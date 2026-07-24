@@ -533,6 +533,23 @@
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
 
+            <!-- SEGMENTO — «E1bc» cuando el fichero es solo algunas historias del episodio.
+                 Sin esto, una fila que es medio episodio se leía igual que las demás. -->
+            <DataGridTemplateColumn Width="Auto" CanUserSort="False">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{StaticResource Accent900}" BorderBrush="{StaticResource Accent700}"
+                          BorderThickness="1" CornerRadius="7" Padding="7,1" Margin="0,0,4,0"
+                          VerticalAlignment="Center" Visibility="{Binding VerSegmento}"
+                          ToolTip="{Binding SegmentoTooltip}">
+                    <TextBlock Text="{Binding SegmentoPildora}" FontSize="10.5"
+                               FontFamily="{StaticResource FontMono}"
+                               Foreground="{StaticResource Accent200}"/>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
             <!-- FICHERO ORIGINAL -->
             <DataGridTemplateColumn Header="FICHERO ORIGINAL" Width="1.1*" SortMemberPath="Original">
               <DataGridTemplateColumn.CellTemplate>
