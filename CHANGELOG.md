@@ -29,6 +29,11 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-24
+
+Versión centrada en **Organizar**: separar los capítulos que traen varias mini-historias, decidir a
+mano lo que la app dio por bueno, y deshacer cualquier borrado con Ctrl+Z.
+
 ### Añadido
 
 - **Cambiar el episodio de cualquier fila, y repartir sus mini-historias.** Antes solo se podía
@@ -90,6 +95,17 @@ es un acuerdo de buena voluntad: está verificado.
   mensaje dice «fichero repetido», nombra al otro fichero y ofrece un botón **«Enviar la copia a la
   Papelera»** en el resolutor (envía el sobrante con un clic, el otro no se toca); en el segundo,
   te pide decidir cuál es el correcto. (`#128`)
+
+- **El explorador de catálogos enseña cada mini-historia con su código.** Un capítulo con varias
+  historias las juntaba en un renglón separadas por rayas, y se leía como un título kilométrico.
+  Ahora va una línea por historia con **su** código —«E1a Se necesita ayudante», «E1b
+  Limpiaarrecifes»—, que es como las numeran los anexos de referencia.
+
+### Corregido
+
+- **La carpeta vinculada a un catálogo dejaba «Analizar» apagado.** Al ponerse sola se escribía la
+  ruta pero no se contaban sus ficheros, y es esa cuenta la que habilita el botón: se veía la
+  carpeta puesta, «Elige una carpeta para empezar» debajo y «Analizar» sin poder pulsarse.
 
 ## [1.0.0] - 2026-07-24
 
