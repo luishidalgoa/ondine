@@ -97,8 +97,17 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     /// porque es una decisión que cambia el nombre final y, sin verla, no hay forma de saber que
     /// esa fila no es el episodio entero: en la tabla se leía igual que cualquier otra.
     /// </summary>
-    public string SegmentoPildora =>
-        SegElegido is { Length: > 0 } s && Res.Episodio is { } ep ? $"E{ep.Num}{s}" : "";
+    public string SegmentoPildora
+    {
+        get
+        {
+            if (Res.Episodio is not { } ep) return "";
+            var propio = SegElegido ?? "";
+            if (propio.Length == 0 && _tambien.Count == 0) return "";
+            var extra = string.Concat(_tambien.Select(h => $"+{h.Episodio.Num}{h.Segmento}"));
+            return $"E{ep.Num}{propio}{extra}";
+        }
+    }
 
     public Visibility VerSegmento =>
         SegmentoPildora.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -108,12 +117,22 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     {
         get
         {
-            if (SegElegido is not { Length: > 0 } s || Res.Episodio is not { } ep) return "";
-            var cuales = s.Select(c => char.ToLowerInvariant(c) - 'a')
-                          .Where(i => i >= 0 && i < ep.TitulosSalida.Count)
-                          .Select(i => $"«{ep.TitulosSalida[i]}»");
-            return $"Este fichero trae solo {string.Join(" y ", cuales)} del episodio {ep.Num}.\n" +
-                   "Con el botón derecho puedes cambiar qué historias son.";
+            if (Res.Episodio is not { } ep || SegmentoPildora.Length == 0) return "";
+
+            static IEnumerable<string> Cuales(CatalogEpisode e, string? seg) =>
+                seg is { Length: > 0 }
+                    ? seg.Select(c => char.ToLowerInvariant(c) - 'a')
+                         .Where(i => i >= 0 && i < e.TitulosSalida.Count)
+                         .Select(i => $"«{e.TitulosSalida[i]}» (ep. {e.Num})")
+                    : new[] { $"el episodio {e.Num} entero" };
+
+            var todas = Cuales(ep, SegElegido).Concat(_tambien.SelectMany(h => Cuales(h.Episodio, h.Segmento)));
+            var aviso = _tambien.Count > 0
+                ? "\n\nOJO: mezcla historias de episodios distintos. El nombre lo dice, pero la app " +
+                  "no sabrá releerlo y al reanalizar saldrá como duda."
+                : "";
+            return $"Este fichero trae: {string.Join(", ", todas)}.\n" +
+                   "Con el botón derecho puedes cambiar qué historias son." + aviso;
         }
     }
 
@@ -154,9 +173,35 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     {
         var archivo = SegElegido != null ? Res.Archivo.ConSegmento(SegElegido) : Res.Archivo;
         NombreNuevo = Res.Episodio != null && Res.Estado != ReindexEstado.Error
-            ? Plantilla.Render(Catalogo, Res.Episodio, archivo)
+            ? Plantilla.Render(Catalogo, Res.Episodio, archivo, _tambien.Count > 0 ? _tambien : null)
             : null;
         RefrescarTodo();
+    }
+
+    // ── Historias de OTROS episodios metidas en este mismo fichero ──
+
+    private readonly List<LibraryTemplate.Historia> _tambien = new();
+
+    /// <summary>Las historias añadidas de otros episodios. Vacío en el caso normal.</summary>
+    public IReadOnlyList<LibraryTemplate.Historia> Tambien => _tambien;
+
+    /// <summary>
+    /// Apunta que este fichero trae TAMBIÉN una historia de otro episodio. El nombre pasa a
+    /// llevar el código compuesto («E1b+2b»): la app no sabrá releerlo y al reanalizar saldrá
+    /// como duda, y así debe ser — es un fichero que no encaja en ningún episodio.
+    /// </summary>
+    public void AnadirHistoria(CatalogEpisode ep, string? seg)
+    {
+        _tambien.Add(new LibraryTemplate.Historia(ep, seg));
+        Recalcular();
+    }
+
+    /// <summary>Deshace las historias añadidas y deja la fila como un episodio normal.</summary>
+    public void QuitarHistorias()
+    {
+        if (_tambien.Count == 0) return;
+        _tambien.Clear();
+        Recalcular();
     }
 
     private void RefrescarTodo()

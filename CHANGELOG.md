@@ -31,6 +31,15 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Cambiar el episodio de cualquier fila, y repartir sus mini-historias.** Antes solo se podía
+  corregir una fila cuando la app dudaba; ahora, con el botón derecho sobre **cualquiera** —también
+  las que están en verde— tienes «Elegir episodio o historias…». Si el episodio trae varias
+  historias, eliges si el fichero es el episodio entero o solo algunas: marcando la b y la c queda
+  como **«E1bc»** con esos dos títulos, y la fila lo enseña en una píldora. Para el caso raro de un
+  fichero que mezcla historias de episodios **distintos**, «Añadir historia de otro episodio…» las
+  suma y el nombre sale con el código compuesto (**«E1b+2b»**): así se ve lo que hay dentro en vez
+  de disfrazarlo de episodio normal.
+
 - **«Partir en segmentos»: un fichero por mini-historia, numeradas 1a, 1b, 1c.** Muchas series de
   dibujos meten 2-3 historias en un mismo capítulo. Si tu catálogo las lista por separado, un botón
   nuevo en Organizar las deja en ficheros independientes con la numeración por segmento. Encuentra

@@ -51,6 +51,7 @@ public static class Program
         Sidecars();
         PapeleraDeLaApp();
         CortesPorSegmento();
+        HistoriasDeEpisodiosDistintos();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2259,6 +2260,65 @@ public static class Program
         });
         Assert(p7.Fiable, "acepta los fundidos en cualquier orden");
         Assert(p7.Trozos[0].Hasta < p7.Trozos[1].Hasta, "y devuelve los trozos en orden");
+    }
+
+    // ────────── Un fichero con historias de episodios DISTINTOS (1b + 2b) ──────────
+
+    private static void HistoriasDeEpisodiosDistintos()
+    {
+        Seccion("Historias de episodios distintos en un mismo fichero");
+
+        var cat = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0", "serie": "Bob Esponja",
+          "episodios": [
+            { "num": 1, "temporada": 1,
+              "titulos": { "es": ["Se necesita ayudante", "Limpiaarrecifes", "Té en la bóveda"] } },
+            { "num": 2, "temporada": 1,
+              "titulos": { "es": ["El puesto de pompas", "Pantalones rotos"] } }
+          ]
+        }
+        """);
+        var e1 = cat.Regulares.First(e => e.Num == 1);
+        var e2 = cat.Regulares.First(e => e.Num == 2);
+        var plantilla = new LibraryTemplate("<serie> - S<temp>E<num> - <título>");
+        var archivo = SignalExtractor.Extract("mezcla.mkv", "Temporada 1");
+
+        // Sin nada que combinar, todo sigue exactamente igual que antes.
+        Eq("Bob Esponja - S1E1 - Se necesita ayudante + Limpiaarrecifes + Té en la bóveda.mkv",
+            plantilla.Render(cat, e1, archivo), "sin combinar no cambia nada");
+
+        // El caso pedido: el fichero trae la SEGUNDA historia del 1 y la SEGUNDA del 2. El código
+        // sale compuesto —«1b+2b»— a propósito: decir «E1b» escondería que ahí dentro hay algo
+        // del episodio 2, y un nombre que miente es peor que uno raro.
+        var mezcla = plantilla.Render(cat, e1, archivo.ConSegmento("b"),
+            new[] { new LibraryTemplate.Historia(e2, "b") });
+        Eq("Bob Esponja - S1E1b+2b - Limpiaarrecifes + Pantalones rotos.mkv", mezcla,
+            "el código compuesto dice de qué episodios viene cada historia");
+
+        // Se pueden encadenar varias, y cada una aporta SOLO su historia.
+        var tres = plantilla.Render(cat, e1, archivo.ConSegmento("a"),
+            new[] { new LibraryTemplate.Historia(e1, "c"), new LibraryTemplate.Historia(e2, "a") });
+        Eq("Bob Esponja - S1E1a+1c+2a - Se necesita ayudante + Té en la bóveda + El puesto de pompas.mkv",
+            tres, "encadena varias historias, cada una con su título");
+
+        // Un añadido SIN letra es el episodio entero: aporta todos sus títulos y no lleva letra.
+        var entero = plantilla.Render(cat, e1, archivo.ConSegmento("b"),
+            new[] { new LibraryTemplate.Historia(e2, null) });
+        Eq("Bob Esponja - S1E1b+2 - Limpiaarrecifes + El puesto de pompas + Pantalones rotos.mkv",
+            entero, "un añadido sin letra aporta el episodio completo");
+
+        // Una lista vacía es como no pasar nada: no debe colar un «+» suelto en el nombre.
+        Eq(plantilla.Render(cat, e1, archivo),
+            plantilla.Render(cat, e1, archivo, Array.Empty<LibraryTemplate.Historia>()),
+            "una lista vacía se comporta como no combinar");
+
+        // La marca <seg> sigue siendo la del fichero, no la combinación: es lo que distingue
+        // el trozo dentro de SU episodio y hay plantillas que la usan suelta.
+        var soloSeg = new LibraryTemplate("<num> seg=<seg>").Render(cat, e1, archivo.ConSegmento("b"),
+            new[] { new LibraryTemplate.Historia(e2, "b") });
+        Assert(soloSeg!.StartsWith("1b+2b"), "el número lleva la combinación");
+        Assert(soloSeg.Contains("seg=b"), "y <seg> sigue siendo la letra de este fichero");
     }
 
     /// <summary>Compara segundos con holgura: los tiempos vienen de ffmpeg y llevan decimales.</summary>
