@@ -53,6 +53,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Ordenar las tablas pulsando en la cabecera de una columna.** En «Comprimir» y en «Organizar»,
+  al hacer clic en una cabecera la tabla se ordena por esa columna (una flecha ▲/▼ marca cuál) y
+  volver a pulsarla alterna entre ascendente y descendente. Los números ordenan como números: en
+  «Comprimir», TAMAÑO ordena por el peso real del fichero y DURACIÓN por su duración, no por el
+  texto. En «Organizar», un tercer clic en la misma columna quita el orden y devuelve la tabla a
+  su orden natural por temporadas (con sus bandas de separación); mientras hay un orden manual,
+  esas bandas se ocultan porque las temporadas quedan entremezcladas.
+
 - **Un indicador de proceso en la cabecera, visible desde cualquier pestaña.** Mientras comprimes
   o exportas en Recortes, si te vas a otra pestaña ya no pierdes de vista que sigue en marcha:
   aparece una píldora en la cabecera con el avance («Comprimiendo 3/8 · 40 %» o «Exportando · 65 %»)

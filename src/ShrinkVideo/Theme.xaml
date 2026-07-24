@@ -836,12 +836,25 @@
     <Setter Property="FontSize" Value="11"/>
     <Setter Property="HorizontalContentAlignment" Value="Left"/>
     <Setter Property="Padding" Value="8,6"/>
+    <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="GridViewColumnHeader">
-          <Border Background="Transparent" Padding="{TemplateBinding Padding}">
-            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+          <Border x:Name="fondo" Background="Transparent" Padding="{TemplateBinding Padding}">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
+              <ContentPresenter VerticalAlignment="Center"/>
+              <!-- Flecha del orden: la pinta solo la columna activa (Glyph = «▲»/«▼») -->
+              <TextBlock Margin="5,0,0,0" FontSize="9" VerticalAlignment="Center"
+                         Foreground="{StaticResource Accent}"
+                         Text="{Binding (local:HeaderSort.Glyph), RelativeSource={RelativeSource TemplatedParent}}"/>
+            </StackPanel>
           </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="fondo" Property="Background" Value="{StaticResource RowHover}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>
     </Setter>

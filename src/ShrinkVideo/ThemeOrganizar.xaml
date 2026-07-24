@@ -146,11 +146,32 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="DataGridColumnHeader">
-          <Border Background="Transparent" BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+          <Border x:Name="fondo" Background="Transparent" BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
                   Padding="{TemplateBinding Padding}">
-            <ContentPresenter VerticalAlignment="Center"
-                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
+              <ContentPresenter VerticalAlignment="Center"/>
+              <!-- Flecha del orden: solo la columna ordenada la muestra (▲ asc / ▼ desc) -->
+              <TextBlock x:Name="flecha" Margin="5,0,0,0" FontSize="9" VerticalAlignment="Center"
+                         Foreground="{StaticResource Accent}" Visibility="Collapsed"/>
+            </StackPanel>
           </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="CanUserSort" Value="True">
+              <Setter Property="Cursor" Value="Hand"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="fondo" Property="Background" Value="{StaticResource RowHover}"/>
+            </Trigger>
+            <Trigger Property="SortDirection" Value="Ascending">
+              <Setter TargetName="flecha" Property="Text" Value="▲"/>
+              <Setter TargetName="flecha" Property="Visibility" Value="Visible"/>
+            </Trigger>
+            <Trigger Property="SortDirection" Value="Descending">
+              <Setter TargetName="flecha" Property="Text" Value="▼"/>
+              <Setter TargetName="flecha" Property="Visibility" Value="Visible"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>
     </Setter>
