@@ -90,6 +90,27 @@ public static partial class SignalExtractor
     [GeneratedRegex(@"\bE(\d{1,4})([a-z]{0,3})\b", RegexOptions.IgnoreCase)]
     private static partial Regex RxEpisodioE();
 
+    // «4x01», «12x05» — temporada×episodio (formato «NxNN», muy común en descargas). El episodio
+    // exige 2-3 cifras para no confundir un «4x4» de un título con una numeración, y las letras
+    // finales son las historias, igual que en SxxExx. Reconocerlo quita el prefijo de serie
+    // («Bob_Esponja_5x01_…») del título, que si no se quedaba dentro y hundía el parecido.
+    // OJO con los límites: el «_» es carácter de palabra, así que \b NO salta entre «_» y una
+    // cifra/letra. Los nombres de descarga usan «_» de separador («…Esponja_4x01_…»), de modo
+    // que se usan lookarounds que excluyen alfanuméricos (y tratan «_», espacio y borde como
+    // frontera) en vez de \b.
+    [GeneratedRegex(@"(?<![a-z0-9])(\d{1,2})x(\d{2,3})([a-z]{0,3})(?![a-z0-9])", RegexOptions.IgnoreCase)]
+    private static partial Regex RxTemporadaEpisodioX();
+
+    // Morralla de descarga: la fuente/release al final del nombre («…AMZN WEB-DL x265 1080p…»).
+    // No es parte del título y hundía el parecido contra el catálogo. Se corta desde el PRIMER
+    // marcador INEQUÍVOCO —nunca una palabra real de un título—. A propósito NO se incluyen
+    // marcas ambiguas sueltas como «web» o «dvd», que sí pueden aparecer en un título de verdad.
+    // El «_» es carácter de palabra: no se puede cerrar el marcador con \b (fallaría en «AMZN_»).
+    // Se cierra con un lookahead que exige un no-alfanumérico (o el final), así «_AMZN_» sí casa.
+    private static readonly Regex RxMorralla = new(
+        @"[\s_.\-]+(?:AMZN|WEBRip|WEB[-_.]?DL|HDTV|BluRay|BDRip|BRRip|DVDRip|HDRip|x26[45]|h26[45]|HEVC|XviD|(?:2160|1080|720|480)p)(?![a-z0-9]).*$",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
     // «72 Título» — número al principio seguido de separador
     [GeneratedRegex(@"^\s*(\d{1,4})\s*[-–_.\s]+")]
     private static partial Regex RxNumeroInicial();
@@ -166,6 +187,14 @@ public static partial class SignalExtractor
             if (int.TryParse(mSE.Groups[1].Value, out var tNom)) temporadaNombre = tNom;
             if (mSE.Groups[3].Value.Length > 0) subSegmento = mSE.Groups[3].Value.ToLowerInvariant();
             resto = TrasElMarcador(resto, mSE.Index, mSE.Length);
+        }
+        else if (RxTemporadaEpisodioX().Match(resto) is { Success: true } mX)
+        {
+            // «4x01»: la temporada y el episodio del propio nombre, y el prefijo de serie fuera.
+            indice = int.Parse(mX.Groups[2].Value);
+            if (int.TryParse(mX.Groups[1].Value, out var tX)) temporadaNombre = tX;
+            if (mX.Groups[3].Value.Length > 0) subSegmento = mX.Groups[3].Value.ToLowerInvariant();
+            resto = TrasElMarcador(resto, mX.Index, mX.Length);
         }
         else
         {
@@ -268,6 +297,9 @@ public static partial class SignalExtractor
 
     private static string LimpiarTitulo(string s)
     {
+        // La morralla de descarga («…_AMZN_WEB_DLtrialeng…», «…x265_1080p») se corta desde su
+        // primer marcador: no es título y restaba parecido contra el catálogo.
+        s = RxMorralla.Replace(s, "");
         // Las etiquetas de la fuente («[Boing HD]», «[1080p]») no son parte del título y
         // hundían el parecido: comparadas contra el catálogo restaban puntos por nada.
         s = Regex.Replace(s, @"\[[^\]]*\]", " ");

@@ -37,6 +37,7 @@ public static class Program
         MarcadorManda();
         SepararHistorias();
         TituloJuntoContraCatalogoPartido();
+        MorrallaYFormatoX();
         PeleaPorElMismoEpisodio();
         PartirEnTramos();
         ArrastrarLasJuntas();
@@ -1948,6 +1949,46 @@ public static class Program
         // No rompe el caso de UNA sola historia: un fichero que solo trae la 1.ª sigue casando.
         var r2 = Uno(cat, F("El colchón perdido.mkv"));
         Eq(62, r2.Episodio?.Num, "una sola historia sigue casando su episodio");
+    }
+
+    // Los ficheros AMZN traen dos ruidos que hundían el parecido contra el catálogo: el prefijo
+    // de serie + numeración «Bob_Esponja_5x01_» (el «5x01» no se reconocía) y la morralla de
+    // descarga «_AMZN_WEB_DLtrialeng…». Se reconoce el formato «NxNN» (quita el prefijo) y se
+    // corta la morralla desde el primer marcador inequívoco (nunca una palabra real).
+    private static void MorrallaYFormatoX()
+    {
+        Seccion("Formato «NxNN» y morralla de descarga");
+
+        // «4x01» = temporada 4, episodio 1; el prefijo de serie se va con el marcador.
+        var f = SignalExtractor.Extract(F("Bob_Esponja_4x01_Miedo_a_una_Burger.mkv"));
+        Eq(4, f.Temporada, "«4x01» da temporada 4");
+        Eq(1, f.Indice, "«4x01» da episodio 1");
+        Eq("miedo a una burger", TitleMatch.Norm(f.TituloNombre), "el título va tras el marcador, sin el prefijo de serie");
+
+        // La morralla se corta desde el primer marcador inequívoco.
+        f = SignalExtractor.Extract(F("Bob_Esponja_5x01_Amigo_o_Enemigo_AMZN_WEB_DLtrialeng_esp_porsr_azufre.mp4"));
+        Eq("amigo o enemigo", TitleMatch.Norm(f.TituloNombre), "AMZN_WEB_DL… y lo que sigue, fuera");
+
+        f = SignalExtractor.Extract(F("Bob_Esponja_7x05_Manten_limpio_Fondo_de_Bikini_x265_1080p.mkv"));
+        Eq("manten limpio fondo de bikini", TitleMatch.Norm(f.TituloNombre), "morralla x265/1080p también fuera");
+
+        // Una palabra ambigua que NO es marcador (p. ej. «web» suelto) se conserva.
+        f = SignalExtractor.Extract(F("[10] La telarana del web social.mkv"));
+        Assert(TitleMatch.Norm(f.TituloNombre).Contains("web"), "«web» suelto (no marcador) se conserva");
+
+        // Integración: un fichero AMZN de título corto casa fuerte (antes caía en «Revisar»).
+        var cat = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0", "serie": "Bob Esponja", "idiomas": { "salida": "es" },
+          "episodios": [
+            { "num": 81, "temporada": 5, "titulos": { "es": ["Amigo o Enemigo"] } },
+            { "num": 82, "temporada": 5, "titulos": { "es": ["El cocinero original", "Luz nocturna"] } }
+          ]
+        }
+        """);
+        var r = Uno(cat, F("Bob_Esponja_5x01_Amigo_o_Enemigo_AMZN_WEB_DLtrialeng_esp_porsr_azufre.mp4"));
+        Eq(81, r.Episodio?.Num, "casa el episodio 81 pese a la morralla");
+        Eq(ReindexConfianza.Alta, r.Confianza, "sin morralla, el título corto casa fuerte");
     }
 
     private static string F(string nombre, string carpeta = "S") => Path.Combine(carpeta, nombre);
