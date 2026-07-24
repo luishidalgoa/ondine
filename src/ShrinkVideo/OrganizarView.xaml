@@ -470,6 +470,13 @@
               <MenuItem x:Name="miRecortar" Header="Enviar a Recortes…"/>
               <MenuItem x:Name="miUbicacion" Header="Abrir la ubicación del fichero"/>
               <Separator/>
+              <!-- Cambiar la propuesta desde CUALQUIER fila, no solo desde las que tienen
+                   conflicto: una fila en verde también puede estar mal, y hasta ahora el
+                   resolutor solo se abría cuando la app dudaba. Aquí se elige el episodio y,
+                   si trae varias historias, cuáles de ellas (E1b, E1bc…). -->
+              <MenuItem x:Name="miElegirEpisodio" Header="Elegir episodio o historias…"/>
+              <MenuItem x:Name="miDejarComoEsta" Header="Dejarlo como está"/>
+              <Separator/>
               <!-- Encontrar un fichero problemático cuesta más que arreglarlo: esto lo
                    aparta para mañana sin tener que volver a buscarlo. -->
               <MenuItem x:Name="miRevisar" Header="Apartar para revisar luego"/>
