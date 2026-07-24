@@ -68,11 +68,10 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
-- **La barra de pestañas escala a muchas más páginas sin romper la cabecera.** La tira de
-  «Comprimir / Organizar / Recortes» vive ahora en un carril flexible del centro que nunca pisa
-  el menú ni los botones de ventana: si algún día hubiera tantas páginas que no cupieran, se
-  desplazan con la rueda del ratón y aparece un botón «▾» con la lista completa para saltar a
-  cualquiera. Con las páginas actuales se ve igual que antes.
+- **El conmutador de páginas es ahora un desplegable compacto que no se come la cabecera.** En
+  vez de una tira de pestañas anchas ocupando su trozo del título, un solo botón muestra la página
+  en la que estás («Comprimir ▾») y, al pulsarlo, despliega la lista con todas las páginas para
+  saltar a cualquiera. Ocupa lo mínimo y da lo mismo que haya 3 páginas o 20.
 
 - **Ordenar las tablas pulsando en la cabecera de una columna.** En «Comprimir» y en «Organizar»,
   al hacer clic en una cabecera la tabla se ordena por esa columna (una flecha ▲/▼ marca cuál) y
