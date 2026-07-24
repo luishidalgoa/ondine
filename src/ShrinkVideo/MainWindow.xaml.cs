@@ -1220,6 +1220,42 @@ public partial class MainWindow : Window
         else tabRecortes.IsChecked = true;
     }
 
+    // --- Tira de pestañas: preparada para muchas más páginas ---------------------------
+    // La tira vive en un ScrollViewer horizontal dentro de la columna flexible del centro.
+    // Con pocas pestañas se centra y no pasa nada; si algún día no cupieran, se desplazan
+    // (rueda del ratón) y el botón «▾» abre la lista completa. Nada se recorta ni pisa el resto.
+
+    /// <summary>La rueda del ratón sobre la tira desplaza en horizontal (no hay scroll vertical).</summary>
+    private void OnTabsRueda(object sender, MouseWheelEventArgs e)
+    {
+        svTabs.ScrollToHorizontalOffset(svTabs.HorizontalOffset - e.Delta);
+        e.Handled = true;
+    }
+
+    /// <summary>El botón «▾» solo se muestra cuando las pestañas no caben (hay algo que desplazar).</summary>
+    private void OnTabsScroll(object sender, ScrollChangedEventArgs e)
+    {
+        btnMasTabs.Visibility = svTabs.ScrollableWidth > 0.5 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>Menú de desbordamiento: lista TODAS las páginas (se arma solo desde las pestañas).</summary>
+    private void OnMasTabs(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu
+        {
+            PlacementTarget = btnMasTabs,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+        };
+        foreach (var rb in panelTabs.Children.OfType<RadioButton>())
+        {
+            var destino = rb;
+            var item = new MenuItem { Header = rb.Tag as string ?? "", IsChecked = rb.IsChecked == true };
+            item.Click += (_, _) => { destino.IsChecked = true; destino.BringIntoView(); };
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
+
     /// <summary>
     /// Ordena la tabla de «Comprimir» al pulsar una cabecera. El primer clic ordena ascendente;
     /// repetir la misma columna alterna a descendente. La columna activa marca la flecha ▲/▼ y

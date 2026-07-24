@@ -53,6 +53,12 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **La barra de pestañas escala a muchas más páginas sin romper la cabecera.** La tira de
+  «Comprimir / Organizar / Recortes» vive ahora en un carril flexible del centro que nunca pisa
+  el menú ni los botones de ventana: si algún día hubiera tantas páginas que no cupieran, se
+  desplazan con la rueda del ratón y aparece un botón «▾» con la lista completa para saltar a
+  cualquiera. Con las páginas actuales se ve igual que antes.
+
 - **Ordenar las tablas pulsando en la cabecera de una columna.** En «Comprimir» y en «Organizar»,
   al hacer clic en una cabecera la tabla se ordena por esa columna (una flecha ▲/▼ marca cuál) y
   volver a pulsarla alterna entre ascendente y descendente. Los números ordenan como números: en
