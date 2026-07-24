@@ -92,6 +92,31 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     public System.Windows.Visibility VerApartada =>
         Apartada ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
+    /// <summary>
+    /// «E1bc» cuando el fichero es SOLO algunas historias del episodio. Se enseña como píldora
+    /// porque es una decisión que cambia el nombre final y, sin verla, no hay forma de saber que
+    /// esa fila no es el episodio entero: en la tabla se leía igual que cualquier otra.
+    /// </summary>
+    public string SegmentoPildora =>
+        SegElegido is { Length: > 0 } s && Res.Episodio is { } ep ? $"E{ep.Num}{s}" : "";
+
+    public Visibility VerSegmento =>
+        SegmentoPildora.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>Qué historias trae, con sus nombres, para el tooltip de la píldora.</summary>
+    public string SegmentoTooltip
+    {
+        get
+        {
+            if (SegElegido is not { Length: > 0 } s || Res.Episodio is not { } ep) return "";
+            var cuales = s.Select(c => char.ToLowerInvariant(c) - 'a')
+                          .Where(i => i >= 0 && i < ep.TitulosSalida.Count)
+                          .Select(i => $"«{ep.TitulosSalida[i]}»");
+            return $"Este fichero trae solo {string.Join(" y ", cuales)} del episodio {ep.Num}.\n" +
+                   "Con el botón derecho puedes cambiar qué historias son.";
+        }
+    }
+
     /// <summary>Nombre final que se escribirá, o null si esta fila no se toca.</summary>
     public string? NombreNuevo { get; private set; }
 
@@ -146,6 +171,7 @@ public sealed class OrganizarRow : INotifyPropertyChanged
             nameof(ListoParaAplicar), nameof(EstadoTooltip),
             nameof(RecomiendaRecortar), nameof(VerRecortar), nameof(TituloDetalle), nameof(VerSelector),
             nameof(EsRepetido), nameof(VerBorrarCopia),
+            nameof(SegmentoPildora), nameof(VerSegmento), nameof(SegmentoTooltip),
             nameof(NombrePropio), nameof(CarpetaPropia), nameof(NombrePareja), nameof(CarpetaPareja),
         }) N(p);
     }
