@@ -145,6 +145,8 @@ public sealed class OrganizarRow : INotifyPropertyChanged
             // pasa a estar lista y su casilla tiene que aparecer en ese momento.
             nameof(ListoParaAplicar), nameof(EstadoTooltip),
             nameof(RecomiendaRecortar), nameof(VerRecortar), nameof(TituloDetalle), nameof(VerSelector),
+            nameof(EsRepetido), nameof(VerBorrarCopia),
+            nameof(NombrePropio), nameof(CarpetaPropia), nameof(NombrePareja), nameof(CarpetaPareja),
         }) N(p);
     }
 
@@ -417,6 +419,32 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     /// <summary>Es una copia repetida (mismo episodio que otro fichero): se puede borrar el sobrante.</summary>
     public bool EsRepetido => !Aplicado && Res.EsDuplicado;
     public Visibility VerBorrarCopia => EsRepetido ? Visibility.Visible : Visibility.Collapsed;
+
+    // ── Las DOS rutas de un «fichero repetido» (#128): esta y su pareja, para elegir cuál borrar ──
+
+    /// <summary>Nombre de ESTE fichero (la copia).</summary>
+    public string NombrePropio => Res.Archivo.NombreArchivo;
+    /// <summary>Carpeta de ESTE fichero, para distinguirlo de su pareja cuando comparten nombre.</summary>
+    public string CarpetaPropia => System.IO.Path.GetDirectoryName(Res.Archivo.Path) ?? "";
+    /// <summary>Nombre del OTRO fichero (el que la app conserva), o «(desconocido)».</summary>
+    public string NombrePareja => Res.RutaPareja != null ? System.IO.Path.GetFileName(Res.RutaPareja) : "(desconocido)";
+    /// <summary>Carpeta del OTRO fichero.</summary>
+    public string CarpetaPareja => Res.RutaPareja != null ? System.IO.Path.GetDirectoryName(Res.RutaPareja) ?? "" : "";
+
+    /// <summary>
+    /// Su fichero rival se fue a la Papelera: esta fila deja de ser un duplicado y vuelve a ser la
+    /// copia válida del episodio que ya tenía identificado, lista para aplicar.
+    /// </summary>
+    public void MarcarRecuperadaDeDuplicado()
+    {
+        Res.EsDuplicado = false;
+        Res.RutaPareja = null;
+        Res.Estado = Res.Episodio?.Especial == true ? ReindexEstado.Especial : ReindexEstado.Corregido;
+        Res.Confianza = ReindexConfianza.Alta;
+        Res.Motivo = "El otro fichero fue a la Papelera: esta es la copia que se conserva.";
+        Res.Alternativas = Array.Empty<ReindexCandidato>();
+        Recalcular();
+    }
 
     /// <summary>Cabecera del panel: partir manda sobre resolver, y un repetido tiene su propio texto.</summary>
     public string TituloDetalle => RecomiendaRecortar

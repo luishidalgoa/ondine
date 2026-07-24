@@ -630,11 +630,48 @@
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
 
+                  <!-- FICHERO REPETIDO (#128): las DOS rutas implicadas, para elegir cuál va a la
+                       Papelera. Nada se borra por su cuenta; ambos ficheros se pueden abrir antes. -->
+                  <Grid Visibility="{Binding VerBorrarCopia}" Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                            BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,6,0">
+                      <StackPanel>
+                        <TextBlock Text="ESTE FICHERO" FontSize="10.5" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding NombrePropio}" FontSize="12.5" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding CarpetaPropia}" FontSize="11" Foreground="{StaticResource Neutral400}"
+                                   TextWrapping="Wrap" Margin="0,2,0,10" FontFamily="{StaticResource FontMono}"/>
+                        <StackPanel Orientation="Horizontal">
+                          <Button Content="Enviar este a la Papelera" Style="{StaticResource BtnSecondary}" FontSize="12"
+                                  Padding="12,4" Click="OnBorrarEste"
+                                  ToolTip="Manda ESTE fichero a la Papelera. El otro se queda. Ctrl+Z para deshacer."/>
+                          <Button Content="Abrir carpeta" Style="{StaticResource BtnGhost}" FontSize="12"
+                                  Margin="8,0,0,0" Click="OnAbrirCarpetaEste"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                            BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="6,0,0,0">
+                      <StackPanel>
+                        <TextBlock Text="EL OTRO (el que la app conserva)" FontSize="10.5" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding NombrePareja}" FontSize="12.5" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding CarpetaPareja}" FontSize="11" Foreground="{StaticResource Neutral400}"
+                                   TextWrapping="Wrap" Margin="0,2,0,10" FontFamily="{StaticResource FontMono}"/>
+                        <StackPanel Orientation="Horizontal">
+                          <Button Content="Enviar el otro a la Papelera" Style="{StaticResource BtnSecondary}" FontSize="12"
+                                  Padding="12,4" Click="OnBorrarOtro"
+                                  ToolTip="Manda el OTRO fichero a la Papelera y deja este como la copia buena. Ctrl+Z para deshacer."/>
+                          <Button Content="Abrir carpeta" Style="{StaticResource BtnGhost}" FontSize="12"
+                                  Margin="8,0,0,0" Click="OnAbrirCarpetaOtro"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+
                   <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                    <!-- Copia repetida: la acción es enviar el sobrante a la Papelera, no elegir episodio -->
-                    <Button Content="Enviar la copia a la Papelera" Style="{StaticResource BtnSecondary}" FontSize="12"
-                            Padding="12,4" Click="OnBorrarCopia" Visibility="{Binding VerBorrarCopia}"
-                            ToolTip="Manda ESTE fichero (la copia repetida) a la Papelera. El otro se queda."/>
                     <CheckBox x:Name="chkRecordar" Content="Recordar esta decisión para este fichero"
                               Foreground="{StaticResource Neutral400}" FontSize="12" VerticalAlignment="Center"
                               Visibility="{Binding VerSelector}"/>
