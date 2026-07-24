@@ -170,9 +170,22 @@ public partial class OrganizarView : UserControl
                 ? $"Elegir episodio o historias… ({historias} dentro)"
                 : "Elegir otro episodio…";
             miDejarComoEsta.IsEnabled = !r.Aplicado;
+            miAnadirHistoria.IsEnabled = _catalogoCargado != null && !r.Aplicado && r.Res.Episodio != null;
+            miQuitarHistorias.IsEnabled = r.Tambien.Count > 0;
+            miQuitarHistorias.Header = r.Tambien.Count > 0
+                ? $"Quitar las {r.Tambien.Count} historias añadidas"
+                : "Quitar las historias añadidas";
         };
         miElegirEpisodio.Click += (_, _) => OnElegirAMano(tabla, new RoutedEventArgs());
         miDejarComoEsta.Click += (_, _) => OnDejarComoEsta(tabla, new RoutedEventArgs());
+        miAnadirHistoria.Click += (_, _) => AnadirHistoriaDeOtroEpisodio();
+        miQuitarHistorias.Click += (_, _) =>
+        {
+            if (tabla.SelectedItem is not OrganizarRow f) return;
+            f.QuitarHistorias();
+            ActualizarContadores();
+            Escribir($"«{f.Original}» vuelve a ser un episodio normal.");
+        };
         miReproducir.Click += (_, _) => ReproducirFila(tabla.SelectedItem as OrganizarRow);
         miRecortar.Click += (_, _) =>
         {
@@ -1616,6 +1629,30 @@ public partial class OrganizarView : UserControl
         Escribir(nombre != null
             ? $"Restaurado de la papelera: {nombre}. Vuelve a analizar para verlo en la lista."
             : "No se pudo restaurar: su sitio ya está ocupado por otro fichero.");
+    }
+
+    /// <summary>
+    /// Apunta que este fichero trae TAMBIÉN una historia de otro episodio. Es el caso raro —un
+    /// fichero que no encaja en ningún episodio—, así que el nombre lo dice con el código
+    /// compuesto («E1b+2b») en vez de disimularlo detrás de uno de los dos.
+    /// </summary>
+    private void AnadirHistoriaDeOtroEpisodio()
+    {
+        if (tabla.SelectedItem is not OrganizarRow fila || _catalogoCargado == null) return;
+        if (fila.Res.Episodio == null)
+        {
+            Aviso("Primero elige el episodio principal de este fichero; después ya puedes añadirle historias de otros.");
+            return;
+        }
+
+        var win = new CatalogoWindow(_catalogoCargado, fila.Res.Archivo.TituloNombre, modoElegir: true)
+        { Owner = Window.GetWindow(this) };
+        if (win.ShowDialog() != true || win.Elegido is not { } ep) return;
+
+        fila.AnadirHistoria(ep, win.SegElegido);
+        ActualizarContadores();
+        Escribir($"«{fila.Original}» → se le añade el episodio {ep.Num}{win.SegElegido}. " +
+                 "Queda con nombre compuesto; al reanalizar saldrá como duda (es un fichero que no es un episodio).");
     }
 
     private void OnDejarComoEsta(object sender, RoutedEventArgs e)

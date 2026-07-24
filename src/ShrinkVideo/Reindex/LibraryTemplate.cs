@@ -62,10 +62,22 @@ public sealed class LibraryTemplate
         Patron = string.IsNullOrWhiteSpace(patron) ? PatronPorDefecto : patron.Trim();
 
     /// <summary>
+    /// Una historia AÑADIDA que también vive en este fichero, y que puede venir de OTRO episodio.
+    /// Con <see cref="Segmento"/> a null se aporta el episodio entero.
+    /// </summary>
+    public readonly record struct Historia(CatalogEpisode Episodio, string? Segmento);
+
+    /// <summary>
     /// Nombre final (con extensión) para un episodio identificado. Devuelve null si el
     /// patrón no deja nada utilizable, para no crear jamás un fichero sin nombre.
+    ///
+    /// Con <paramref name="tambien"/> el fichero trae historias de MÁS episodios y el número sale
+    /// compuesto: «1b+2b». Se escribe así a propósito, aun sabiendo que la app no sabrá releerlo:
+    /// un «E1b» a secas escondería que ahí dentro hay algo del episodio 2, y un nombre que miente
+    /// es peor que uno raro. Al reanalizar salta como duda, que es justo lo que toca.
     /// </summary>
-    public string? Render(ReindexCatalog catalogo, CatalogEpisode episodio, FileSignals archivo)
+    public string? Render(ReindexCatalog catalogo, CatalogEpisode episodio, FileSignals archivo,
+                          IReadOnlyList<Historia>? tambien = null)
     {
         // La temporada del episodio manda; si el catálogo no la trae, se usa la que
         // insinúa la carpeta del fichero, y si tampoco, se deja el hueco vacío.
@@ -86,8 +98,8 @@ public sealed class LibraryTemplate
                 // historia suelta se pisaría con el episodio completo o con su otra mitad.
                 "num" => (param is { Length: > 0 }
                     ? episodio.Num.ToString().PadLeft(param.Length, '0')
-                    : episodio.Num.ToString()) + archivo.SubSegmento,
-                "título" or "titulo" => TituloPara(episodio, archivo, param),
+                    : episodio.Num.ToString()) + archivo.SubSegmento + SufijoDe(tambien, param),
+                "título" or "titulo" => TituloConAnadidos(episodio, archivo, param, tambien),
                 // Los sub-segmentos («[438a]») necesitan distinguirse o se pisarían al renombrar
                 "seg" => archivo.SubSegmento ?? "",
                 _ => m.Value,
@@ -98,6 +110,31 @@ public sealed class LibraryTemplate
         if (nombre.Length == 0) return null;
 
         return nombre + archivo.Extension;
+    }
+
+    /// <summary>«+2b+3a» — lo que se pega al número cuando hay historias de más episodios.</summary>
+    private static string SufijoDe(IReadOnlyList<Historia>? tambien, string? param)
+    {
+        if (tambien is not { Count: > 0 }) return "";
+        return string.Concat(tambien.Select(h =>
+            "+" + (param is { Length: > 0 }
+                ? h.Episodio.Num.ToString().PadLeft(param.Length, '0')
+                : h.Episodio.Num.ToString()) + h.Segmento));
+    }
+
+    /// <summary>El título de este fichero más el de cada historia añadida, en el orden dado.</summary>
+    private static string TituloConAnadidos(CatalogEpisode episodio, FileSignals archivo,
+                                            string? separador, IReadOnlyList<Historia>? tambien)
+    {
+        var propio = TituloPara(episodio, archivo, separador);
+        if (tambien is not { Count: > 0 }) return propio;
+
+        var union = separador ?? " + ";
+        var partes = new List<string> { propio };
+        // Cada añadido aporta SOLO su historia; sin letra, el episodio entero. Se reusa la
+        // misma regla del título propio pasando su letra como sub-segmento.
+        partes.AddRange(tambien.Select(h => TituloPara(h.Episodio, archivo.ConSegmento(h.Segmento), separador)));
+        return string.Join(union, partes.Where(p => p.Length > 0));
     }
 
     /// <summary>

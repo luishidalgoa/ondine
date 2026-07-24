@@ -475,6 +475,10 @@
                    resolutor solo se abría cuando la app dudaba. Aquí se elige el episodio y,
                    si trae varias historias, cuáles de ellas (E1b, E1bc…). -->
               <MenuItem x:Name="miElegirEpisodio" Header="Elegir episodio o historias…"/>
+              <!-- Para el fichero raro que mezcla historias de episodios DISTINTOS. El nombre
+                   sale con el código compuesto («E1b+2b») a propósito: así se ve lo que hay. -->
+              <MenuItem x:Name="miAnadirHistoria" Header="Añadir historia de otro episodio…"/>
+              <MenuItem x:Name="miQuitarHistorias" Header="Quitar las historias añadidas"/>
               <MenuItem x:Name="miDejarComoEsta" Header="Dejarlo como está"/>
               <Separator/>
               <!-- Encontrar un fichero problemático cuesta más que arreglarlo: esto lo
