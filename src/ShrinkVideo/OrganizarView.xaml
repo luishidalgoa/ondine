@@ -625,6 +625,10 @@
                   </ItemsControl>
 
                   <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <!-- Copia repetida: la acción es enviar el sobrante a la Papelera, no elegir episodio -->
+                    <Button Content="Enviar la copia a la Papelera" Style="{StaticResource BtnSecondary}" FontSize="12"
+                            Padding="12,4" Click="OnBorrarCopia" Visibility="{Binding VerBorrarCopia}"
+                            ToolTip="Manda ESTE fichero (la copia repetida) a la Papelera. El otro se queda."/>
                     <CheckBox x:Name="chkRecordar" Content="Recordar esta decisión para este fichero"
                               Foreground="{StaticResource Neutral400}" FontSize="12" VerticalAlignment="Center"
                               Visibility="{Binding VerSelector}"/>
