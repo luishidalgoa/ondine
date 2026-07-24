@@ -36,6 +36,7 @@ public static class Program
         LeerLoQueEscribe();
         MarcadorManda();
         SepararHistorias();
+        TituloJuntoContraCatalogoPartido();
         PeleaPorElMismoEpisodio();
         PartirEnTramos();
         ArrastrarLasJuntas();
@@ -1920,6 +1921,35 @@ public static class Program
     /// y el extractor no encuentra ni el nombre ni la extension. Componerla con el
     /// separador del sistema hace que los tests digan lo mismo aqui y en el CI de Linux.
     /// </summary>
+    // El caso Bob Esponja: los ficheros AMZN nombran las DOS historias JUNTAS, sin separador
+    // («Miedo a una Burger Cangreburger La concha de un hombre»). Contra un catálogo con las
+    // historias PARTIDAS en títulos sueltos, ese título junto no casaba con ninguna suelta y el
+    // parecido caía a «Revisar» (no aplicable en bloque). Debe casar fuerte igualmente.
+    private static void TituloJuntoContraCatalogoPartido()
+    {
+        Seccion("Título con historias juntas vs catálogo partido");
+        var cat = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0",
+          "serie": "Bob Esponja",
+          "idiomas": { "salida": "es" },
+          "episodios": [
+            { "num": 61, "temporada": 4, "titulos": { "es": ["Miedo a una Burger Cangreburger", "La concha de un hombre"] } },
+            { "num": 62, "temporada": 4, "titulos": { "es": ["El colchón perdido", "Cangrejo contra Plancton"] } }
+          ]
+        }
+        """);
+
+        var r = Uno(cat, F("Miedo a una Burger Cangreburger La concha de un hombre.mkv"));
+        Eq(61, r.Episodio?.Num, "casa el episodio 61 por el título junto");
+        Assert(r.Score >= TitleMatch.UmbralTitulo, "el título junto queda por encima del umbral");
+        Eq(ReindexConfianza.Alta, r.Confianza, "casa fuerte → aplicable en bloque");
+
+        // No rompe el caso de UNA sola historia: un fichero que solo trae la 1.ª sigue casando.
+        var r2 = Uno(cat, F("El colchón perdido.mkv"));
+        Eq(62, r2.Episodio?.Num, "una sola historia sigue casando su episodio");
+    }
+
     private static string F(string nombre, string carpeta = "S") => Path.Combine(carpeta, nombre);
 
     private static ReindexResolution Uno(ReindexCatalog cat, string ruta) =>
