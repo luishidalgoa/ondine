@@ -160,7 +160,19 @@ public partial class OrganizarView : UserControl
             // El mismo sitio sirve para apartar y para desapartar: el rótulo dice cuál de
             // las dos toca ahora, así no hay que recordar el estado de la fila.
             miRevisar.Header = r.Apartada ? "Quitar de la cola" : "Añadir a la cola";
+
+            // Se puede corregir cualquier fila, esté como esté: lo único que hace falta es un
+            // catálogo cargado y que no se haya renombrado ya. El rótulo dice si hay historias
+            // que repartir, que es lo que permite decir «este fichero es solo la b y la c».
+            int historias = r.Res.Episodio?.TitulosSalida.Count ?? 0;
+            miElegirEpisodio.IsEnabled = _catalogoCargado != null && !r.Aplicado;
+            miElegirEpisodio.Header = historias > 1
+                ? $"Elegir episodio o historias… ({historias} dentro)"
+                : "Elegir otro episodio…";
+            miDejarComoEsta.IsEnabled = !r.Aplicado;
         };
+        miElegirEpisodio.Click += (_, _) => OnElegirAMano(tabla, new RoutedEventArgs());
+        miDejarComoEsta.Click += (_, _) => OnDejarComoEsta(tabla, new RoutedEventArgs());
         miReproducir.Click += (_, _) => ReproducirFila(tabla.SelectedItem as OrganizarRow);
         miRecortar.Click += (_, _) =>
         {
