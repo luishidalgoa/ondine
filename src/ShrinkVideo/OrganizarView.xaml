@@ -52,6 +52,12 @@
                     Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeStartLineCap="Round"/>
             </Viewbox>
           </Button>
+          <!-- En qué confía ESTE catálogo al identificar (se guarda por catálogo). -->
+          <ComboBox x:Name="cboModo" Height="34" MinWidth="168" Margin="10,0,0,0" VerticalContentAlignment="Center"
+                    ToolTip="En qué se fía este catálogo al identificar. «El número manda»: si el fichero trae número de episodio, se usa aunque el título flojee — sin caer en «revisar».">
+            <ComboBoxItem Content="Prioridad: automática" IsSelected="True"/>
+            <ComboBoxItem Content="Prioridad: el número manda"/>
+          </ComboBox>
         </StackPanel>
       </StackPanel>
 

@@ -288,6 +288,23 @@ public static class ReindexStore
         EscribirMapa(RutaPreferencias, mapa);
     }
 
+    // El modo de prioridad del match es una propiedad de CADA catálogo (la fiabilidad de una
+    // biblioteca no es global), así que se guarda por su ruta. «auto» = el de por defecto.
+    public static void GuardarModo(string catalogoRuta, string modo)
+    {
+        var mapa = LeerMapa(RutaPreferencias);
+        var clave = "modo:" + catalogoRuta;
+        if (string.IsNullOrEmpty(modo) || modo == "auto") mapa.Remove(clave);
+        else mapa[clave] = modo;
+        EscribirMapa(RutaPreferencias, mapa);
+    }
+
+    public static string CargarModo(string catalogoRuta)
+    {
+        var mapa = LeerMapa(RutaPreferencias);
+        return mapa.TryGetValue("modo:" + catalogoRuta, out var m) ? m : "auto";
+    }
+
     // ── mapas de texto sueltos (procedencia, preferencias) ──
     // Ficheros minusculos y de forma libre; un fallo de lectura se traga y se sigue: son
     // comodidades, no datos que valga la pena defender con un error en pantalla.

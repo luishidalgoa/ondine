@@ -31,6 +31,12 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Prioridad del match por catálogo, en Organizar.** Un desplegable junto al selector de catálogo
+  permite elegir en qué se fía ese catálogo al identificar: **«Automática»** (la cascada de
+  siempre) o **«El número manda»** — si el fichero trae número de episodio, se usa aunque el título
+  no case del todo, sin dejarlo en «revisar». Se guarda por catálogo (cada biblioteca recuerda el
+  suyo). Útil cuando sabes que tu numeración es buena aunque los nombres estén sucios. (`#127`)
+
 - **Tutoriales dentro de la app (menú Ayuda → «Tutoriales · cómo funciona…»).** Una ventana con
   índice a la izquierda y cuatro guías: cómo identifica **Organizar** tus ficheros —con un
   diagrama de qué datos lee y en qué orden de prioridad decide el estado (verde/ámbar/rojo)— y su

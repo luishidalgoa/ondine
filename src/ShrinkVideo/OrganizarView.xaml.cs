@@ -36,6 +36,7 @@ public partial class OrganizarView : UserControl
     private bool _ordenManual;   // hay un orden por cabecera activo (oculta las bandas de temporada)
     private readonly List<CatalogoGuardado> _catalogos = new();
     private CatalogoGuardado? _catalogoElegido;
+    private bool _sincronizandoModo;   // evita re-analizar mientras se pone el modo al cargar catálogo
     private ReindexCatalog? _catalogoCargado;
     private LibraryTemplate _plantilla = new();
     private Dictionary<string, ReindexOverride> _decisiones = new();
@@ -96,6 +97,14 @@ public partial class OrganizarView : UserControl
         txtPlantilla.TextChanged += (_, _) => RefrescarVistaPrevia();
 
         cboSerie.SelectionChanged += (_, _) => ElegirCatalogo(cboSerie.SelectedItem as CatalogoGuardado);
+        cboModo.SelectionChanged += (_, _) =>
+        {
+            if (_sincronizandoModo || _catalogoElegido == null) return;
+            ReindexStore.GuardarModo(_catalogoElegido.Ruta,
+                ModoActual() == ModoPrioridad.NumeroPorTemporada ? "numero" : "auto");
+            // Cambiar el modo re-identifica al momento si ya hay análisis en pantalla.
+            if (_catalogoCargado != null && _ficheros.Length > 0) Simular();
+        };
 
         foreach (var chip in new[] { chipLimpios, chipCorregidos, chipEspeciales, chipConflictos, chipErrores, chipDudas })
         {
@@ -243,10 +252,18 @@ public partial class OrganizarView : UserControl
             .ToList();
     }
 
+    /// <summary>El modo de prioridad elegido para este catálogo (el motor lo usa en Resolve).</summary>
+    private ModoPrioridad ModoActual() =>
+        cboModo.SelectedIndex == 1 ? ModoPrioridad.NumeroPorTemporada : ModoPrioridad.Automatico;
+
     private void CargarCatalogoElegido()
     {
         _catalogoCargado = null;
         if (_catalogoElegido == null) return;
+        // El modo es propiedad del catálogo: se restaura el suyo sin disparar un re-análisis.
+        _sincronizandoModo = true;
+        cboModo.SelectedIndex = ReindexStore.CargarModo(_catalogoElegido.Ruta) == "numero" ? 1 : 0;
+        _sincronizandoModo = false;
         try { _catalogoCargado = ReindexCatalog.Load(_catalogoElegido.Ruta); }
         catch (Exception ex) { Aviso($"No se pudo leer el catálogo: {ex.Message}"); }
     }
@@ -564,6 +581,7 @@ public partial class OrganizarView : UserControl
         var catalogo = _catalogoCargado;
         var ficheros = _ficheros;
         var decisiones = _decisiones;
+        var modo = ModoActual();   // se lee AQUÍ: dentro del Task.Run no se puede tocar el ComboBox
 
         try
         {
@@ -581,7 +599,7 @@ public partial class OrganizarView : UserControl
             // ── Etapa 2: el motor, fuera del hilo de interfaz ──
             if (animar) _pasos.EnCurso(1);
             var resoluciones = await ConTiempoDeVerse(
-                Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones)), animar);
+                Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo)), animar);
 
             // ── Etapa 2b: metadatos SOLO de los dudosos ──
             // El contenedor suele llevar el título grabado («title» del MKV) aunque el
@@ -645,7 +663,7 @@ public partial class OrganizarView : UserControl
                     for (int i = 0; i < señales.Count; i++)
                         if (metadatos.TryGetValue(señales[i].Path, out var titulo))
                             señales[i] = SignalExtractor.Extract(señales[i].Path, señales[i].Carpeta, titulo);
-                    resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones));
+                    resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
                     Escribir($"{metadatos.Count} títulos encontrados en los metadatos.");
                 }
             }
