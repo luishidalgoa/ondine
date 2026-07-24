@@ -328,6 +328,22 @@ public static class ReindexStore
             : new List<string>();
     }
 
+    /// <summary>
+    /// Desvincula una carpeta de un catálogo. Devuelve false si no estaba vinculada. Hace falta
+    /// poder quitarlas: una carpeta que se movió o que se emparejó por error se quedaría ahí
+    /// para siempre, proponiéndose cada vez que eliges el catálogo.
+    /// </summary>
+    public static bool OlvidarCarpetaDeCatalogo(string catalogoRuta, string carpeta)
+    {
+        var lista = CargarCarpetasDeCatalogo(catalogoRuta);
+        if (lista.RemoveAll(c => string.Equals(c, carpeta, StringComparison.OrdinalIgnoreCase)) == 0)
+            return false;
+        var mapa = LeerMapa(RutaPreferencias);
+        mapa["carpetas:" + catalogoRuta] = string.Join("\n", lista);
+        EscribirMapa(RutaPreferencias, mapa);
+        return true;
+    }
+
     // ── mapas de texto sueltos (procedencia, preferencias) ──
     // Ficheros minusculos y de forma libre; un fallo de lectura se traga y se sigue: son
     // comodidades, no datos que valga la pena defender con un error en pantalla.
