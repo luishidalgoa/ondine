@@ -74,17 +74,32 @@
           <DataTemplate>
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="62"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource FontMono}" FontSize="12"
-                         Foreground="{StaticResource Accent}" VerticalAlignment="Top" Margin="0,1,0,0"/>
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="{Binding Titulos}" FontSize="12.5" TextWrapping="Wrap"
-                           Foreground="{StaticResource Text}"/>
-                <TextBlock Text="{Binding Detalle}" FontSize="11" Margin="0,1,0,0"
-                           Foreground="{StaticResource Neutral500}"/>
+              <StackPanel Grid.Column="0">
+                <!-- Una línea por mini-historia, cada una con su código («E1a», «E1b»…): es como
+                     las numeran los anexos de referencia, y así se ve de un vistazo que el
+                     capítulo trae tres historias y no un título kilométrico. -->
+                <ItemsControl ItemsSource="{Binding Segmentos}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid Margin="0,0,0,1">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="62"/><ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource FontMono}" FontSize="12"
+                                   Foreground="{StaticResource Accent}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Titulo}" FontSize="12.5" TextWrapping="Wrap"
+                                   Foreground="{StaticResource Text}"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock FontSize="11" Margin="62,2,0,0" Foreground="{StaticResource Neutral500}">
+                  <Run Text="{Binding Detalle, Mode=OneWay}"/><Run Text="   "/><Run Text="{Binding Cuantas, Mode=OneWay}"/>
+                </TextBlock>
               </StackPanel>
-              <Border Grid.Column="2" Background="{StaticResource Accent900}" CornerRadius="6" Padding="7,2"
+              <Border Grid.Column="1" Background="{StaticResource Accent900}" CornerRadius="6" Padding="7,2"
                       VerticalAlignment="Top" Visibility="{Binding EsEspecial}">
                 <TextBlock Text="especial" FontSize="10.5" Foreground="{StaticResource Accent200}"/>
               </Border>

@@ -5,15 +5,37 @@ using ShrinkVideo.Reindex;
 
 namespace ShrinkVideo;
 
+/// <summary>Una mini-historia del episodio, con el código que le toca («E1a»).</summary>
+public sealed record SegmentoVista(string Codigo, string Titulo);
+
 /// <summary>Una fila del explorador, ya lista para pintar.</summary>
 public sealed class EpisodioVista
 {
     public required CatalogEpisode Ep { get; init; }
 
     public string Codigo => $"E{Ep.Num}";
-    public string Titulos => Ep.TitulosSalida.Count > 0
-        ? string.Join("  ┃  ", Ep.TitulosSalida)
-        : "(sin título en español: se identifica por número o fecha)";
+
+    /// <summary>
+    /// Las historias del episodio, cada una con SU código. Un capítulo puede traer 2-3
+    /// mini-historias y se numeran «1a», «1b», «1c» —igual que en los anexos de referencia—,
+    /// así que se pintan una por línea. Juntarlas en un renglón separadas por rayas hacía
+    /// pensar que el episodio tenía un título larguísimo en vez de tres historias distintas.
+    /// </summary>
+    public IReadOnlyList<SegmentoVista> Segmentos
+    {
+        get
+        {
+            var t = Ep.TitulosSalida;
+            if (t.Count == 0)
+                return new[] { new SegmentoVista(Codigo, "(sin título en español: se identifica por número o fecha)") };
+            if (t.Count == 1)
+                return new[] { new SegmentoVista(Codigo, t[0]) };
+            return t.Select((x, i) => new SegmentoVista($"{Codigo}{SegmentSplitter.Letra(i)}", x)).ToList();
+        }
+    }
+
+    /// <summary>«3 historias», o vacío si solo trae una: sin nada que contar, no se dice.</summary>
+    public string Cuantas => Ep.TitulosSalida.Count > 1 ? $"{Ep.TitulosSalida.Count} historias" : "";
 
     /// <summary>«2009 · 03/07/2009» — lo que confirma o desmiente una sospecha.</summary>
     public string Detalle
