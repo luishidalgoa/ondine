@@ -55,6 +55,14 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Directory.CreateDirectory(_thumbDir);
+        // La papelera de la app manda los borrados VIEJOS a la Papelera del sistema; los recientes
+        // se pueden deshacer al instante. Aquí se le da la vía a la Papelera real y sus triggers de
+        // finalizado: al cerrar (todo) y cada pocos minutos (los que hayan envejecido).
+        Reindex.PapeleraApp.EnviarASistema = RecycleBin.Send;
+        Closed += (_, _) => Reindex.PapeleraApp.VaciarAlCerrar();
+        var relojPapelera = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
+        relojPapelera.Tick += (_, _) => Reindex.PapeleraApp.FinalizarViejos();
+        relojPapelera.Start();
         lst.ItemsSource = _rows;
         // Clic en una cabecera de la tabla = ordenar por esa columna (asc/desc alterno).
         lst.AddHandler(GridViewColumnHeader.ClickEvent, new RoutedEventHandler(OnCabeceraTablaClick));

@@ -31,6 +31,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Deshacer con Ctrl+Z al enviar un fichero a la Papelera (empezando por Organizar).** Cuando
+  envías la copia repetida a la Papelera, va primero a una papelera propia de la app: pulsa
+  **Ctrl+Z** y se restaura exacto a su sitio, con su contenido. Esos borrados se finalizan en la
+  Papelera de Windows —donde siguen recuperables— por tres vías: al cerrar la app, cada pocos
+  minutos, y cuando se acumulan. Fiable también con ficheros de OneDrive. (Primera parte del
+  `#137`; Comprimir y Recortes migrarán después.)
+
 - **Cada catálogo recuerda las carpetas que has analizado con él.** Al elegir un catálogo en
   Organizar, si ya lo usaste con una carpeta, esa carpeta se pre-rellena sola — eliges el catálogo
   y ya puedes pulsar «Analizar», sin volver a emparejar carpeta y catálogo cada vez. Recuerda las

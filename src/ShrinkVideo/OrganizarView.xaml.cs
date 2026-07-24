@@ -105,6 +105,16 @@ public partial class OrganizarView : UserControl
             // Cambiar el modo re-identifica al momento si ya hay análisis en pantalla.
             if (_catalogoCargado != null && _ficheros.Length > 0) Simular();
         };
+        // Ctrl+Z deshace el último envío a la papelera de la app (p. ej. la copia repetida borrada).
+        PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key == System.Windows.Input.Key.Z
+                && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0)
+            {
+                DeshacerBorrado();
+                e.Handled = true;
+            }
+        };
 
         foreach (var chip in new[] { chipLimpios, chipCorregidos, chipEspeciales, chipConflictos, chipErrores, chipDudas })
         {
@@ -1288,17 +1298,27 @@ public partial class OrganizarView : UserControl
                 "Enviar a la Papelera", "Cancelar"))
             return;
 
-        if (RecycleBin.Send(ruta))
+        if (PapeleraApp.Enviar(ruta) != null)
         {
             _filas.Remove(fila);
             ActualizarContadores();
-            Escribir($"Copia repetida enviada a la Papelera: {nombre}");
+            Escribir($"Copia repetida enviada a la papelera: {nombre}  ·  pulsa Ctrl+Z para deshacer.");
         }
         else
         {
             DialogWindow.Aviso(Window.GetWindow(this), "No se pudo",
-                "No se ha podido enviar el fichero a la Papelera. ¿Sigue abierto en otro programa?");
+                "No se ha podido enviar el fichero a la papelera. ¿Sigue abierto en otro programa?");
         }
+    }
+
+    /// <summary>Ctrl+Z: restaura el último fichero enviado a la papelera de la app a su sitio.</summary>
+    private void DeshacerBorrado()
+    {
+        if (!PapeleraApp.PuedeDeshacer) return;
+        var nombre = PapeleraApp.DeshacerUltimo();
+        Escribir(nombre != null
+            ? $"Restaurado de la papelera: {nombre}. Vuelve a analizar para verlo en la lista."
+            : "No se pudo restaurar: su sitio ya está ocupado por otro fichero.");
     }
 
     private void OnDejarComoEsta(object sender, RoutedEventArgs e)
