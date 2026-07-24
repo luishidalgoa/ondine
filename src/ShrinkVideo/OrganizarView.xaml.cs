@@ -1287,28 +1287,82 @@ public partial class OrganizarView : UserControl
             : $"«{fila.Original}» → historia «{win.SegElegido}» del episodio {ep.Num}.");
     }
 
-    private void OnBorrarCopia(object sender, RoutedEventArgs e)
+    private static OrganizarRow? FilaDe(object sender) =>
+        (sender as FrameworkElement)?.DataContext as OrganizarRow;
+
+    /// <summary>«Enviar este a la Papelera»: manda a la Papelera ESTE fichero (la copia repetida).</summary>
+    private void OnBorrarEste(object sender, RoutedEventArgs e)
     {
-        if (tabla.SelectedItem is not OrganizarRow fila) return;
-        var ruta = fila.RutaActual;
+        if (FilaDe(sender) is not { } fila) return;
+        EnviarRepetidoAPapelera(fila, fila.RutaActual, esOtro: false);
+    }
+
+    /// <summary>«Enviar el otro a la Papelera»: manda el fichero rival y deja esta fila como la copia buena.</summary>
+    private void OnBorrarOtro(object sender, RoutedEventArgs e)
+    {
+        if (FilaDe(sender) is not { } fila) return;
+        if (string.IsNullOrEmpty(fila.Res.RutaPareja)) return;
+        EnviarRepetidoAPapelera(fila, fila.Res.RutaPareja!, esOtro: true);
+    }
+
+    private void OnAbrirCarpetaEste(object sender, RoutedEventArgs e)
+    {
+        if (FilaDe(sender) is { } fila) AbrirEnCarpeta(fila.RutaActual);
+    }
+
+    private void OnAbrirCarpetaOtro(object sender, RoutedEventArgs e)
+    {
+        if (FilaDe(sender) is { } fila && !string.IsNullOrEmpty(fila.Res.RutaPareja))
+            AbrirEnCarpeta(fila.Res.RutaPareja!);
+    }
+
+    private static void AbrirEnCarpeta(string ruta)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                "explorer.exe", $"/select,\"{ruta}\"") { UseShellExecute = true });
+        }
+        catch { /* si el fichero ya no está, no pasa nada: el usuario ve la carpeta o un aviso del SO */ }
+    }
+
+    /// <summary>
+    /// Fichero repetido (#128): envía a la Papelera de la app uno de los dos ficheros implicados
+    /// —el de la fila (<paramref name="esOtro"/>=false) o su pareja (=true)— y deja la lista
+    /// coherente. Nunca borra nada sin confirmar; Ctrl+Z lo restaura.
+    /// </summary>
+    private void EnviarRepetidoAPapelera(OrganizarRow fila, string ruta, bool esOtro)
+    {
         var nombre = System.IO.Path.GetFileName(ruta);
+        var quien = esOtro ? "el otro fichero (el que la app conserva)" : "esta copia repetida";
         if (!DialogWindow.Confirmar(Window.GetWindow(this), "Enviar a la Papelera",
-                $"¿Enviar esta copia repetida a la Papelera?\n\n{nombre}\n\n" +
-                "El otro fichero (el que se queda) no se toca, y podrás recuperarla de la Papelera.",
+                $"¿Enviar {quien} a la Papelera?\n\n{nombre}\n\n" +
+                "Podrás recuperarlo con Ctrl+Z o desde la Papelera.",
                 "Enviar a la Papelera", "Cancelar"))
             return;
 
-        if (PapeleraApp.Enviar(ruta) != null)
-        {
-            _filas.Remove(fila);
-            ActualizarContadores();
-            Escribir($"Copia repetida enviada a la papelera: {nombre}  ·  pulsa Ctrl+Z para deshacer.");
-        }
-        else
+        if (PapeleraApp.Enviar(ruta) == null)
         {
             DialogWindow.Aviso(Window.GetWindow(this), "No se pudo",
                 "No se ha podido enviar el fichero a la papelera. ¿Sigue abierto en otro programa?");
+            return;
         }
+
+        if (esOtro)
+        {
+            // Se fue el «ganador»: quita su fila si estaba en la lista y esta pasa a ser la copia buena.
+            var otra = _filas.FirstOrDefault(f =>
+                string.Equals(f.RutaActual, ruta, StringComparison.OrdinalIgnoreCase));
+            if (otra != null) _filas.Remove(otra);
+            fila.MarcarRecuperadaDeDuplicado();
+            Escribir($"A la papelera: {nombre}. «{fila.Original}» pasa a ser la copia buena · Ctrl+Z para deshacer.");
+        }
+        else
+        {
+            _filas.Remove(fila);
+            Escribir($"Copia repetida enviada a la papelera: {nombre}  ·  pulsa Ctrl+Z para deshacer.");
+        }
+        ActualizarContadores();
     }
 
     /// <summary>Ctrl+Z: restaura el último fichero enviado a la papelera de la app a su sitio.</summary>

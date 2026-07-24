@@ -93,6 +93,13 @@ public sealed class ReindexResolution
     public bool EsDuplicado { get; set; }
 
     /// <summary>
+    /// Cuando esta fila es un duplicado/conflicto, la ruta del OTRO fichero que reclama el mismo
+    /// episodio (el «ganador» que la app conserva). Permite enseñar las DOS rutas implicadas y que
+    /// el usuario elija cuál mandar a la Papelera. null si no aplica.
+    /// </summary>
+    public string? RutaPareja { get; set; }
+
+    /// <summary>
     /// El fichero contiene DOS episodios del catálogo. Es una marca y no una comparación de
     /// textos, por lo mismo que <see cref="EsDuplicado"/>: depender de cómo está redactado
     /// el motivo se rompe en cuanto se reescribe el mensaje.
@@ -643,6 +650,7 @@ public static class ReindexEngine
                 r.Estado = ReindexEstado.Conflicto;
                 r.Confianza = ReindexConfianza.Ninguna;
                 r.EsDuplicado = true;
+                r.RutaPareja = ganador.Archivo.Path;   // el otro fichero, para enseñar las dos rutas
 
                 // ¿Es la MISMA obra (una copia repetida) o dos ficheros DISTINTOS peleando por el
                 // número? Si el título y el sub-segmento coinciden, es lo primero: el mensaje debe

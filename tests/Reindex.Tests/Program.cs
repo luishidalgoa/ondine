@@ -448,6 +448,11 @@ public static class Program
             Assert(enStaging.Motivo.Contains(enBib.Archivo.NombreArchivo) ||
                    enStaging.Motivo.Contains("otro"),
                 "y señala al otro fichero para poder decidir cuál borrar");
+            // #128: la resolución lleva la RUTA de la pareja (el ganador), para enseñar las dos
+            // rutas y dejar elegir cuál va a la Papelera. El ganador no tiene pareja.
+            Eq(enBib.Archivo.Path, enStaging.RutaPareja,
+                "el duplicado apunta a la ruta EXACTA del fichero que se conserva");
+            Assert(enBib.RutaPareja == null, "el fichero que se conserva no queda marcado con pareja");
         }
 
         // La TEMPORADA se lee también del propio nombre «S2012E455», no solo de la carpeta. Un

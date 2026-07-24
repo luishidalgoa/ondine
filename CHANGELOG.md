@@ -31,6 +31,12 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Fichero repetido en Organizar: ves las dos rutas y eliges cuál borrar.** Cuando dos ficheros
+  son el mismo episodio, al abrir la fila aparecen los **dos** ficheros implicados —este y el que
+  la app conserva—, cada uno con su carpeta y un botón para abrirla. Eliges cuál mandar a la
+  Papelera (nunca se borra nada por su cuenta); si mandas el que la app conservaba, el otro pasa a
+  ser la copia buena. Recuperable con **Ctrl+Z**. (`#128`)
+
 - **Deshacer con Ctrl+Z al enviar un fichero a la Papelera, en toda la app.** Cuando mandas un
   fichero a la Papelera —la copia repetida en **Organizar**, un vídeo en **Comprimir**, o el
   original tras partirlo en **Recortes**— va primero a una papelera propia de la app: pulsa
