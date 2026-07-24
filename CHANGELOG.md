@@ -43,8 +43,9 @@ es un acuerdo de buena voluntad: está verificado.
   dice qué hacer.** Cuando dos ficheros caen en el mismo episodio, el motivo ahora aclara si son
   **la misma obra repetida** (mismo título y segmento — el típico caso del vídeo en su carpeta y
   una copia en «Renombrar») o **dos ficheros distintos peleando** por el número. En el primero, el
-  mensaje dice «fichero repetido», nombra al otro fichero y sugiere enviar el sobrante a la
-  Papelera; en el segundo, te pide decidir cuál es el correcto. (`#128`)
+  mensaje dice «fichero repetido», nombra al otro fichero y ofrece un botón **«Enviar la copia a la
+  Papelera»** en el resolutor (envía el sobrante con un clic, el otro no se toca); en el segundo,
+  te pide decidir cuál es el correcto. (`#128`)
 
 ## [1.0.0] - 2026-07-24
 

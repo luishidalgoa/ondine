@@ -414,17 +414,22 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     public bool RecomiendaRecortar => !Aplicado && Res.TraeDosEpisodios;
     public Visibility VerRecortar => RecomiendaRecortar ? Visibility.Visible : Visibility.Collapsed;
 
-    /// <summary>Cabecera del panel: cuando trae dos episodios, «partir» manda sobre «resolver».</summary>
+    /// <summary>Es una copia repetida (mismo episodio que otro fichero): se puede borrar el sobrante.</summary>
+    public bool EsRepetido => !Aplicado && Res.EsDuplicado;
+    public Visibility VerBorrarCopia => EsRepetido ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>Cabecera del panel: partir manda sobre resolver, y un repetido tiene su propio texto.</summary>
     public string TituloDetalle => RecomiendaRecortar
         ? "DOS EPISODIOS EN UN MISMO FICHERO"
+        : EsRepetido ? "FICHERO REPETIDO"
         : "RESOLVER CONFLICTO";
 
     /// <summary>
-    /// El selector de «elige un episodio» se esconde cuando la respuesta es partir: ofrecer
-    /// E588 o E589 es justo empujar al error que el usuario reportó — ponerle un número a un
-    /// fichero que trae dos y perder el otro.
+    /// El selector de «elige un episodio» se esconde cuando la respuesta es partir (ofrecer E588 o
+    /// E589 es empujar al error de perder el otro) o cuando es una copia repetida (no hay episodio
+    /// que elegir: lo que toca es borrar el sobrante).
     /// </summary>
-    public Visibility VerSelector => RecomiendaRecortar ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility VerSelector => RecomiendaRecortar || EsRepetido ? Visibility.Collapsed : Visibility.Visible;
 
     // Ni pendiente ni por despachar: no hay nada que hacerle.
     public bool EsDuda => !Aplicado && !SinCambios && Res.EsDuda;

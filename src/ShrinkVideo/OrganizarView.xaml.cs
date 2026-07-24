@@ -1240,6 +1240,30 @@ public partial class OrganizarView : UserControl
             : $"«{fila.Original}» → historia «{win.SegElegido}» del episodio {ep.Num}.");
     }
 
+    private void OnBorrarCopia(object sender, RoutedEventArgs e)
+    {
+        if (tabla.SelectedItem is not OrganizarRow fila) return;
+        var ruta = fila.RutaActual;
+        var nombre = System.IO.Path.GetFileName(ruta);
+        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Enviar a la Papelera",
+                $"¿Enviar esta copia repetida a la Papelera?\n\n{nombre}\n\n" +
+                "El otro fichero (el que se queda) no se toca, y podrás recuperarla de la Papelera.",
+                "Enviar a la Papelera", "Cancelar"))
+            return;
+
+        if (RecycleBin.Send(ruta))
+        {
+            _filas.Remove(fila);
+            ActualizarContadores();
+            Escribir($"Copia repetida enviada a la Papelera: {nombre}");
+        }
+        else
+        {
+            DialogWindow.Aviso(Window.GetWindow(this), "No se pudo",
+                "No se ha podido enviar el fichero a la Papelera. ¿Sigue abierto en otro programa?");
+        }
+    }
+
     private void OnDejarComoEsta(object sender, RoutedEventArgs e)
     {
         if (tabla.SelectedItem is not OrganizarRow fila) return;
