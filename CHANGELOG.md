@@ -31,6 +31,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **El recuadro de selección por arrastre ya llega a los vídeos que quedan fuera de la vista.**
+  Antes, al dibujar el recuadro (arrastrando con el botón izquierdo sobre la lista de Comprimir),
+  solo seleccionaba lo que cabía en pantalla: si la lista era larga, no podías abarcar de un tirón
+  los de más abajo. Ahora, al llegar con el ratón al borde superior o inferior, la lista se
+  desplaza sola y el recuadro sigue seleccionando mientras avanza, como en el explorador de
+  archivos.
+
 - **Un fichero bien nombrado ya no se confunde con un «remake» del mismo título al estar en una
   subcarpeta.** La temporada se leía solo del nombre de la carpeta; un fichero como
   «…S2020E574 - El aro de la gratitud.mkv» metido en una subcarpeta de trabajo (p. ej.

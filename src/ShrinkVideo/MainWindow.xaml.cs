@@ -33,11 +33,19 @@ public partial class MainWindow : Window
     private bool _applyingPreset;
     private Settings _settings = new();
 
-    // banda de selección (rubber-band)
-    private Point _marqueeStart;
+    // banda de selección (rubber-band). El ancla se guarda en coordenadas de CONTENIDO (viewport
+    // + desplazamiento del scroll), no de viewport: así, al auto-desplazar durante el arrastre, la
+    // banda sigue anclada a la misma fila y selecciona también lo que quedaba fuera de la vista.
+    private Point _marqueeStart;         // coordenadas de CONTENIDO
+    private Point _marqueeUltimoV;       // última posición del ratón en coordenadas de viewport
     private bool _marqueeActive;
     private bool _marqueeDragging;
     private readonly HashSet<object> _marqueeBase = new();
+    private ScrollViewer? _lstScroll;
+    private const double MarqueeBorde = 22;   // franja del borde que dispara el auto-scroll
+    private const double MarqueePaso = 26;     // píxeles por tic de auto-scroll
+    private readonly System.Windows.Threading.DispatcherTimer _marqueeAutoScroll =
+        new() { Interval = TimeSpan.FromMilliseconds(30) };
 
     // orden por cabecera de la tabla de «Comprimir»
     private GridViewColumnHeader? _lstSortHeader;
@@ -120,6 +128,7 @@ public partial class MainWindow : Window
         lst.PreviewMouseLeftButtonDown += Lst_MouseDown;
         lst.PreviewMouseMove += Lst_MouseMove;
         lst.PreviewMouseLeftButtonUp += Lst_MouseUp;
+        _marqueeAutoScroll.Tick += (_, _) => MarqueeAutoScrollPaso();
 
         // El panel lateral se pliega solo cuando la ventana se queda estrecha
         SizeChanged += (_, _) => AjustarAAncho();
@@ -531,11 +540,21 @@ public partial class MainWindow : Window
     }
 
     // ---------- selección estilo explorador (rubber-band) ----------
+    private ScrollViewer? LstScroll => _lstScroll ??= FindDescendant<ScrollViewer>(lst);
+
+    /// <summary>Punto del ratón en coordenadas de CONTENIDO (viewport + desplazamiento del scroll).</summary>
+    private Point PuntoContenido(Point viewport)
+    {
+        var sv = LstScroll;
+        return sv == null ? viewport
+            : new Point(viewport.X + sv.HorizontalOffset, viewport.Y + sv.VerticalOffset);
+    }
+
     private void Lst_MouseDown(object sender, MouseButtonEventArgs e)
     {
         // ignorar si el click es sobre la barra de desplazamiento
         if (FindAncestor<ScrollBar>(e.OriginalSource as DependencyObject) != null) return;
-        _marqueeStart = e.GetPosition(lst);
+        _marqueeStart = PuntoContenido(e.GetPosition(lst));
         _marqueeActive = true;
         _marqueeDragging = false;
         // no capturamos ni marcamos manejado aún: un click simple debe seleccionar la fila con normalidad
@@ -544,7 +563,9 @@ public partial class MainWindow : Window
     private void Lst_MouseMove(object sender, MouseEventArgs e)
     {
         if (!_marqueeActive || e.LeftButton != MouseButtonState.Pressed) return;
-        var cur = e.GetPosition(lst);
+        var curV = e.GetPosition(lst);            // viewport (para el borde del auto-scroll)
+        _marqueeUltimoV = curV;
+        var cur = PuntoContenido(curV);           // contenido
         if (!_marqueeDragging)
         {
             if (Math.Abs(cur.X - _marqueeStart.X) < 5 && Math.Abs(cur.Y - _marqueeStart.Y) < 5) return;   // umbral
@@ -555,17 +576,17 @@ public partial class MainWindow : Window
             lst.CaptureMouse();
             marquee.Visibility = Visibility.Visible;
         }
-        var band = new Rect(_marqueeStart, cur);
-        Canvas.SetLeft(marquee, band.X);
-        Canvas.SetTop(marquee, band.Y);
-        marquee.Width = band.Width;
-        marquee.Height = band.Height;
-        ApplyMarqueeSelection(band);
+        PintarYSeleccionar(new Rect(_marqueeStart, cur));
+        // Si el ratón roza el borde superior/inferior, desplazar solo para alcanzar lo de fuera.
+        double h = lst.ActualHeight;
+        if (curV.Y < MarqueeBorde || curV.Y > h - MarqueeBorde) _marqueeAutoScroll.Start();
+        else _marqueeAutoScroll.Stop();
         e.Handled = true;
     }
 
     private void Lst_MouseUp(object sender, MouseButtonEventArgs e)
     {
+        _marqueeAutoScroll.Stop();
         if (_marqueeDragging)
         {
             marquee.Visibility = Visibility.Collapsed;
@@ -579,17 +600,47 @@ public partial class MainWindow : Window
         _marqueeActive = false;   // fue un click simple: lo gestiona el ListView
     }
 
-    /// <summary>Selecciona las filas cuyo rectángulo intersecta la banda (unión con la base si venía con Ctrl).</summary>
+    /// <summary>Un tic de auto-scroll: desplaza hacia el borde tocado y rehace la banda con el nuevo offset.</summary>
+    private void MarqueeAutoScrollPaso()
+    {
+        var sv = LstScroll;
+        if (sv == null || !_marqueeDragging) { _marqueeAutoScroll.Stop(); return; }
+        double v = _marqueeUltimoV.Y, h = lst.ActualHeight;
+        if (v < MarqueeBorde && sv.VerticalOffset > 0)
+            sv.ScrollToVerticalOffset(Math.Max(0, sv.VerticalOffset - MarqueePaso));
+        else if (v > h - MarqueeBorde && sv.VerticalOffset < sv.ScrollableHeight)
+            sv.ScrollToVerticalOffset(Math.Min(sv.ScrollableHeight, sv.VerticalOffset + MarqueePaso));
+        else { _marqueeAutoScroll.Stop(); return; }
+        // el ratón no se ha movido, pero el contenido sí: recomputar el punto de contenido
+        PintarYSeleccionar(new Rect(_marqueeStart, PuntoContenido(_marqueeUltimoV)));
+    }
+
+    /// <summary>Dibuja la banda (convertida a viewport) y selecciona lo que abarca, en coordenadas de contenido.</summary>
+    private void PintarYSeleccionar(Rect band)
+    {
+        var sv = LstScroll;
+        double hoff = sv?.HorizontalOffset ?? 0, voff = sv?.VerticalOffset ?? 0;
+        Canvas.SetLeft(marquee, band.X - hoff);
+        Canvas.SetTop(marquee, band.Y - voff);
+        marquee.Width = band.Width;
+        marquee.Height = band.Height;
+        ApplyMarqueeSelection(band);
+    }
+
+    /// <summary>Selecciona las filas cuyo rectángulo (en coordenadas de contenido) intersecta la banda.</summary>
     private void ApplyMarqueeSelection(Rect band)
     {
+        var sv = LstScroll;
+        double hoff = sv?.HorizontalOffset ?? 0, voff = sv?.VerticalOffset ?? 0;
         for (int i = 0; i < lst.Items.Count; i++)
         {
             if (lst.ItemContainerGenerator.ContainerFromIndex(i) is not ListViewItem lvi) continue;
             Rect r;
             try
             {
-                var tl = lvi.TranslatePoint(new Point(0, 0), lst);
-                r = new Rect(tl, new Size(lvi.ActualWidth, lvi.ActualHeight));
+                var tlV = lvi.TranslatePoint(new Point(0, 0), lst);   // viewport
+                r = new Rect(new Point(tlV.X + hoff, tlV.Y + voff),   // → contenido
+                             new Size(lvi.ActualWidth, lvi.ActualHeight));
             }
             catch { continue; }
             bool want = r.IntersectsWith(band) || _marqueeBase.Contains(lst.Items[i]);
@@ -675,6 +726,20 @@ public partial class MainWindow : Window
         {
             if (d is T t) return t;
             d = VisualTreeHelper.GetParent(d);
+        }
+        return null;
+    }
+
+    /// <summary>Primer descendiente del tipo pedido en el árbol visual (búsqueda en anchura).</summary>
+    private static T? FindDescendant<T>(DependencyObject? raiz) where T : DependencyObject
+    {
+        if (raiz == null) return null;
+        int n = VisualTreeHelper.GetChildrenCount(raiz);
+        for (int i = 0; i < n; i++)
+        {
+            var hijo = VisualTreeHelper.GetChild(raiz, i);
+            if (hijo is T t) return t;
+            if (FindDescendant<T>(hijo) is { } nieto) return nieto;
         }
         return null;
     }
