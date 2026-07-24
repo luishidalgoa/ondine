@@ -113,6 +113,7 @@ public partial class MainWindow : Window
         miPrefs.Click += (_, _) => OpenPreferences();
         miCheckUpd.Click += async (_, _) => await CheckUpdateAsync(manual: true);
         miAbout.Click += (_, _) => ShowAbout();
+        miTutoriales.Click += (_, _) => new AyudaWindow { Owner = this }.Show();
 
         // «Subcarpetas» es el mismo ajuste que el de Preferencias: se mantienen en sync
         chkRec.Checked += (_, _) => PersistRecurse();

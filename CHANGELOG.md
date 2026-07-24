@@ -29,6 +29,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Tutoriales dentro de la app (menú Ayuda → «Tutoriales · cómo funciona…»).** Una ventana con
+  índice a la izquierda y cuatro guías: cómo identifica **Organizar** tus ficheros —con un
+  diagrama de qué datos lee y en qué orden de prioridad decide el estado (verde/ámbar/rojo)— y su
+  paso a paso, más el paso a paso de **Comprimir** y de **Recortes** (y cómo combinarlo con
+  Organizar). Todo offline y con el tema de la app. (`#130`)
+
 ### Cambiado
 
 - **Un fichero repetido (la misma obra en dos sitios) se distingue de un conflicto de verdad y te
