@@ -30,7 +30,8 @@ $publish = Join-Path $root "publish"
 if (Test-Path $publish) { Remove-Item -Recurse -Force $publish }
 dotnet publish $csproj -c Release -r win-x64 --self-contained true `
     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$Version -o $publish
+    -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$Version `
+    -p:Official=true -o $publish
 if ($LASTEXITCODE -ne 0) { throw "Fallo en dotnet publish" }
 
 # 3) instalador Inno Setup
