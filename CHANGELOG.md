@@ -31,6 +31,11 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Cada catálogo recuerda las carpetas que has analizado con él.** Al elegir un catálogo en
+  Organizar, si ya lo usaste con una carpeta, esa carpeta se pre-rellena sola — eliges el catálogo
+  y ya puedes pulsar «Analizar», sin volver a emparejar carpeta y catálogo cada vez. Recuerda las
+  últimas (la más reciente primero), y también al arrancar con el último catálogo. (`#129`)
+
 - **Prioridad del match por catálogo, en Organizar.** Un desplegable junto al selector de catálogo
   permite elegir en qué se fía ese catálogo al identificar: **«Automática»** (la cascada de
   siempre) o **«El número manda»** — si el fichero trae número de episodio, se usa aunque el título
