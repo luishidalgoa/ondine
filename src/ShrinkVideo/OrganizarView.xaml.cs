@@ -239,6 +239,14 @@ public partial class OrganizarView : UserControl
         }
         _catalogoElegido ??= _catalogos.FirstOrDefault();
 
+        // Al arrancar con el último catálogo, pre-rellena su carpeta reciente (no pasa por
+        // ElegirCatalogo, así que hay que hacerlo aquí también).
+        if (_catalogoElegido != null && string.IsNullOrWhiteSpace(txtCarpeta.Text))
+        {
+            var cs = ReindexStore.CargarCarpetasDeCatalogo(_catalogoElegido.Ruta);
+            if (cs.Count > 0) txtCarpeta.Text = cs[0];
+        }
+
         cboSerie.SelectedItem = _catalogoElegido;
         panelSinCatalogos.Visibility = _catalogos.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         PintarTarjetas();
@@ -273,6 +281,13 @@ public partial class OrganizarView : UserControl
         if (cat == null || cat.Ruta == _catalogoElegido?.Ruta) return;
         _catalogoElegido = cat;
         ReindexStore.GuardarUltimoCatalogo(cat.Ruta);
+        // Si este catálogo ya se usó con una carpeta y aún no has elegido ninguna, se pre-rellena
+        // la más reciente: eliges el catálogo y ya puedes pulsar «Analizar».
+        if (string.IsNullOrWhiteSpace(txtCarpeta.Text))
+        {
+            var carpetas = ReindexStore.CargarCarpetasDeCatalogo(cat.Ruta);
+            if (carpetas.Count > 0) txtCarpeta.Text = carpetas[0];
+        }
         cboSerie.SelectedItem = cat;
         PintarTarjetas();
         CargarCatalogoElegido();
@@ -562,6 +577,10 @@ public partial class OrganizarView : UserControl
         catch { /* la carpeta puede haber desaparecido; el guard de abajo lo dice */ }
 
         if (_catalogoCargado == null || _ficheros.Length == 0) return;
+
+        // Se recuerda esta carpeta para este catálogo: la próxima vez que lo elijas se pre-rellena
+        // sola y no tienes que volver a emparejar carpeta y catálogo.
+        if (_catalogoElegido != null) ReindexStore.GuardarCarpetaDeCatalogo(_catalogoElegido.Ruta, carpetaActual);
 
         // Las etapas viven en la pantalla de inicio: al re-simular desde la revisión (botón
         // de abajo) no hay dónde pintarlas y se va directo al resultado.

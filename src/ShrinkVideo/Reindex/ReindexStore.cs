@@ -305,6 +305,29 @@ public static class ReindexStore
         return mapa.TryGetValue("modo:" + catalogoRuta, out var m) ? m : "auto";
     }
 
+    // Carpetas ya analizadas con un catálogo: para no re-emparejar carpeta y catálogo cada vez.
+    // La más reciente, la primera. Se guardan como líneas dentro del valor del mapa (el JSON
+    // escapa los saltos de línea, y una ruta no lleva '\n').
+    public static void GuardarCarpetaDeCatalogo(string catalogoRuta, string carpeta)
+    {
+        if (string.IsNullOrWhiteSpace(carpeta)) return;
+        var lista = CargarCarpetasDeCatalogo(catalogoRuta);
+        lista.RemoveAll(c => string.Equals(c, carpeta, StringComparison.OrdinalIgnoreCase));
+        lista.Insert(0, carpeta);
+        if (lista.Count > 8) lista = lista.GetRange(0, 8);
+        var mapa = LeerMapa(RutaPreferencias);
+        mapa["carpetas:" + catalogoRuta] = string.Join("\n", lista);
+        EscribirMapa(RutaPreferencias, mapa);
+    }
+
+    public static List<string> CargarCarpetasDeCatalogo(string catalogoRuta)
+    {
+        var mapa = LeerMapa(RutaPreferencias);
+        return mapa.TryGetValue("carpetas:" + catalogoRuta, out var v) && v.Length > 0
+            ? v.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList()
+            : new List<string>();
+    }
+
     // ── mapas de texto sueltos (procedencia, preferencias) ──
     // Ficheros minusculos y de forma libre; un fallo de lectura se traga y se sigue: son
     // comodidades, no datos que valga la pena defender con un error en pantalla.
