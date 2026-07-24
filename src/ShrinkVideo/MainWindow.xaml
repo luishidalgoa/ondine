@@ -144,6 +144,8 @@
               <MenuItem x:Name="miCheckUpd" Header="Buscar actualizaciones"/>
             </MenuItem>
             <MenuItem Header="Ayuda">
+              <MenuItem x:Name="miTutoriales" Header="Tutoriales · cómo funciona…"/>
+              <Separator/>
               <MenuItem x:Name="miAbout" Header="Acerca de ShrinkStudio"/>
             </MenuItem>
           </Menu>
