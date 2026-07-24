@@ -255,7 +255,15 @@ public partial class OrganizarView : UserControl
         if (_catalogoElegido != null && string.IsNullOrWhiteSpace(txtCarpeta.Text))
         {
             var cs = ReindexStore.CargarCarpetasDeCatalogo(_catalogoElegido.Ruta);
-            if (cs.Count > 0) txtCarpeta.Text = cs[0];
+            if (cs.Count > 0)
+            {
+                txtCarpeta.Text = cs[0];
+                // Contar los ficheros SE DIFIERE: al arrancar, recorrer cientos de ficheros en
+                // OneDrive es un viaje de red por carpeta y dejaría la ventana en blanco. Se
+                // pinta primero y se cuenta en cuanto la interfaz está libre.
+                Dispatcher.BeginInvoke(new Action(RevisarCarpeta),
+                    System.Windows.Threading.DispatcherPriority.Background);
+            }
         }
 
         cboSerie.SelectedItem = _catalogoElegido;
@@ -297,10 +305,12 @@ public partial class OrganizarView : UserControl
         // esa era la del catálogo anterior y aquí ya no pinta nada. Antes solo se rellenaba si
         // el campo estaba vacío, así que en la práctica no se veía nunca.
         var carpetas = ReindexStore.CargarCarpetasDeCatalogo(cat.Ruta);
-        if (carpetas.Count > 0) txtCarpeta.Text = carpetas[0];
         cboSerie.SelectedItem = cat;
         PintarTarjetas();
         CargarCatalogoElegido();
+        // La carpeta se pone DESPUÉS de cargar el catálogo y con su escaneo: si solo se escribe
+        // el texto, «Analizar» se queda apagado — lo que lo habilita es la cuenta de ficheros.
+        if (carpetas.Count > 0) PonerCarpeta(carpetas[0]);
         ActualizarEstado();
         ActualizarVinculo();
         RefrescarVistaPrevia();
@@ -359,7 +369,7 @@ public partial class OrganizarView : UserControl
                 IsChecked = string.Equals(destino, actual, StringComparison.OrdinalIgnoreCase),
                 IsCheckable = true,
             };
-            it.Click += (_, _) => { txtCarpeta.Text = destino; ActualizarVinculo(); ActualizarEstado(); };
+            it.Click += (_, _) => PonerCarpeta(destino);
             menu.Items.Add(it);
         }
 
@@ -468,6 +478,18 @@ public partial class OrganizarView : UserControl
     /// serie y las temporadas cuelgan dentro. Quedándose en el primer nivel, una serie entera
     /// se veía como «no hay vídeos».
     /// </summary>
+    /// <summary>
+    /// Pone una carpeta en el campo Y la cuenta. Escribir solo el texto no basta: lo que habilita
+    /// «Analizar» es la cuenta de ficheros, así que una carpeta puesta por la app —la vinculada al
+    /// catálogo, o la elegida en el menú de vínculos— dejaba el botón apagado y la pantalla
+    /// diciendo «Elige una carpeta para empezar» con la carpeta delante.
+    /// </summary>
+    private void PonerCarpeta(string ruta)
+    {
+        txtCarpeta.Text = ruta;
+        RevisarCarpeta();
+    }
+
     private void RevisarCarpeta()
     {
         var carpeta = txtCarpeta.Text?.Trim() ?? "";
