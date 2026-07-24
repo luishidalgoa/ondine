@@ -75,7 +75,7 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **Compilación en la nube** (GitHub Actions): al empujar un tag `vX.Y.Z`, el instalador se compila y se adjunta al Release automáticamente.
 - ✅ **CLI** (`ShrinkStudio.Cli`) para comprimir, analizar y medir sin abrir la interfaz.
 - ✅ **Motor con tests** (560+) que corren en CI sin restaurar paquetes.
-- 🔜 **Capturas en el README**: hoy no hay ninguna, así que no se ve qué es la app antes de instalarla.
+- ✅ **Capturas en el README** de las tres herramientas, con datos reales dentro.
 - ⬜ Firmar el instalador (evitar el aviso de SmartScreen).
 - ⬜ Rediseño visual (brief en [`docs/design-brief.md`](docs/design-brief.md)).
 - ⬜ **Linux / macOS**: WPF es solo Windows. Requiere migrar la interfaz a **Avalonia** (multiplataforma);
