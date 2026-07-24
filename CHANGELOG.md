@@ -31,6 +31,17 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Los ficheros con la morralla de la web de descarga y numeración «4x01» ya se identifican con
+  confianza alta.** Un fichero como «Bob_Esponja_5x01_Amigo_o_Enemigo_AMZN_WEB_DLtrialeng…»
+  metía dentro del título el prefijo de la serie, el «5x01» (que no se reconocía) y la coletilla
+  de la descarga, y todo eso hundía el parecido con el catálogo hasta dejarlo en «revisar» (no se
+  podía aplicar en bloque) — sobre todo en títulos cortos. Ahora se reconoce el formato
+  «temporada × episodio» (4x01, 12x05…) —que se lleva el prefijo de serie— y se corta la
+  coletilla de descarga desde su primer marcador inequívoco (AMZN, WEB-DL, x265, 1080p…), sin
+  tocar palabras reales del título. Resultado medido en una biblioteca de Bob Esponja: los 27
+  ficheros que quedaban en «revisar» pasan a confianza alta, sin cambiar nada de lo que ya se
+  resolvía bien.
+
 - **Un fichero con las dos historias juntas en el nombre ya casa bien con un catálogo que las
   tiene separadas.** Muchas descargas nombran el episodio con sus dos historias seguidas
   («Historia A Historia B»), sin separador. Contra un catálogo que guarda cada historia por
