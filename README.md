@@ -25,6 +25,10 @@ Frente a HandBrake destaca en **procesamiento por lotes**: analiza una carpeta e
 de cada vídeo y comprime en tanda desatendida. **Nunca toca los originales** salvo que se lo pidas
 explícitamente, y en ese caso van a la papelera, nunca a borrado definitivo.
 
+Además de comprimir, trae dos herramientas para dejar la biblioteca a punto, cada una en su pestaña:
+**Organizar**, que identifica cada episodio de una carpeta contra un catálogo y propone su nombre
+canónico; y **Recortes**, para partir un vídeo en varios o quitarle un trozo.
+
 > Cambios de cada versión: [`CHANGELOG.md`](CHANGELOG.md) ·
 > Roadmap de funcionalidades heredadas de HandBrake: [`ROADMAP.md`](ROADMAP.md).
 
@@ -43,6 +47,13 @@ explícitamente, y en ese caso van a la papelera, nunca a borrado definitivo.
 - **Renombrado de la salida al estilo PowerRename**: buscar/reemplazar con expresiones regulares,
   contadores, variables de fecha y formato del texto, con vista previa en vivo.
 - **Previsualización de 10 s** con los ajustes actuales, para comprobar antes de lanzar la tanda.
+- **Organizar: identificación y renombrado por catálogo.** Coteja una carpeta de episodios contra un
+  catálogo (JSON) y propone el nombre canónico de cada uno, identificándolos por título aunque el nombre
+  venga con la numeración y la morralla de la descarga. Marca el estado de cada fichero —limpio, con
+  cambio o conflicto— y aplica en bloque los que identifica con confianza; lo dudoso lo deja para que
+  decidas, sin inventar nunca. Ordena las columnas pulsando su cabecera.
+- **Recortes: partir y recortar.** Divide un vídeo en varios tramos o quítale un trozo —para separar
+  capítulos pegados o cortar intros— con previsualización de la línea de tiempo.
 - **Presets y preferencias** por pestañas, y actualizaciones automáticas desde GitHub.
 
 ## Instalación

@@ -27,55 +27,10 @@ es un acuerdo de buena voluntad: está verificado.
 7. **Sin secciones vacías** ni versiones repetidas, y las versiones van de más nueva a
    más antigua.
 
-## [Unreleased]
+## [1.0.0] - 2026-07-24
 
-### Corregido
-
-- **Los ficheros con la morralla de la web de descarga y numeración «4x01» ya se identifican con
-  confianza alta.** Un fichero como «Bob_Esponja_5x01_Amigo_o_Enemigo_AMZN_WEB_DLtrialeng…»
-  metía dentro del título el prefijo de la serie, el «5x01» (que no se reconocía) y la coletilla
-  de la descarga, y todo eso hundía el parecido con el catálogo hasta dejarlo en «revisar» (no se
-  podía aplicar en bloque) — sobre todo en títulos cortos. Ahora se reconoce el formato
-  «temporada × episodio» (4x01, 12x05…) —que se lleva el prefijo de serie— y se corta la
-  coletilla de descarga desde su primer marcador inequívoco (AMZN, WEB-DL, x265, 1080p…), sin
-  tocar palabras reales del título. Resultado medido en una biblioteca de Bob Esponja: los 27
-  ficheros que quedaban en «revisar» pasan a confianza alta, sin cambiar nada de lo que ya se
-  resolvía bien.
-
-- **Un fichero con las dos historias juntas en el nombre ya casa bien con un catálogo que las
-  tiene separadas.** Muchas descargas nombran el episodio con sus dos historias seguidas
-  («Historia A Historia B»), sin separador. Contra un catálogo que guarda cada historia por
-  separado, ese nombre no se parecía a ninguna historia suelta y el episodio caía en «revisar»
-  (no se podía aplicar en bloque). Ahora el motor también compara contra las historias unidas,
-  así que esos ficheros se identifican con confianza alta y entran en el renombrado automático —
-  sin perder los que traen una sola historia, que siguen casando su título.
-
-- **El recuadro de selección por arrastre ya llega a los vídeos que quedan fuera de la vista.**
-  Antes, al dibujar el recuadro (arrastrando con el botón izquierdo sobre la lista de Comprimir),
-  solo seleccionaba lo que cabía en pantalla: si la lista era larga, no podías abarcar de un tirón
-  los de más abajo. Ahora, al llegar con el ratón al borde superior o inferior, la lista se
-  desplaza sola y el recuadro sigue seleccionando mientras avanza, como en el explorador de
-  archivos.
-
-- **Un fichero bien nombrado ya no se confunde con un «remake» del mismo título al estar en una
-  subcarpeta.** La temporada se leía solo del nombre de la carpeta; un fichero como
-  «…S2020E574 - El aro de la gratitud.mkv» metido en una subcarpeta de trabajo (p. ej.
-  «Renombrar», sin año) perdía su temporada, y como en Doraemon hay historias que se repiten
-  años después con el mismo título, el motor lo tomaba por el episodio equivocado (el 88 de 2007
-  en vez del 574 de 2020) y lo dejaba en conflicto una y otra vez. Ahora la temporada también se
-  lee del propio nombre («S2020E…»), así que identifica el episodio correcto aunque el fichero no
-  esté en su carpeta de temporada.
-
-- **Un fichero ya correctamente nombrado deja de salir en «Conflicto» una y otra vez.** Cuando
-  otro fichero reclamaba el mismo número de episodio, la app podía marcar como conflicto al que
-  YA estaba bien nombrado (perdía un desempate alfabético) en vez de al aspirante. Lo «corregías»
-  y volvía a aparecer en cada análisis. Ahora el **titular** —el fichero que ya lleva el nombre
-  correcto— manda sobre su número y se queda en verde; el conflicto recae en el otro fichero,
-  que es el que de verdad hay que decidir. Y si son dos copias del MISMO fichero (el típico caso
-  de tener el vídeo en su carpeta de temporada y una copia en una subcarpeta de trabajo tipo
-  «Renombrar»), la que queda verde es siempre la de la **biblioteca** —la más superficial—, no la
-  de staging, sin depender del orden de escaneo. (La copia sobrante seguirá marcada como
-  duplicada: para que desaparezca del todo hay que borrar ese segundo fichero.)
+Primera versión estable. Reúne el conjunto de mejoras de identificación y renombrado, el nuevo
+conmutador de páginas y los arreglos de rendimiento de Recortes acumulados desde la 0.14.
 
 ### Añadido
 
@@ -118,6 +73,58 @@ es un acuerdo de buena voluntad: está verificado.
   normal. «Partirlo en dos» sigue siendo la acción destacada cuando de verdad son dos.
 
 ### Corregido
+
+- **Los ficheros con la morralla de la web de descarga y numeración «4x01» ya se identifican con
+  confianza alta.** Un fichero como «Bob_Esponja_5x01_Amigo_o_Enemigo_AMZN_WEB_DLtrialeng…»
+  metía dentro del título el prefijo de la serie, el «5x01» (que no se reconocía) y la coletilla
+  de la descarga, y todo eso hundía el parecido con el catálogo hasta dejarlo en «revisar» (no se
+  podía aplicar en bloque) — sobre todo en títulos cortos. Ahora se reconoce el formato
+  «temporada × episodio» (4x01, 12x05…) —que se lleva el prefijo de serie— y se corta la
+  coletilla de descarga desde su primer marcador inequívoco (AMZN, WEB-DL, x265, 1080p…), sin
+  tocar palabras reales del título. Resultado medido en una biblioteca de Bob Esponja: los 27
+  ficheros que quedaban en «revisar» pasan a confianza alta, sin cambiar nada de lo que ya se
+  resolvía bien.
+
+- **Un fichero con las dos historias juntas en el nombre ya casa bien con un catálogo que las
+  tiene separadas.** Muchas descargas nombran el episodio con sus dos historias seguidas
+  («Historia A Historia B»), sin separador. Contra un catálogo que guarda cada historia por
+  separado, ese nombre no se parecía a ninguna historia suelta y el episodio caía en «revisar»
+  (no se podía aplicar en bloque). Ahora el motor también compara contra las historias unidas,
+  así que esos ficheros se identifican con confianza alta y entran en el renombrado automático —
+  sin perder los que traen una sola historia, que siguen casando su título.
+
+- **El separador «|» que escribes en la plantilla ya se ve en el nombre.** El «|» es un carácter
+  ilegal en los nombres de fichero de Windows y la app lo borraba, así que el separador entre las
+  historias de un episodio no aparecía. Ahora se sustituye por «┃» (una barra Unicode legal y casi
+  idéntica), de modo que una plantilla como «<título: | >» produce «Historia A ┃ Historia B». La
+  app lee «┃» y «|» igual, así que renombrar y volver a analizar sigue dando lo mismo.
+
+- **El recuadro de selección por arrastre ya llega a los vídeos que quedan fuera de la vista.**
+  Antes, al dibujar el recuadro (arrastrando con el botón izquierdo sobre la lista de Comprimir),
+  solo seleccionaba lo que cabía en pantalla: si la lista era larga, no podías abarcar de un tirón
+  los de más abajo. Ahora, al llegar con el ratón al borde superior o inferior, la lista se
+  desplaza sola y el recuadro sigue seleccionando mientras avanza, como en el explorador de
+  archivos.
+
+- **Un fichero bien nombrado ya no se confunde con un «remake» del mismo título al estar en una
+  subcarpeta.** La temporada se leía solo del nombre de la carpeta; un fichero como
+  «…S2020E574 - El aro de la gratitud.mkv» metido en una subcarpeta de trabajo (p. ej.
+  «Renombrar», sin año) perdía su temporada, y como en Doraemon hay historias que se repiten
+  años después con el mismo título, el motor lo tomaba por el episodio equivocado (el 88 de 2007
+  en vez del 574 de 2020) y lo dejaba en conflicto una y otra vez. Ahora la temporada también se
+  lee del propio nombre («S2020E…»), así que identifica el episodio correcto aunque el fichero no
+  esté en su carpeta de temporada.
+
+- **Un fichero ya correctamente nombrado deja de salir en «Conflicto» una y otra vez.** Cuando
+  otro fichero reclamaba el mismo número de episodio, la app podía marcar como conflicto al que
+  YA estaba bien nombrado (perdía un desempate alfabético) en vez de al aspirante. Lo «corregías»
+  y volvía a aparecer en cada análisis. Ahora el **titular** —el fichero que ya lleva el nombre
+  correcto— manda sobre su número y se queda en verde; el conflicto recae en el otro fichero,
+  que es el que de verdad hay que decidir. Y si son dos copias del MISMO fichero (el típico caso
+  de tener el vídeo en su carpeta de temporada y una copia en una subcarpeta de trabajo tipo
+  «Renombrar»), la que queda verde es siempre la de la **biblioteca** —la más superficial—, no la
+  de staging, sin depender del orden de escaneo. (La copia sobrante seguirá marcada como
+  duplicada: para que desaparezca del todo hay que borrar ese segundo fichero.)
 
 - **Recortes ya no se vuelve más lento cuanto más exportas.** Había una fuga de recursos: cada
   vez que exportabas un tramo y cargabas otro vídeo, el proceso se quedaba con un puñado de

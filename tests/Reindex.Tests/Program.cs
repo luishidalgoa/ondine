@@ -761,6 +761,14 @@ public static class Program
                    .Contains("El cometa + Nieve en agosto"),
             "sin parámetro sigue uniendo con «+»: las plantillas de siempre no cambian");
 
+        // El «|» que la gente escribe en la plantilla es ILEGAL en Windows: se sustituye por «┃»
+        // (legal y casi idéntica), no se borra. Así «<título: | >» ya enseña el separador.
+        Eq("El cometa ┃ Nieve en agosto.mkv",
+            new LibraryTemplate("<título: | >").Render(catSeg, catSeg.PorNum(12)!, f),
+            "el «|» de la plantilla se vuelve «┃» en el nombre, no desaparece");
+        Eq("A ┃ B", LibraryTemplate.LimpiarNombre("A | B"),
+            "LimpiarNombre convierte «|» en «┃» (no en espacio)");
+
         // El caso real completo: reproducir un nombre que ya existe en la biblioteca
         Eq("Serie de prueba S2005E012 - El cometa ┃ Nieve en agosto.mkv",
             new LibraryTemplate("<serie> S<temp>E<num:000> - <título: ┃ >")
