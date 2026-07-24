@@ -31,6 +31,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Un fichero con las dos historias juntas en el nombre ya casa bien con un catálogo que las
+  tiene separadas.** Muchas descargas nombran el episodio con sus dos historias seguidas
+  («Historia A Historia B»), sin separador. Contra un catálogo que guarda cada historia por
+  separado, ese nombre no se parecía a ninguna historia suelta y el episodio caía en «revisar»
+  (no se podía aplicar en bloque). Ahora el motor también compara contra las historias unidas,
+  así que esos ficheros se identifican con confianza alta y entran en el renombrado automático —
+  sin perder los que traen una sola historia, que siguen casando su título.
+
 - **El recuadro de selección por arrastre ya llega a los vídeos que quedan fuera de la vista.**
   Antes, al dibujar el recuadro (arrastrando con el botón izquierdo sobre la lista de Comprimir),
   solo seleccionaba lo que cabía en pantalla: si la lista era larga, no podías abarcar de un tirón

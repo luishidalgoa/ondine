@@ -701,7 +701,22 @@ internal sealed class IndiceTitulos
     public IndiceTitulos(ReindexCatalog cat)
     {
         foreach (var e in cat.Episodios)
-            _bolsas[e] = e.TitulosNorm.Select(t => new TitleBag(t)).ToArray();
+        {
+            var bolsas = e.TitulosNorm.Select(t => new TitleBag(t)).ToList();
+            // Un fichero puede nombrar las DOS historias JUNTAS, sin separador («Historia A
+            // Historia B»), como las descargas AMZN. Contra un catálogo con las historias
+            // PARTIDAS en títulos sueltos, ese título junto no casaba con ninguno y el parecido
+            // caía a «Revisar» (no aplicable en bloque). Se indexa TAMBIÉN la concatenación de
+            // las historias (idioma de salida, en su orden) para que el título junto case fuerte
+            // sin perder el caso de una sola historia —esa sigue casando su título suelto—.
+            if (e.TitulosSalida.Count > 1)
+            {
+                var unido = TitleMatch.Norm(string.Concat(e.TitulosSalida));
+                if (unido.Length > 0 && !e.TitulosNorm.Contains(unido))
+                    bolsas.Add(new TitleBag(unido));
+            }
+            _bolsas[e] = bolsas.ToArray();
+        }
     }
 
     /// <summary>
