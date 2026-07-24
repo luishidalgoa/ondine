@@ -45,10 +45,12 @@ es un acuerdo de buena voluntad: está verificado.
   vías: al cerrar la app, cada pocos minutos, y cuando se acumulan. Fiable también con ficheros de
   OneDrive. (`#137`)
 
-- **Cada catálogo recuerda las carpetas que has analizado con él.** Al elegir un catálogo en
-  Organizar, si ya lo usaste con una carpeta, esa carpeta se pre-rellena sola — eliges el catálogo
-  y ya puedes pulsar «Analizar», sin volver a emparejar carpeta y catálogo cada vez. Recuerda las
-  últimas (la más reciente primero), y también al arrancar con el último catálogo. (`#129`)
+- **Cada catálogo recuerda las carpetas que has analizado con él, y ahora se ve y se puede tocar.**
+  Al elegir un catálogo en Organizar, su carpeta se pre-rellena sola — eliges el catálogo y ya
+  puedes pulsar «Analizar», sin volver a emparejar carpeta y catálogo cada vez. Un botón nuevo
+  junto a «elegir carpeta» abre la lista de carpetas de ese catálogo: saltas a cualquiera con un
+  clic, **vinculas la carpeta actual** o **quitas el vínculo**. Bajo el campo se indica siempre si
+  la carpeta está vinculada. Al analizar se vincula sola. (`#129`)
 
 - **Prioridad del match por catálogo, en Organizar.** Un desplegable junto al selector de catálogo
   permite elegir en qué se fía ese catálogo al identificar: **«Automática»** (la cascada de

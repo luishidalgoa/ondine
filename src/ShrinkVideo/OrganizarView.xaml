@@ -358,8 +358,10 @@
               <!-- La carpeta vive AQUÍ: elegirla, ver cuántos ficheros trae y simular son la
                    misma acción, y estaban repartidas por tres sitios de la pantalla. -->
               <TextBlock Text="Carpeta a organizar" Style="{StaticResource OrgLabel}"/>
-              <Grid Margin="0,0,0,14">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
                 <local:CampoTexto x:Name="txtCarpeta" Icono="M1.5 3.5h4l1.5 2h7.5v7h-13z" HorizontalAlignment="Stretch"/>
                 <Button x:Name="btnCarpeta" Grid.Column="1" Style="{StaticResource BtnSecondary}" Width="34" Height="34" Padding="0"
                         Margin="6,0,0,0" ToolTip="Elegir la carpeta cuyos ficheros quieres organizar">
@@ -367,7 +369,22 @@
                     <Path Data="M1.5 3.5h4l1.5 2h7.5l-2 7h-11z M1.5 3.5v9h11" Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeLineJoin="Round"/>
                   </Viewbox>
                 </Button>
+                <!-- Carpetas vinculadas a ESTE catálogo: verlas, saltar a una, vincular la
+                     actual o quitarla. Antes el vínculo se guardaba solo al analizar y no había
+                     manera de verlo ni de hacerlo a mano — era una función invisible. -->
+                <Button x:Name="btnVinculos" Grid.Column="2" Style="{StaticResource BtnSecondary}" Width="34" Height="34" Padding="0"
+                        Margin="6,0,0,0" Click="OnVinculos"
+                        ToolTip="Carpetas vinculadas a este catálogo: elegir una, vincular la actual o quitarla">
+                  <Viewbox Width="15" Height="15">
+                    <Path Data="M6.2 9.8 9.8 6.2 M6.6 4.4 8.1 2.9a2.6 2.6 0 0 1 3.7 3.7l-1.5 1.5 M9.4 11.6 7.9 13.1a2.6 2.6 0 0 1-3.7-3.7l1.5-1.5"
+                          Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                  </Viewbox>
+                </Button>
               </Grid>
+              <!-- Estado del vínculo, a la vista: sin esto no hay forma de saber si la carpeta
+                   quedará asociada al catálogo para la próxima vez. -->
+              <TextBlock x:Name="lblVinculo" FontSize="11.5" Margin="0,0,0,12"
+                         Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>
 
               <TextBlock x:Name="lblFicheros" Text="Elige una carpeta para empezar" FontSize="13.5"
                          Foreground="{StaticResource Text}" HorizontalAlignment="Center" TextAlignment="Center"

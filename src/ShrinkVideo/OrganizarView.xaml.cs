@@ -261,6 +261,7 @@ public partial class OrganizarView : UserControl
         panelSinCatalogos.Visibility = _catalogos.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         PintarTarjetas();
         CargarCatalogoElegido();
+        ActualizarVinculo();
     }
 
     private void PintarTarjetas()
@@ -291,18 +292,106 @@ public partial class OrganizarView : UserControl
         if (cat == null || cat.Ruta == _catalogoElegido?.Ruta) return;
         _catalogoElegido = cat;
         ReindexStore.GuardarUltimoCatalogo(cat.Ruta);
-        // Si este catálogo ya se usó con una carpeta y aún no has elegido ninguna, se pre-rellena
-        // la más reciente: eliges el catálogo y ya puedes pulsar «Analizar».
-        if (string.IsNullOrWhiteSpace(txtCarpeta.Text))
-        {
-            var carpetas = ReindexStore.CargarCarpetasDeCatalogo(cat.Ruta);
-            if (carpetas.Count > 0) txtCarpeta.Text = carpetas[0];
-        }
+        // Al CAMBIAR de catálogo se pone su carpeta vinculada, aunque el campo ya tuviera una:
+        // esa era la del catálogo anterior y aquí ya no pinta nada. Antes solo se rellenaba si
+        // el campo estaba vacío, así que en la práctica no se veía nunca.
+        var carpetas = ReindexStore.CargarCarpetasDeCatalogo(cat.Ruta);
+        if (carpetas.Count > 0) txtCarpeta.Text = carpetas[0];
         cboSerie.SelectedItem = cat;
         PintarTarjetas();
         CargarCatalogoElegido();
         ActualizarEstado();
+        ActualizarVinculo();
         RefrescarVistaPrevia();
+    }
+
+    /// <summary>
+    /// Deja a la vista si la carpeta del campo está vinculada al catálogo elegido. Sin esto, el
+    /// vínculo es invisible: no hay forma de saber si la próxima vez vendrá sola.
+    /// </summary>
+    private void ActualizarVinculo()
+    {
+        if (lblVinculo == null) return;
+        var carpeta = txtCarpeta.Text?.Trim() ?? "";
+        if (_catalogoElegido == null || carpeta.Length == 0)
+        {
+            lblVinculo.Text = "";
+            return;
+        }
+        var vinculadas = ReindexStore.CargarCarpetasDeCatalogo(_catalogoElegido.Ruta);
+        bool esta = vinculadas.Any(c => string.Equals(c, carpeta, StringComparison.OrdinalIgnoreCase));
+        lblVinculo.Text = esta
+            ? $"🔗 Vinculada a «{_catalogoElegido.Serie}» · vendrá sola la próxima vez"
+            : vinculadas.Count > 0
+                ? $"Sin vincular · «{_catalogoElegido.Serie}» tiene {vinculadas.Count} carpeta(s) guardada(s)"
+                : "Sin vincular · se vinculará sola al analizar";
+    }
+
+    /// <summary>
+    /// Menú de las carpetas vinculadas a este catálogo: saltar a una, vincular la actual o
+    /// quitarla. El vínculo se guardaba solo al analizar y no se podía ni ver ni tocar.
+    /// </summary>
+    private void OnVinculos(object sender, RoutedEventArgs e)
+    {
+        if (_catalogoElegido == null)
+        {
+            Aviso("Elige antes un catálogo: las carpetas se vinculan a uno concreto.");
+            return;
+        }
+        var actual = txtCarpeta.Text?.Trim() ?? "";
+        var vinculadas = ReindexStore.CargarCarpetasDeCatalogo(_catalogoElegido.Ruta);
+        var menu = new ContextMenu();
+
+        menu.Items.Add(new MenuItem
+        {
+            Header = $"Carpetas de «{_catalogoElegido.Serie}»",
+            IsEnabled = false,
+        });
+        if (vinculadas.Count == 0)
+            menu.Items.Add(new MenuItem { Header = "  (ninguna todavía)", IsEnabled = false });
+        foreach (var c in vinculadas)
+        {
+            var destino = c;
+            var it = new MenuItem
+            {
+                Header = destino,
+                IsChecked = string.Equals(destino, actual, StringComparison.OrdinalIgnoreCase),
+                IsCheckable = true,
+            };
+            it.Click += (_, _) => { txtCarpeta.Text = destino; ActualizarVinculo(); ActualizarEstado(); };
+            menu.Items.Add(it);
+        }
+
+        menu.Items.Add(new Separator());
+        bool yaEsta = vinculadas.Any(c => string.Equals(c, actual, StringComparison.OrdinalIgnoreCase));
+        if (actual.Length > 0 && !yaEsta)
+        {
+            var add = new MenuItem { Header = "Vincular la carpeta actual a este catálogo" };
+            add.Click += (_, _) =>
+            {
+                ReindexStore.GuardarCarpetaDeCatalogo(_catalogoElegido.Ruta, actual);
+                Escribir($"Carpeta vinculada a «{_catalogoElegido.Serie}»: {actual}");
+                ActualizarVinculo();
+            };
+            menu.Items.Add(add);
+        }
+        if (yaEsta)
+        {
+            var quitar = new MenuItem { Header = "Quitar el vínculo de la carpeta actual" };
+            quitar.Click += (_, _) =>
+            {
+                ReindexStore.OlvidarCarpetaDeCatalogo(_catalogoElegido.Ruta, actual);
+                Escribir($"Vínculo quitado: {actual}");
+                ActualizarVinculo();
+            };
+            menu.Items.Add(quitar);
+        }
+        if (actual.Length == 0)
+            menu.Items.Add(new MenuItem { Header = "Elige una carpeta para poder vincularla", IsEnabled = false });
+
+        menu.PlacementTarget = btnVinculos;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
     }
 
     private void OnUsarCatalogo(object sender, RoutedEventArgs e)
@@ -402,6 +491,7 @@ public partial class OrganizarView : UserControl
         // Volver a elegir carpeta invalida lo que hubiera en la tabla
         MostrarInicio();
         ActualizarEstado();
+        ActualizarVinculo();
     }
 
     private void CambiarPlantilla()
@@ -590,7 +680,11 @@ public partial class OrganizarView : UserControl
 
         // Se recuerda esta carpeta para este catálogo: la próxima vez que lo elijas se pre-rellena
         // sola y no tienes que volver a emparejar carpeta y catálogo.
-        if (_catalogoElegido != null) ReindexStore.GuardarCarpetaDeCatalogo(_catalogoElegido.Ruta, carpetaActual);
+        if (_catalogoElegido != null)
+        {
+            ReindexStore.GuardarCarpetaDeCatalogo(_catalogoElegido.Ruta, carpetaActual);
+            ActualizarVinculo();   // que se vea al momento que ha quedado vinculada
+        }
 
         // Las etapas viven en la pantalla de inicio: al re-simular desde la revisión (botón
         // de abajo) no hay dónde pintarlas y se va directo al resultado.

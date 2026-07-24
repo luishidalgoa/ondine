@@ -903,6 +903,29 @@ public static class Program
             ReindexStore.GuardarUltimoCatalogo(guardado.Ruta);
             Eq(guardado.Ruta, ReindexStore.CargarUltimoCatalogo(), "se recuerda la elegida");
 
+            // — carpetas vinculadas a un catálogo (#129): elegir el catálogo y que ya venga con
+            //   su carpeta, sin re-emparejar cada vez. Se pueden ver, añadir y quitar a mano.
+            Eq(0, ReindexStore.CargarCarpetasDeCatalogo(guardado.Ruta).Count,
+                "un catálogo recién importado no tiene carpetas vinculadas");
+            ReindexStore.GuardarCarpetaDeCatalogo(guardado.Ruta, @"C:\Series\Bob");
+            ReindexStore.GuardarCarpetaDeCatalogo(guardado.Ruta, @"C:\Series\Otra");
+            var vinculadas = ReindexStore.CargarCarpetasDeCatalogo(guardado.Ruta);
+            Eq(2, vinculadas.Count, "guarda las carpetas usadas con ese catálogo");
+            Eq(@"C:\Series\Otra", vinculadas[0], "la más reciente va la primera");
+            ReindexStore.GuardarCarpetaDeCatalogo(guardado.Ruta, @"C:\Series\Bob");
+            Eq(2, ReindexStore.CargarCarpetasDeCatalogo(guardado.Ruta).Count,
+                "volver a usar una carpeta ya vinculada no la duplica");
+            Eq(@"C:\Series\Bob", ReindexStore.CargarCarpetasDeCatalogo(guardado.Ruta)[0],
+                "y la sube al principio");
+            // Quitar a mano: sin esto, una carpeta que ya no existe se queda ahí para siempre.
+            Assert(ReindexStore.OlvidarCarpetaDeCatalogo(guardado.Ruta, @"C:\Series\Otra"),
+                "se puede desvincular una carpeta");
+            var quedan = ReindexStore.CargarCarpetasDeCatalogo(guardado.Ruta);
+            Eq(1, quedan.Count, "y desaparece de la lista");
+            Eq(@"C:\Series\Bob", quedan[0], "sin tocar las demás");
+            Assert(!ReindexStore.OlvidarCarpetaDeCatalogo(guardado.Ruta, @"C:\Series\Otra"),
+                "desvincular dos veces no revienta");
+
             // Un JSON inválido no se registra
             var malo = Path.Combine(temporal, "malo.json");
             File.WriteAllText(malo, "{ no soy un catalogo ");
