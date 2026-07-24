@@ -27,7 +27,50 @@ es un acuerdo de buena voluntad: está verificado.
 7. **Sin secciones vacías** ni versiones repetidas, y las versiones van de más nueva a
    más antigua.
 
-## [Unreleased]
+## [1.0.0] - 2026-07-24
+
+Primera versión estable. Reúne el conjunto de mejoras de identificación y renombrado, el nuevo
+conmutador de páginas y los arreglos de rendimiento de Recortes acumulados desde la 0.14.
+
+### Añadido
+
+- **El conmutador de páginas es ahora un desplegable compacto que no se come la cabecera.** En
+  vez de una tira de pestañas anchas ocupando su trozo del título, un solo botón muestra la página
+  en la que estás («Comprimir ▾») y, al pulsarlo, despliega la lista con todas las páginas para
+  saltar a cualquiera. Ocupa lo mínimo y da lo mismo que haya 3 páginas o 20.
+
+- **Ordenar las tablas pulsando en la cabecera de una columna.** En «Comprimir» y en «Organizar»,
+  al hacer clic en una cabecera la tabla se ordena por esa columna (una flecha ▲/▼ marca cuál) y
+  volver a pulsarla alterna entre ascendente y descendente. Los números ordenan como números: en
+  «Comprimir», TAMAÑO ordena por el peso real del fichero y DURACIÓN por su duración, no por el
+  texto. En «Organizar», un tercer clic en la misma columna quita el orden y devuelve la tabla a
+  su orden natural por temporadas (con sus bandas de separación); mientras hay un orden manual,
+  esas bandas se ocultan porque las temporadas quedan entremezcladas.
+
+- **Un indicador de proceso en la cabecera, visible desde cualquier pestaña.** Mientras comprimes
+  o exportas en Recortes, si te vas a otra pestaña ya no pierdes de vista que sigue en marcha:
+  aparece una píldora en la cabecera con el avance («Comprimiendo 3/8 · 40 %» o «Exportando · 65 %»)
+  y, al pulsarla, te lleva de vuelta a la pestaña de esa tarea. Si hay dos tareas a la vez (una
+  compresión y un export), enseña la de mayor prioridad: nunca se solapan dos indicadores. Al
+  terminar una compresión, la píldora dice «✓ N hechos» unos segundos antes de retirarse sola.
+
+- **Botón «Vaciar» en Recortes para soltar el vídeo y liberar la memoria.** Deja la página como
+  recién abierta —sin vídeo, sin cortes, sin historial— y devuelve al sistema la memoria que
+  ocupaban el vídeo y las miniaturas, sin cerrar la app. Aparece en la cabecera cuando hay algo
+  cargado; si tienes cortes preparados, pregunta antes de descartarlos.
+
+- **Al elegir historia en un episodio multi-historia, puedes marcar VARIAS (no solo una).** El
+  diálogo «¿Cuáles trae este fichero?» ahora usa casillas: si un fichero trae dos de las tres
+  historias de un episodio (la «a» y la «c», pongamos), márcalas las dos y el nombre queda como
+  «E413ac» con los dos títulos juntos. Marcar todas equivale a «el episodio completo». El nombre
+  se relee igual, así que renombrar y volver a analizar sigue dando lo mismo.
+
+- **«Elegir otro episodio…» también cuando detecta dos episodios en un fichero.** Antes, si la
+  app veía que un fichero traía dos capítulos, solo dejaba «Partirlo en dos» o «Dejarlo como
+  está» y escondía el selector de episodio. Ahora la opción de asignar un episodio a mano está
+  siempre disponible: si la detección de «dos episodios» fue un falso positivo, puedes corregirlo
+  eligiendo el episodio correcto — y la fila deja de recomendar partir y pasa a un renombrado
+  normal. «Partirlo en dos» sigue siendo la acción destacada cuando de verdad son dos.
 
 ### Corregido
 
@@ -76,48 +119,6 @@ es un acuerdo de buena voluntad: está verificado.
   «Renombrar»), la que queda verde es siempre la de la **biblioteca** —la más superficial—, no la
   de staging, sin depender del orden de escaneo. (La copia sobrante seguirá marcada como
   duplicada: para que desaparezca del todo hay que borrar ese segundo fichero.)
-
-### Añadido
-
-- **El conmutador de páginas es ahora un desplegable compacto que no se come la cabecera.** En
-  vez de una tira de pestañas anchas ocupando su trozo del título, un solo botón muestra la página
-  en la que estás («Comprimir ▾») y, al pulsarlo, despliega la lista con todas las páginas para
-  saltar a cualquiera. Ocupa lo mínimo y da lo mismo que haya 3 páginas o 20.
-
-- **Ordenar las tablas pulsando en la cabecera de una columna.** En «Comprimir» y en «Organizar»,
-  al hacer clic en una cabecera la tabla se ordena por esa columna (una flecha ▲/▼ marca cuál) y
-  volver a pulsarla alterna entre ascendente y descendente. Los números ordenan como números: en
-  «Comprimir», TAMAÑO ordena por el peso real del fichero y DURACIÓN por su duración, no por el
-  texto. En «Organizar», un tercer clic en la misma columna quita el orden y devuelve la tabla a
-  su orden natural por temporadas (con sus bandas de separación); mientras hay un orden manual,
-  esas bandas se ocultan porque las temporadas quedan entremezcladas.
-
-- **Un indicador de proceso en la cabecera, visible desde cualquier pestaña.** Mientras comprimes
-  o exportas en Recortes, si te vas a otra pestaña ya no pierdes de vista que sigue en marcha:
-  aparece una píldora en la cabecera con el avance («Comprimiendo 3/8 · 40 %» o «Exportando · 65 %»)
-  y, al pulsarla, te lleva de vuelta a la pestaña de esa tarea. Si hay dos tareas a la vez (una
-  compresión y un export), enseña la de mayor prioridad: nunca se solapan dos indicadores. Al
-  terminar una compresión, la píldora dice «✓ N hechos» unos segundos antes de retirarse sola.
-
-- **Botón «Vaciar» en Recortes para soltar el vídeo y liberar la memoria.** Deja la página como
-  recién abierta —sin vídeo, sin cortes, sin historial— y devuelve al sistema la memoria que
-  ocupaban el vídeo y las miniaturas, sin cerrar la app. Aparece en la cabecera cuando hay algo
-  cargado; si tienes cortes preparados, pregunta antes de descartarlos.
-
-- **Al elegir historia en un episodio multi-historia, puedes marcar VARIAS (no solo una).** El
-  diálogo «¿Cuáles trae este fichero?» ahora usa casillas: si un fichero trae dos de las tres
-  historias de un episodio (la «a» y la «c», pongamos), márcalas las dos y el nombre queda como
-  «E413ac» con los dos títulos juntos. Marcar todas equivale a «el episodio completo». El nombre
-  se relee igual, así que renombrar y volver a analizar sigue dando lo mismo.
-
-- **«Elegir otro episodio…» también cuando detecta dos episodios en un fichero.** Antes, si la
-  app veía que un fichero traía dos capítulos, solo dejaba «Partirlo en dos» o «Dejarlo como
-  está» y escondía el selector de episodio. Ahora la opción de asignar un episodio a mano está
-  siempre disponible: si la detección de «dos episodios» fue un falso positivo, puedes corregirlo
-  eligiendo el episodio correcto — y la fila deja de recomendar partir y pasa a un renombrado
-  normal. «Partirlo en dos» sigue siendo la acción destacada cuando de verdad son dos.
-
-### Corregido
 
 - **Recortes ya no se vuelve más lento cuanto más exportas.** Había una fuga de recursos: cada
   vez que exportabas un tramo y cargabas otro vídeo, el proceso se quedaba con un puñado de
