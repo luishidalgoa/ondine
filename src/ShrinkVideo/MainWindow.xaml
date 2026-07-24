@@ -399,15 +399,16 @@
               </ListView.ContextMenu>
               <ListView.View>
                 <GridView ColumnHeaderContainerStyle="{StaticResource ColHeader}">
-                  <GridViewColumn Header="VÍDEO" Width="316" DisplayMemberBinding="{Binding Name}"/>
-                  <GridViewColumn Header="CARPETA" Width="130" DisplayMemberBinding="{Binding Dir}"/>
-                  <GridViewColumn Header="TAMAÑO" Width="80" DisplayMemberBinding="{Binding SizeMB}"/>
-                  <GridViewColumn Header="DURACIÓN" Width="76" DisplayMemberBinding="{Binding Dur}"/>
-                  <GridViewColumn Header="CÓDEC" Width="64" DisplayMemberBinding="{Binding Codec}"/>
-                  <GridViewColumn Header="AUDIO" Width="88" DisplayMemberBinding="{Binding Audio}"/>
-                  <GridViewColumn Header="SUBS" Width="64" DisplayMemberBinding="{Binding Subs}"/>
+                  <GridViewColumn Header="VÍDEO" Width="316" DisplayMemberBinding="{Binding Name}" local:HeaderSort.Field="Name"/>
+                  <GridViewColumn Header="CARPETA" Width="130" DisplayMemberBinding="{Binding Dir}" local:HeaderSort.Field="Dir"/>
+                  <!-- TAMAÑO y DURACIÓN ordenan por su valor numérico (Bytes / DurationSec), no por el texto formateado -->
+                  <GridViewColumn Header="TAMAÑO" Width="80" DisplayMemberBinding="{Binding SizeMB}" local:HeaderSort.Field="Bytes"/>
+                  <GridViewColumn Header="DURACIÓN" Width="76" DisplayMemberBinding="{Binding Dur}" local:HeaderSort.Field="DurationSec"/>
+                  <GridViewColumn Header="CÓDEC" Width="64" DisplayMemberBinding="{Binding Codec}" local:HeaderSort.Field="Codec"/>
+                  <GridViewColumn Header="AUDIO" Width="88" DisplayMemberBinding="{Binding Audio}" local:HeaderSort.Field="Audio"/>
+                  <GridViewColumn Header="SUBS" Width="64" DisplayMemberBinding="{Binding Subs}" local:HeaderSort.Field="Subs"/>
                   <!-- El color solo REFUERZA: el texto ya distingue por sí solo (daltonismo) -->
-                  <GridViewColumn Header="ESTADO" Width="132">
+                  <GridViewColumn Header="ESTADO" Width="132" local:HeaderSort.Field="Estado">
                     <GridViewColumn.CellTemplate>
                       <DataTemplate>
                         <TextBlock Text="{Binding Estado}" TextTrimming="CharacterEllipsis">

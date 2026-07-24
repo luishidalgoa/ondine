@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -37,11 +39,17 @@ public partial class MainWindow : Window
     private bool _marqueeDragging;
     private readonly HashSet<object> _marqueeBase = new();
 
+    // orden por cabecera de la tabla de «Comprimir»
+    private GridViewColumnHeader? _lstSortHeader;
+    private ListSortDirection _lstSortDir = ListSortDirection.Ascending;
+
     public MainWindow()
     {
         InitializeComponent();
         Directory.CreateDirectory(_thumbDir);
         lst.ItemsSource = _rows;
+        // Clic en una cabecera de la tabla = ordenar por esa columna (asc/desc alterno).
+        lst.AddHandler(GridViewColumnHeader.ClickEvent, new RoutedEventHandler(OnCabeceraTablaClick));
         lblVersion.Text = "v" + Updater.Current;
         _previewBtnContent = btnPreview.Content;   // para restaurar tras "Cancelar"
 
@@ -1210,6 +1218,38 @@ public partial class MainWindow : Window
         if (pag == Pagina.Comprimir) tabComprimir.IsChecked = true;
         else if (pag == Pagina.Organizar) tabOrganizar.IsChecked = true;
         else tabRecortes.IsChecked = true;
+    }
+
+    /// <summary>
+    /// Ordena la tabla de «Comprimir» al pulsar una cabecera. El primer clic ordena ascendente;
+    /// repetir la misma columna alterna a descendente. La columna activa marca la flecha ▲/▼ y
+    /// las numéricas (TAMAÑO, DURACIÓN) ordenan por su valor real, no por el texto formateado.
+    /// </summary>
+    private void OnCabeceraTablaClick(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not GridViewColumnHeader cab) return;
+        if (cab.Role == GridViewColumnHeaderRole.Padding || cab.Column == null) return;
+
+        string? campo = HeaderSort.GetField(cab.Column);
+        if (string.IsNullOrEmpty(campo)) return;
+
+        if (_lstSortHeader == cab)
+            _lstSortDir = _lstSortDir == ListSortDirection.Ascending
+                ? ListSortDirection.Descending : ListSortDirection.Ascending;
+        else
+        {
+            if (_lstSortHeader != null) HeaderSort.SetGlyph(_lstSortHeader, "");
+            _lstSortHeader = cab;
+            _lstSortDir = ListSortDirection.Ascending;
+        }
+
+        var vista = CollectionViewSource.GetDefaultView(lst.ItemsSource);
+        if (vista == null) return;
+        vista.SortDescriptions.Clear();
+        vista.SortDescriptions.Add(new SortDescription(campo, _lstSortDir));
+        vista.Refresh();
+
+        HeaderSort.SetGlyph(cab, _lstSortDir == ListSortDirection.Ascending ? "▲" : "▼");
     }
 
     /// <summary>Etiqueta de la tarea de «Comprimir»: «Comprimiendo 3/8 · 31 %».</summary>

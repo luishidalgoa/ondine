@@ -436,7 +436,8 @@
         <!-- La separación por temporada la pinta cada fila (ver «banda» en OrgRow), no
              DataGrid.GroupStyle: agrupar rompe el reparto de las columnas en «*». -->
         <DataGrid x:Name="tabla" Style="{StaticResource OrgGrid}"
-                  RowDetailsVisibilityMode="VisibleWhenSelected">
+                  RowDetailsVisibilityMode="VisibleWhenSelected"
+                  Sorting="OnTablaSorting">
           <!-- Va en la tabla y no en el estilo de fila: el estilo vive en un diccionario
                de recursos, que no tiene código detrás donde colgar los manejadores. La
                fila sobre la que se pulsó se resuelve al abrirlo. -->
@@ -455,7 +456,7 @@
 
             <!-- Marcar qué se aplica. Solo tiene casilla lo que ESTÁ listo: poner una en
                  los conflictos insinuaría que marcándolos se aplican, y es al revés. -->
-            <DataGridTemplateColumn Width="44">
+            <DataGridTemplateColumn Width="44" CanUserSort="False">
               <DataGridTemplateColumn.Header>
                 <CheckBox x:Name="chkTodos" IsChecked="True" Checked="OnMarcarTodos" Unchecked="OnMarcarTodos"
                           ToolTip="Marcar o desmarcar todos los listos para aplicar"/>
@@ -472,7 +473,7 @@
             </DataGridTemplateColumn>
 
             <!-- ESTADO — chip: glifo + palabra + color, nunca solo color -->
-            <DataGridTemplateColumn Header="ESTADO" Width="112">
+            <DataGridTemplateColumn Header="ESTADO" Width="112" SortMemberPath="EstadoVisible">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
                   <Border Background="{Binding EstadoBg}" BorderBrush="{Binding EstadoBorde}" BorderThickness="1"
@@ -493,7 +494,7 @@
 
             <!-- APARTADO — sin encabezado ni anchura fija: es un margen de libreta, no una
                  columna de datos. Solo aparece si hay algo apartado. -->
-            <DataGridTemplateColumn Width="Auto">
+            <DataGridTemplateColumn Width="Auto" CanUserSort="False">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
                   <TextBlock Text="🔖" FontSize="12" Margin="0,0,2,0" VerticalAlignment="Center"
@@ -503,7 +504,7 @@
             </DataGridTemplateColumn>
 
             <!-- FICHERO ORIGINAL -->
-            <DataGridTemplateColumn Header="FICHERO ORIGINAL" Width="1.1*">
+            <DataGridTemplateColumn Header="FICHERO ORIGINAL" Width="1.1*" SortMemberPath="Original">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
                   <TextBlock Text="{Binding Original}" Foreground="{StaticResource Neutral300}"
@@ -513,7 +514,7 @@
             </DataGridTemplateColumn>
 
             <!-- PROPUESTA -->
-            <DataGridTemplateColumn Header="PROPUESTA" Width="1.6*">
+            <DataGridTemplateColumn Header="PROPUESTA" Width="1.6*" SortMemberPath="Propuesta">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
                   <TextBlock Text="{Binding Propuesta}" Foreground="{Binding PropuestaFg}"
@@ -534,7 +535,7 @@
             </DataGridTemplateColumn>
 
             <!-- POR QUÉ — evidencia corta; la prosa completa, en el tooltip -->
-            <DataGridTemplateColumn Header="POR QUÉ" Width="0.7*" MinWidth="90">
+            <DataGridTemplateColumn Header="POR QUÉ" Width="0.7*" MinWidth="90" SortMemberPath="PorQue">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
                   <TextBlock Text="{Binding PorQue}" Foreground="{StaticResource Neutral500}" FontSize="12"

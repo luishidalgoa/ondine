@@ -33,6 +33,7 @@ public sealed class CatalogoCard
 public partial class OrganizarView : UserControl
 {
     private readonly ObservableCollection<OrganizarRow> _filas = new();
+    private bool _ordenManual;   // hay un orden por cabecera activo (oculta las bandas de temporada)
     private readonly List<CatalogoGuardado> _catalogos = new();
     private CatalogoGuardado? _catalogoElegido;
     private ReindexCatalog? _catalogoCargado;
@@ -658,6 +659,9 @@ public partial class OrganizarView : UserControl
 
             var raiz = txtCarpeta.Text?.Trim() ?? "";
             _filas.Clear();
+            // Un análisis nuevo empieza en el orden natural por temporada: se retira cualquier
+            // orden por cabecera que hubiera quedado de antes.
+            QuitarOrdenManual();
             foreach (var r in resoluciones)
             {
                 var fila = new OrganizarRow(r, catalogo, _plantilla,
@@ -913,6 +917,47 @@ public partial class OrganizarView : UserControl
         return d as T;
     }
 
+    /// <summary>
+    /// Orden por cabecera con tri-estado: 1.º clic ascendente, 2.º descendente, 3.º sin orden.
+    /// «Sin orden» devuelve el orden natural por temporada —el único en que las bandas de
+    /// separación tienen sentido—, de modo que mientras hay orden manual esas bandas se ocultan.
+    /// </summary>
+    private void OnTablaSorting(object sender, DataGridSortingEventArgs e)
+    {
+        e.Handled = true;   // gestionamos el ciclo a mano para poder «quitar el orden»
+        var col = e.Column;
+        if (string.IsNullOrEmpty(col.SortMemberPath)) return;
+
+        var vista = CollectionViewSource.GetDefaultView(_filas);
+        if (vista == null) return;
+
+        ListSortDirection? siguiente = col.SortDirection switch
+        {
+            null => ListSortDirection.Ascending,
+            ListSortDirection.Ascending => ListSortDirection.Descending,
+            _ => null,   // descendente → se quita el orden
+        };
+
+        foreach (var c in tabla.Columns) if (c != col) c.SortDirection = null;
+        col.SortDirection = siguiente;
+        vista.SortDescriptions.Clear();
+
+        if (siguiente is { } dir)
+            vista.SortDescriptions.Add(new SortDescription(col.SortMemberPath, dir));
+
+        _ordenManual = siguiente != null;
+        RecalcularSeparadores();   // reordena las bandas (o las oculta si hay orden manual)
+    }
+
+    /// <summary>Retira el orden por cabecera y vuelve al orden natural por temporada.</summary>
+    private void QuitarOrdenManual()
+    {
+        _ordenManual = false;
+        foreach (var c in tabla.Columns) c.SortDirection = null;
+        var vista = CollectionViewSource.GetDefaultView(_filas);
+        vista?.SortDescriptions.Clear();
+    }
+
     /// <returns>Cuántas temporadas han quedado separadas. 0 = no hay nada que separar.</returns>
     private int RecalcularSeparadores()
     {
@@ -921,6 +966,10 @@ public partial class OrganizarView : UserControl
 
         var visibles = vista.Cast<OrganizarRow>().ToList();
         foreach (var f in visibles) { f.PrimeraDeGrupo = false; f.GrupoConteo = ""; }
+
+        // Con un orden por cabecera activo las temporadas se entremezclan, así que las bandas
+        // de separación dejan de significar nada: se ocultan hasta que se quite el orden.
+        if (_ordenManual) return 0;
 
         if (visibles.Select(f => f.Grupo).Distinct().Count() <= 1) return 0;
 
