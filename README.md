@@ -32,6 +32,23 @@ canónico; y **Recortes**, para partir un vídeo en varios o quitarle un trozo.
 > Cambios de cada versión: [`CHANGELOG.md`](CHANGELOG.md) ·
 > Roadmap de funcionalidades heredadas de HandBrake: [`ROADMAP.md`](ROADMAP.md).
 
+## Así se ve
+
+**Comprimir** — analiza una carpeta entera, enseña las pistas de cada vídeo (códec, idiomas de audio,
+subtítulos) y comprime en tanda. El panel de la derecha pronostica el tamaño final y el ahorro.
+
+![La pestaña Comprimir con una carpeta analizada](docs/img/comprimir.png)
+
+**Organizar** — compara los ficheros de una carpeta con un catálogo de episodios y propone el nombre
+de cada uno. El color dice de qué fiarte, y no se renombra nada hasta que lo apruebas.
+
+![La pestaña Organizar con los ficheros ya identificados](docs/img/organizar.png)
+
+**Recortes** — parte un vídeo en varios o quítale un trozo. Cada tramo sale como un fichero aparte, y
+el original solo se borra si salen todos.
+
+![La pestaña Recortes con un vídeo partido en dos tramos](docs/img/recortes.png)
+
 ## Qué sabe hacer
 
 - **Lotes de verdad.** Selección estilo explorador en la tabla: arrastra en banda, `Ctrl`/`Mayús`+clic,
