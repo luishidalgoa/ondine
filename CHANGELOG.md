@@ -31,6 +31,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **«Partir en segmentos»: un fichero por mini-historia, numeradas 1a, 1b, 1c.** Muchas series de
+  dibujos meten 2-3 historias en un mismo capítulo. Si tu catálogo las lista por separado, un botón
+  nuevo en Organizar las deja en ficheros independientes con la numeración por segmento. Encuentra
+  solo el punto de corte —busca el fundido a negro que separa las historias y se queda con el que
+  encaja con el reparto que dice el catálogo— y corta **sin recodificar**: no pierde nada de calidad
+  y tarda un segundo por episodio. Los originales van a la Papelera (recuperables con **Ctrl+Z**)
+  solo si salen todos sus trozos, y lo que no tenga un corte claro se queda intacto y se te dice.
+
 - **Fichero repetido en Organizar: ves las dos rutas y eliges cuál borrar.** Cuando dos ficheros
   son el mismo episodio, al abrir la fila aparecen los **dos** ficheros implicados —este y el que
   la app conserva—, cada uno con su carpeta y un botón para abrirla. Eliges cuál mandar a la

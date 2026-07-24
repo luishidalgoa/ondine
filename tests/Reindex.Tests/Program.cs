@@ -50,6 +50,7 @@ public static class Program
         OrdinalDeTemporada();
         Sidecars();
         PapeleraDeLaApp();
+        CortesPorSegmento();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2181,6 +2182,92 @@ public static class Program
     }
 
     /// <summary>Como <see cref="Lanza{T}"/>, pero devuelve la excepción para mirarle el mensaje.</summary>
+    // ────────────────── Cortes por segmento (partir un episodio) ──────────────────
+
+    private static void CortesPorSegmento()
+    {
+        Seccion("Cortes por segmento");
+
+        static SegmentSplitter.Negro N(double a, double b) => new(a, b);
+
+        // Los tres casos son MEDIDAS REALES de episodios del usuario (ffmpeg blackdetect).
+        // Un episodio de Bob Esponja trae 2-3 mini-historias separadas por un fundido a negro,
+        // y el catálogo ya dice cuántas son: con ese dato el corte se puede elegir solo.
+
+        // — 1x01: tres historias, y la de en medio («Reef Blower») dura solo 2:42, así que los
+        //   trozos son MUY desiguales. Es el caso que rompe cualquier corte «por tercios».
+        var negros1x01 = new[]
+        {
+            N(378.10, 378.63),   // fundido DENTRO de la primera historia
+            N(517.13, 517.97),   // ← corte de verdad (entra la tarjeta «Reef Blower»)
+            N(520.57, 520.73),   // otro fundido interno, ya dentro de la segunda
+            N(679.33, 680.53),   // ← corte de verdad (tarjeta «Tea at the Treedome»)
+        };
+        var p = SegmentSplitter.Planificar(1357.33, 3, negros1x01);
+        Assert(p.Fiable, "1x01: encuentra los dos cortes");
+        Eq(3, p.Trozos.Count, "y produce tres trozos");
+        Cerca(517.13, p.Trozos[0].Hasta, "el primero acaba donde entra «Reef Blower»");
+        Cerca(517.97, p.Trozos[1].Desde, "el segundo arranca DESPUÉS del negro, no en él");
+        Cerca(679.33, p.Trozos[1].Hasta, "y acaba donde entra «Tea at the Treedome»");
+        Cerca(1357.33, p.Trozos[2].Hasta, "el último llega hasta el final del fichero");
+
+        // — 1x02: dos historias. Hay un negro larguísimo al final (los créditos) que NO es corte.
+        var p2 = SegmentSplitter.Planificar(1356.0, 2, new[]
+        {
+            N(0.0, 0.17),          // negro de arranque
+            N(675.00, 677.17),     // ← el corte
+            N(679.40, 679.57),
+            N(1310.70, 1312.70),   // créditos: dura MÁS que el corte y aun así no es corte
+        });
+        Assert(p2.Fiable, "1x02: no se deja engañar por el negro de los créditos");
+        Cerca(675.00, p2.Trozos[0].Hasta, "corta en la mitad de verdad");
+
+        // — 1x08: dos historias y CINCO negros largos. Elegir «el más largo» daría 616,2 (1,40 s)
+        //   y sería un corte a mitad de escena; el bueno es 675,3, que solo dura 0,80 s. Por eso
+        //   manda la CERCANÍA al reparto esperado, no lo que dure el fundido.
+        var p3 = SegmentSplitter.Planificar(1354.0, 2, new[]
+        {
+            N(41.20, 41.77),
+            N(552.70, 553.67),
+            N(563.70, 564.47),
+            N(616.20, 617.60),     // el más largo de todos… y NO es el corte
+            N(675.30, 676.10),     // ← el corte
+            N(1309.60, 1310.90),
+        });
+        Assert(p3.Fiable, "1x08: con cinco candidatos elige el correcto");
+        Cerca(675.30, p3.Trozos[0].Hasta, "manda la cercanía al reparto, no la duración del fundido");
+
+        // — Un episodio de una sola historia no se parte.
+        var p4 = SegmentSplitter.Planificar(1300.0, 1, negros1x01);
+        Eq(1, p4.Trozos.Count, "un episodio de una sola historia se queda entero");
+        Assert(p4.Trozos[0].Desde == 0, "y empieza en cero");
+
+        // — Sin ningún fundido aprovechable NO se inventa un corte: cortar por el medio a ciegas
+        //   parte una escena y estropea las dos mitades. Mejor decir que hay que mirarlo.
+        var p5 = SegmentSplitter.Planificar(1300.0, 2, new[] { N(0.0, 0.2), N(1290.0, 1292.0) });
+        Assert(!p5.Fiable, "sin candidatos válidos se marca como NO fiable");
+        Assert(p5.Motivo.Length > 0, "y dice por qué");
+
+        // — Un fundido que cae lejísimos del reparto esperado tampoco vale.
+        var p6 = SegmentSplitter.Planificar(1300.0, 2, new[] { N(120.0, 121.0) });
+        Assert(!p6.Fiable, "un fundido a 120 s no sirve para partir por la mitad");
+
+        // — Los negros se pueden dar desordenados: el plan sale ordenado igual.
+        var p7 = SegmentSplitter.Planificar(1357.33, 3, new[]
+        {
+            N(679.33, 680.53), N(378.10, 378.63), N(517.13, 517.97),
+        });
+        Assert(p7.Fiable, "acepta los fundidos en cualquier orden");
+        Assert(p7.Trozos[0].Hasta < p7.Trozos[1].Hasta, "y devuelve los trozos en orden");
+    }
+
+    /// <summary>Compara segundos con holgura: los tiempos vienen de ffmpeg y llevan decimales.</summary>
+    private static void Cerca(double esperado, double real, string descripcion)
+    {
+        if (Math.Abs(esperado - real) < 0.05) { _ok++; Console.WriteLine($"  ✓ {descripcion}"); }
+        else { _fallos++; Console.WriteLine($"  ✗ {descripcion} (esperaba {esperado:0.00}, salió {real:0.00})"); }
+    }
+
     private static T? Lanzado<T>(Action accion, string descripcion) where T : Exception
     {
         try { accion(); _fallos++; Console.WriteLine($"  ✗ {descripcion} (no lanzó nada)"); return null; }
