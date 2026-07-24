@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private object? _previewBtnContent;
     private CancellationTokenSource? _cts;
     private bool _running;
+    private Pagina _paginaActual = Pagina.Comprimir;   // la pestaña que se está viendo
     private bool _paused;
     private bool _applyingPreset;
     private Settings _settings = new();
@@ -121,12 +122,19 @@ public partial class MainWindow : Window
         tabRecortes.Checked += (_, _) => CambiarPagina(Pagina.Recortes);
         pageOrganizar.Log += AppendLog;
         pageRecortes.Log += AppendLog;
+        // Recortes reporta su export al indicador global: se ve desde cualquier pestaña.
+        pageRecortes.EstadoProceso += (activo, etiqueta) =>
+        {
+            _recortesEtiqueta = activo ? etiqueta : null;
+            ActualizarIndicadorGlobal();
+        };
         pageOrganizar.AbrirEnRecortes += (ruta, partirPorLaMitad) =>
         {
             tabRecortes.IsChecked = true;
             pageRecortes.Cargar(ruta, partirPorLaMitad);
         };
-        pillFondo.MouseLeftButtonUp += (_, _) => tabComprimir.IsChecked = true;
+        // La píldora lleva a la pestaña de la tarea que muestra, no siempre a «Comprimir».
+        pillFondo.MouseLeftButtonUp += (_, _) => IrAPestaña(_pillDestino);
 
         tabDetalle.MouseLeftButtonUp += (_, _) => ShowSideTab("detalle");
         tabEstim.MouseLeftButtonUp += (_, _) => ShowSideTab("estim");
@@ -951,8 +959,7 @@ public partial class MainWindow : Window
         tglLog.IsChecked = true;
         txtLog.Clear();
         lblProg.Text = $"Procesando {sel.Count} vídeo(s)…";
-        ActualizarTextoPildora(0, sel.Count, 0);
-        ActualizarPildoraFondo();
+        ActualizarTextoPildora(0, sel.Count, 0);   // ya recalcula el indicador global
 
         foreach (var r in selRows) r.Estado = "En cola";
         var reporter = new Reporter(this, deleteOriginals, selRows);
@@ -1145,6 +1152,8 @@ public partial class MainWindow : Window
 
     private void CambiarPagina(Pagina pagina)
     {
+        _paginaActual = pagina;
+
         var comprimir = pagina == Pagina.Comprimir ? Visibility.Visible : Visibility.Collapsed;
         rowOrigen.Visibility = comprimir;
         rowOpciones.Visibility = comprimir;
@@ -1160,45 +1169,73 @@ public partial class MainWindow : Window
         // la vista, y lo retoma al volver. Un tab oculto ya no se DIBUJA —WPF lo hace solo—,
         // pero sin esto seguiría decodificando vídeo y goteando fotogramas en segundo plano.
         pageRecortes.EnPantalla(pagina == Pagina.Recortes);
-        ActualizarPildoraFondo();
+        ActualizarIndicadorGlobal();
     }
 
-    /// <summary>
-    /// La píldora de la barra de título solo tiene sentido cuando hay compresión en marcha y
-    /// el usuario NO la está mirando: si estás en «Comprimir» ya ves la barra de progreso, y
-    /// repetirlo sería ruido.
-    /// </summary>
-    private void ActualizarPildoraFondo()
+    // --- Indicador global de proceso -------------------------------------------------
+    // Una sola píldora en la cabecera para TODAS las pestañas. Cada tarea de proceso deja
+    // aquí su etiqueta (null = sin tarea); la píldora enseña la de mayor prioridad cuya
+    // pestaña NO es la que miras —esa ya te muestra su progreso en línea—, así nunca hay dos
+    // indicadores a la vez y desde cualquier tab sabes que algo sigue vivo.
+    private string? _compEtiqueta;      // «Comprimir»  (prioridad alta)
+    private string? _recortesEtiqueta;  // «Recortes»   (prioridad media)
+    private Pagina _pillDestino = Pagina.Comprimir;   // adónde te lleva al pulsar la píldora
+
+    /// <summary>Recalcula qué tarea (si alguna) muestra la píldora de la cabecera.</summary>
+    private void ActualizarIndicadorGlobal()
     {
-        bool enOtraPagina = pageOrganizar.Visibility == Visibility.Visible;
-        pillFondo.Visibility = _running && enOtraPagina ? Visibility.Visible : Visibility.Collapsed;
+        // (página, prioridad, texto) de cada tarea activa. Mayor prioridad manda.
+        var tareas = new List<(Pagina pag, int prio, string txt)>();
+        if (_compEtiqueta != null) tareas.Add((Pagina.Comprimir, 3, _compEtiqueta));
+        if (_recortesEtiqueta != null) tareas.Add((Pagina.Recortes, 2, _recortesEtiqueta));
+
+        var visible = tareas
+            .Where(t => t.pag != _paginaActual)      // la de tu propia pestaña ya se ve en línea
+            .OrderByDescending(t => t.prio)
+            .ToList();
+
+        if (visible.Count == 0) { pillFondo.Visibility = Visibility.Collapsed; return; }
+
+        var t0 = visible[0];
+        lblPill.Text = t0.txt;
+        _pillDestino = t0.pag;
+        // El punto pulsa solo mientras la tarea vive; en el «✓ … hecho» final no.
+        pillDot.Visibility = t0.txt.StartsWith("✓") ? Visibility.Collapsed : Visibility.Visible;
+        pillFondo.Visibility = Visibility.Visible;
     }
 
-    /// <summary>Texto de la píldora: «Comprimiendo 3/8 · 31 %».</summary>
+    /// <summary>Marca la pestaña destino de la píldora al pulsarla.</summary>
+    private void IrAPestaña(Pagina pag)
+    {
+        if (pag == Pagina.Comprimir) tabComprimir.IsChecked = true;
+        else if (pag == Pagina.Organizar) tabOrganizar.IsChecked = true;
+        else tabRecortes.IsChecked = true;
+    }
+
+    /// <summary>Etiqueta de la tarea de «Comprimir»: «Comprimiendo 3/8 · 31 %».</summary>
     private void ActualizarTextoPildora(int hecho, int total, double fraccion)
     {
-        lblPill.Text = total > 0
+        _compEtiqueta = total > 0
             ? $"Comprimiendo {hecho}/{total} · {fraccion * 100:0} %"
             : "Comprimiendo";
+        ActualizarIndicadorGlobal();
     }
 
     /// <summary>
-    /// Al acabar, la píldora dice «✓ N hechos» unos segundos y se retira. Quitarla de golpe
-    /// dejaría a quien esté en «Organizar» sin enterarse de que terminó.
+    /// Al acabar la compresión, la píldora dice «✓ N hechos» unos segundos y se retira. Quitarla
+    /// de golpe dejaría a quien esté en otra pestaña sin enterarse de que terminó.
     /// </summary>
     private void AnunciarFinEnPildora(int total)
     {
-        if (pillFondo.Visibility != Visibility.Visible) return;
-
-        pillDot.Visibility = Visibility.Collapsed;
-        lblPill.Text = $"✓ {total} hecho{(total == 1 ? "" : "s")}";
+        _compEtiqueta = $"✓ {total} hecho{(total == 1 ? "" : "s")}";
+        ActualizarIndicadorGlobal();
 
         var reloj = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
         reloj.Tick += (s, _) =>
         {
             reloj.Stop();
-            pillFondo.Visibility = Visibility.Collapsed;
-            pillDot.Visibility = Visibility.Visible;
+            _compEtiqueta = null;
+            ActualizarIndicadorGlobal();
         };
         reloj.Start();
     }

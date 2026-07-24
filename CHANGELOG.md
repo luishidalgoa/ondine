@@ -53,6 +53,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Un indicador de proceso en la cabecera, visible desde cualquier pestaña.** Mientras comprimes
+  o exportas en Recortes, si te vas a otra pestaña ya no pierdes de vista que sigue en marcha:
+  aparece una píldora en la cabecera con el avance («Comprimiendo 3/8 · 40 %» o «Exportando · 65 %»)
+  y, al pulsarla, te lleva de vuelta a la pestaña de esa tarea. Si hay dos tareas a la vez (una
+  compresión y un export), enseña la de mayor prioridad: nunca se solapan dos indicadores. Al
+  terminar una compresión, la píldora dice «✓ N hechos» unos segundos antes de retirarse sola.
+
 - **Botón «Vaciar» en Recortes para soltar el vídeo y liberar la memoria.** Deja la página como
   recién abierta —sin vídeo, sin cortes, sin historial— y devuelve al sistema la memoria que
   ocupaban el vídeo y las miniaturas, sin cerrar la app. Aparece en la cabecera cuando hay algo

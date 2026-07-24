@@ -110,6 +110,13 @@ public partial class RecortesView : UserControl
     /// <summary>Se avisa al anfitrión para que lo escriba en el registro compartido.</summary>
     public event Action<string>? Log;
 
+    /// <summary>
+    /// Late al anfitrión el estado del export (activo, etiqueta corta). Con esto la ventana
+    /// puede mostrar el indicador global de proceso desde cualquier pestaña: si estás en
+    /// «Comprimir» u «Organizar» mientras Recortes exporta, sigues viendo que sigue vivo.
+    /// </summary>
+    internal event Action<bool, string>? EstadoProceso;
+
     public RecortesView()
     {
         InitializeComponent();
@@ -1435,6 +1442,7 @@ public partial class RecortesView : UserControl
         btnExportar.IsEnabled = false;
         btnCortar.IsEnabled = false;
         PintarExportando(true);
+        EstadoProceso?.Invoke(true, "Exportando…");
         // Las miniaturas se paran: leerían el mismo fichero que se está codificando, y con
         // uno recién bajado de la nube ese goteo de ffmpegs era parte de la lentitud.
         _esperaPrevia.Stop();
@@ -1518,6 +1526,7 @@ public partial class RecortesView : UserControl
             _pausadaExp = false;
             _tramoActual = "";
             PintarExportando(false);
+            EstadoProceso?.Invoke(false, "");
             foreach (var f in _tramos) f.EnCurso = false;
 
             // La pregunta va ANTES de reabrir el vídeo: el reproductor mantiene el fichero
@@ -1570,7 +1579,11 @@ public partial class RecortesView : UserControl
         // de la etiqueta: con un nombre que llevara « · » se comía media frase.
         public void FileProgress(double fraccion, string cruda) =>
             _v.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                () => _v.lblProgreso.Text = $"{_v._tramoActual} · {fraccion * 100:0} %");
+                () =>
+                {
+                    _v.lblProgreso.Text = $"{_v._tramoActual} · {fraccion * 100:0} %";
+                    _v.EstadoProceso?.Invoke(true, $"Exportando · {fraccion * 100:0} %");
+                });
         public void FileDone(FileResult r) { }
         public void FileSkipped(string ruta, string porque) =>
             _v.Dispatcher.BeginInvoke(() =>
