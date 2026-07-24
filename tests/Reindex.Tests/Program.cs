@@ -441,6 +441,11 @@ public static class Program
                 "la copia de la biblioteca (más superficial) se queda limpia, sea cual sea el orden de escaneo");
             Eq(ReindexEstado.Conflicto, enStaging.Estado,
                 "la copia en la subcarpeta de trabajo es la que cae en conflicto");
+            Assert(enStaging.Motivo.Contains("repetido"),
+                "misma obra en dos sitios → el motivo dice «fichero repetido», no un conflicto genérico");
+            Assert(enStaging.Motivo.Contains(enBib.Archivo.NombreArchivo) ||
+                   enStaging.Motivo.Contains("otro"),
+                "y señala al otro fichero para poder decidir cuál borrar");
         }
 
         // La TEMPORADA se lee también del propio nombre «S2012E455», no solo de la carpeta. Un

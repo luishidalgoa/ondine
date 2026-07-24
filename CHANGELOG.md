@@ -29,6 +29,15 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Cambiado
+
+- **Un fichero repetido (la misma obra en dos sitios) se distingue de un conflicto de verdad y te
+  dice qué hacer.** Cuando dos ficheros caen en el mismo episodio, el motivo ahora aclara si son
+  **la misma obra repetida** (mismo título y segmento — el típico caso del vídeo en su carpeta y
+  una copia en «Renombrar») o **dos ficheros distintos peleando** por el número. En el primero, el
+  mensaje dice «fichero repetido», nombra al otro fichero y sugiere enviar el sobrante a la
+  Papelera; en el segundo, te pide decidir cuál es el correcto. (`#128`)
+
 ## [1.0.0] - 2026-07-24
 
 Primera versión estable. Reúne el conjunto de mejoras de identificación y renombrado, el nuevo

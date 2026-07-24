@@ -601,8 +601,19 @@ public static class ReindexEngine
                 r.Estado = ReindexEstado.Conflicto;
                 r.Confianza = ReindexConfianza.Ninguna;
                 r.EsDuplicado = true;
-                r.Motivo = $"En el catálogo, el episodio {grupo.Key.Num} es «{comoSeLlama}». " +
-                           $"Lo reclama con más fuerza «{ganador.Archivo.NombreArchivo}»";
+
+                // ¿Es la MISMA obra (una copia repetida) o dos ficheros DISTINTOS peleando por el
+                // número? Si el título y el sub-segmento coinciden, es lo primero: el mensaje debe
+                // decir «fichero repetido» y señalar al otro para que el usuario borre el sobrante.
+                bool mismaObra =
+                    TitleMatch.Norm(r.Archivo.TituloNombre) == TitleMatch.Norm(ganador.Archivo.TituloNombre)
+                    && r.Archivo.SubSegmento == ganador.Archivo.SubSegmento;
+                r.Motivo = mismaObra
+                    ? $"Fichero repetido: otro fichero cubre el mismo episodio {grupo.Key.Num} " +
+                      $"«{comoSeLlama}» — «{ganador.Archivo.NombreArchivo}». Decide cuál conservar y " +
+                      $"envía el sobrante a la Papelera."
+                    : $"Conflicto: este y «{ganador.Archivo.NombreArchivo}» reclaman el episodio " +
+                      $"{grupo.Key.Num} «{comoSeLlama}». Decide cuál es el correcto.";
             }
 
             // El ganador tampoco se aplica a ciegas: hubo pelea, que se vea.
