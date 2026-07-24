@@ -171,6 +171,7 @@
               <TextBlock Style="{StaticResource P}" Text="3.  Ajusta el preset o las opciones (formato, códec, calidad, resolución, audio). El idioma principal se marca como pista por defecto; los que no elijas se descartan para ahorrar espacio."/>
               <TextBlock Style="{StaticResource P}" Text="4.  Mira el pronóstico de ahorro; si quieres la cifra real, «Medir con una muestra» codifica unos fragmentos cortos."/>
               <TextBlock Style="{StaticResource P}" Text="5.  Selecciona los vídeos y pulsa «Comprimir selección». Verás el progreso en vivo, con Pausar y Detener. Nunca toca los originales salvo que lo pidas (y entonces van a la Papelera)."/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="«Enviar a la Papelera» usa una papelera propia de la app: puedes recuperar lo último con Ctrl+Z al instante. Al acumularse o cerrar la app, esos ficheros pasan a la Papelera de Windows (siguen recuperables ahí)."/>
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Si el disco se llena, la tanda se pausa sola y sigue cuando liberas espacio. Puedes seguir el progreso desde cualquier pestaña con la píldora de la cabecera."/>
             </StackPanel>
 
@@ -181,6 +182,7 @@
               <TextBlock Style="{StaticResource P}" Text="2.  Marca los cortes en la línea de tiempo para separar los tramos que quieres conservar (útil para partir un fichero que trae dos capítulos, o quitar una intro)."/>
               <TextBlock Style="{StaticResource P}" Text="3.  Pulsa «Exportar»: genera un fichero por tramo. El original no se toca."/>
               <TextBlock Style="{StaticResource P}" Text="4.  «Vaciar» deja la página como recién abierta y libera la memoria del vídeo y las miniaturas, sin cerrar la app."/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Con los tramos ya en disco, la app ofrece mandar el original a la Papelera (nunca sin preguntar). Va a la papelera propia: si algo salió mal, Ctrl+Z lo recupera al instante."/>
               <TextBlock Style="{StaticResource H3}" Text="COMBINAR CON ORGANIZAR"/>
               <TextBlock Style="{StaticResource P}" Text="Cuando Organizar detecta que un fichero trae DOS episodios, ofrece «Partirlo en dos» → lo abre en Recortes para que separes los dos capítulos. Después, cada trozo se identifica y renombra por separado en Organizar."/>
             </StackPanel>

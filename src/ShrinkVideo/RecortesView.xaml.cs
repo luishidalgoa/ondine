@@ -122,6 +122,16 @@ public partial class RecortesView : UserControl
         InitializeComponent();
         listaTramos.ItemsSource = _tramos;
 
+        // Ctrl+Z: recuperar el original que se mandó a la Papelera propia tras exportar los tramos.
+        PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                DeshacerPapelera();
+                e.Handled = true;
+            }
+        };
+
         cboFmt.ItemsSource = OpcionesSalida.Formatos;
         cboCodec.ItemsSource = OpcionesSalida.Codecs;
         cboQ.ItemsSource = OpcionesSalida.Calidades;
@@ -1328,6 +1338,19 @@ public partial class RecortesView : UserControl
     }
 
     /// <summary>
+    /// Ctrl+Z: recupera el último original enviado a la Papelera propia (lo devuelve a su sitio en
+    /// disco). El proyecto ya se cerró, así que solo restaura el fichero — se vuelve a abrir para editarlo.
+    /// </summary>
+    private void DeshacerPapelera()
+    {
+        var nombre = Reindex.PapeleraApp.DeshacerUltimo();
+        lblProgreso.Text = nombre != null
+            ? $"Recuperado «{nombre}» · vuelve a abrirlo para editarlo"
+            : "No hay nada que recuperar.";
+        if (nombre != null) Log?.Invoke($"Recortes: «{nombre}» recuperado de la papelera.");
+    }
+
+    /// <summary>
     /// Con los tramos ya en disco, ofrece deshacerse del original — que es lo que casi
     /// siempre quieres tras partir un vídeo, y buscarlo a mano después es una lata.
     ///
@@ -1350,7 +1373,9 @@ public partial class RecortesView : UserControl
                 "Sí, a la papelera", "No, conservarlo"))
             return false;
 
-        if (!RecycleBin.Send(ruta))
+        // Papelera PROPIA de la app (no la de Windows): recuperable con Ctrl+Z de forma fiable;
+        // al acumularse o cerrar la app, se finaliza en la Papelera del sistema.
+        if (Reindex.PapeleraApp.Enviar(ruta) == null)
         {
             Log?.Invoke($"Recortes: no se pudo enviar «{fi.Name}» a la papelera; sigue donde estaba.");
             DialogWindow.Aviso(dueno, "Recortes",
@@ -1359,7 +1384,7 @@ public partial class RecortesView : UserControl
         }
 
         Log?.Invoke($"Recortes: «{fi.Name}» a la papelera tras exportar {cuantos} tramos.");
-        lblProgreso.Text = $"Listo · {cuantos} tramos · original a la papelera";
+        lblProgreso.Text = $"Listo · {cuantos} tramos · original a la papelera (Ctrl+Z para recuperar)";
 
         // Sin fichero no hay proyecto: dejar la línea de tiempo con los cortes de un vídeo
         // que ya no existe solo lleva a exportar de nuevo y no entender por qué falla.

@@ -29,6 +29,9 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _cts;
     private bool _running;
     private Pagina _paginaActual = Pagina.Comprimir;   // la pestaña que se está viendo
+    // Filas enviadas a la Papelera propia (Comprimir), en orden, para deshacer con Ctrl+Z: al
+    // restaurar el fichero también vuelve su fila a la lista, sin re-analizarlo.
+    private readonly Stack<VideoRow> _pilaPapelera = new();
     private bool _paused;
     private bool _applyingPreset;
     private Settings _settings = new();
@@ -670,9 +673,37 @@ public partial class MainWindow : Window
     // ---------- quitar de la lista / menú contextual ----------
     private void Lst_KeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            DeshacerPapelera();
+            e.Handled = true;
+            return;
+        }
         if (e.Key != Key.Delete) return;
         RemoveSelectedRows();
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// Ctrl+Z en la lista de Comprimir: restaura el último vídeo enviado a la Papelera propia
+    /// (a su sitio en disco) y devuelve su fila a la lista. Si su sitio ya se reocupó, no pisa nada.
+    /// </summary>
+    private void DeshacerPapelera()
+    {
+        var nombre = Reindex.PapeleraApp.DeshacerUltimo();
+        if (nombre == null)
+        {
+            lblProg.Text = _pilaPapelera.Count == 0
+                ? "No hay nada que recuperar."
+                : "No se pudo recuperar (su sitio ya está ocupado).";
+            return;
+        }
+        if (_pilaPapelera.Count > 0 && Path.GetFileName(_pilaPapelera.Peek().Path) == nombre)
+        {
+            var r = _pilaPapelera.Pop();
+            if (!_rows.Contains(r)) _rows.Add(r);
+        }
+        lblProg.Text = $"Recuperado «{nombre}».";
     }
 
     /// <summary>Con el botón derecho, si la fila no estaba seleccionada pasa a serlo (como el explorador).</summary>
@@ -961,12 +992,17 @@ public partial class MainWindow : Window
         if (sel.Count == 0) { DialogWindow.Aviso(this, "Eliminar", "No hay vídeos seleccionados."); return; }
         double mb = sel.Sum(r => r.Bytes) / 1048576.0;
         if (!DialogWindow.Confirmar(this, "Eliminar marcados", $"¿Enviar {sel.Count} vídeo(s) ({mb:n0} MB) a la Papelera de reciclaje?")) return;
+        _pilaPapelera.Clear();   // una tanda nueva; el Ctrl+Z restaura de esta tanda hacia atrás
         foreach (var r in sel)
         {
-            if (RecycleBin.Send(r.Path)) _rows.Remove(r);
+            // Papelera PROPIA de la app (no la de Windows): permite deshacer con Ctrl+Z de forma
+            // fiable y, al acumularse o cerrar, se finaliza en la Papelera del sistema.
+            if (Reindex.PapeleraApp.Enviar(r.Path) != null) { _rows.Remove(r); _pilaPapelera.Push(r); }
             else r.Estado = "error al borrar";
         }
-        lblProg.Text = "Enviados a la Papelera.";
+        lblProg.Text = _pilaPapelera.Count > 0
+            ? $"A la Papelera. Ctrl+Z para recuperar «{Reindex.PapeleraApp.UltimoNombre}»."
+            : "Enviados a la Papelera.";
     }
     private void DeleteFolders()
     {
