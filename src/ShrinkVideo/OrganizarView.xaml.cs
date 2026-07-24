@@ -78,6 +78,7 @@ public partial class OrganizarView : UserControl
         btnSimular.Click += (_, _) => Simular();
         btnSimularGrande.Click += (_, _) => Simular();
         btnAplicar.Click += (_, _) => PedirConfirmacion();
+        btnPartirSegmentos.Click += OnPartirSegmentos;
         btnDeshacer.Click += (_, _) => DeshacerUltimoLote();
         btnDeshacerBanda.Click += (_, _) => DeshacerUltimoLote();
         btnMemoria.Click += (_, _) => AbrirMemoria();
@@ -947,6 +948,11 @@ public partial class OrganizarView : UserControl
                              "Los conflictos y las dudas nunca se tocan, estén como estén.";
         btnAceptarVerdes.IsEnabled = listos > 0;
 
+        // Partir solo tiene sentido sobre lo YA identificado y con más de una historia dentro.
+        int partibles = FilasPartibles().Count;
+        btnPartirSegmentos.IsEnabled = partibles > 0;
+        btnPartirSegmentos.Content = partibles > 0 ? $"Partir {partibles} en segmentos…" : "Partir en segmentos…";
+
         // Los que ya estaban bien se dicen aparte: si no, «383 listos · 165 por despachar» sobre
         // 548 deja 0 sin explicar y parece que se han perdido por el camino.
         int hechos = _filas.Count(f => f.SinCambios);
@@ -1379,6 +1385,115 @@ public partial class OrganizarView : UserControl
         Escribir(win.SegElegido == null
             ? $"«{fila.Original}» → episodio {ep.Num} (elegido en el explorador)."
             : $"«{fila.Original}» → historia «{win.SegElegido}» del episodio {ep.Num}.");
+    }
+
+    // ───────────────── Partir un episodio en sus mini-historias ─────────────────
+
+    /// <summary>
+    /// Las filas que se pueden partir: identificadas, sin tocar todavía y cuyo episodio trae más
+    /// de una historia. Un fichero que ya es una sola historia no se parte.
+    /// </summary>
+    private List<OrganizarRow> FilasPartibles() =>
+        _filas.Where(f => !f.Aplicado
+                          && f.Res.Episodio is { } ep && ep.TitulosSalida.Count > 1
+                          && f.Res.Archivo.SubSegmento == null
+                          && f.Res.Confianza == ReindexConfianza.Alta)
+              .ToList();
+
+    /// <summary>
+    /// Deja un fichero por mini-historia, numeradas «1a», «1b», «1c». El reparto lo decide
+    /// <see cref="SegmentSplitter"/> con los fundidos a negro y el número de historias que dice
+    /// el catálogo; el corte va sin recodificar, así que no pierde calidad y tarda un suspiro.
+    ///
+    /// Los que no tengan un corte claro se dejan como están y se listan al final: cortar a ojo
+    /// partiría una escena por la mitad.
+    /// </summary>
+    private async void OnPartirSegmentos(object sender, RoutedEventArgs e)
+    {
+        var candidatas = FilasPartibles();
+        if (candidatas.Count == 0 || _catalogoCargado == null) return;
+
+        int trozos = candidatas.Sum(f => f.Res.Episodio!.TitulosSalida.Count);
+        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Partir en segmentos",
+                $"{candidatas.Count} episodios traen varias mini-historias dentro.\n\n" +
+                $"Se van a dejar {trozos} ficheros, uno por historia, numerados 1a, 1b, 1c…\n" +
+                "El corte NO recodifica: no se pierde calidad.\n\n" +
+                "Los originales van a la Papelera (recuperables con Ctrl+Z) solo si salen todos " +
+                "sus trozos. Los que no tengan un corte claro se dejan intactos.",
+                "Partir", "Cancelar"))
+            return;
+
+        btnPartirSegmentos.IsEnabled = false;
+        var plantilla = new LibraryTemplate(txtPlantilla.Text);
+        int hechos = 0;
+        var sinCorte = new List<string>();
+
+        foreach (var fila in candidatas)
+        {
+            var ruta = fila.RutaActual;
+            var ep = fila.Res.Episodio!;
+            int n = ep.TitulosSalida.Count;
+            Escribir($"Partiendo «{Path.GetFileName(ruta)}» en {n}…");
+            try
+            {
+                var duracion = await SegmentSplitRunner.DuracionAsync(ruta);
+                var negros = await SegmentSplitRunner.DetectarNegrosAsync(ruta);
+                var plan = SegmentSplitter.Planificar(duracion, n, negros);
+                if (!plan.Fiable)
+                {
+                    sinCorte.Add(Path.GetFileName(ruta));
+                    Escribir($"  sin corte claro: {plan.Motivo}");
+                    continue;
+                }
+
+                // Se escriben con nombre temporal y solo al final se dejan con el suyo: si algo
+                // falla a medias, no queda una mezcla de trozos buenos con nombres definitivos.
+                var carpeta = Path.GetDirectoryName(ruta)!;
+                var ext = Path.GetExtension(ruta);
+                var salidas = new List<(string tmp, string final)>();
+                bool todo = true;
+                for (int i = 0; i < plan.Trozos.Count; i++)
+                {
+                    var seg = SegmentSplitter.Letra(i);
+                    var nombre = plantilla.Render(_catalogoCargado, ep, fila.Res.Archivo.ConSegmento(seg))
+                                 ?? $"{Path.GetFileNameWithoutExtension(ruta)}{seg}{ext}";
+                    var tmp = Path.Combine(carpeta, $"~part{i}_{Guid.NewGuid():N}{ext}");
+                    if (!await SegmentSplitRunner.ExtraerAsync(ruta, tmp, plan.Trozos[i]))
+                    { todo = false; break; }
+                    salidas.Add((tmp, Path.Combine(carpeta, nombre)));
+                }
+
+                if (!todo)
+                {
+                    foreach (var s in salidas) try { File.Delete(s.tmp); } catch { }
+                    sinCorte.Add(Path.GetFileName(ruta));
+                    continue;
+                }
+
+                // El original a la papelera ANTES de renombrar: uno de los trozos puede querer
+                // llamarse igual que él, y entonces el destino estaría ocupado.
+                PapeleraApp.Enviar(ruta);
+                foreach (var s in salidas)
+                {
+                    try { if (File.Exists(s.final)) File.Delete(s.final); } catch { }
+                    File.Move(s.tmp, s.final);
+                }
+                _filas.Remove(fila);
+                hechos++;
+            }
+            catch (Exception ex)
+            {
+                sinCorte.Add(Path.GetFileName(ruta));
+                Escribir($"  no se pudo partir: {ex.Message}");
+            }
+        }
+
+        ActualizarContadores();
+        Escribir(sinCorte.Count == 0
+            ? $"Partidos {hechos} episodios. Vuelve a analizar para verlos numerados por segmento."
+            : $"Partidos {hechos}. Sin corte claro ({sinCorte.Count}): {string.Join(", ", sinCorte.Take(5))}" +
+              (sinCorte.Count > 5 ? "…" : "") + " — ábrelos en Recortes y marca el corte a mano.");
+        btnPartirSegmentos.IsEnabled = FilasPartibles().Count > 0;
     }
 
     private static OrganizarRow? FilaDe(object sender) =>

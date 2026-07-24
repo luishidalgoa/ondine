@@ -125,6 +125,10 @@ public sealed class Engine
     private static string Ffmpeg => ResolveTool("ffmpeg");
     private static string Ffprobe => ResolveTool("ffprobe");
 
+    /// <summary>Las mismas herramientas ya resueltas, para quien las invoque por su cuenta.</summary>
+    public static string FfmpegPath => Ffmpeg;
+    public static string FfprobePath => Ffprobe;
+
     /// <summary>
     /// El título grabado DENTRO del contenedor (la etiqueta «title» del MKV/MP4), o null.
     /// Existe para los ficheros sin título en el nombre: el metadato suele conservarlo.

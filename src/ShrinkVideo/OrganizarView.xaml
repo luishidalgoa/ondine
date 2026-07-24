@@ -743,6 +743,12 @@
           </StackPanel>
         </Button>
 
+        <!-- Un fichero con 2-3 mini-historias se puede dejar en un fichero por historia, con la
+             numeración por segmento («1a», «1b», «1c»). El corte va sin recodificar. -->
+        <Button x:Name="btnPartirSegmentos" Style="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"
+                Content="Partir en segmentos…"
+                ToolTip="Separa los episodios que traen varias mini-historias en un fichero por historia, numerados 1a, 1b, 1c. Corta sin recodificar: no pierde calidad."/>
+
         <Button x:Name="btnDeshacer" Style="{StaticResource BtnGhostMuted}" IsEnabled="False"
                 ToolTip="Devuelve los ficheros del último lote a su nombre anterior">
           <StackPanel Orientation="Horizontal">
