@@ -49,6 +49,7 @@ public static class Program
         SegmentoRecordado();
         OrdinalDeTemporada();
         Sidecars();
+        PapeleraDeLaApp();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2039,6 +2040,50 @@ public static class Program
         var nm2 = ReindexEngine.Resolve(new[] { fuera }, cat, null, ModoPrioridad.NumeroPorTemporada)[0];
         Assert(nm2.Confianza != ReindexConfianza.Alta || nm2.Episodio == null,
             "un episodio 9 en una temporada de 3 no se inventa por el modo");
+    }
+
+    // La papelera propia de la app (#137): enviar mueve el fichero a un almacén gestionado y
+    // deshacer lo restaura EXACTO a su sitio, con su contenido, y sin pisar nada si el sitio ya
+    // volvió a ocuparse. Se prueba con ficheros de verdad en un temporal (RaizOverride).
+    private static void PapeleraDeLaApp()
+    {
+        Seccion("Papelera propia de la app (deshacer)");
+        var tmp = Path.Combine(Path.GetTempPath(), "shrink-papelera-" + Guid.NewGuid().ToString("N"));
+        var prev = ReindexStore.RaizOverride;
+        ReindexStore.RaizOverride = tmp;
+        try
+        {
+            var origen = Path.Combine(tmp, "video", "cap.mkv");
+            Directory.CreateDirectory(Path.GetDirectoryName(origen)!);
+            File.WriteAllText(origen, "contenido");
+
+            Assert(!PapeleraApp.PuedeDeshacer, "empieza vacía");
+            Assert(PapeleraApp.Enviar(origen) != null, "enviar devuelve un id");
+            Assert(!File.Exists(origen), "el fichero deja su sitio al enviarlo");
+            Assert(PapeleraApp.PuedeDeshacer, "hay algo que deshacer");
+            Eq("cap.mkv", PapeleraApp.UltimoNombre, "recuerda el nombre del último");
+
+            Eq("cap.mkv", PapeleraApp.DeshacerUltimo(), "deshacer devuelve el nombre restaurado");
+            Assert(File.Exists(origen), "el fichero vuelve EXACTAMENTE a su sitio");
+            Eq("contenido", File.ReadAllText(origen), "y con su contenido intacto");
+            Assert(!PapeleraApp.PuedeDeshacer, "tras deshacer no queda nada");
+
+            // No pisa un fichero que haya vuelto a ocupar el sitio.
+            PapeleraApp.Enviar(origen);
+            File.WriteAllText(origen, "otro");
+            Assert(PapeleraApp.DeshacerUltimo() == null, "no restaura si el sitio ya está ocupado");
+            Eq("otro", File.ReadAllText(origen), "y no pisa lo que hubiera");
+
+            // Trigger de cierre: VaciarAlCerrar finaliza todo lo pendiente y deja la papelera vacía.
+            File.WriteAllText(origen, "x2"); PapeleraApp.Enviar(origen);
+            PapeleraApp.VaciarAlCerrar();
+            Assert(!PapeleraApp.PuedeDeshacer, "vaciar al cerrar deja la papelera vacía");
+        }
+        finally
+        {
+            ReindexStore.RaizOverride = prev;
+            try { Directory.Delete(tmp, true); } catch { }
+        }
     }
 
     private static string F(string nombre, string carpeta = "S") => Path.Combine(carpeta, nombre);
