@@ -44,6 +44,23 @@ public enum ReindexHint
     OrdinalTemporada,
 }
 
+/// <summary>
+/// En qué evidencia confía el catálogo al identificar. La fiabilidad es una propiedad de la
+/// biblioteca, no global, así que esto se elige POR catálogo (opt-in). El modo por defecto no
+/// cambia nada de lo de siempre.
+/// </summary>
+public enum ModoPrioridad
+{
+    /// <summary>La cascada de siempre (número+fecha, luego título). El comportamiento por defecto.</summary>
+    Automatico,
+    /// <summary>
+    /// «El número manda»: el episodio N de la temporada T que dice el fichero se aplica directo,
+    /// sin bajar a «revisar» por un título flojo. Para bibliotecas ya bien numeradas aunque los
+    /// nombres estén sucios.
+    /// </summary>
+    NumeroPorTemporada,
+}
+
 /// <summary>Un episodio propuesto, con por qué se propone.</summary>
 public sealed class ReindexCandidato
 {
@@ -150,7 +167,8 @@ public static class ReindexEngine
     public static List<ReindexResolution> Resolve(
         IReadOnlyList<FileSignals> archivos,
         ReindexCatalog catalogo,
-        IReadOnlyDictionary<string, ReindexOverride>? overrides = null)
+        IReadOnlyDictionary<string, ReindexOverride>? overrides = null,
+        ModoPrioridad modo = ModoPrioridad.Automatico)
     {
         overrides ??= new Dictionary<string, ReindexOverride>();
         var indice = new IndiceTitulos(catalogo);
@@ -160,7 +178,7 @@ public static class ReindexEngine
         // después, cuando ya están todas. AsOrdered mantiene el orden de entrada, que es el
         // que verá el usuario en la tabla.
         var resoluciones = archivos.AsParallel().AsOrdered()
-            .Select(a => ResolverUno(a, catalogo, overrides, indice))
+            .Select(a => ResolverUno(a, catalogo, overrides, indice, modo))
             .ToList();
         Deduplicar(resoluciones);
 
@@ -180,7 +198,8 @@ public static class ReindexEngine
     // ────────────────────────── resolución de un fichero ──────────────────────────
 
     private static ReindexResolution ResolverUno(FileSignals f, ReindexCatalog cat,
-        IReadOnlyDictionary<string, ReindexOverride> overrides, IndiceTitulos indice)
+        IReadOnlyDictionary<string, ReindexOverride> overrides, IndiceTitulos indice,
+        ModoPrioridad modo = ModoPrioridad.Automatico)
     {
         var r = new ReindexResolution { Archivo = f };
 
@@ -210,6 +229,29 @@ public static class ReindexEngine
                 r.Estado = epOv.Especial ? ReindexEstado.Especial
                          : (f.Indice == epOv.Num ? ReindexEstado.Limpio : ReindexEstado.Corregido);
                 r.Motivo = "Lo decidiste tú antes";
+                return r;
+            }
+        }
+
+        // ── Modo «el número manda por temporada» (opt-in, por catálogo) ──
+        // Solo se activa si el catálogo lo pide. Quien SABE que su numeración es buena (aunque los
+        // nombres estén sucios) aplica directo el episodio N de la temporada T del fichero, sin
+        // caer en «revisar» por un título flojo. Si el fichero no trae número+temporada, o ese
+        // hueco no existe en el catálogo, se deja pasar a la cascada normal (no se inventa nada).
+        if (modo == ModoPrioridad.NumeroPorTemporada && !f.Especial
+            && f.Temporada is int temp && f.Indice is int idx && idx >= 1)
+        {
+            var porPos = cat.Regulares.Where(e => e.Temporada == temp)
+                                      .OrderBy(e => e.Num)
+                                      .ElementAtOrDefault(idx - 1);
+            if (porPos != null)
+            {
+                r.Episodio = porPos;
+                r.Hint = ReindexHint.OrdinalTemporada;
+                r.Score = 1.0;
+                r.Confianza = ReindexConfianza.Alta;
+                r.Estado = f.Indice == porPos.Num ? ReindexEstado.Limpio : ReindexEstado.Corregido;
+                r.Motivo = $"El episodio {idx} de la temporada {temp} (modo «el número manda»)";
                 return r;
             }
         }

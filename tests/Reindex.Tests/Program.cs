@@ -38,6 +38,7 @@ public static class Program
         SepararHistorias();
         TituloJuntoContraCatalogoPartido();
         MorrallaYFormatoX();
+        ModoNumeroManda();
         PeleaPorElMismoEpisodio();
         PartirEnTramos();
         ArrastrarLasJuntas();
@@ -2002,6 +2003,42 @@ public static class Program
         var r = Uno(cat, F("Bob_Esponja_5x01_Amigo_o_Enemigo_AMZN_WEB_DLtrialeng_esp_porsr_azufre.mp4"));
         Eq(81, r.Episodio?.Num, "casa el episodio 81 pese a la morralla");
         Eq(ReindexConfianza.Alta, r.Confianza, "sin morralla, el título corto casa fuerte");
+    }
+
+    // Modo opt-in «el número manda por temporada» (#127): para bibliotecas ya bien numeradas
+    // aunque los nombres estén sucios. El episodio N de la temporada T se aplica directo, sin
+    // caer en «revisar» por un título que no casa. El modo por defecto no cambia nada.
+    private static void ModoNumeroManda()
+    {
+        Seccion("Modo «el número manda por temporada» (#127)");
+        var cat = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0", "serie": "Bob Esponja", "idiomas": { "salida": "es" },
+          "episodios": [
+            { "num": 61, "temporada": 4, "titulos": { "es": ["Miedo a una Burger"] } },
+            { "num": 62, "temporada": 4, "titulos": { "es": ["El colchon perdido"] } },
+            { "num": 63, "temporada": 4, "titulos": { "es": ["Ha visto a este caracol"] } },
+            { "num": 81, "temporada": 5, "titulos": { "es": ["Amigo o Enemigo"] } }
+          ]
+        }
+        """);
+        var f = SignalExtractor.Extract(F("Bob_Esponja_4x02_zzz_titulo_que_no_casa.mkv", "Temporada 4"));
+
+        // Por defecto (automático): el número 2 no es un num del catálogo y el título no casa → NO fiable.
+        var auto = ReindexEngine.Resolve(new[] { f }, cat)[0];
+        Assert(auto.Confianza != ReindexConfianza.Alta, "en automático, un título que no casa no es fiable");
+
+        // «El número manda»: el 2.º episodio de la temporada 4 (num 62) se aplica directo.
+        var nm = ReindexEngine.Resolve(new[] { f }, cat, null, ModoPrioridad.NumeroPorTemporada)[0];
+        Eq(62, nm.Episodio?.Num, "el 2.º episodio de la temporada 4 es el num 62");
+        Eq(ReindexConfianza.Alta, nm.Confianza, "con «el número manda» se aplica sin caer en revisar");
+        Eq(ReindexEstado.Corregido, nm.Estado, "hay cambio: el fichero es 4x02, el catálogo lo numera 62");
+
+        // Si el hueco no existe (temporada 4 solo tiene 3), no se inventa: pasa a la cascada normal.
+        var fuera = SignalExtractor.Extract(F("Bob_Esponja_4x09_otro.mkv", "Temporada 4"));
+        var nm2 = ReindexEngine.Resolve(new[] { fuera }, cat, null, ModoPrioridad.NumeroPorTemporada)[0];
+        Assert(nm2.Confianza != ReindexConfianza.Alta || nm2.Episodio == null,
+            "un episodio 9 en una temporada de 3 no se inventa por el modo");
     }
 
     private static string F(string nombre, string carpeta = "S") => Path.Combine(carpeta, nombre);
