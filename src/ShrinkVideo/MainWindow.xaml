@@ -91,8 +91,17 @@
       </Border>
 
       <!-- ══ Barra de título ══ -->
+      <!-- Tres columnas para que la tira de pestañas viva en el hueco flexible del centro y
+           nunca pise ni el menú (izq., Auto) ni los botones de ventana (der., Auto): así el
+           conmutador escala a muchas más páginas —se desplaza y ofrece un menú «▾»— sin
+           romper la cabecera. -->
       <Grid Grid.Row="0" Height="40">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
           <Border Width="26" Height="26" CornerRadius="8" VerticalAlignment="Center"
                   Effect="{StaticResource HaloMarca}"><!-- el logotipo es la única pieza con neón permanente -->
             <Border.Background>
@@ -139,16 +148,27 @@
             </MenuItem>
           </Menu>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
-
-          <!-- ══ Conmutador de páginas ══ -->
-          <!-- Metáfora de páginas de oficio (DaVinci Resolve), no pestañas de documento:
-               son dos trabajos distintos sobre listas independientes, no dos vistas del
-               mismo documento. Cae dentro de los 40 px de CaptionHeight, así que necesita
-               IsHitTestVisibleInChrome (lo hereda del contenedor) o se tragaría los clics. -->
-          <Border Background="#1B1D2B" CornerRadius="9" Padding="3" Margin="0,0,10,0">
-            <StackPanel Orientation="Horizontal">
+        <!-- ══ Conmutador de páginas (columna central, flexible) ══ -->
+        <!-- Metáfora de páginas de oficio (DaVinci Resolve), no pestañas de documento: son
+             trabajos distintos sobre listas independientes, no vistas del mismo documento. Cae
+             dentro de los 40 px de CaptionHeight, así que necesita IsHitTestVisibleInChrome o se
+             tragaría los clics. La tira va en un ScrollViewer: si hubiera tantas pestañas que no
+             cupieran, se desplazan (rueda del ratón) y aparece el botón «▾» con la lista completa,
+             en vez de recortarse o pisar el resto de la cabecera. -->
+        <Grid Grid.Column="1" WindowChrome.IsHitTestVisibleInChrome="True">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <ScrollViewer x:Name="svTabs" Grid.Column="0" HorizontalScrollBarVisibility="Hidden"
+                        VerticalScrollBarVisibility="Disabled"
+                        PreviewMouseWheel="OnTabsRueda" ScrollChanged="OnTabsScroll">
+          <!-- Alineado a la derecha: con pocas pestañas quedan donde estaban (pegadas a la
+               píldora); solo cuando NO caben, el ScrollViewer las desplaza. -->
+          <Border Background="#1B1D2B" CornerRadius="9" Padding="3" Margin="0,0,4,0" HorizontalAlignment="Right">
+            <StackPanel x:Name="panelTabs" Orientation="Horizontal">
               <RadioButton x:Name="tabComprimir" Style="{StaticResource PageTab}" IsChecked="True" GroupName="pagina"
+                           Tag="Comprimir"
                            ToolTip="Comprimir vídeos: reduce el tamaño sin tocar los originales">
                 <StackPanel Orientation="Horizontal">
                   <Viewbox Width="13" Height="13" Margin="0,0,7,0">
@@ -160,6 +180,7 @@
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="tabOrganizar" Style="{StaticResource PageTab}" GroupName="pagina"
+                           Tag="Organizar"
                            ToolTip="Organizar: identifica cada episodio contra un catálogo y propone su nombre">
                 <StackPanel Orientation="Horizontal">
                   <Viewbox Width="13" Height="13" Margin="0,0,7,0">
@@ -171,6 +192,7 @@
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="tabRecortes" Style="{StaticResource PageTab}" GroupName="pagina"
+                           Tag="Recortes"
                            ToolTip="Recortes: parte un vídeo en varios o quítale un trozo">
                 <StackPanel Orientation="Horizontal">
                   <Viewbox Width="13" Height="13" Margin="0,0,7,0">
@@ -184,6 +206,20 @@
               </RadioButton>
             </StackPanel>
           </Border>
+          </ScrollViewer>
+
+          <!-- «▾»: solo aparece si las pestañas no caben; abre la lista completa de páginas -->
+          <Button x:Name="btnMasTabs" Grid.Column="1" Style="{StaticResource BtnTitle}" Visibility="Collapsed"
+                  Click="OnMasTabs" ToolTip="Ir a una página…">
+            <Path Data="M3,5 L7,9 L11,5" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                  StrokeThickness="1.4" Width="14" Height="14" Stretch="None"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Button>
+        </Grid>
+
+        <!-- ══ Grupo derecho: píldora de proceso + botones de ventana ══ -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"
+                    WindowChrome.IsHitTestVisibleInChrome="True">
 
           <!-- ══ Píldora de trabajo en segundo plano ══ -->
           <!-- Al cambiar de página la compresión sigue: si no se dijera aquí, parecería
