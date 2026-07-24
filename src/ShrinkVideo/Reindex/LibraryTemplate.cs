@@ -142,7 +142,14 @@ public sealed class LibraryTemplate
     {
         var sb = new StringBuilder(s.Length);
         foreach (var ch in s)
+        {
+            // El «|» es ilegal en un nombre de Windows, pero es el separador de historias que la
+            // gente ESCRIBE en la plantilla («<título: | >»). En vez de borrarlo —que dejaba el
+            // separador invisible— se sustituye por «┃» (barra Unicode, legal y casi idéntica).
+            // La app lee «┃» y «|» igual al reanalizar, así que el nombre sigue siendo estable.
+            if (ch == '|') { sb.Append('┃'); continue; }
             sb.Append(Array.IndexOf(Prohibidos, ch) >= 0 || char.IsControl(ch) ? ' ' : ch);
+        }
 
         var limpio = System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"\s{2,}", " ").Trim();
         // Windows no admite terminar en punto o espacio: el propio explorador los borra

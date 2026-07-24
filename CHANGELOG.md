@@ -93,6 +93,12 @@ conmutador de páginas y los arreglos de rendimiento de Recortes acumulados desd
   así que esos ficheros se identifican con confianza alta y entran en el renombrado automático —
   sin perder los que traen una sola historia, que siguen casando su título.
 
+- **El separador «|» que escribes en la plantilla ya se ve en el nombre.** El «|» es un carácter
+  ilegal en los nombres de fichero de Windows y la app lo borraba, así que el separador entre las
+  historias de un episodio no aparecía. Ahora se sustituye por «┃» (una barra Unicode legal y casi
+  idéntica), de modo que una plantilla como «<título: | >» produce «Historia A ┃ Historia B». La
+  app lee «┃» y «|» igual, así que renombrar y volver a analizar sigue dando lo mismo.
+
 - **El recuadro de selección por arrastre ya llega a los vídeos que quedan fuera de la vista.**
   Antes, al dibujar el recuadro (arrastrando con el botón izquierdo sobre la lista de Comprimir),
   solo seleccionaba lo que cabía en pantalla: si la lista era larga, no podías abarcar de un tirón
