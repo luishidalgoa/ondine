@@ -30,6 +30,36 @@
 
   <!-- ══ Conmutador de páginas «Comprimir | Organizar» ══ -->
   <!-- Metáfora de páginas de oficio (DaVinci Resolve), no pestañas de documento. -->
+  <!-- Botón compacto del conmutador de páginas: muestra la página actual y abre la lista.
+       Siempre «encendido» (fondo Surface + borde de acento), porque siempre representa dónde
+       estás. Reemplaza la tira ancha de pestañas para no comerse el header. -->
+  <Style x:Key="PageSelector" TargetType="Button">
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Padding" Value="12,6"/>
+    <Setter Property="SnapsToDevicePixels" Value="True"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="b" Background="{StaticResource Surface}" CornerRadius="7"
+                  Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="{StaticResource Accent700}">
+            <ContentPresenter VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Accent}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="b" Property="Background" Value="{StaticResource Accent900}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <Style x:Key="PageTab" TargetType="RadioButton">
     <Setter Property="Foreground" Value="{StaticResource Neutral400}"/>
     <Setter Property="FontSize" Value="12.5"/>
