@@ -4,6 +4,11 @@ Nació como relevo de HandBrake (comprimir por lotes sin pelearse con los ajuste
 herramientas: **Comprimir**, **Organizar** (poner nombre a una biblioteca a partir de un catálogo)
 y **Recortes** (partir un vídeo o quitarle un trozo).
 
+> **Hacia dónde va**: ser **la pieza que le falta a Plex y Jellyfin**. Esos servicios enseñan una
+> biblioteca preciosa, pero solo si los ficheros ya están bien nombrados y colocados; cuando no lo
+> están, se rinden. Preparar eso es lo que Organizar sabe hacer y ningún compresor hace.
+> Ver el epic [#153](https://github.com/luishidalgoa/shrink-studio/issues/153).
+
 Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 
 ## Base
@@ -47,6 +52,15 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - 🔜 Detección de **temporadas por carpeta** más lista cuando el nombre no la dice.
 - ⬜ Leer el título del **metadato** del contenedor como una señal más.
 - ⬜ Catálogos **compartibles**: exportar/importar sin duplicar trabajo.
+
+## Organizar — más allá de las series ([epic #153](https://github.com/luishidalgoa/shrink-studio/issues/153))
+- 🔜 **Tipo de biblioteca** (serie / película): hoy todo asume que son episodios, y una película no
+  tiene temporada ni número. ([#154](https://github.com/luishidalgoa/shrink-studio/issues/154))
+- ⬜ **Películas sin catálogo**: identificarlas contra una base de datos pública, porque para las
+  películas no existe una lista que importar. El reto es que el nombre del fichero es una fuente
+  poco fiable. ([#155](https://github.com/luishidalgoa/shrink-studio/issues/155))
+- ⬜ **Montar la estructura de carpetas**, no solo renombrar: hoy 200 capítulos sueltos se quedan
+  sueltos aunque queden bien nombrados. ([#156](https://github.com/luishidalgoa/shrink-studio/issues/156))
 
 ## Recortes
 - ✅ Línea de tiempo con miniaturas, marcar tramos y exportar uno por tramo.
