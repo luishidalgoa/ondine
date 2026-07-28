@@ -29,6 +29,11 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-25
+
+Saber **qué te falta**. Hasta ahora Organizar decía qué tenías; ahora también lo que no, contándolo
+por historias para que no se cuele un capítulo a medias haciéndose pasar por completo.
+
 ### Añadido
 
 - **«Qué falta»: la lista de lo que no tienes.** El catálogo ya sabe qué episodios existen y la app
