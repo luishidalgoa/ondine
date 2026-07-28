@@ -771,6 +771,12 @@
           </StackPanel>
         </Button>
 
+        <!-- El catálogo sabe qué episodios existen y la app cuáles tienes: la resta es «qué me
+             falta», y estaba ahí sin aprovechar. -->
+        <Button x:Name="btnQueFalta" Style="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"
+                Content="Qué falta…"
+                ToolTip="Compara el catálogo con lo que tienes y dice qué episodios faltan. Cuenta por historias: un capítulo del que solo tienes dos de sus tres sale como incompleto."/>
+
         <!-- Un fichero con 2-3 mini-historias se puede dejar en un fichero por historia, con la
              numeración por segmento («1a», «1b», «1c»). El corte va sin recodificar. -->
         <Button x:Name="btnPartirSegmentos" Style="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"

@@ -79,6 +79,12 @@ public partial class OrganizarView : UserControl
         btnSimularGrande.Click += (_, _) => Simular();
         btnAplicar.Click += (_, _) => PedirConfirmacion();
         btnPartirSegmentos.Click += OnPartirSegmentos;
+        btnQueFalta.Click += (_, _) =>
+        {
+            if (_catalogoCargado == null || _filas.Count == 0) return;
+            new FaltantesWindow(_catalogoCargado, _filas.Select(f => f.Res).ToList())
+            { Owner = Window.GetWindow(this) }.ShowDialog();
+        };
         btnDeshacer.Click += (_, _) => DeshacerUltimoLote();
         btnDeshacerBanda.Click += (_, _) => DeshacerUltimoLote();
         btnMemoria.Click += (_, _) => AbrirMemoria();
@@ -996,6 +1002,9 @@ public partial class OrganizarView : UserControl
         btnAceptarVerdes.IsEnabled = listos > 0;
 
         // Partir solo tiene sentido sobre lo YA identificado y con más de una historia dentro.
+        // Comparar con el catálogo solo tiene sentido cuando hay algo analizado.
+        btnQueFalta.IsEnabled = _catalogoCargado != null && _filas.Count > 0;
+
         int partibles = FilasPartibles().Count;
         btnPartirSegmentos.IsEnabled = partibles > 0;
         btnPartirSegmentos.Content = partibles > 0 ? $"Partir {partibles} en segmentos…" : "Partir en segmentos…";
