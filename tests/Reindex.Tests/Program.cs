@@ -52,6 +52,7 @@ public static class Program
         PapeleraDeLaApp();
         CortesPorSegmento();
         HistoriasDeEpisodiosDistintos();
+        QueMeFalta();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2260,6 +2261,84 @@ public static class Program
         });
         Assert(p7.Fiable, "acepta los fundidos en cualquier orden");
         Assert(p7.Trozos[0].Hasta < p7.Trozos[1].Hasta, "y devuelve los trozos en orden");
+    }
+
+    // ───────────────── Qué falta en la biblioteca ─────────────────
+
+    private static void QueMeFalta()
+    {
+        Seccion("Qué falta en la biblioteca");
+
+        var cat = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0", "serie": "Serie",
+          "episodios": [
+            { "num": 1, "temporada": 1, "titulos": { "es": ["Uno a", "Uno b", "Uno c"] } },
+            { "num": 2, "temporada": 1, "titulos": { "es": ["Dos a", "Dos b"] } },
+            { "num": 3, "temporada": 1, "titulos": { "es": ["Tres entero"] } },
+            { "num": 4, "temporada": 2, "titulos": { "es": ["Cuatro a", "Cuatro b"] } },
+            { "num": 90, "temporada": 1, "especial": true, "titulos": { "es": ["Un especial"] } }
+          ]
+        }
+        """);
+
+        // Un fichero SIN letra cubre el episodio ENTERO, aunque traiga tres historias dentro:
+        // es el caso normal de una biblioteca sin partir.
+        var r1 = new ReindexResolution { Archivo = SignalExtractor.Extract("uno.mkv", "T1") }
+            .Con(cat, 1);
+        // De los tres trozos del episodio 2 solo está el primero.
+        var r2a = new ReindexResolution { Archivo = SignalExtractor.Extract("dos.mkv", "T1").ConSegmento("a") }
+            .Con(cat, 2);
+
+        var informe = CoberturaCatalogo.Calcular(cat, new[] { r1, r2a });
+
+        Eq(1, informe.Huecos.Count(h => h.Episodio.Num == 2), "el episodio a medias sale como hueco");
+        var medio = informe.Huecos.First(h => h.Episodio.Num == 2);
+        Assert(!medio.Entero, "y NO se marca como que falta entero");
+        Eq(1, medio.Faltan.Count, "solo falta una historia");
+        Eq("b", medio.Faltan[0], "la «b», que es la que no está");
+
+        Assert(informe.Huecos.All(h => h.Episodio.Num != 1),
+            "el episodio con el fichero completo NO aparece como hueco");
+
+        var tres = informe.Huecos.FirstOrDefault(h => h.Episodio.Num == 3);
+        Assert(tres != null && tres.Entero, "un episodio del que no hay nada falta ENTERO");
+
+        // Por defecto solo se miran las temporadas de las que hay ALGO: si tienes la 1 y el
+        // catálogo trae 16, listar las otras 15 enteras es ruido, no información.
+        Assert(informe.Huecos.All(h => h.Episodio.Temporada == 1),
+            "no se listan las temporadas de las que no hay ni un fichero");
+        var todo = CoberturaCatalogo.Calcular(cat, new[] { r1, r2a }, soloTemporadasConAlgo: false);
+        Assert(todo.Huecos.Any(h => h.Episodio.Temporada == 2),
+            "pidiéndolo, sí se listan las temporadas que no has empezado");
+
+        // Los especiales se cuentan aparte: casi nadie los tiene completos y ensucian el recuento.
+        Assert(informe.Huecos.All(h => !h.Episodio.Especial), "los especiales no se mezclan con los normales");
+        Eq(1, informe.EspecialesQueFaltan, "pero se dice cuántos faltan");
+
+        // Un fichero que trae DOS historias marcadas («bc») cubre las dos.
+        var r4 = new ReindexResolution { Archivo = SignalExtractor.Extract("cuatro.mkv", "T2").ConSegmento("ab") }
+            .Con(cat, 4);
+        var t2 = CoberturaCatalogo.Calcular(cat, new[] { r4 });
+        Assert(t2.Huecos.All(h => h.Episodio.Num != 4), "un fichero con «ab» cubre las dos historias");
+
+        // El resumen sirve para el rótulo de la pantalla.
+        Eq(6, informe.SegmentosTotales, "cuenta los segmentos de las temporadas miradas");
+        Eq(4, informe.SegmentosPresentes, "y cuántos hay (3 del uno + 1 del dos)");
+
+        // Una resolución sin identificar no cuenta como que cubre nada.
+        var suelto = new ReindexResolution { Archivo = SignalExtractor.Extract("vete a saber.mkv", "T1") };
+        var conSuelto = CoberturaCatalogo.Calcular(cat, new[] { r1, r2a, suelto });
+        Eq(informe.Huecos.Count, conSuelto.Huecos.Count, "un fichero sin identificar no tapa ningún hueco");
+    }
+
+    /// <summary>Atajo de los tests: deja la resolución apuntando a un episodio del catálogo.</summary>
+    private static ReindexResolution Con(this ReindexResolution r, ReindexCatalog cat, int num)
+    {
+        r.Episodio = cat.Regulares.Concat(cat.Especiales).First(e => e.Num == num);
+        r.Confianza = ReindexConfianza.Alta;
+        r.Estado = ReindexEstado.Corregido;
+        return r;
     }
 
     // ────────── Un fichero con historias de episodios DISTINTOS (1b + 2b) ──────────

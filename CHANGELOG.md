@@ -29,6 +29,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **«Qué falta»: la lista de lo que no tienes.** El catálogo ya sabe qué episodios existen y la app
+  cuáles has identificado, así que la resta estaba ahí sin aprovechar. Un botón nuevo en Organizar
+  compara las dos cosas y lista lo que no está. Lo cuenta **por historias, no por capítulos**: si un
+  capítulo trae tres mini-historias y solo tienes dos, sale como **«a medias»** — algo que mirando
+  la carpeta parece completo y no lo está. Por defecto solo mira las temporadas que has empezado
+  (listar las que ni has tocado no informa de nada), se puede pedir que incluya las demás, y la
+  lista se copia al portapapeles. Los especiales se cuentan aparte.
+
 ## [1.1.0] - 2026-07-24
 
 Versión centrada en **Organizar**: separar los capítulos que traen varias mini-historias, decidir a
