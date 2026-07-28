@@ -37,17 +37,51 @@ public partial class FaltantesWindow : Window
         chkTodas.Checked += (_, _) => Pintar();
         chkTodas.Unchecked += (_, _) => Pintar();
         btnCopiar.Click += (_, _) => Copiar();
+
+        // El rótulo depende de cómo numere el catálogo: hay series que van por año de emisión y
+        // ahí «Temporada 2005» chirría — es el año.
+        _porAnio = CoberturaCatalogo.TemporadasSonAnios(catalogo);
+        lblTemporada.Text = _porAnio ? "Año" : "Temporada";
+
+        cboTemporada.Items.Add(_porAnio ? "Todos los años" : "Todas las temporadas");
+        foreach (var t in CoberturaCatalogo.TemporadasDe(catalogo))
+            cboTemporada.Items.Add(_porAnio ? t.ToString() : $"Temporada {t}");
+        cboTemporada.SelectedIndex = 0;
+        cboTemporada.SelectionChanged += (_, _) => Pintar();
+
         Pintar();
+    }
+
+    private readonly bool _porAnio;
+
+    /// <summary>La temporada elegida, o null si están todas (el primer elemento de la lista).</summary>
+    private int? TemporadaElegida
+    {
+        get
+        {
+            if (cboTemporada.SelectedIndex <= 0) return null;
+            var todas = CoberturaCatalogo.TemporadasDe(_catalogo);
+            int i = cboTemporada.SelectedIndex - 1;
+            return i >= 0 && i < todas.Count ? todas[i] : null;
+        }
     }
 
     private CoberturaCatalogo.Informe _informe = null!;
 
     private void Pintar()
     {
+        var temporada = TemporadaElegida;
         _informe = CoberturaCatalogo.Calcular(_catalogo, _resoluciones,
-            soloTemporadasConAlgo: chkTodas.IsChecked != true);
+            soloTemporadasConAlgo: chkTodas.IsChecked != true,
+            temporada: temporada);
 
-        lblResumen.Text = _informe.Resumen;
+        // Con una temporada elegida, la casilla de «incluir las que no he empezado» no pinta
+        // nada: ya estás mirando una concreta, esté empezada o no.
+        chkTodas.IsEnabled = temporada == null;
+
+        lblResumen.Text = temporada == null
+            ? _informe.Resumen
+            : $"{(_porAnio ? "Año" : "Temporada")} {temporada}: {_informe.Resumen}";
         lblEspeciales.Text = _informe.EspecialesQueFaltan > 0
             ? $"Aparte, faltan {_informe.EspecialesQueFaltan} especial(es). Se cuentan por separado " +
               "porque casi nadie los tiene completos."
@@ -56,9 +90,11 @@ public partial class FaltantesWindow : Window
         btnCopiar.IsEnabled = _informe.Huecos.Count > 0;
 
         if (_informe.Huecos.Count == 0)
-            lblPie.Text = chkTodas.IsChecked == true
-                ? "No falta nada del catálogo entero."
-                : "No falta nada de las temporadas que has empezado.";
+            lblPie.Text = temporada != null
+                ? $"No falta nada de {(_porAnio ? "" : "la temporada ")}{temporada}."
+                : chkTodas.IsChecked == true
+                    ? "No falta nada del catálogo entero."
+                    : "No falta nada de las temporadas que has empezado.";
         else
             lblPie.Text = "Se cuenta por historias: un capítulo con tres y solo dos en disco sale como incompleto.";
     }

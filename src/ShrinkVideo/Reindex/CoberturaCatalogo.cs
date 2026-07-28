@@ -55,9 +55,30 @@ public static class CoberturaCatalogo
     /// <paramref name="soloTemporadasConAlgo"/> a false salen todas, para cuando lo que quieres es
     /// justo saber qué te queda por conseguir.
     /// </summary>
+    /// <summary>Las temporadas del catálogo, en orden, para ofrecerlas donde haga falta elegir.</summary>
+    public static IReadOnlyList<int> TemporadasDe(ReindexCatalog catalogo) =>
+        catalogo.Regulares.Where(e => e.Temporada.HasValue).Select(e => e.Temporada!.Value)
+                .Distinct().OrderBy(t => t).ToList();
+
+    /// <summary>
+    /// ¿Este catálogo numera las temporadas por AÑO? Doraemon (2005) lo hace, y ahí poner
+    /// «Temporada 2005» chirría: es el año de emisión. Se mira si todas caen en un rango de años
+    /// creíble, que es lo único que distingue un 2005-temporada de un 2005-año.
+    /// </summary>
+    public static bool TemporadasSonAnios(ReindexCatalog catalogo)
+    {
+        var t = TemporadasDe(catalogo);
+        return t.Count > 0 && t.All(x => x >= 1900 && x <= 2200);
+    }
+
+    /// <param name="temporada">
+    /// Si se indica, se mira SOLO esa temporada y las cuentas son suyas. Con 16 temporadas, «qué
+    /// falta» en bloque no dice mucho; lo útil es saber qué queda de la que estás completando.
+    /// </param>
     public static Informe Calcular(ReindexCatalog catalogo,
                                    IReadOnlyList<ReindexResolution> resoluciones,
-                                   bool soloTemporadasConAlgo = true)
+                                   bool soloTemporadasConAlgo = true,
+                                   int? temporada = null)
     {
         // Qué segmentos cubre cada episodio. Sin letra, el fichero es el episodio entero.
         var cubierto = new Dictionary<int, HashSet<int>>();
@@ -91,7 +112,9 @@ public static class CoberturaCatalogo
 
         foreach (var ep in catalogo.Regulares.OrderBy(e => e.Num))
         {
-            if (soloTemporadasConAlgo && ep.Temporada.HasValue &&
+            // Con una temporada pedida, manda ella: el resto ni se mira, ni para las cuentas.
+            if (temporada.HasValue && ep.Temporada != temporada.Value) continue;
+            if (!temporada.HasValue && soloTemporadasConAlgo && ep.Temporada.HasValue &&
                 !temporadasConAlgo.Contains(ep.Temporada.Value)) continue;
 
             int cuantos = Math.Max(1, ep.TitulosSalida.Count);

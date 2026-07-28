@@ -2330,6 +2330,34 @@ public static class Program
         var suelto = new ReindexResolution { Archivo = SignalExtractor.Extract("vete a saber.mkv", "T1") };
         var conSuelto = CoberturaCatalogo.Calcular(cat, new[] { r1, r2a, suelto });
         Eq(informe.Huecos.Count, conSuelto.Huecos.Count, "un fichero sin identificar no tapa ningún hueco");
+
+        // — mirar UNA temporada concreta —
+        // Con 16 temporadas, «qué falta» en bloque no sirve para nada práctico: lo que quieres
+        // saber es qué te falta de la que estás completando ahora.
+        var soloT2 = CoberturaCatalogo.Calcular(cat, new[] { r1, r2a },
+            soloTemporadasConAlgo: false, temporada: 2);
+        Assert(soloT2.Huecos.All(h => h.Episodio.Temporada == 2), "filtra por la temporada pedida");
+        Eq(2, soloT2.SegmentosTotales, "y las cuentas son SOLO de esa temporada");
+        Eq(0, soloT2.SegmentosPresentes, "de la 2 no hay nada");
+
+        var soloT1 = CoberturaCatalogo.Calcular(cat, new[] { r1, r2a }, temporada: 1);
+        Eq(6, soloT1.SegmentosTotales, "de la 1 hay 6 historias");
+        Eq(4, soloT1.SegmentosPresentes, "de las que tienes 4");
+
+        // Qué temporadas ofrecer en el desplegable, en orden.
+        var todas = CoberturaCatalogo.TemporadasDe(cat);
+        Eq(2, todas.Count, "lista las temporadas del catálogo");
+        Eq(1, todas[0], "en orden");
+
+        // — «temporada» o «año», según cómo las numere el catálogo —
+        // Hay series que numeran por AÑO (Doraemon 2005): llamarle «Temporada 2005» chirría.
+        Assert(!CoberturaCatalogo.TemporadasSonAnios(cat), "1 y 2 son temporadas, no años");
+        var porAnio = ReindexCatalog.Parse("""
+        { "esquema": "reindex/1.0", "serie": "Otra", "episodios": [
+          { "num": 1, "temporada": 2005, "titulos": { "es": ["Uno"] } },
+          { "num": 2, "temporada": 2006, "titulos": { "es": ["Dos"] } } ] }
+        """);
+        Assert(CoberturaCatalogo.TemporadasSonAnios(porAnio), "2005 y 2006 son años");
     }
 
     /// <summary>Atajo de los tests: deja la resolución apuntando a un episodio del catálogo.</summary>
