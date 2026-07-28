@@ -32,6 +32,14 @@
       <!-- Resumen y el interruptor de alcance: por defecto solo se miran las temporadas de las
            que hay algo, porque listar las que ni has empezado no informa de nada. -->
       <StackPanel Grid.Row="1" Margin="16,4,16,10">
+        <!-- Mirar UNA temporada es lo normal: con 16, «qué falta» en bloque no dice mucho; lo
+             útil es qué queda de la que estás completando. El rótulo dice «Temporada» o «Año»
+             según cómo las numere el catálogo (hay series que van por año de emisión). -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+          <TextBlock x:Name="lblTemporada" Text="Temporada" FontSize="12" VerticalAlignment="Center"
+                     Foreground="{StaticResource Neutral400}" Margin="0,0,8,0"/>
+          <ComboBox x:Name="cboTemporada" MinWidth="150" Height="30" VerticalContentAlignment="Center"/>
+        </StackPanel>
         <TextBlock x:Name="lblResumen" FontSize="13" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
         <TextBlock x:Name="lblEspeciales" FontSize="11.5" Margin="0,3,0,0"
                    Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>

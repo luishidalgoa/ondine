@@ -38,6 +38,9 @@ es un acuerdo de buena voluntad: está verificado.
   la carpeta parece completo y no lo está. Por defecto solo mira las temporadas que has empezado
   (listar las que ni has tocado no informa de nada), se puede pedir que incluya las demás, y la
   lista se copia al portapapeles. Los especiales se cuentan aparte.
+  Se puede **mirar una temporada concreta** —que es lo normal cuando estás completando una— y el
+  desplegable dice «Temporada» o «Año» según cómo las numere tu catálogo, porque hay series que van
+  por año de emisión y ahí «Temporada 2005» no se entiende.
 
 ## [1.1.0] - 2026-07-24
 
