@@ -143,6 +143,7 @@ public partial class MainWindow : Window
         miCtxRecycle.Click += (_, _) => DeleteSelected();
         miCtxOpenFolder.Click += (_, _) => OpenContainingFolder();
         miCtxCopyPath.Click += (_, _) => CopySelectedPaths();
+        miCtxPistas.Click += async (_, _) => await QuitarPistasDeSeleccionado();
         miCtxSelectAll.Click += (_, _) => lst.SelectAll();
         miCtxInvert.Click += (_, _) => InvertSelection();
 
@@ -725,6 +726,44 @@ public partial class MainWindow : Window
         lblProg.Text = sel.Count == 1
             ? "1 vídeo quitado de la lista (el archivo sigue en su sitio)."
             : $"{sel.Count} vídeos quitados de la lista (los archivos siguen en su sitio).";
+    }
+
+    /// <summary>
+    /// Quitar pistas del fichero seleccionado SIN recomprimir. Es de uno en uno a propósito: las
+    /// pistas de cada fichero son distintas (idiomas, orden), y aplicar «quita la segunda de
+    /// audio» en bloque se llevaría por delante la equivocada en cuanto uno no coincida.
+    /// </summary>
+    private async Task QuitarPistasDeSeleccionado()
+    {
+        if (SelectedRows().FirstOrDefault() is not { } r || !File.Exists(r.Path)) return;
+
+        lblProg.Text = "Leyendo las pistas…";
+        var (pistas, dur) = await _engine.PistasDeAsync(r.Path);
+        if (pistas.Count == 0)
+        {
+            lblProg.Text = "";
+            DialogWindow.Aviso(this, "Pistas", "No se han podido leer las pistas de este fichero.");
+            return;
+        }
+        if (pistas.Count(p => p.Tipo != TipoPista.Video) == 0)
+        {
+            lblProg.Text = "";
+            DialogWindow.Aviso(this, "Pistas",
+                "Este fichero solo trae vídeo: no hay pistas de audio ni de subtítulos que quitar.");
+            return;
+        }
+
+        lblProg.Text = "";
+        var win = new PistasWindow(_engine, r.Path, pistas, dur) { Owner = this };
+        win.ShowDialog();
+        if (!win.SeCambioAlgo) return;
+
+        // El fichero es OTRO: pesa menos y tiene otras pistas. La fila se rehace en vez de
+        // parchearla —su tamaño es de solo lectura— y así vuelve a sondearse con lo que hay ahora.
+        var ruta = r.Path;
+        _rows.Remove(r);
+        await AddFilesAsync(new[] { ruta });
+        lblProg.Text = $"Pistas quitadas de «{Path.GetFileName(ruta)}».";
     }
 
     private void UpdateContextMenu()

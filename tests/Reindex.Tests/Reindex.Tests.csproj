@@ -19,6 +19,8 @@
   -->
   <ItemGroup>
     <Compile Include="..\..\src\ShrinkVideo\Reindex\*.cs" LinkBase="Reindex" />
+    <!-- Igual que Reindex: lógica sin WPF ni ffmpeg, así que entra en el arnés y corre en CI. -->
+    <Compile Include="..\..\src\ShrinkVideo\Pistas\*.cs" LinkBase="Pistas" />
   </ItemGroup>
 
 </Project>
