@@ -14,7 +14,22 @@ public sealed record Pista(
     int? Canales,
     long? BitsPorSegundo)
 {
-    /// <summary>«Audio · aac · spa · 2 canales · 128 kbps» — lo que se lee para decidir.</summary>
+    /// <summary>El título que trae la pista («Castellano AMZN», «Forzados»), si lo trae.</summary>
+    public string Titulo { get; init; } = "";
+
+    /// <summary>La que el reproductor pone por defecto.</summary>
+    public bool EsPredeterminada { get; init; }
+
+    /// <summary>Subtítulos «forzados»: solo traducen lo imprescindible, no todo el diálogo.</summary>
+    public bool EsForzada { get; init; }
+
+    /// <summary>
+    /// «Audio · Español · «Castellano AMZN» · 2 canales · 128 kbps · aac · predeterminada».
+    ///
+    /// El orden no es casual: primero lo que te dice QUÉ es (tipo, idioma, título) y al final el
+    /// detalle técnico. Un código como «spa» no sirve para elegir, y lo que sobra —un idioma sin
+    /// declarar, un caudal de cero— no se enseña: parece un error y no aporta.
+    /// </summary>
     public string Resumen
     {
         get
@@ -29,10 +44,16 @@ public sealed record Pista(
                     _ => "Otra",
                 },
             };
-            if (Codec.Length > 0) partes.Add(Codec);
-            if (Idioma.Length > 0) partes.Add(Idioma);
+            var idioma = Idiomas.Nombre(Idioma);
+            if (idioma.Length > 0) partes.Add(idioma);
+            if (Titulo.Length > 0) partes.Add($"«{Titulo}»");
+            if (EsForzada) partes.Add("forzados");
             if (Canales is > 0) partes.Add($"{Canales} canales");
-            if (BitsPorSegundo is > 0) partes.Add($"{BitsPorSegundo / 1000} kbps");
+            // A partir de 1 kbps: un subtítulo de texto declara ~76 bps y sacar «0 kbps» es tan
+            // confuso como sacar el cero a secas.
+            if (BitsPorSegundo is >= 1000) partes.Add($"{BitsPorSegundo / 1000} kbps");
+            if (Codec.Length > 0) partes.Add(Codec);
+            if (EsPredeterminada) partes.Add("predeterminada");
             return string.Join(" · ", partes);
         }
     }
