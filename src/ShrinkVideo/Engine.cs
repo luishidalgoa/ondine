@@ -24,9 +24,21 @@ internal sealed class FfStream
     [JsonPropertyName("r_frame_rate")] public string? RFrameRate { get; set; }
     [JsonPropertyName("channels")] public int? Channels { get; set; }
     [JsonPropertyName("tags")] public FfTags? Tags { get; set; }
+    [JsonPropertyName("disposition")] public FfDisposition? Disposition { get; set; }
     public string Lang => Tags?.Language ?? "";
+    /// <summary>El título puesto a mano en la pista («Castellano AMZN»): lo que mejor la identifica.</summary>
+    public string Titulo => Tags?.Title ?? "";
 }
-internal sealed class FfTags { [JsonPropertyName("language")] public string? Language { get; set; } }
+internal sealed class FfTags
+{
+    [JsonPropertyName("language")] public string? Language { get; set; }
+    [JsonPropertyName("title")] public string? Title { get; set; }
+}
+internal sealed class FfDisposition
+{
+    [JsonPropertyName("default")] public int Default { get; set; }
+    [JsonPropertyName("forced")] public int Forced { get; set; }
+}
 
 /// <summary>
 /// Contexto de serialización generado en compilación. Permite publicar el binario
@@ -325,7 +337,12 @@ public sealed class Engine
                 _ => TipoPista.Otro,
             };
             long? bps = long.TryParse(s.BitRate, out var b) ? b : null;
-            lista.Add(new Pista(s.Index, tipo, s.CodecName, s.Lang, s.Channels, bps));
+            lista.Add(new Pista(s.Index, tipo, s.CodecName, s.Lang, s.Channels, bps)
+            {
+                Titulo = s.Titulo,
+                EsPredeterminada = s.Disposition?.Default == 1,
+                EsForzada = s.Disposition?.Forced == 1,
+            });
         }
         return (lista, dur);
     }
@@ -422,7 +439,10 @@ public sealed class Engine
         var (code, stdout, _) = await RunAsync(Ffprobe, new[]
         {
             "-v", "error",
-            "-show_entries", "stream=index,codec_type,codec_name,width,height,bit_rate,r_frame_rate,channels:stream_tags=language:format=bit_rate,duration,size",
+            // El «title» y el «disposition» son para poder distinguir las pistas al quitarlas:
+            // «spa» a secas no dice si es el doblaje bueno, y en subtítulos importa saber si son
+            // los forzados o los completos.
+            "-show_entries", "stream=index,codec_type,codec_name,width,height,bit_rate,r_frame_rate,channels,disposition:stream_tags=language,title:format=bit_rate,duration,size",
             "-of", "json", "--", path
         });
         if (code != 0 || string.IsNullOrWhiteSpace(stdout)) return null;

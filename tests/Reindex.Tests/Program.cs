@@ -2311,10 +2311,43 @@ public static class Program
         var soloSubs = SelectorDePistas.Planificar(pistas, new[] { 4 });
         Eq(0L, soloSubs.BytesQueSeAhorran(1357), "quitar un subtítulo de texto no promete ahorro");
 
-        // El resumen de cada pista, que es lo que se enseña para elegir.
-        Eq("Audio · aac · spa · 2 canales · 128 kbps", pistas[1].Resumen, "describe una pista de audio");
-        Eq("Subtítulo · mov_text · eng", pistas[4].Resumen, "y una de subtítulos");
-        Eq("Vídeo · hevc", pistas[0].Resumen, "y la de vídeo");
+        // — el resumen tiene que ser LEGIBLE —
+        // «spa», «eng», «por» no le dicen nada a nadie: si no sabes qué doblaje es cada uno, no
+        // puedes elegir. El idioma se escribe con su nombre.
+        Eq("Audio · Español · 2 canales · 128 kbps · aac", pistas[1].Resumen, "el idioma va con su nombre");
+        Eq("Subtítulo · Inglés · mov_text", pistas[4].Resumen, "y en los subtítulos igual");
+        // «und» (sin declarar) es lo que trae casi todo el vídeo: decirlo solo mete ruido.
+        Eq("Vídeo · hevc", new Pista(0, TipoPista.Video, "hevc", "und", null, null).Resumen,
+            "un idioma «und» no se enseña");
+        // Un caudal de 0 parece un error; mejor no decir nada.
+        Eq("Subtítulo · Inglés · mov_text",
+            new Pista(9, TipoPista.Subtitulo, "mov_text", "eng", null, 0).Resumen,
+            "no se enseña «0 kbps»");
+        // Y 76 bps —el caudal real de un subtítulo de texto— tampoco puede salir como «0 kbps»:
+        // redondear a cero y enseñarlo es exactamente el mismo error.
+        Eq("Subtítulo · Inglés · mov_text",
+            new Pista(9, TipoPista.Subtitulo, "mov_text", "eng", null, 76).Resumen,
+            "un caudal que no llega a 1 kbps no se enseña");
+
+        // Cualificado porque en este arnés ya hay una sección de tests llamada «Idiomas».
+        Eq("Español", ShrinkVideo.Idiomas.Nombre("spa"), "spa");
+        Eq("Inglés", ShrinkVideo.Idiomas.Nombre("eng"), "eng");
+        Eq("Portugués", ShrinkVideo.Idiomas.Nombre("por"), "por");
+        Eq("Japonés", ShrinkVideo.Idiomas.Nombre("jpn"), "jpn");
+        Eq("", ShrinkVideo.Idiomas.Nombre("und"), "«und» no es un idioma que enseñar");
+        Eq("zzz", ShrinkVideo.Idiomas.Nombre("zzz"), "un código que no conocemos se deja tal cual");
+
+        // — el título de la pista y las marcas son lo que de verdad distingue —
+        // Muchos ficheros traen un título puesto a mano («Castellano AMZN», «Forzados») y es la
+        // pista más útil para saber cuál es cuál. Y en subtítulos, «forzados» frente a completos
+        // cambia por completo si te sobran o no.
+        var conTitulo = new Pista(1, TipoPista.Audio, "aac", "spa", 2, 128_000)
+        { Titulo = "Castellano AMZN", EsPredeterminada = true };
+        Assert(conTitulo.Resumen.Contains("«Castellano AMZN»"), "el título de la pista se enseña");
+        Assert(conTitulo.Resumen.Contains("predeterminada"), "y que es la predeterminada");
+
+        var forzados = new Pista(3, TipoPista.Subtitulo, "subrip", "spa", null, null) { EsForzada = true };
+        Assert(forzados.Resumen.Contains("forzados"), "los subtítulos forzados se marcan como tal");
 
         // Quitarlo TODO menos el vídeo es legítimo (deja el vídeo mudo), pero hay que avisar.
         var mudo = SelectorDePistas.Planificar(pistas, new[] { 1, 2 });
