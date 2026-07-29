@@ -387,6 +387,11 @@
                   <MenuItem x:Name="miCtxRemove" Header="Quitar de la lista" InputGestureText="Supr"/>
                   <MenuItem x:Name="miCtxRecycle" Header="Enviar el archivo a la Papelera…"/>
                   <Separator/>
+                  <!-- Quitar un doblaje o unos subtítulos que no vas a usar NO necesita
+                       recomprimir: se reempaqueta copiando los datos, en segundos y sin tocar
+                       la imagen. Y un fichero con cinco audios lleva cientos de megas de más. -->
+                  <MenuItem x:Name="miCtxPistas" Header="Quitar pistas de audio o subtítulos…"/>
+                  <Separator/>
                   <MenuItem x:Name="miCtxOpenFolder" Header="Abrir carpeta contenedora"/>
                   <MenuItem x:Name="miCtxCopyPath" Header="Copiar ruta"/>
                   <Separator/>

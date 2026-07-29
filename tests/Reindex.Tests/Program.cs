@@ -53,6 +53,7 @@ public static class Program
         CortesPorSegmento();
         HistoriasDeEpisodiosDistintos();
         QueMeFalta();
+        QuitarPistas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2261,6 +2262,64 @@ public static class Program
         });
         Assert(p7.Fiable, "acepta los fundidos en cualquier orden");
         Assert(p7.Trozos[0].Hasta < p7.Trozos[1].Hasta, "y devuelve los trozos en orden");
+    }
+
+    // ───────────── Quitar pistas sin recomprimir (remux) ─────────────
+
+    private static void QuitarPistas()
+    {
+        Seccion("Quitar pistas sin recomprimir");
+
+        // Las pistas de un fichero real del usuario: video HEVC + 2 audios + 2 subtitulos.
+        var pistas = new List<Pista>
+        {
+            new(0, TipoPista.Video,     "hevc",     "",    null, null),
+            new(1, TipoPista.Audio,     "aac",      "spa",  2,   128_000),
+            new(2, TipoPista.Audio,     "aac",      "eng",  2,   128_000),
+            new(3, TipoPista.Subtitulo, "mov_text", "spa", null, null),
+            new(4, TipoPista.Subtitulo, "mov_text", "eng", null, null),
+        };
+
+        // Quitar el audio inglés: se mapea por índice ABSOLUTO lo que se conserva. Es inequívoco,
+        // frente a «-map -0:a:1» que obliga a contar pistas del mismo tipo y se lía con los huecos.
+        var plan = SelectorDePistas.Planificar(pistas, new[] { 2 });
+        Assert(plan.HayCambios, "quitar una pista es un cambio");
+        var args = plan.Argumentos("entrada.mkv", "salida.mkv");
+        Assert(args.Contains("-map") && args.Contains("0:0") && args.Contains("0:1"),
+            "conserva el vídeo y el audio que se queda");
+        Assert(!args.Contains("0:2"), "y NO mapea la que se quita");
+        Assert(args.Contains("copy"), "copia los paquetes: no recodifica nada");
+        Assert(!args.Any(a => a.Contains("libx") || a.Contains("crf")),
+            "no aparece ningún ajuste de codificación");
+
+        // El vídeo no se puede quitar: sin él no queda un vídeo, queda otra cosa.
+        var sinVideo = SelectorDePistas.Planificar(pistas, new[] { 0, 2 });
+        Assert(sinVideo.Conservadas.Any(p => p.Tipo == TipoPista.Video),
+            "la pista de vídeo se conserva aunque se pida quitarla");
+
+        // Sin nada marcado no hay trabajo: no se debe reescribir el fichero por gusto.
+        Assert(!SelectorDePistas.Planificar(pistas, Array.Empty<int>()).HayCambios,
+            "sin pistas marcadas no hay cambios");
+
+        // Cuánto se ahorra: es el argumento para hacerlo, así que hay que poder decirlo antes.
+        // 128 kbps durante 1357 s ≈ 21,7 MB.
+        long ahorro = plan.BytesQueSeAhorran(1357);
+        Assert(ahorro > 20_000_000 && ahorro < 23_000_000,
+            $"estima el ahorro del audio quitado (salió {ahorro})");
+
+        // Un subtítulo de texto pesa una miseria: no se debe prometer un ahorro que no existe.
+        var soloSubs = SelectorDePistas.Planificar(pistas, new[] { 4 });
+        Eq(0L, soloSubs.BytesQueSeAhorran(1357), "quitar un subtítulo de texto no promete ahorro");
+
+        // El resumen de cada pista, que es lo que se enseña para elegir.
+        Eq("Audio · aac · spa · 2 canales · 128 kbps", pistas[1].Resumen, "describe una pista de audio");
+        Eq("Subtítulo · mov_text · eng", pistas[4].Resumen, "y una de subtítulos");
+        Eq("Vídeo · hevc", pistas[0].Resumen, "y la de vídeo");
+
+        // Quitarlo TODO menos el vídeo es legítimo (deja el vídeo mudo), pero hay que avisar.
+        var mudo = SelectorDePistas.Planificar(pistas, new[] { 1, 2 });
+        Assert(mudo.QuedaSinAudio, "avisa de que el resultado se queda sin audio");
+        Assert(!plan.QuedaSinAudio, "y no avisa cuando queda alguno");
     }
 
     // ───────────────── Qué falta en la biblioteca ─────────────────

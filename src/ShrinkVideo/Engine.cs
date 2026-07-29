@@ -301,6 +301,73 @@ public sealed class Engine
     }
 
     // ---------- análisis de pistas (para el scan de la UI) ----------
+    /// <summary>
+    /// Todas las pistas del fichero, con su índice absoluto, para poder quitar alguna sin
+    /// recomprimir (ver <see cref="SelectorDePistas"/>). Las portadas incrustadas se dejan fuera:
+    /// son imágenes que ffprobe declara como vídeo y no son una pista que nadie quiera tocar.
+    /// </summary>
+    public async Task<(IReadOnlyList<Pista> Pistas, int DuracionSeg)> PistasDeAsync(string path)
+    {
+        var pr = await ProbeFullAsync(path);
+        if (pr == null) return (Array.Empty<Pista>(), 0);
+
+        int dur = double.TryParse(pr.Format?.Duration, System.Globalization.CultureInfo.InvariantCulture,
+                                  out var d) ? (int)d : 0;
+        var lista = new List<Pista>();
+        foreach (var s in pr.Streams)
+        {
+            if (s.CodecType == "video" && CoverCodecs.Contains(s.CodecName)) continue;
+            var tipo = s.CodecType switch
+            {
+                "video" => TipoPista.Video,
+                "audio" => TipoPista.Audio,
+                "subtitle" => TipoPista.Subtitulo,
+                _ => TipoPista.Otro,
+            };
+            long? bps = long.TryParse(s.BitRate, out var b) ? b : null;
+            lista.Add(new Pista(s.Index, tipo, s.CodecName, s.Lang, s.Channels, bps));
+        }
+        return (lista, dur);
+    }
+
+    /// <summary>
+    /// Reempaqueta el fichero dejando fuera las pistas marcadas, SIN recodificar («-c copy»).
+    /// Escribe a un temporal y solo al final sustituye al original: si algo falla a medias, el
+    /// fichero de partida sigue intacto.
+    /// </summary>
+    public async Task<(bool Ok, string Mensaje, long BytesAntes, long BytesDespues)> QuitarPistasAsync(
+        string path, SelectorDePistas.Plan plan, CancellationToken ct = default)
+    {
+        if (!plan.HayCambios) return (false, "No hay pistas marcadas.", 0, 0);
+        if (!File.Exists(path)) return (false, "El fichero ya no está.", 0, 0);
+
+        long antes = new FileInfo(path).Length;
+        var tmp = Path.Combine(Path.GetDirectoryName(path)!,
+            $"~pistas_{Guid.NewGuid():N}{Path.GetExtension(path)}");
+        try
+        {
+            var (code, _, err) = await RunAsync(Ffmpeg, plan.Argumentos(path, tmp).ToArray());
+            if (code != 0 || !File.Exists(tmp) || new FileInfo(tmp).Length == 0)
+            {
+                try { File.Delete(tmp); } catch { }
+                var razon = err.Split('\n').LastOrDefault(l => l.Trim().Length > 0)?.Trim();
+                return (false, string.IsNullOrEmpty(razon) ? "ffmpeg no pudo reempaquetarlo." : razon, antes, 0);
+            }
+
+            long despues = new FileInfo(tmp).Length;
+            // El original se manda a la papelera propia en vez de borrarlo: si el remux salió
+            // mal de una forma que no detectamos, con Ctrl+Z se recupera.
+            Reindex.PapeleraApp.Enviar(path);
+            File.Move(tmp, path, overwrite: true);
+            return (true, "", antes, despues);
+        }
+        catch (Exception ex)
+        {
+            try { File.Delete(tmp); } catch { }
+            return (false, ex.Message, antes, 0);
+        }
+    }
+
     public async Task<ProbeInfo> ProbeAsync(string path)
     {
         var pr = await ProbeFullAsync(path);
