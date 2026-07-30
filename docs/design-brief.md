@@ -14,6 +14,14 @@ Comprime y convierte vídeos (series, películas, capítulos) a **H.265 / H.264 
 - Ventana ~1180×780, mínimo 980×640, **una sola ventana**. Tema oscuro.
 
 ## Estilo actual (punto de partida; puedes proponer otro)
+
+> **DESFASADO.** Lo de abajo describe el estado de julio de 2025 y ya no es lo que se ejecuta. La
+> paleta real está en [`src/Ondine/Theme.xaml`](../src/Ondine/Theme.xaml): fondo `#161826`,
+> superficie `#232532`, campos `#292B31`, texto `#E9E9ED`, **acento blurple `#968AE0`**. Y el icono
+> ya no es un squircle: es la marca «Corrientes», un trazo abierto sin contenedor — ver
+> [`docs/marca/`](marca/README.md). El viraje a turquesa que propone este brief **no se hizo** y
+> sigue pendiente; si se aborda, hay que rehacer la marca con él.
+
 Fondo `#0F1216`, tarjetas `#1A1F26`, campos `#232A33`, texto `#E8EAED`, atenuado `#8A93A0`, **acento turquesa `#6CE8D0`**. Icono: squircle turquesa→teal con *play* central y flechas de compresión (adjunto).
 
 ## Inventario ACTUAL (debe seguir existiendo)
