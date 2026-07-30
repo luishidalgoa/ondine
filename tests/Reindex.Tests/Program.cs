@@ -2287,8 +2287,11 @@ public static class Program
             "sin distinguir mayúsculas: Windows tampoco las distingue");
         Assert(!cat.SeIgnora("Bob Esponja - S1E1 - Uno.mkv"), "y no ignora lo que no está");
 
-        // Se puede dar la ruta entera: lo que se compara es el nombre del fichero.
-        Assert(cat.SeIgnora(@"C:\Series\Bob\otro extra.mkv"), "acepta una ruta completa");
+        // Se puede dar la ruta entera: lo que se compara es el nombre del fichero. Con los DOS
+        // separadores, porque este código corre en Linux y macOS (la CLI es multiplataforma) con
+        // catálogos escritos en Windows — y allí Path.GetFileName no parte por la barra invertida.
+        Assert(cat.SeIgnora(@"C:\Series\Bob\otro extra.mkv"), "acepta una ruta de Windows");
+        Assert(cat.SeIgnora("/home/luis/Series/otro extra.mkv"), "y una de Linux");
 
         // Un catálogo sin la lista funciona igual que siempre.
         var sinLista = ReindexCatalog.Parse("""

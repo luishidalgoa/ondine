@@ -135,9 +135,22 @@ public sealed class ReindexCatalog
     public bool SeIgnora(string rutaONombre)
     {
         if (Ignorar.Count == 0 || string.IsNullOrWhiteSpace(rutaONombre)) return false;
-        var nombre = System.IO.Path.GetFileName(rutaONombre.Trim());
-        return Ignorar.Any(i => string.Equals(System.IO.Path.GetFileName(i.Trim()), nombre,
-                                              StringComparison.OrdinalIgnoreCase));
+        var nombre = SoloNombre(rutaONombre);
+        return Ignorar.Any(i => string.Equals(SoloNombre(i), nombre, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// El nombre del fichero, cortando por los DOS separadores.
+    ///
+    /// No vale <c>Path.GetFileName</c>: en Linux la barra invertida no es un separador, así que
+    /// una ruta de Windows se devolvería entera. Y este código corre en Linux y macOS —la CLI es
+    /// multiplataforma— con catálogos escritos en Windows.
+    /// </summary>
+    private static string SoloNombre(string s)
+    {
+        var t = s.Trim();
+        int corte = t.LastIndexOfAny(new[] { '/', '\\' });
+        return corte >= 0 ? t[(corte + 1)..] : t;
     }
 
     /// <summary>
@@ -158,7 +171,7 @@ public sealed class ReindexCatalog
     private static bool TocarIgnorados(string rutaCatalogo, string nombreFichero, bool quitar)
     {
         if (string.IsNullOrWhiteSpace(nombreFichero)) return false;
-        var nombre = System.IO.Path.GetFileName(nombreFichero.Trim());
+        var nombre = SoloNombre(nombreFichero);
 
         var raiz = System.Text.Json.Nodes.JsonNode.Parse(System.IO.File.ReadAllText(rutaCatalogo))
                    as System.Text.Json.Nodes.JsonObject
@@ -166,13 +179,11 @@ public sealed class ReindexCatalog
 
         var lista = raiz["ignorar"] as System.Text.Json.Nodes.JsonArray;
         var actuales = lista?.Select(n => n?.GetValue<string>() ?? "").ToList() ?? new List<string>();
-        bool estaba = actuales.Any(x => string.Equals(System.IO.Path.GetFileName(x.Trim()), nombre,
-                                                      StringComparison.OrdinalIgnoreCase));
+        bool estaba = actuales.Any(x => string.Equals(SoloNombre(x), nombre, StringComparison.OrdinalIgnoreCase));
         if (quitar == !estaba) return false;   // quitar lo que no está, o añadir lo que ya está
 
         if (quitar)
-            actuales.RemoveAll(x => string.Equals(System.IO.Path.GetFileName(x.Trim()), nombre,
-                                                  StringComparison.OrdinalIgnoreCase));
+            actuales.RemoveAll(x => string.Equals(SoloNombre(x), nombre, StringComparison.OrdinalIgnoreCase));
         else
             actuales.Add(nombre);
 
