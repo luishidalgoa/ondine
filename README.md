@@ -46,20 +46,23 @@ nunca a borrado definitivo. Todo ocurre **en tu máquina**: no manda tus fichero
 
 ## Así se ve
 
-**Comprimir** — analiza una carpeta entera, enseña las pistas de cada vídeo (códec, idiomas de audio,
-subtítulos) y comprime en tanda. El panel de la derecha pronostica el tamaño final y el ahorro.
+**Comprimir** — analiza una carpeta entera y enseña las pistas de cada vídeo: códec, duración,
+idiomas de audio y subtítulos. Después comprime en tanda, y el panel de la derecha pronostica el
+tamaño final y el ahorro.
 
-![La pestaña Comprimir con una carpeta analizada](docs/img/comprimir.png)
+![La pestaña Comprimir con una temporada analizada: 26 vídeos con su códec, duración e idiomas](docs/img/comprimir.png)
 
 **Organizar** — compara los ficheros de una carpeta con un catálogo de episodios y propone el nombre
-de cada uno. El color dice de qué fiarte, y no se renombra nada hasta que lo apruebas.
+de cada uno, agrupados por temporada. El color dice de qué fiarte, y no se renombra nada hasta que lo
+apruebas.
 
-![La pestaña Organizar con los ficheros ya identificados](docs/img/organizar.png)
+![La pestaña Organizar: 246 ficheros contra el catálogo, 246 correctos y ningún conflicto](docs/img/organizar.png)
 
 **Recortes** — parte un vídeo en varios o quítale un trozo. Cada tramo sale como un fichero aparte, y
-el original solo se borra si salen todos.
+el original solo se borra si salen todos. Cuando el nombre trae dos títulos, el segundo tramo se
+bautiza solo.
 
-![La pestaña Recortes con un vídeo partido en dos tramos](docs/img/recortes.png)
+![La pestaña Recortes con un capítulo partido en sus dos historias](docs/img/recortes.png)
 
 ## Qué sabe hacer
 
