@@ -37,11 +37,14 @@
     <Compile Include="..\ShrinkVideo\RenameRule.cs"    Link="RenameRule.cs" />
     <Compile Include="..\ShrinkVideo\VideoRow.cs"      Link="VideoRow.cs" />
     <Compile Include="..\ShrinkVideo\Native.cs"        Link="Native.cs" />
-    <!-- La carpeta ENTERA, no los dos ficheros que hoy hacen falta: el motor ya tira de
+    <!-- Las carpetas ENTERAS, no los ficheros que hoy hacen falta: el motor ya tira de
          Reindex.LibraryTemplate y Reindex.Tramos, y una lista a mano vuelve a romper la
          CLI la próxima vez que alguien use otro. Es código multiplataforma a propósito —
-         los tests lo compilan igual para Linux. -->
+         los tests lo compilan igual para Linux.
+         Pasó de verdad: al añadir Pistas/ (quitar audio o subtítulos) el motor empezó a usar
+         sus tipos y la CLI dejó de compilar en las cinco plataformas. -->
     <Compile Include="..\ShrinkVideo\Reindex\*.cs" LinkBase="Reindex" />
+    <Compile Include="..\ShrinkVideo\Pistas\*.cs" LinkBase="Pistas" />
   </ItemGroup>
 
 </Project>
