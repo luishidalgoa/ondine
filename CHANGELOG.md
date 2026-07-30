@@ -29,6 +29,10 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-07-30
+
+Despachar un fichero raro una vez y que la app se acuerde.
+
 ### Añadido
 
 - **«Dejarlo como está» ya no se olvida: queda apuntado en el catálogo.** En casi toda carpeta hay
