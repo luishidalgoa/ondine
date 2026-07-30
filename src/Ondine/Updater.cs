@@ -45,7 +45,7 @@ public static class Updater
             var meta = Assembly.GetExecutingAssembly()
                 .GetCustomAttributes<AssemblyMetadataAttribute>()
                 .FirstOrDefault(a => a.Key == "UpdateRepo");
-            return string.IsNullOrWhiteSpace(meta?.Value) ? "luishidalgoa/shrink-video" : meta!.Value!;
+            return string.IsNullOrWhiteSpace(meta?.Value) ? "luishidalgoa/ondine" : meta!.Value!;
         }
     }
 

@@ -666,7 +666,7 @@ public partial class OrganizarView : UserControl
     /// así se corrige sin publicar una versión, y siempre se lee la vigente.
     /// </summary>
     private const string UrlEspecificacion =
-        "https://github.com/luishidalgoa/shrink-studio/blob/main/docs/catalogo-reindex.md";
+        "https://github.com/luishidalgoa/ondine/blob/main/docs/catalogo-reindex.md";
 
     private void AbrirEspecificacion()
     {
