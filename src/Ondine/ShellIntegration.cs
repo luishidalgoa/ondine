@@ -19,11 +19,12 @@ internal static class ShellIntegration
     private const string VerbName = "Ondine.Comprimir";
     private const string VerbLabel = "Comprimir con Ondine";
 
-    // Lo que se registraba cuando la app se llamaba ShrinkStudio. Literales a propósito: NO
-    // deben seguir al nombre de la app.
-    private const string VerbNameAnterior = "ShrinkVideo.Comprimir";
-    private const string ProgIdAnterior = "ShrinkVideo.Video";
-    private const string SendToAnterior = "ShrinkVideo.lnk";
+    // Lo que se registraba cuando la app se llamaba ShrinkStudio. Viven en NombresHistoricos,
+    // que es el único sitio donde se guardan los literales que NO deben seguir al nombre de la
+    // app — y donde un test los fija.
+    private static string VerbNameAnterior => NombresHistoricos.VerboMenu;
+    private static string ProgIdAnterior => NombresHistoricos.ProgId;
+    private static string SendToAnterior => NombresHistoricos.AccesoSendTo;
 
     /// <summary>
     /// Borra lo que dejó registrado la app cuando se llamaba ShrinkStudio.
