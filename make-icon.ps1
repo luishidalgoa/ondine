@@ -1,12 +1,12 @@
-# Genera el icono de ShrinkStudio con GDI+ (sin dependencias externas).
+# Genera el icono de Ondine con GDI+ (sin dependencias externas).
 #
 # El glifo es EL MISMO que luce la barra de título de la app: squircle con el
 # degradado morado de la paleta Nocturne (Accent #968AE0 -> Accent700 #5D5294),
 # un play central y dos chevrones que lo aprietan por los lados — la metáfora de
 # comprimir. Antes el icono era turquesa y no se parecía en nada al de la app.
 #
-# Salidas: src\ShrinkVideo\Assets\app.ico (multi-resolución 16..256),
-#          src\ShrinkVideo\Assets\app-256.png y docs\icon.png (README/repo).
+# Salidas: src\Ondine\Assets\app.ico (multi-resolución 16..256),
+#          src\Ondine\Assets\app-256.png y docs\icon.png (README/repo).
 Add-Type -AssemblyName System.Drawing
 $ErrorActionPreference = "Stop"
 
@@ -93,7 +93,7 @@ foreach ($s in $sizes) {
     $bmp.Dispose(); $ms.Dispose()
 }
 
-$out = Join-Path $PSScriptRoot "src\ShrinkVideo\Assets\app.ico"
+$out = Join-Path $PSScriptRoot "src\Ondine\Assets\app.ico"
 $fs = [System.IO.File]::Create($out)
 $bw = New-Object System.IO.BinaryWriter($fs)
 $bw.Write([uint16]0); $bw.Write([uint16]1); $bw.Write([uint16]$sizes.Count)
@@ -112,7 +112,7 @@ $bw.Flush(); $fs.Close()
 
 # PNG grande: vista previa interna y portada del README
 $big = Render 256
-$big.Save((Join-Path $PSScriptRoot "src\ShrinkVideo\Assets\app-256.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+$big.Save((Join-Path $PSScriptRoot "src\Ondine\Assets\app-256.png"), [System.Drawing.Imaging.ImageFormat]::Png)
 $docs = Join-Path $PSScriptRoot "docs"
 if (-not (Test-Path $docs)) { New-Item -ItemType Directory $docs | Out-Null }
 $big.Save((Join-Path $docs "icon.png"), [System.Drawing.Imaging.ImageFormat]::Png)

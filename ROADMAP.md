@@ -1,4 +1,4 @@
-# Roadmap — ShrinkStudio
+# Roadmap — Ondine
 
 Nació como relevo de HandBrake (comprimir por lotes sin pelearse con los ajustes) y hoy son tres
 herramientas: **Comprimir**, **Organizar** (poner nombre a una biblioteca a partir de un catálogo)
@@ -87,7 +87,7 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 ## Transversal
 - ✅ **FFmpeg**: el instalador lo detecta y, si falta, lo descarga e instala junto a la app (el usuario no configura nada).
 - ✅ **Compilación en la nube** (GitHub Actions): al empujar un tag `vX.Y.Z`, el instalador se compila y se adjunta al Release automáticamente.
-- ✅ **CLI** (`ShrinkStudio.Cli`) para comprimir, analizar y medir sin abrir la interfaz.
+- ✅ **CLI** (`Ondine.Cli`) para comprimir, analizar y medir sin abrir la interfaz.
 - ✅ **Motor con tests** (560+) que corren en CI sin restaurar paquetes.
 - ✅ **Capturas en el README** de las tres herramientas, con datos reales dentro.
 - ⬜ Firmar el instalador (evitar el aviso de SmartScreen).

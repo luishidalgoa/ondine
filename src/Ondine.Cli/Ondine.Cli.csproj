@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- net9.0 "a secas": compila y corre en Windows, Linux y macOS -->
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ondine</AssemblyName>
+    <RootNamespace>Ondine</RootNamespace>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <!-- Recorta el runtime: el binario pasa de ~68 MB a ~13 MB. Requiere que el JSON de
+         ffprobe se deserialice con el contexto generado (FfProbeJsonContext), no por
+         reflexión, o el recortador se lleva los tipos y el análisis devuelve datos vacíos. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+
+    <Version>1.4.0</Version>
+    <Product>Ondine CLI</Product>
+    <Company>luishidalgoa</Company>
+    <Authors>luishidalgoa</Authors>
+    <Description>Ondine CLI — compresor de vídeo multiplataforma (el mismo motor que la app de escritorio).</Description>
+  </PropertyGroup>
+
+  <!--
+    El motor se comparte con la app WPF ENLAZANDO los ficheros, no copiándolos:
+    así no hay dos versiones que se desincronicen. Se excluye todo lo de interfaz
+    (ventanas, tema) porque WPF solo existe en Windows.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Ondine\Engine.cs"        Link="Engine.cs" />
+    <Compile Include="..\Ondine\EncodeOptions.cs" Link="EncodeOptions.cs" />
+    <Compile Include="..\Ondine\Estimator.cs"     Link="Estimator.cs" />
+    <Compile Include="..\Ondine\RenameRule.cs"    Link="RenameRule.cs" />
+    <Compile Include="..\Ondine\VideoRow.cs"      Link="VideoRow.cs" />
+    <Compile Include="..\Ondine\Native.cs"        Link="Native.cs" />
+    <!-- Las carpetas ENTERAS, no los ficheros que hoy hacen falta: el motor ya tira de
+         Reindex.LibraryTemplate y Reindex.Tramos, y una lista a mano vuelve a romper la
+         CLI la próxima vez que alguien use otro. Es código multiplataforma a propósito —
+         los tests lo compilan igual para Linux.
+         Pasó de verdad: al añadir Pistas/ (quitar audio o subtítulos) el motor empezó a usar
+         sus tipos y la CLI dejó de compilar en las cinco plataformas. -->
+    <Compile Include="..\Ondine\Reindex\*.cs" LinkBase="Reindex" />
+    <Compile Include="..\Ondine\Pistas\*.cs" LinkBase="Pistas" />
+    <Compile Include="..\Ondine\Rutas\*.cs" LinkBase="Rutas" />
+  </ItemGroup>
+
+</Project>

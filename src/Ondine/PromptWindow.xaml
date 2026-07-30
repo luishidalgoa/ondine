@@ -1,0 +1,178 @@
+<Window x:Class="Ondine.PromptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Generar catálogo con una IA" Width="760" Height="640" MinWidth="620" MinHeight="480"
+        WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterOwner"
+        FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="38" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0"
+                  UseAeroCaptionButtons="False"/>
+  </WindowChrome.WindowChrome>
+
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}" BorderThickness="1" CornerRadius="8">
+    <Grid Margin="0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/><!-- titulo -->
+        <RowDefinition Height="Auto"/><!-- explicacion -->
+        <RowDefinition Height="Auto"/><!-- campos -->
+        <RowDefinition Height="*"/>   <!-- vista previa -->
+        <RowDefinition Height="Auto"/><!-- acciones -->
+      </Grid.RowDefinitions>
+
+      <Grid Grid.Row="0" Height="38">
+        <TextBlock Text="Generar catálogo con una IA" FontSize="13.5" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <Button x:Name="btnCerrar" Style="{StaticResource BtnClose}" HorizontalAlignment="Right"
+                WindowChrome.IsHitTestVisibleInChrome="True">
+          <Path Data="M2,2 L11,11 M11,2 L2,11" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                StrokeThickness="1.2" Width="13" Height="13" Stretch="None"
+                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Button>
+      </Grid>
+
+      <TextBlock Grid.Row="1" Margin="16,0,16,14" TextWrapping="Wrap" FontSize="12.5" LineHeight="19"
+                 Foreground="{StaticResource Neutral400}">
+        Rellena los datos y copia el texto. Pégaselo a una IA que pueda leer páginas web
+        (Claude, ChatGPT…) junto con la dirección del anexo, y te devolverá el catálogo listo
+        para importar. El texto ya lleva dentro el formato y las reglas, así que no hace falta
+        que le expliques nada más.
+      </TextBlock>
+
+      <Grid Grid.Row="2" Margin="16,0,16,12">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
+          <TextBlock Text="Serie" Style="{StaticResource OrgLabel}"/>
+          <TextBox x:Name="txtSerie"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
+          <TextBlock Text="Idioma para el nombre del fichero" Style="{StaticResource OrgLabel}"/>
+          <ComboBox x:Name="cboSalida" Height="32" VerticalContentAlignment="Center"
+                    MaxDropDownHeight="260"
+                    ToolTip="El título que se escribirá al renombrar">
+            <ComboBox.ItemTemplate>
+              <DataTemplate><TextBlock Text="{Binding Nombre}"/></DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="0">
+          <TextBlock Text="Dirección del anexo" Style="{StaticResource OrgLabel}"/>
+          <TextBox x:Name="txtFuente"
+                   ToolTip="La página con la lista de episodios: Wikipedia, Fandom, la que uses"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="2">
+          <!-- El rótulo viejo decía «Idiomas para reconocer los ficheros», que se leía como
+               si fuera el idioma del programa. Es el idioma DEL TÍTULO QUE YA TIENEN. -->
+          <TextBlock Text="Idiomas en los que vienen titulados tus ficheros"
+                     Style="{StaticResource OrgLabel}" TextTrimming="CharacterEllipsis">
+            <TextBlock.ToolTip>
+              <TextBlock MaxWidth="380" TextWrapping="Wrap" LineHeight="18">
+                No es el idioma del nombre final: ese es el de arriba.<LineBreak/><LineBreak/>
+                Es en qué idiomas puede estar escrito el título que tus ficheros ya traen hoy.
+                El catálogo guardará los títulos en todos los que marques, y al identificar se
+                comparará contra todos ellos.<LineBreak/><LineBreak/>
+                Cuantos más marques, menos ficheros se quedan sin reconocer. Lo que cuesta es
+                un catálogo más largo, así que marca los que de verdad aparecen en tu carpeta.
+              </TextBlock>
+            </TextBlock.ToolTip>
+          </TextBlock>
+
+          <!-- Los elegidos a la vista y la lista en un emergente. Tenerla siempre abierta
+               se comía media ventana y acababa pisando la vista previa: son 183 idiomas, y
+               lo normal es tocar esto una vez y olvidarse. Mismo patrón que «Marcas». -->
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                  BorderThickness="1" CornerRadius="8" Padding="8,6" MinHeight="46">
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+
+              <ItemsControl x:Name="listaSeleccionados" VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Background="{StaticResource Accent900}" BorderBrush="{StaticResource Accent700}"
+                            BorderThickness="1" CornerRadius="6" Padding="7,2" Margin="0,2,5,2">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Nombre}" FontSize="11.5" VerticalAlignment="Center"
+                                   Foreground="{StaticResource Accent200}"/>
+                        <Button Style="{StaticResource BtnGhostMuted}" Content="&#x2715;" FontSize="9"
+                                Padding="4,1" Margin="5,0,-4,0" Click="OnQuitarIdioma"
+                                Tag="{Binding Codigo}" ToolTip="Quitar este idioma"/>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <ToggleButton x:Name="btnAnadirIdioma" Grid.Column="1" Style="{StaticResource FiltroChip}"
+                            VerticalAlignment="Center" Margin="6,0,0,0" Padding="9,3" FontSize="11.5"
+                            Content="+ Anadir" ToolTip="Buscar y anadir idiomas"/>
+
+              <Popup x:Name="popIdiomas" PlacementTarget="{Binding ElementName=btnAnadirIdioma}"
+                     Placement="Bottom" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade"
+                     IsOpen="{Binding IsChecked, ElementName=btnAnadirIdioma, Mode=TwoWay}"
+                     HorizontalOffset="-232">
+                <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Neutral800}"
+                        BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,4,12,12" Width="320">
+                  <StackPanel>
+                    <TextBox x:Name="txtBuscarIdioma" Margin="0,0,0,6"
+                             ToolTip="Escribe el nombre o el codigo"/>
+                    <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                      <ItemsControl x:Name="listaResultados">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Button Style="{StaticResource BtnGhostMuted}" HorizontalContentAlignment="Stretch"
+                                    Padding="8,4" Click="OnAlternarIdioma" Tag="{Binding Codigo}">
+                              <Grid>
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="16"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Marca}" FontSize="11" VerticalAlignment="Center"
+                                           Foreground="{StaticResource Accent}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Nombre}" FontSize="12"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Codigo}" FontSize="11"
+                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                           FontFamily="{StaticResource FontMono}"
+                                           Foreground="{StaticResource Neutral500}"/>
+                              </Grid>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                    <TextBlock x:Name="lblSinResultados" FontSize="11.5" Margin="4,4,0,2"
+                               Foreground="{StaticResource Neutral500}" Visibility="Collapsed"
+                               Text="Ningun idioma se llama asi"/>
+                  </StackPanel>
+                </Border>
+              </Popup>
+            </Grid>
+          </Border>
+        </StackPanel>
+      </Grid>
+
+      <Border Grid.Row="3" Margin="16,0,16,12" Background="{StaticResource Field}" CornerRadius="8">
+        <TextBox x:Name="txtPrompt" IsReadOnly="True" Background="Transparent" BorderThickness="0"
+                 Foreground="{StaticResource Neutral300}" FontFamily="{StaticResource FontMono}" FontSize="11"
+                 Padding="12,10" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
+      </Border>
+
+      <Grid Grid.Row="4" Margin="16,0,16,14">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <TextBlock x:Name="lblAviso" VerticalAlignment="Center" FontSize="12"
+                   Foreground="{StaticResource Neutral500}" TextTrimming="CharacterEllipsis"/>
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <Button x:Name="btnAbrirFuente" Style="{StaticResource BtnSecondary}" Content="Abrir el anexo"
+                  Margin="0,0,8,0" ToolTip="Abre la página en el navegador para comprobar que es la correcta"/>
+          <Button x:Name="btnCopiar" Style="{StaticResource BtnPrimary}" Content="Copiar el prompt"/>
+        </StackPanel>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>

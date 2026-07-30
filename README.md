@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/icon.png" alt="ShrinkStudio" width="128">
+  <img src="docs/icon.png" alt="Ondine" width="128">
 </p>
 
-<h1 align="center">ShrinkStudio</h1>
+<h1 align="center">Ondine</h1>
 
 <p align="center">
   Compresor de vídeo por lotes, pensado como <b>relevo ligero de HandBrake</b>:
@@ -77,7 +77,7 @@ el original solo se borra si salen todos.
 
 ### Windows — app de escritorio
 
-1. Descarga el instalador de la página de **[Releases](https://github.com/luishidalgoa/shrink-studio/releases/latest)** → `ShrinkStudio-Setup-X.Y.Z.exe`.
+1. Descarga el instalador de la página de **[Releases](https://github.com/luishidalgoa/shrink-studio/releases/latest)** → `Ondine-Setup-X.Y.Z.exe`.
 2. Ejecútalo. Se instala **solo para tu usuario** (no pide permisos de administrador) y crea acceso
    directo en el menú Inicio (y opcionalmente en el Escritorio).
 3. Como el instalador no está firmado, Windows SmartScreen puede avisar: pulsa
@@ -89,20 +89,20 @@ el original solo se borra si salen todos.
 ### Linux y macOS — terminal
 
 La interfaz gráfica usa WPF, que solo existe en Windows. Para el resto de sistemas se publica
-`shrinkstudio`, que comparte **exactamente el mismo motor**. Descarga el paquete de tu plataforma en
+`ondine`, que comparte **exactamente el mismo motor**. Descarga el paquete de tu plataforma en
 [Releases](https://github.com/luishidalgoa/shrink-studio/releases/latest) y descomprímelo:
 
 ```bash
-tar xzf shrinkstudio-linux-x64.tar.gz     # o linux-arm64, macos-arm64, macos-x64
-./shrinkstudio --help
+tar xzf ondine-linux-x64.tar.gz     # o linux-arm64, macos-arm64, macos-x64
+./ondine --help
 ```
 
 Es un único binario autocontenido: no hace falta instalar .NET. Se entrega en `.tar.gz` porque así
 conserva el permiso de ejecución, que un fichero suelto pierde al descargarse.
 
 En **Windows**, la herramienta de terminal se descarga directamente como
-`shrinkstudio-windows-x64.exe`, sin comprimir. Ojo: eso es el CLI, distinto del instalador
-`ShrinkStudio-Setup-X.Y.Z.exe`, que es la app de escritorio.
+`ondine-windows-x64.exe`, sin comprimir. Ojo: eso es el CLI, distinto del instalador
+`Ondine-Setup-X.Y.Z.exe`, que es la app de escritorio.
 
 Necesita `ffmpeg` y `ffprobe` en el `PATH` (`apt install ffmpeg`, `brew install ffmpeg`).
 
@@ -123,19 +123,19 @@ que no elijas se descartan para ahorrar espacio.
 
 ```bash
 # Comprimir una temporada entera a MP4 720p, con el audio a 128 kbps
-shrinkstudio comprimir serie/ -r --formato mp4 --alto 720 --audio 128 -o comprimidos/
+ondine comprimir serie/ -r --formato mp4 --alto 720 --audio 128 -o comprimidos/
 
 # Ver qué pistas tiene cada vídeo
-shrinkstudio analizar serie/ -r
+ondine analizar serie/ -r
 
 # Medir cuánto va a ocupar de verdad, sin comprimirlo entero
-shrinkstudio medir capitulo.mkv --alto 720
+ondine medir capitulo.mkv --alto 720
 
 # Comprimir renombrando la salida con un contador
-shrinkstudio comprimir *.mkv --regex --buscar "^" --reemplazar 'T01E${padding=2;start=1} - ' --enumerar
+ondine comprimir *.mkv --regex --buscar "^" --reemplazar 'T01E${padding=2;start=1} - ' --enumerar
 ```
 
-`shrinkstudio --help` lista todas las opciones.
+`ondine --help` lista todas las opciones.
 
 ## Actualizaciones automáticas
 
@@ -149,14 +149,14 @@ Requisitos: **.NET 9 SDK** e **Inno Setup 6** (`winget install JRSoftware.InnoSe
 
 ```powershell
 # Ejecutar la app en desarrollo
-dotnet run --project src/ShrinkVideo
+dotnet run --project src/Ondine
 
 # Ejecutar la herramienta de terminal
-dotnet run --project src/ShrinkStudio.Cli -- --help
+dotnet run --project src/Ondine.Cli -- --help
 
 # Compilar el instalador completo (icono + .exe self-contained + instalador Inno)
 pwsh -File build.ps1
-# -> installer/Output/ShrinkStudio-Setup-<version>.exe
+# -> installer/Output/Ondine-Setup-<version>.exe
 ```
 
 ### Publicar una versión
@@ -164,7 +164,7 @@ pwsh -File build.ps1
 Todo se compila en la nube, sin dependencias locales:
 
 1. Añade la sección de la versión en [`CHANGELOG.md`](CHANGELOG.md) (`## [X.Y.Z] - AAAA-MM-DD`).
-2. Sube `<Version>` **en los dos** `.csproj` (`src/ShrinkVideo` y `src/ShrinkStudio.Cli`).
+2. Sube `<Version>` **en los dos** `.csproj` (`src/Ondine` y `src/Ondine.Cli`).
 3. `git tag vX.Y.Z && git push --follow-tags`.
 
 [GitHub Actions](.github/workflows/build.yml) **verifica primero el contrato del CHANGELOG** —que la
@@ -176,8 +176,8 @@ Release. Si el contrato no se cumple, no se publica nada.
 
 | Carpeta | Qué es |
 |---|---|
-| `src/ShrinkVideo/` | App C#/WPF. `Engine.cs` es el motor (FFmpeg); el resto es interfaz y auto-update. |
-| `src/ShrinkStudio.Cli/` | Herramienta de terminal multiplataforma. Enlaza los fuentes del motor, no los copia. |
+| `src/Ondine/` | App C#/WPF. `Engine.cs` es el motor (FFmpeg); el resto es interfaz y auto-update. |
+| `src/Ondine.Cli/` | Herramienta de terminal multiplataforma. Enlaza los fuentes del motor, no los copia. |
 | `installer/` | Script de Inno Setup. |
 | `make-icon.ps1` | Genera el icono con GDI+. |
 | `build.ps1` | Compila todo de punta a punta. |
