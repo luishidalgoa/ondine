@@ -3,12 +3,12 @@
     1) regenera el icono, 2) publica el .exe self-contained, 3) compila el instalador Inno.
     Uso:  pwsh -File build.ps1            (versión leída del .csproj)
           pwsh -File build.ps1 0.2.0      (forzar versión)
-    Salida: installer\Output\ShrinkVideo-Setup-<version>.exe
+    Salida: installer\Output\Ondine-Setup-<version>.exe
 #>
 param([string]$Version)
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
-$csproj = Join-Path $root "src\ShrinkVideo\ShrinkVideo.csproj"
+$csproj = Join-Path $root "src\Ondine\Ondine.csproj"
 
 if (-not $Version) {
     $Version = (Select-Xml -Path $csproj -XPath "//Version").Node.InnerText
@@ -19,7 +19,7 @@ Write-Host "== Comprimir vídeos · versión $Version ==" -ForegroundColor Cyan
 Write-Host "`n[1/3] Icono..." -ForegroundColor Yellow
 pwsh -NoProfile -File (Join-Path $root "make-icon.ps1")
 if ($LASTEXITCODE -ne 0) {
-    if (Test-Path (Join-Path $root "src\ShrinkVideo\Assets\app.ico")) {
+    if (Test-Path (Join-Path $root "src\Ondine\Assets\app.ico")) {
         Write-Host "  make-icon falló; uso el app.ico ya versionado." -ForegroundColor DarkYellow
     } else { throw "make-icon falló y no existe app.ico" }
 }
@@ -44,8 +44,8 @@ if (-not $iscc) {
 } else { $iscc = $iscc.Source }
 if (-not $iscc) { throw "No se encuentra ISCC.exe (Inno Setup). Instálalo: winget install JRSoftware.InnoSetup" }
 
-& $iscc "/DMyAppVersion=$Version" (Join-Path $root "installer\shrink-video.iss")
+& $iscc "/DMyAppVersion=$Version" (Join-Path $root "installer\ondine.iss")
 if ($LASTEXITCODE -ne 0) { throw "Fallo en Inno Setup" }
 
-$out = Join-Path $root "installer\Output\ShrinkStudio-Setup-$Version.exe"
+$out = Join-Path $root "installer\Output\Ondine-Setup-$Version.exe"
 Write-Host "`nInstalador listo: $out ($([math]::Round((Get-Item $out).Length/1MB,1)) MB)" -ForegroundColor Green

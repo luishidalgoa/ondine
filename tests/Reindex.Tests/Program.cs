@@ -1,6 +1,6 @@
-using ShrinkVideo.Reindex;
+using Ondine.Reindex;
 
-namespace ShrinkVideo.Reindex.Tests;
+namespace Ondine.Reindex.Tests;
 
 /// <summary>
 /// Arnés de tests del motor de reindexado. Sin dependencias externas a propósito: CI lo
@@ -864,7 +864,7 @@ public static class Program
     {
         Seccion("Almacén en disco");
 
-        var temporal = Path.Combine(Path.GetTempPath(), "shrinkstudio-test-" + Guid.NewGuid().ToString("N")[..8]);
+        var temporal = Path.Combine(Path.GetTempPath(), "ondine-test-" + Guid.NewGuid().ToString("N")[..8]);
         ReindexStore.RaizOverride = temporal;
         try
         {
@@ -2348,7 +2348,7 @@ public static class Program
         finally { try { File.Delete(tmp); } catch { } }
     }
 
-    // ───────────── La mudanza de %AppData%\ShrinkStudio a Ondine ─────────────
+    // ───────────── La mudanza de %AppData%\Ondine a Ondine ─────────────
 
     private static void MudanzaDeDatosDeUsuario()
     {
@@ -2361,8 +2361,14 @@ public static class Program
         var baseTmp = Path.Combine(Path.GetTempPath(), $"mudanza_{Guid.NewGuid():N}");
         try
         {
-            string Vieja(string n) => Path.Combine(baseTmp, n, "ShrinkStudio");
-            string Nueva(string n) => Path.Combine(baseTmp, n, "Ondine");
+            // Se toman de las constantes en vez de escribirlas a mano: así un buscar-y-reemplazar
+            // del nombre de la app no puede dejar las dos apuntando a la misma carpeta — que es
+            // justo lo que pasó al renombrar, y dejaba la mudanza sin efecto en silencio.
+            string Vieja(string n) => Path.Combine(baseTmp, n, DatosDeUsuario.NombreAnterior);
+            string Nueva(string n) => Path.Combine(baseTmp, n, DatosDeUsuario.Nombre);
+
+            Assert(DatosDeUsuario.NombreAnterior != DatosDeUsuario.Nombre,
+                "la carpeta vieja y la nueva no pueden llamarse igual");
 
             // ── Caso 1: hay carpeta vieja y no hay nueva → se muda entera ──
             Directory.CreateDirectory(Path.Combine(Vieja("a"), "catalogos"));
@@ -2469,12 +2475,12 @@ public static class Program
             "un caudal que no llega a 1 kbps no se enseña");
 
         // Cualificado porque en este arnés ya hay una sección de tests llamada «Idiomas».
-        Eq("Español", ShrinkVideo.Idiomas.Nombre("spa"), "spa");
-        Eq("Inglés", ShrinkVideo.Idiomas.Nombre("eng"), "eng");
-        Eq("Portugués", ShrinkVideo.Idiomas.Nombre("por"), "por");
-        Eq("Japonés", ShrinkVideo.Idiomas.Nombre("jpn"), "jpn");
-        Eq("", ShrinkVideo.Idiomas.Nombre("und"), "«und» no es un idioma que enseñar");
-        Eq("zzz", ShrinkVideo.Idiomas.Nombre("zzz"), "un código que no conocemos se deja tal cual");
+        Eq("Español", Ondine.Idiomas.Nombre("spa"), "spa");
+        Eq("Inglés", Ondine.Idiomas.Nombre("eng"), "eng");
+        Eq("Portugués", Ondine.Idiomas.Nombre("por"), "por");
+        Eq("Japonés", Ondine.Idiomas.Nombre("jpn"), "jpn");
+        Eq("", Ondine.Idiomas.Nombre("und"), "«und» no es un idioma que enseñar");
+        Eq("zzz", Ondine.Idiomas.Nombre("zzz"), "un código que no conocemos se deja tal cual");
 
         // — el título de la pista y las marcas son lo que de verdad distingue —
         // Muchos ficheros traen un título puesto a mano («Castellano AMZN», «Forzados») y es la

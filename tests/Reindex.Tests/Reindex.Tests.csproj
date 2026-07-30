@@ -8,22 +8,22 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <AssemblyName>reindex-tests</AssemblyName>
-    <RootNamespace>ShrinkVideo.Reindex.Tests</RootNamespace>
+    <RootNamespace>Ondine.Reindex.Tests</RootNamespace>
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <!--
-    Se ENLAZAN las fuentes del motor en vez de referenciar el proyecto WPF: ShrinkVideo
+    Se ENLAZAN las fuentes del motor en vez de referenciar el proyecto WPF: Ondine
     apunta a net9.0-windows y no compila fuera de Windows, mientras que estas reglas sí.
-    Mismo patrón que ShrinkStudio.Cli, y sin paquetes NuGet para que CI no restaure nada.
+    Mismo patrón que Ondine.Cli, y sin paquetes NuGet para que CI no restaure nada.
   -->
   <ItemGroup>
-    <Compile Include="..\..\src\ShrinkVideo\Reindex\*.cs" LinkBase="Reindex" />
+    <Compile Include="..\..\src\Ondine\Reindex\*.cs" LinkBase="Reindex" />
     <!-- Igual que Reindex: lógica sin WPF ni ffmpeg, así que entra en el arnés y corre en CI. -->
-    <Compile Include="..\..\src\ShrinkVideo\Pistas\*.cs" LinkBase="Pistas" />
+    <Compile Include="..\..\src\Ondine\Pistas\*.cs" LinkBase="Pistas" />
     <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
          ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->
-    <Compile Include="..\..\src\ShrinkVideo\Rutas\*.cs" LinkBase="Rutas" />
+    <Compile Include="..\..\src\Ondine\Rutas\*.cs" LinkBase="Rutas" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Ondine</AssemblyName>
+    <RootNamespace>Ondine</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- Versión: única fuente para el ejecutable, el instalador y el auto-update -->
+    <Version>1.4.0</Version>
+    <Product>Ondine</Product>
+    <!-- FileDescription del exe: es el nombre que muestra el submenú «Abrir con» -->
+    <AssemblyTitle>Ondine</AssemblyTitle>
+    <Company>luishidalgoa</Company>
+    <Authors>luishidalgoa</Authors>
+    <Description>Ondine — compresor de vídeo por lotes: reduce a HEVC/H.264/AV1 en MKV/MP4/WebM con aceleración por hardware, conservando los idiomas de audio elegidos y sin tocar los originales.</Description>
+    <Copyright>© luishidalgoa</Copyright>
+
+    <!-- Repo de GitHub del que la app descarga sus actualizaciones -->
+    <UpdateRepo>luishidalgoa/shrink-studio</UpdateRepo>
+  </PropertyGroup>
+
+  <!-- Marca de compilación local/dev. La build OFICIAL (build.ps1, en CI) pasa -p:Official=true
+       y NO define esta constante; cualquier otra compilación (dotnet build/publish en local) sí,
+       para que la etiqueta de versión distinga el dev de la release de GitHub. -->
+  <PropertyGroup Condition="'$(Official)' != 'true'">
+    <DefineConstants>$(DefineConstants);DEV_BUILD</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>UpdateRepo</_Parameter1>
+      <_Parameter2>$(UpdateRepo)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+</Project>

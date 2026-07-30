@@ -1,6 +1,9 @@
 # Registro de cambios
 
-Todos los cambios relevantes de ShrinkStudio se anotan aquí.
+Todos los cambios relevantes de Ondine se anotan aquí.
+
+> Hasta la v1.4.0 la app se llamaba **ShrinkStudio**. Las entradas anteriores conservan ese
+> nombre: son el registro de lo que pasó entonces, y reescribirlas sería falsearlo.
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el
 versionado sigue [SemVer](https://semver.org/lang/es/). Antes de la 1.0 la versión
@@ -28,6 +31,17 @@ es un acuerdo de buena voluntad: está verificado.
    más antigua.
 
 ## [Unreleased]
+
+### Cambiado
+
+- **La app pasa a llamarse Ondine.** ShrinkStudio nació como relevo de HandBrake, y ese nombre
+  contaba solo un tercio de lo que hace hoy: además de comprimir, ordena bibliotecas enteras
+  contra un catálogo y parte episodios en sus historias. Lo que de verdad hace es **preparar tu
+  biblioteca antes de que Plex o Jellyfin la escaneen**, y el nombre nuevo deja sitio para eso.
+  No tienes que hacer nada: al actualizar se conservan tus catálogos, decisiones, presets y
+  ajustes — se mudan solos de `%AppData%\ShrinkStudio` a `%AppData%\Ondine` la primera vez que
+  abres la app. El acceso directo, el menú del botón derecho y las actualizaciones automáticas
+  siguen funcionando igual.
 
 ## [1.4.0] - 2026-07-30
 

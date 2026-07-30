@@ -1,0 +1,309 @@
+using System.Text.RegularExpressions;
+
+namespace Ondine.Reindex;
+
+/// <summary>
+/// Lo que se puede deducir de UN fichero antes de mirar el catálogo. Todo es opcional:
+/// un fichero puede no traer ni fecha, ni número, ni título reconocible.
+/// </summary>
+public sealed class FileSignals
+{
+    /// <summary>Ruta completa; también hace de clave del fichero en el lote.</summary>
+    public string Path { get; init; } = "";
+    /// <summary>Nombre con extensión, tal cual se ve.</summary>
+    public string NombreArchivo { get; init; } = "";
+    public string Extension { get; init; } = "";
+    /// <summary>Carpeta contenedora (solo el nombre), de donde sale la temporada.</summary>
+    public string Carpeta { get; init; } = "";
+
+    public DateOnly? Fecha { get; init; }
+    /// <summary>Número que YA trae el fichero (puede estar mal: eso es lo que venimos a arreglar).</summary>
+    public int? Indice { get; init; }
+    /// <summary>Sufijo de sub-segmento de «[438a]»: distingue mitades del mismo episodio.</summary>
+    public string? SubSegmento { get; init; }
+    public bool Especial { get; init; }
+    public int? IndiceEspecial { get; init; }
+    public int? Temporada { get; init; }
+
+    /// <summary>Lo que queda del nombre tras quitar fecha, índice y marcas.</summary>
+    public string TituloNombre { get; init; } = "";
+    /// <summary>Título del metadato del contenedor (MKV/MP4). Novedad frente a los scripts.</summary>
+    public string? TituloMeta { get; init; }
+
+    /// <summary>
+    /// Trozos del título si el nombre venía multi-segmento (separador ┃ o |). Si solo hay
+    /// uno, la lista está vacía: no hay nada que partir.
+    /// </summary>
+    public IReadOnlyList<string> Segmentos { get; init; } = Array.Empty<string>();
+
+    /// <summary>Identidad estable del fichero para recordar decisiones (§4 de la epic).</summary>
+    public string Fingerprint { get; init; } = "";
+
+    /// <summary>Si el fichero no se pudo leer o el nombre no da nada, el motivo.</summary>
+    public string? Error { get; init; }
+
+    /// <summary>
+    /// Una copia con otro sub-segmento. Existe porque decidir «este fichero es solo la
+    /// historia b» ocurre DESPUÉS de extraer las señales, y las señales son inmutables a
+    /// propósito: la decisión crea una variante, no reescribe la evidencia.
+    /// </summary>
+    public FileSignals ConSegmento(string? seg) => new()
+    {
+        Path = Path, NombreArchivo = NombreArchivo, Extension = Extension, Carpeta = Carpeta,
+        Fecha = Fecha, Indice = Indice, SubSegmento = seg, Especial = Especial,
+        IndiceEspecial = IndiceEspecial, Temporada = Temporada, TituloNombre = TituloNombre,
+        TituloMeta = TituloMeta, Segmentos = Segmentos, Fingerprint = Fingerprint, Error = Error,
+    };
+
+    /// <summary>¿Hay algo con lo que identificar? Si no, es ERROR de entrada.</summary>
+    public bool TieneSeñales => Indice.HasValue || Fecha.HasValue
+                                || !string.IsNullOrWhiteSpace(TituloNombre)
+                                || !string.IsNullOrWhiteSpace(TituloMeta);
+}
+
+/// <summary>Lee las señales del nombre del fichero. Función pura: mismo nombre ⇒ mismas señales.</summary>
+public static partial class SignalExtractor
+{
+    // «2005-04-22 …» al inicio
+    [GeneratedRegex(@"^\s*(\d{4})-(\d{2})-(\d{2})")]
+    private static partial Regex RxFecha();
+
+    // «[S]» o «[S12]» — desvía a la rama de especiales
+    [GeneratedRegex(@"\[\s*S\s*(\d*)\s*\]", RegexOptions.IgnoreCase)]
+    private static partial Regex RxEspecial();
+
+    // «[438]», «[438a]» (una historia) o «[438ac]» (varias): las letras son el sub-segmento.
+    // Hasta 3 letras: un episodio no trae tantas historias, y limitarlo evita leer una palabra
+    // pegada al número («E02best») como si fueran segmentos.
+    [GeneratedRegex(@"\[\s*(\d{1,4})\s*([a-z]{0,3})\s*\]", RegexOptions.IgnoreCase)]
+    private static partial Regex RxIndiceCorchetes();
+
+    // «S03E12» / «s03e12», «S2017E487b» (una historia) y «S2017E487ac» (varias). Las letras
+    // pegadas al número son las historias que trae. Es el formato que ESCRIBE la propia app al
+    // marcar «esto es solo la historia b» (o «la a y la c»), así que tiene que saber releerlo:
+    // si no, cada pasada deshace la decisión de la anterior. Máximo 3 letras y el \b de después
+    // las cierra: así una palabra como «best» pegada al número no se confunde con segmentos.
+    [GeneratedRegex(@"\bS(\d{1,4})E(\d{1,4})([a-z]{0,3})\b", RegexOptions.IgnoreCase)]
+    private static partial Regex RxSxxExx();
+
+    // «E72» suelto, con sus letras opcionales igual que arriba
+    [GeneratedRegex(@"\bE(\d{1,4})([a-z]{0,3})\b", RegexOptions.IgnoreCase)]
+    private static partial Regex RxEpisodioE();
+
+    // «4x01», «12x05» — temporada×episodio (formato «NxNN», muy común en descargas). El episodio
+    // exige 2-3 cifras para no confundir un «4x4» de un título con una numeración, y las letras
+    // finales son las historias, igual que en SxxExx. Reconocerlo quita el prefijo de serie
+    // («Bob_Esponja_5x01_…») del título, que si no se quedaba dentro y hundía el parecido.
+    // OJO con los límites: el «_» es carácter de palabra, así que \b NO salta entre «_» y una
+    // cifra/letra. Los nombres de descarga usan «_» de separador («…Esponja_4x01_…»), de modo
+    // que se usan lookarounds que excluyen alfanuméricos (y tratan «_», espacio y borde como
+    // frontera) en vez de \b.
+    [GeneratedRegex(@"(?<![a-z0-9])(\d{1,2})x(\d{2,3})([a-z]{0,3})(?![a-z0-9])", RegexOptions.IgnoreCase)]
+    private static partial Regex RxTemporadaEpisodioX();
+
+    // Morralla de descarga: la fuente/release al final del nombre («…AMZN WEB-DL x265 1080p…»).
+    // No es parte del título y hundía el parecido contra el catálogo. Se corta desde el PRIMER
+    // marcador INEQUÍVOCO —nunca una palabra real de un título—. A propósito NO se incluyen
+    // marcas ambiguas sueltas como «web» o «dvd», que sí pueden aparecer en un título de verdad.
+    // El «_» es carácter de palabra: no se puede cerrar el marcador con \b (fallaría en «AMZN_»).
+    // Se cierra con un lookahead que exige un no-alfanumérico (o el final), así «_AMZN_» sí casa.
+    private static readonly Regex RxMorralla = new(
+        @"[\s_.\-]+(?:AMZN|WEBRip|WEB[-_.]?DL|HDTV|BluRay|BDRip|BRRip|DVDRip|HDRip|x26[45]|h26[45]|HEVC|XviD|(?:2160|1080|720|480)p)(?![a-z0-9]).*$",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+    // «72 Título» — número al principio seguido de separador
+    [GeneratedRegex(@"^\s*(\d{1,4})\s*[-–_.\s]+")]
+    private static partial Regex RxNumeroInicial();
+
+    // Carpeta: «Season 2007», «Temporada 3», «2007», «S03»
+    [GeneratedRegex(@"^(?:season|temporada|t|s)?\s*_?-?\s*(\d{1,4})\s*$", RegexOptions.IgnoreCase)]
+    private static partial Regex RxCarpetaTemporada();
+
+    /// <summary>
+    /// Separadores de multi-segmento del nombre. Cada web reparte las dos historias de un
+    /// capítulo a su manera: «A ┃ B», «A | B», «A + B» o «A - B».
+    ///
+    /// El guion EXIGE espacios a los lados a propósito: sin ellos, «El súper-guante» se
+    /// partiría en dos historias inventadas.
+    /// </summary>
+    private static readonly Regex RxSeparadorHistorias = new(@"\s*[┃|+]\s*|\s+[-–—]\s+");
+
+    /// <summary>
+    /// Extrae las señales de un nombre de fichero. No toca el disco: <paramref name="tituloMeta"/>
+    /// lo aporta quien haya leído el contenedor, para que esta función siga siendo testeable.
+    /// </summary>
+    public static FileSignals Extract(string rutaCompleta, string? carpeta = null, string? tituloMeta = null,
+                                      string? fingerprint = null)
+    {
+        var nombreArchivo = System.IO.Path.GetFileName(rutaCompleta);
+        var ext = System.IO.Path.GetExtension(rutaCompleta);
+        var resto = System.IO.Path.GetFileNameWithoutExtension(rutaCompleta) ?? "";
+
+        // Un nombre suelto sin carpeta deja GetDirectoryName en cadena vacía, y DirectoryInfo
+        // lanza con eso. Antes reventaba en vez de limitarse a no saber la temporada.
+        if (carpeta == null)
+        {
+            var dir = System.IO.Path.GetDirectoryName(rutaCompleta);
+            carpeta = string.IsNullOrEmpty(dir) ? "" : new System.IO.DirectoryInfo(dir).Name;
+        }
+
+        DateOnly? fecha = null;
+        int? indice = null, indiceEspecial = null;
+        string? subSegmento = null;
+        bool especial = false;
+
+        // 1. fecha al inicio — la primera, para que su «22» no se confunda con un índice
+        var mFecha = RxFecha().Match(resto);
+        if (mFecha.Success)
+        {
+            if (DateOnly.TryParse($"{mFecha.Groups[1].Value}-{mFecha.Groups[2].Value}-{mFecha.Groups[3].Value}",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var d))
+                fecha = d;
+            resto = resto[mFecha.Length..];
+        }
+
+        // 2. especial antes que índice: «[S12]» no debe leerse como número de episodio regular
+        var mEsp = RxEspecial().Match(resto);
+        if (mEsp.Success)
+        {
+            especial = true;
+            if (int.TryParse(mEsp.Groups[1].Value, out var ne)) indiceEspecial = ne;
+            resto = resto.Remove(mEsp.Index, mEsp.Length);
+        }
+
+        // 3. índice: SxxExx → corchetes → E72 → número inicial (en orden de fiabilidad).
+        //
+        // El SxxExx va PRIMERO porque es el único marcador que no admite otra lectura. Los
+        // corchetes iban delante y se los llevaba cualquier número entre corchetes del
+        // título: hay catálogos que los usan («Cuido de mamá (LA)[30]»), y entonces el
+        // nombre que la propia app escribía se releía como el episodio 30. Renombrar y
+        // volver a simular tiene que dar lo mismo, o los datos se degradan solos.
+        int? temporadaNombre = null;   // la que declara el propio nombre en «S2012E455»
+        var mSE = RxSxxExx().Match(resto);
+        if (mSE.Success)
+        {
+            indice = int.Parse(mSE.Groups[2].Value);
+            if (int.TryParse(mSE.Groups[1].Value, out var tNom)) temporadaNombre = tNom;
+            if (mSE.Groups[3].Value.Length > 0) subSegmento = mSE.Groups[3].Value.ToLowerInvariant();
+            resto = TrasElMarcador(resto, mSE.Index, mSE.Length);
+        }
+        else if (RxTemporadaEpisodioX().Match(resto) is { Success: true } mX)
+        {
+            // «4x01»: la temporada y el episodio del propio nombre, y el prefijo de serie fuera.
+            indice = int.Parse(mX.Groups[2].Value);
+            if (int.TryParse(mX.Groups[1].Value, out var tX)) temporadaNombre = tX;
+            if (mX.Groups[3].Value.Length > 0) subSegmento = mX.Groups[3].Value.ToLowerInvariant();
+            resto = TrasElMarcador(resto, mX.Index, mX.Length);
+        }
+        else
+        {
+            var mCor = RxIndiceCorchetes().Match(resto);
+            if (mCor.Success)
+            {
+                indice = int.Parse(mCor.Groups[1].Value);
+                if (mCor.Groups[2].Value.Length > 0) subSegmento = mCor.Groups[2].Value.ToLowerInvariant();
+                resto = resto.Remove(mCor.Index, mCor.Length);
+            }
+            else
+            {
+                var mE = RxEpisodioE().Match(resto);
+                if (mE.Success)
+                {
+                    indice = int.Parse(mE.Groups[1].Value);
+                    if (mE.Groups[2].Value.Length > 0) subSegmento = mE.Groups[2].Value.ToLowerInvariant();
+                    resto = TrasElMarcador(resto, mE.Index, mE.Length);
+                }
+                else
+                {
+                    var mNum = RxNumeroInicial().Match(resto);
+                    if (mNum.Success)
+                    {
+                        indice = int.Parse(mNum.Groups[1].Value);
+                        resto = resto[mNum.Length..];
+                    }
+                }
+            }
+        }
+
+        // 4. temporada: manda la de la carpeta (así está organizada la biblioteca), pero si la
+        //    carpeta no la dice —un fichero en una subcarpeta de trabajo tipo «Renombrar»— se
+        //    usa la que trae el propio nombre en «S2012E455». Sin esto, un fichero perfecto
+        //    perdía su temporada fuera de su carpeta y se confundía con un REMAKE del mismo
+        //    título en otro año (caso «El aro de la gratitud»: 574 de 2020 tomado por el 88 de 2007).
+        int? temporada = TemporadaDeCarpeta(carpeta) ?? temporadaNombre;
+
+        // 5. lo que queda es el título; los trozos si venía multi-segmento
+        var titulo = LimpiarTitulo(resto);
+        var segmentos = RxSeparadorHistorias.Split(titulo)
+                              .Select(LimpiarTitulo)
+                              .Where(s => s.Length > 0)
+                              .ToList();
+        if (segmentos.Count < 2) segmentos.Clear();   // no había nada que partir
+
+        return new FileSignals
+        {
+            Path = rutaCompleta,
+            NombreArchivo = nombreArchivo,
+            Extension = ext,
+            Carpeta = carpeta,
+            Fecha = fecha,
+            Indice = indice,
+            SubSegmento = subSegmento,
+            Especial = especial,
+            IndiceEspecial = indiceEspecial,
+            Temporada = temporada,
+            TituloNombre = titulo,
+            TituloMeta = string.IsNullOrWhiteSpace(tituloMeta) ? null : tituloMeta.Trim(),
+            Segmentos = segmentos,
+            Fingerprint = fingerprint ?? rutaCompleta,
+        };
+    }
+
+    /// <summary>
+    /// Qué temporada dice el NOMBRE de una carpeta: «Season 2005», «Temporada 3», «S03» o
+    /// un año a secas. Null si no dice ninguna («Especiales», «Películas»…).
+    ///
+    /// Lo usan dos sitios —las señales de un fichero y el orden de la biblioteca— y tienen
+    /// que estar de acuerdo: si una reconociera «Season 2005» y la otra no, la tabla
+    /// ordenaría por un criterio distinto del que luego identifica.
+    /// </summary>
+    public static int? TemporadaDeCarpeta(string carpeta)
+    {
+        if (string.IsNullOrWhiteSpace(carpeta)) return null;
+
+        var m = RxCarpetaTemporada().Match(carpeta.Trim());
+        if (m.Success && int.TryParse(m.Groups[1].Value, out var t)) return t;
+
+        var mSE = RxSxxExx().Match(carpeta);
+        return mSE.Success ? int.Parse(mSE.Groups[1].Value) : null;
+    }
+
+    /// <summary>Quita separadores sobrantes de los bordes y espacios repetidos.</summary>
+    /// <summary>
+    /// El título es lo que va DESPUÉS del marcador de episodio: delante está el nombre de
+    /// la serie («Doraemon (2005) - S17E485 - Título»). Quitando solo el marcador quedaba
+    /// «Doraemon (2005) - - Título», y ese guion suelto se confundía con el que separa las
+    /// dos historias de un capítulo.
+    ///
+    /// Si detrás no hay nada (el marcador iba al final: «Título S01E02»), se conserva lo de
+    /// delante — que entonces sí era el título.
+    /// </summary>
+    private static string TrasElMarcador(string resto, int indice, int largo)
+    {
+        var despues = LimpiarTitulo(resto[(indice + largo)..]);
+        return despues.Length > 0 ? despues : resto.Remove(indice, largo);
+    }
+
+    private static string LimpiarTitulo(string s)
+    {
+        // La morralla de descarga («…_AMZN_WEB_DLtrialeng…», «…x265_1080p») se corta desde su
+        // primer marcador: no es título y restaba parecido contra el catálogo.
+        s = RxMorralla.Replace(s, "");
+        // Las etiquetas de la fuente («[Boing HD]», «[1080p]») no son parte del título y
+        // hundían el parecido: comparadas contra el catálogo restaban puntos por nada.
+        s = Regex.Replace(s, @"\[[^\]]*\]", " ");
+        s = s.Trim().Trim('-', '–', '_', '.', ' ', '\t');
+        return Regex.Replace(s, @"\s{2,}", " ").Trim();
+    }
+}

@@ -9,7 +9,7 @@ obj/
 # Artefactos de build (se generan con build.ps1)
 publish/
 installer/Output/
-src/ShrinkVideo/Assets/app-256.png
+src/Ondine/Assets/app-256.png
 
 # Restos de scraping de páginas de referencia: material de consulta, no del proyecto
 .firecrawl/

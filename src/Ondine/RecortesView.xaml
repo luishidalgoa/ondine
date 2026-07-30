@@ -1,0 +1,435 @@
+<UserControl x:Class="Ondine.RecortesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}">
+  <UserControl.Resources>
+    <BooleanToVisibilityConverter x:Key="B2V"/>
+
+    <!-- ══ Acción colgada de la pista ══
+         Redonda y pequeña porque va encima de la línea de tiempo, pegada al punto al que se
+         refiere. Un botón con texto ahí arriba taparía justo lo que hay que mirar. -->
+    <Style x:Key="AccionPista" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Width" Value="24"/>
+      <Setter Property="Height" Value="24"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Ellipse x:Name="fondo" Fill="{StaticResource Accent600}"
+                       Stroke="#59FFFFFF" StrokeThickness="1"/>
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="fondo" Property="Fill" Value="{StaticResource Accent}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.3"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- ══ Quitar un tramo desde su propio bloque ══
+         Solo aparece al pasar por encima del bloque: con una ✕ fija en cada tramo la pista
+         se llena de aspas y deja de leerse como una línea de tiempo. -->
+    <Style x:Key="QuitarBloque" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Width" Value="19"/>
+      <Setter Property="Height" Value="19"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Ellipse x:Name="fondo" Fill="#D90E1018" Stroke="#66FFFFFF" StrokeThickness="1"/>
+              <Path Data="M3,3 L9,9 M9,3 L3,9" Stretch="None" Width="12" Height="12"
+                    Stroke="White" StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="fondo" Property="Fill" Value="#E6B04A44"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </UserControl.Resources>
+
+  <Grid Margin="0,8,0,0">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>   <!-- origen -->
+      <RowDefinition Height="*"/>      <!-- vídeo + tramos -->
+      <RowDefinition Height="Auto"/>   <!-- salida -->
+    </Grid.RowDefinitions>
+
+    <!-- ══ De dónde sale el vídeo ══ -->
+    <Border Grid.Row="0" Background="{StaticResource Surface}" CornerRadius="8" Padding="12,10"
+            BorderBrush="{StaticResource Divider}" BorderThickness="1">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Button x:Name="btnElegir" Grid.Column="0" Style="{StaticResource BtnPrimary}"
+                Content="Elegir vídeo…" Padding="14,6"/>
+        <StackPanel Grid.Column="1" Margin="14,0,10,0" VerticalAlignment="Center">
+          <TextBlock x:Name="lblVideo" Text="Ningún vídeo cargado" FontSize="12.5" FontWeight="Medium"
+                     TextTrimming="CharacterEllipsis"/>
+          <TextBlock x:Name="lblVideoDet" FontSize="11" Foreground="{StaticResource Neutral500}"
+                     Text="Arrastra un vídeo aquí, o ábrelo desde Organizar con el botón derecho."/>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock x:Name="lblDuracionTotal" VerticalAlignment="Center"
+                     FontFamily="{StaticResource FontMono}" FontSize="12"
+                     Foreground="{StaticResource Neutral400}" Text=""/>
+          <!-- Vacía Recortes y libera la memoria del vídeo. Solo aparece con algo cargado. -->
+          <Button x:Name="btnVaciar" Style="{StaticResource BtnGhostMuted}" Margin="12,0,0,0"
+                  Padding="10,5" FontSize="12" Visibility="Collapsed" Content="Vaciar"
+                  ToolTip="Descarta el vídeo y los cortes y libera la memoria — deja Recortes como recién abierto"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ══ Vídeo y tramos ══ -->
+    <Grid Grid.Row="1" Margin="0,10,0,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/><ColumnDefinition Width="300"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- reproductor con la pista de tramos debajo -->
+      <Border Grid.Column="0" Background="#08090F" CornerRadius="8" ClipToBounds="True"
+              BorderBrush="{StaticResource Divider}" BorderThickness="1">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*"/><RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <Grid Grid.Row="0">
+            <!-- Fondo estático del reproductor: un degradado oscuro y sutil, pintado por la GPU
+                 una sola vez (coste cero). El vídeo, al cargarse, lo tapa. Aquí hubo un plasma
+                 animado calculado por CPU, pero en una app que satura la CPU comprimiendo se
+                 comía un núcleo entero en reposo y volvía lenta la interfaz — retirado a
+                 propósito (KRO — rendimiento). -->
+            <Grid.Background>
+              <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#090A11" Offset="0"/>
+                <GradientStop Color="#11131D" Offset="0.5"/>
+                <GradientStop Color="#090A11" Offset="1"/>
+              </LinearGradientBrush>
+            </Grid.Background>
+            <MediaElement x:Name="video" LoadedBehavior="Manual" UnloadedBehavior="Stop" Stretch="Uniform"/>
+            <!-- El texto del estado vacío va en una pastilla translúcida: así se lee igual de
+                 bien sobre el fondo que sobre el vídeo. -->
+            <Border x:Name="chipSinVideo" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="#66101018" CornerRadius="8" Padding="14,7">
+              <TextBlock x:Name="lblSinVideo" Text="Elige un vídeo para empezar a cortarlo"
+                         FontSize="12.5" Foreground="{StaticResource Neutral300}"/>
+            </Border>
+
+            <!-- Mientras se prepara el vídeo, la página entera está deshabilitada: dejar
+                 tocar los controles con el material a medio cargar solo produce estados
+                 raros. Aquí se dice qué está pasando y cuánto queda. -->
+            <Border x:Name="capaCarga" Visibility="Collapsed" Background="#CC08090F">
+              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="300">
+                <TextBlock x:Name="lblCarga" Text="Preparando el vídeo…" FontSize="12.5"
+                           HorizontalAlignment="Center" Foreground="{StaticResource Neutral300}"/>
+                <ProgressBar x:Name="barCarga" Height="4" Margin="0,10,0,0" Minimum="0" Maximum="1"/>
+                <TextBlock x:Name="lblCargaDet" Margin="0,7,0,0" FontSize="11" HorizontalAlignment="Center"
+                           Foreground="{StaticResource Neutral600}" Text=""/>
+              </StackPanel>
+            </Border>
+
+            <!-- ══ Mientras se exporta ══
+                 El reproductor se apaga a propósito: el motor necesita el fichero suelto
+                 para poder codificarlo. En vez de dejar un rectángulo negro que parece una
+                 avería, se vela la imagen y se dice por qué. Los pulsos de luz son el mismo
+                 lenguaje que el fondo de la app —manchas radiales muy tenues— pero latiendo,
+                 para que se lea como «trabajando» y no como «colgado». -->
+            <!-- Capa de exportación: solo el mensaje sobre un velo RADIAL —oscuro en el centro
+                 para que el texto se lea, transparente en los cantos para que asome el fondo
+                 degradado del reproductor—, no un velo plano. -->
+            <Border x:Name="capaExportando" Visibility="Collapsed">
+              <Border.Background>
+                <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.75" RadiusY="0.75">
+                  <GradientStop Color="#8C0C0E16" Offset="0"/>
+                  <GradientStop Color="#000C0E16" Offset="1"/>
+                </RadialGradientBrush>
+              </Border.Background>
+              <Grid ClipToBounds="True">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="360">
+                  <!-- Triángulo de aviso, dibujado: nada de fuentes de iconos. -->
+                  <Path HorizontalAlignment="Center" Stretch="Uniform" Width="34" Height="34"
+                        Stroke="White" StrokeThickness="1.6" StrokeLineJoin="Round"
+                        Data="M12,3.4 L22,20.6 L2,20.6 Z M12,9.5 L12,14.5 M12,17.2 L12,17.4"
+                        StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                  <TextBlock Margin="0,12,0,0" FontSize="13" FontWeight="Medium" Foreground="White"
+                             TextAlignment="Center" TextWrapping="Wrap"
+                             Text="El reproductor está en pausa mientras se exporta"/>
+                  <TextBlock Margin="0,5,0,0" FontSize="11.5" Foreground="#CBD0E2"
+                             TextAlignment="Center" TextWrapping="Wrap"
+                             Text="El vídeo tiene que estar libre para poder cortarlo. Vuelve solo al terminar."/>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </Grid>
+
+          <StackPanel Grid.Row="1" Margin="14,8,14,12">
+            <!-- ══ La pista ══
+                 UNA sola línea de tiempo, como en un editor de vídeo. Antes eran dos cosas
+                 separadas: una regla morada arriba, que solo se miraba, y un deslizador
+                 debajo para moverse — y había que traducir mentalmente de una a otra para
+                 saber por dónde se estaba cortando. Aquí el fondo son fotogramas del propio
+                 vídeo, cada tramo es un bloque, las juntas se agarran y se arrastran, y el
+                 cabezal va encima de todo. Las acciones cuelgan del sitio donde actúan.
+
+                 La previa flotante va en la MISMA columna que la pista y con altura cero:
+                 así su origen de coordenadas es exactamente el que devuelve
+                 GetPosition(pista) y el globo cae justo bajo el cursor. Si se cambia de
+                 sitio hay que conservar esa propiedad o vuelve a salir torcido; con un
+                 Popup había que traducir entre dos sistemas de coordenadas, y ahí fallaba. -->
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="26"/>    <!-- acciones rápidas, colgadas del cabezal -->
+                <RowDefinition Height="Auto"/>  <!-- la pista -->
+              </Grid.RowDefinitions>
+
+              <!-- «Cortar aquí» va pegado al cabezal, que es justo por donde va a partir.
+                   Abajo a la derecha, como estaba, obligaba a mirar a un sitio para apuntar
+                   y a otro distinto para disparar. -->
+              <Canvas x:Name="capaAcciones" Grid.Row="0" Grid.Column="1">
+                <Button x:Name="btnCortar" Style="{StaticResource AccionPista}" IsEnabled="False"
+                        Visibility="Collapsed"
+                        ToolTip="Cortar aquí: parte en dos el tramo por donde va el cabezal  (C)">
+                  <TextBlock Text="✂" FontSize="12" Foreground="White" Margin="0,1,0,0"/>
+                </Button>
+              </Canvas>
+
+              <TextBlock x:Name="lblPos" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"
+                         Margin="0,0,11,0" MinWidth="46" TextAlignment="Right"
+                         FontFamily="{StaticResource FontMono}" FontSize="11"
+                         Foreground="#D6D9E8" Text="0:00"/>
+
+              <!-- La pista vive dentro de un visor que se desplaza: al ampliar, la pista se
+                   hace MÁS ANCHA que la ventana y el visor deja recorrerla. Todo el cálculo
+                   de la línea de tiempo ya estaba normalizado por el ancho de la pista, así
+                   que ampliar no cambia ni una cuenta: solo cambia ese ancho. -->
+              <ScrollViewer x:Name="visorPista" Grid.Row="1" Grid.Column="1"
+                            HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                            PanningMode="HorizontalOnly">
+                <Grid x:Name="pista" Height="54" ClipToBounds="True"
+                      Background="Transparent" Cursor="Hand"
+                      ToolTip="Pincha para moverte por el vídeo. Arrastra los tiradores de las juntas para afinar dónde corta.&#10;Ctrl + rueda (o Ctrl + y Ctrl −) para ampliar la línea de tiempo.">
+                <Border Background="#0E1018" BorderBrush="{StaticResource Divider}" BorderThickness="1"/>
+                <Canvas x:Name="capaFotogramas" IsHitTestVisible="False"/>
+                <Canvas x:Name="capaBloques"/>
+                <Canvas x:Name="capaTiradores"/>
+                <Canvas x:Name="capaCabezal" IsHitTestVisible="False">
+                  <!-- Blanco con un filo oscuro a cada lado: sobre un fotograma claro una
+                       línea blanca a secas desaparece. -->
+                  <Border x:Name="cabezal" Width="4" Background="White" Visibility="Collapsed"
+                          BorderBrush="#70000000" BorderThickness="1,0"
+                          Height="{Binding ActualHeight, ElementName=pista}"/>
+                </Canvas>
+                </Grid>
+              </ScrollViewer>
+
+              <Canvas x:Name="capaPrevia" Grid.Row="0" Grid.Column="1" Height="0"
+                      VerticalAlignment="Top" IsHitTestVisible="False">
+                <Border x:Name="globoPrevia" Visibility="Collapsed" Background="#F00A0B14"
+                        CornerRadius="6" Padding="3" BorderBrush="{StaticResource Accent700}"
+                        BorderThickness="1">
+                  <Grid>
+                    <Image x:Name="imgPrevia" Width="192" Height="108" Stretch="UniformToFill"/>
+                    <Border Background="#B0000000" CornerRadius="3" Padding="5,1"
+                            HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5">
+                      <TextBlock x:Name="lblPrevia" FontFamily="{StaticResource FontMono}"
+                                 FontSize="11" Foreground="White" Text="0:00"/>
+                    </Border>
+                    <TextBlock x:Name="lblPreviaCargando" Text="…" FontSize="16"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Foreground="{StaticResource Neutral500}"/>
+                  </Grid>
+                </Border>
+              </Canvas>
+
+              <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock x:Name="lblDur" Margin="11,0,0,0" MinWidth="46"
+                           FontFamily="{StaticResource FontMono}" FontSize="11"
+                           Foreground="#B9BECF" Text="0:00"/>
+                <!-- Solo aparece si hay aumento: a 1× no hay nada que decir. -->
+                <TextBlock x:Name="lblZoom" Margin="8,0,0,0" FontFamily="{StaticResource FontMono}"
+                           FontSize="11" Foreground="{StaticResource Accent400}" Text=""
+                           ToolTip="Aumento de la línea de tiempo · Ctrl+0 para verla entera"/>
+              </StackPanel>
+            </Grid>
+
+            <!-- Los fotogramas del fondo sitúan a ojo; el globo que sigue al cursor da el
+                 fotograma exacto del punto al que apuntas, que es lo que hace falta para
+                 clavar un corte. Se saca bajo demanda y se tira: no se guarda una tira fija
+                 de doce sitios que no son el que te importa. -->
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+              <Button x:Name="btnAtras" Style="{StaticResource BtnIcono}" Margin="0,0,10,0"
+                      ToolTip="Atrás 10 s  (flecha izquierda)">
+                <Path Data="M10,5 L4.5,10 L10,15 M16,5 L10.5,10 L16,15" Stretch="None" Width="20" Height="20"
+                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                      StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+              </Button>
+              <Button x:Name="btnPlay" Style="{StaticResource BtnPlay}" ToolTip="Reproducir / pausar  (espacio)">
+                <Path x:Name="glifoPlay" Stretch="None" Data="M6.5,3.5 L17,10 L6.5,16.5 Z" Fill="White"
+                      Stroke="White" StrokeThickness="2.2" StrokeLineJoin="Round" Width="19" Height="20"/>
+              </Button>
+              <Button x:Name="btnAdelante" Style="{StaticResource BtnIcono}" Margin="10,0,0,0"
+                      ToolTip="Adelante 10 s  (flecha derecha)">
+                <Path Data="M10,5 L15.5,10 L10,15 M4,5 L9.5,10 L4,15" Stretch="None" Width="20" Height="20"
+                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                      StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+              </Button>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ══ Lista de tramos ══ -->
+      <Border Grid.Column="1" Margin="10,0,0,0" Background="{StaticResource Surface}" CornerRadius="8"
+              BorderBrush="{StaticResource Divider}" BorderThickness="1">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <StackPanel Grid.Row="0" Margin="12,10,12,6">
+            <TextBlock Text="TRAMOS" FontSize="10.5" FontWeight="SemiBold" Opacity="0.65"/>
+            <TextBlock x:Name="lblAyudaTramos" FontSize="11" Foreground="{StaticResource Neutral500}"
+                       TextWrapping="Wrap" Margin="0,3,0,0"
+                       Text="Cada tramo será un fichero. Corta por donde quieras y ponles nombre."/>
+          </StackPanel>
+          <ItemsControl x:Name="listaTramos" Grid.Row="1" Margin="8,0,8,8">
+            <ItemsControl.Template>
+              <ControlTemplate TargetType="ItemsControl">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>
+              </ControlTemplate>
+            </ItemsControl.Template>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border CornerRadius="6" Padding="9,7" Margin="0,0,0,6" BorderThickness="1">
+                  <Border.Style>
+                    <Style TargetType="Border">
+                      <Setter Property="Background" Value="{StaticResource Field}"/>
+                      <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+                      <!-- El tramo que se está exportando se ve sin buscarlo: el rótulo de
+                           abajo dice cuál va, pero la vista de tramos es donde se mira. -->
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding EnCurso}" Value="True">
+                          <Setter Property="Background" Value="{StaticResource Accent900}"/>
+                          <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <StackPanel>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
+                      <Border Background="{StaticResource Accent800}" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Numero}" FontSize="10.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource Accent200}"/>
+                      </Border>
+                      <TextBlock Grid.Column="1" Margin="7,0,0,0" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource FontMono}" FontSize="10.5"
+                                 Foreground="{StaticResource Neutral400}" Text="{Binding Rango}"/>
+                      <TextBlock Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                 Margin="0,0,4,0" FontSize="10" FontWeight="SemiBold"
+                                 Foreground="{StaticResource Accent200}" Text="EXPORTANDO"
+                                 Visibility="{Binding EnCurso, Converter={StaticResource B2V}}"/>
+                      <Button Grid.Column="2" Tag="{Binding}" Click="OnQuitarTramo"
+                              Style="{StaticResource BtnIcono}" Width="24" Height="24"
+                              ToolTip="Quitar este tramo (no se exportará)">
+                        <Path Data="M3,3 L11,11 M11,3 L3,11" Stretch="None" Width="14" Height="14"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              StrokeThickness="1.3" StrokeStartLineCap="Round"/>
+                      </Button>
+                    </Grid>
+                    <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Margin="0,6,0,0"
+                             FontSize="11.5" ToolTip="Nombre del fichero que se creará (sin extensión)"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- ══ Salida: los MISMOS ajustes y la MISMA estimación que Comprimir ══ -->
+    <Border Grid.Row="2" Margin="0,10,0,0" Background="{StaticResource Surface}" CornerRadius="8"
+            Padding="12,10" BorderBrush="{StaticResource Divider}" BorderThickness="1">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Margin="0,0,10,0">
+            <TextBlock Text="Formato" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cboFmt" SelectedIndex="0"/>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Margin="0,0,10,0">
+            <TextBlock Text="Códec" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cboCodec" SelectedIndex="0"/>
+          </StackPanel>
+          <StackPanel Grid.Column="2" Margin="0,0,10,0">
+            <TextBlock Text="Calidad" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cboQ" SelectedIndex="0"/>
+          </StackPanel>
+          <StackPanel Grid.Column="3" Margin="0,0,10,0">
+            <TextBlock Text="Resolución máx." FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cboRes" SelectedIndex="0"/>
+          </StackPanel>
+          <StackPanel Grid.Column="4">
+            <TextBlock Text="Audio" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cboAud" SelectedIndex="0"/>
+          </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,10,0,0">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock x:Name="lblEst" FontSize="15" FontWeight="Medium"
+                       Foreground="{StaticResource Accent200}" Text="—" VerticalAlignment="Center"/>
+            <TextBlock x:Name="lblEstDet" FontSize="11" Foreground="{StaticResource Neutral500}"
+                       Margin="10,0,0,0" VerticalAlignment="Center" Text="Elige un vídeo para estimar el tamaño"/>
+          </StackPanel>
+          <TextBlock x:Name="lblDestino" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                     Margin="0,26,0,0" FontSize="10.5" Foreground="{StaticResource Neutral600}"
+                     TextTrimming="CharacterEllipsis" MaxWidth="620" Text=""/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <TextBlock x:Name="lblProgreso" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="11.5"
+                       Foreground="{StaticResource Neutral400}" Text=""/>
+            <Button x:Name="btnDestino" Style="{StaticResource BtnSecondary}" Padding="10,6" Margin="0,0,8,0"
+                    Content="Guardar en…" ToolTip="Por defecto, junto al vídeo original"/>
+            <!-- Solo salen mientras se exporta: un «Detener» apagado permanente es ruido. -->
+            <Button x:Name="btnPausarExp" Style="{StaticResource BtnSecondary}" Padding="10,6"
+                    Margin="0,0,8,0" Content="Pausar" Visibility="Collapsed"
+                    ToolTip="Suspende ffmpeg donde va. Reanudar sigue desde ahí, no desde el principio."/>
+            <Button x:Name="btnDetenerExp" Style="{StaticResource BtnSecondary}" Padding="10,6"
+                    Margin="0,0,8,0" Content="Detener" Visibility="Collapsed"
+                    ToolTip="Corta la exportación y mata el proceso de ffmpeg, no lo deja de fondo."/>
+            <Button x:Name="btnExportar" Style="{StaticResource BtnPrimary}" Padding="16,7"
+                    Content="Exportar" IsEnabled="False"/>
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

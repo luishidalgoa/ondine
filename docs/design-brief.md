@@ -1,10 +1,10 @@
-# Brief para rediseño visual — ShrinkStudio
+# Brief para rediseño visual — Ondine
 
 > Pega esto en Claude Design (adjunta también `docs/icon.png` y, si puedes, una captura actual de la app).
 
 ---
 
-Eres un diseñador de producto. Quiero un **lavado de cara visual** de mi app de escritorio Windows **ShrinkStudio**, un transcodificador de vídeo pensado como **relevo ligero y moderno de HandBrake**. Mantén la funcionalidad; céntrate en la estética y en una estructura que pueda crecer: jerarquía, espaciado, color, tipografía, iconografía y microinteracciones.
+Eres un diseñador de producto. Quiero un **lavado de cara visual** de mi app de escritorio Windows **Ondine**, un transcodificador de vídeo pensado como **relevo ligero y moderno de HandBrake**. Mantén la funcionalidad; céntrate en la estética y en una estructura que pueda crecer: jerarquía, espaciado, color, tipografía, iconografía y microinteracciones.
 
 ## Qué es
 Comprime y convierte vídeos (series, películas, capítulos) a **H.265 / H.264 / AV1** en **MP4 o MKV**, con aceleración por hardware, conservando los idiomas de audio elegidos. Su punto fuerte frente a HandBrake es el **procesamiento por lotes**: el usuario elige una carpeta o archivos, la app analiza los vídeos (pistas, duración, tamaño) y él marca cuáles convertir.
