@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 60" width="220" height="60" fill="none" role="img" aria-label="Ondine">
+  <g transform="translate(10 10) scale(0.625)" stroke="#B5ABFC" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7 17 C 15.5 9 26.5 25 35 17 C 43.5 9 48.5 25 57 17"></path>
+  <path d="M7 32 C 16 28 26 36 35 32 C 44 28 48 36 57 32"></path>
+  <path d="M7 47 L 57 47"></path>
+  </g>
+  <text x="62" y="38" font-family="Inter, 'Segoe UI', sans-serif" font-size="26" font-weight="500" letter-spacing="0.5" fill="#E9E9ED">Ondine</text>
+</svg>
