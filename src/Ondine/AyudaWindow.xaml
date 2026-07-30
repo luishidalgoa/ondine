@@ -58,7 +58,26 @@
 
       <!-- ═ barra de título ═ -->
       <Grid Grid.Row="0">
-        <TextBlock Text="Ayuda — Ondine" FontSize="13.5" FontWeight="Medium" VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <!-- La marca, igual que en la ventana principal: mismo dibujo, sin contenedor. -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+          <Viewbox Width="18" Height="18" VerticalAlignment="Center">
+            <Canvas Width="64" Height="64">
+              <Canvas.Resources>
+                <Style TargetType="Path">
+                  <Setter Property="Stroke" Value="#B5ABFC"/>
+                  <Setter Property="StrokeThickness" Value="6"/>
+                  <Setter Property="StrokeStartLineCap" Value="Round"/>
+                  <Setter Property="StrokeEndLineCap" Value="Round"/>
+                  <Setter Property="StrokeLineJoin" Value="Round"/>
+                </Style>
+              </Canvas.Resources>
+              <Path Data="M7,17 C15.5,9 26.5,25 35,17 C43.5,9 48.5,25 57,17"/>
+              <Path Data="M7,32 C16,28 26,36 35,32 C44,28 48,36 57,32"/>
+              <Path Data="M7,47 L57,47"/>
+            </Canvas>
+          </Viewbox>
+          <TextBlock Text="Ayuda — Ondine" FontSize="13.5" FontWeight="Medium" VerticalAlignment="Center" Margin="9,0,0,0"/>
+        </StackPanel>
         <Button x:Name="btnCerrar" Style="{StaticResource BtnClose}" HorizontalAlignment="Right"
                 WindowChrome.IsHitTestVisibleInChrome="True">
           <Path Data="M2,2 L11,11 M11,2 L2,11" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
