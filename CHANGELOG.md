@@ -29,17 +29,27 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-26
+
+Adelgazar un vídeo **sin recomprimirlo**: quitarle los doblajes y los subtítulos que no vas a usar.
+
 ### Añadido
 
 - **Quitar pistas de audio o subtítulos sin comprimir de nuevo.** Un fichero con varios doblajes
   puede llevar decenas de megas de audio que no vas a escuchar. Con el botón derecho sobre un vídeo
-  en Comprimir, «Quitar pistas de audio o subtítulos…» enseña todo lo que trae dentro (códec,
-  idioma, canales, caudal) y te deja marcar lo que no quieras. **No se recomprime nada**: el
-  fichero se reempaqueta copiando los datos tal cual, así que tarda un segundo y el vídeo queda
-  **idéntico bit a bit** — medido sobre un episodio real, 155 MB → 134 MB en 0,6 s con el mismo
-  vídeo exacto. Antes de tocar nada se dice cuánto se va a ahorrar; la pista de vídeo no se puede
-  quitar, y si el resultado se quedaría sin audio se avisa. El original va a la Papelera, así que
-  **Ctrl+Z** lo devuelve.
+  en Comprimir, «Quitar pistas de audio o subtítulos…» enseña todo lo que trae dentro y te deja
+  marcar lo que no quieras. **No se recomprime nada**: el fichero se reempaqueta copiando los datos
+  tal cual, así que tarda un segundo y el vídeo queda **idéntico bit a bit** — medido sobre un
+  episodio real, 155 MB → 134 MB en 0,6 s con el mismo vídeo exacto. Antes de tocar nada se dice
+  cuánto se va a ahorrar; la pista de vídeo no se puede quitar, y si el resultado se quedaría sin
+  audio se avisa. El original va a la Papelera, así que **Ctrl+Z** lo devuelve.
+
+- **Las pistas se leen con el idioma en claro.** Cada una se describe por lo que es —«Audio ·
+  Español · 2 canales · 129 kbps»— en vez de con el código del fichero (`spa`, `eng`, `por`), que
+  no sirve para decidir qué doblaje sobra. Si la pista trae un título puesto a mano («Castellano
+  AMZN») se enseña, igual que si es la **predeterminada** o si los subtítulos son **forzados** —lo
+  único que distingue dos pistas del mismo idioma—. Y lo que no aporta ya no aparece: el idioma sin
+  declarar del vídeo, o el caudal de un subtítulo de texto, que no llega a 1 kbps.
 
 ## [1.2.0] - 2026-07-25
 
