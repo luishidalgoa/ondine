@@ -32,6 +32,11 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-30
+
+La app cambia de nombre: **ShrinkStudio pasa a llamarse Ondine**. Al actualizar no tienes que hacer
+nada — tus catálogos, decisiones, presets y ajustes se mudan solos.
+
 ### Cambiado
 
 - **Logotipo nuevo.** El anterior era un cuadrado con degradado, un botón de *play* y dos flechas
