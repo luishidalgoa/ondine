@@ -107,8 +107,7 @@ public static class ReindexStore
     /// <summary>Se puede redirigir en los tests para no ensuciar el perfil del usuario.</summary>
     public static string? RaizOverride { get; set; }
 
-    public static string Raiz => RaizOverride ?? Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShrinkStudio");
+    public static string Raiz => RaizOverride ?? DatosDeUsuario.Raiz;
 
     public static string DirCatalogos => Path.Combine(Raiz, "catalogos");
     public static string DirLotes => Path.Combine(Raiz, "lotes");

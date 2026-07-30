@@ -21,6 +21,9 @@
     <Compile Include="..\..\src\ShrinkVideo\Reindex\*.cs" LinkBase="Reindex" />
     <!-- Igual que Reindex: lógica sin WPF ni ffmpeg, así que entra en el arnés y corre en CI. -->
     <Compile Include="..\..\src\ShrinkVideo\Pistas\*.cs" LinkBase="Pistas" />
+    <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
+         ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->
+    <Compile Include="..\..\src\ShrinkVideo\Rutas\*.cs" LinkBase="Rutas" />
   </ItemGroup>
 
 </Project>

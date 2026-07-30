@@ -45,6 +45,7 @@
          sus tipos y la CLI dejó de compilar en las cinco plataformas. -->
     <Compile Include="..\ShrinkVideo\Reindex\*.cs" LinkBase="Reindex" />
     <Compile Include="..\ShrinkVideo\Pistas\*.cs" LinkBase="Pistas" />
+    <Compile Include="..\ShrinkVideo\Rutas\*.cs" LinkBase="Rutas" />
   </ItemGroup>
 
 </Project>
