@@ -5,32 +5,44 @@
 <h1 align="center">Ondine</h1>
 
 <p align="center">
-  Compresor de vídeo por lotes, pensado como <b>relevo ligero de HandBrake</b>:
-  reduce series, películas y capítulos a <b>H.265 / H.264 / AV1</b> en <b>MKV, MP4 o WebM</b>,
-  con aceleración por hardware y conservando solo los idiomas de audio que quieras.
+  <b>Lo que pasas antes de que Plex escanee.</b>
+</p>
+
+<p align="center">
+  Plex, Jellyfin y Kodi enseñan una biblioteca preciosa — pero solo si los ficheros ya están
+  bien nombrados y colocados. Cuando no lo están, se rinden: el episodio sale como
+  «Desconocido», la película se confunde con otra, o directamente no aparece.
+  Ondine es la herramienta que pasas <b>antes</b>.
 </p>
 
 <p align="center">
   <b>App de escritorio para Windows</b> · <b>herramienta de terminal para Linux, macOS y Windows</b>
 </p>
 
+<p align="center">
+  <i>Antes se llamaba ShrinkStudio.</i>
+</p>
+
 ---
 
-Su foco es el **ahorro de almacenamiento**: reduce típicamente **un 80–90 %** el tamaño manteniendo muy
-buena calidad visual. Antes de comprimir te muestra un **pronóstico** del tamaño final y del ahorro, y si
-quieres afinarlo puedes **medirlo de verdad**: codifica varias muestras cortas con tus ajustes y calcula
-el peso real.
+Tres cosas, y las tres suben la **calidad del dato** de tu biblioteca:
 
-Frente a HandBrake destaca en **procesamiento por lotes**: analiza una carpeta entera, muestra las pistas
-de cada vídeo y comprime en tanda desatendida. **Nunca toca los originales** salvo que se lo pidas
-explícitamente, y en ese caso van a la papelera, nunca a borrado definitivo.
+- **Comprimir** — para que quepa. Reduce típicamente **un 80–90 %** manteniendo muy buena calidad
+  visual, con aceleración por hardware. Antes de empezar te enseña un **pronóstico** del tamaño
+  final, y si quieres afinarlo puede **medirlo de verdad** codificando muestras cortas. También
+  sabe **quitar doblajes y subtítulos sin recomprimir**: un episodio de 155 MB baja a 134 MB en
+  0,6 s, con el vídeo **idéntico bit a bit**.
+- **Organizar** — para que el servidor la reconozca. Identifica cada episodio de una carpeta
+  contra un catálogo y propone su nombre canónico. Entiende que **un episodio puede traer varias
+  historias dentro** (`E1a`, `E1b`, `E1c`), sabe **partirlo** en ficheros independientes, y te dice
+  **qué capítulos te faltan**.
+- **Recortes** — para quitar lo que sobra. Partir un vídeo en varios o cortarle un trozo, sin abrir
+  un editor.
 
-Además de comprimir, trae dos herramientas para dejar la biblioteca a punto, cada una en su pestaña:
-**Organizar**, que identifica cada episodio de una carpeta contra un catálogo y propone su nombre
-canónico; y **Recortes**, para partir un vídeo en varios o quitarle un trozo.
+**Nunca toca los originales** salvo que se lo pidas explícitamente, y en ese caso van a la papelera,
+nunca a borrado definitivo. Todo ocurre **en tu máquina**: no manda tus ficheros a ninguna parte.
 
-> Cambios de cada versión: [`CHANGELOG.md`](CHANGELOG.md) ·
-> Roadmap de funcionalidades heredadas de HandBrake: [`ROADMAP.md`](ROADMAP.md).
+> Cambios de cada versión: [`CHANGELOG.md`](CHANGELOG.md) · Hacia dónde va: [`ROADMAP.md`](ROADMAP.md).
 
 ## Así se ve
 
