@@ -13,11 +13,8 @@ namespace Ondine;
 /// </summary>
 public static class DatosDeUsuario
 {
-    /// <summary>
-    /// Cómo se llamaba la carpeta hasta la v1.4.0. Es un literal a propósito y NO debe seguir al
-    /// nombre de la app: si algún día vuelve a cambiar, este sigue siendo «ShrinkStudio».
-    /// </summary>
-    public const string NombreAnterior = "ShrinkStudio";
+    /// <summary>Cómo se llamaba la carpeta hasta la v1.4.0. Ver <see cref="NombresHistoricos"/>.</summary>
+    public const string NombreAnterior = NombresHistoricos.CarpetaDatos;
     public const string Nombre = "Ondine";
 
     /// <summary>Se puede redirigir en los tests para no ensuciar el perfil del usuario.</summary>
@@ -55,10 +52,16 @@ public static class DatosDeUsuario
     /// <remarks>
     /// Tres decisiones que parecen detalles y no lo son:
     ///
-    /// 1. <b>Si la carpeta nueva YA existe, no se toca nada.</b> Es el caso de quien usó la
-    ///    versión nueva y luego abrió una vieja. Fusionar podría pisar datos buenos con datos
-    ///    viejos, y eso no tiene marcha atrás. Se deja la nueva como está y la vieja donde
-    ///    estaba: recuperable a mano, que es peor experiencia pero nunca pérdida.
+    /// 1. <b>Si la carpeta nueva ya existe CON ALGO DENTRO, no se toca nada.</b> Es el caso de
+    ///    quien usó la versión nueva y luego abrió una vieja. Fusionar podría pisar datos buenos
+    ///    con datos viejos, y eso no tiene marcha atrás. Se deja la nueva como está y la vieja
+    ///    donde estaba: recuperable a mano, que es peor experiencia pero nunca pérdida.
+    ///    <br/>
+    ///    Pero una carpeta nueva <b>vacía</b> sí se rellena, y esto no es un detalle: si la
+    ///    mudanza falla una vez, la propia app crea el destino a los pocos segundos —
+    ///    <c>SettingsStore.Save</c> y <c>ReindexStore</c> hacen <c>CreateDirectory</c>— y sin esta
+    ///    excepción la regla anterior sería cierta para siempre. Un fallo transitorio (un fichero
+    ///    abierto, el antivirus) dejaría los datos varados sin posibilidad de reintento.
     ///
     /// 2. <b>Si <c>Move</c> falla, se copia.</b> <c>Move</c> es atómico dentro del mismo volumen,
     ///    pero falla si algo tiene un fichero abierto o si %AppData% está redirigido a otra
@@ -71,11 +74,16 @@ public static class DatosDeUsuario
     public static bool Mudar(string vieja, string nueva)
     {
         if (!Directory.Exists(vieja)) return false;
-        if (Directory.Exists(nueva)) return false;
+
+        bool destinoExiste = Directory.Exists(nueva);
+        if (destinoExiste && !EstaVacia(nueva)) return false;
 
         try
         {
-            Directory.Move(vieja, nueva);
+            // Con el destino vacío no vale Directory.Move —falla si la carpeta ya está—, así que
+            // se mueve el contenido y se retira la vieja al terminar.
+            if (destinoExiste) MoverContenido(vieja, nueva);
+            else Directory.Move(vieja, nueva);
             return true;
         }
         catch
@@ -87,12 +95,27 @@ public static class DatosDeUsuario
             }
             catch
             {
-                // Que no quede una carpeta a medias haciéndose pasar por una mudanza completa:
-                // la próxima vez la regla 1 la daría por buena y la vieja no se volvería a mirar.
-                try { if (Directory.Exists(nueva)) Directory.Delete(nueva, true); } catch { }
+                // Que no quede una carpeta a medias haciéndose pasar por una mudanza completa.
+                // Si el destino ya estaba (vacío), se respeta: no es nuestro.
+                try { if (!destinoExiste && Directory.Exists(nueva)) Directory.Delete(nueva, true); } catch { }
                 return false;
             }
         }
+    }
+
+    private static bool EstaVacia(string dir)
+    {
+        try { return !Directory.EnumerateFileSystemEntries(dir).Any(); }
+        catch { return false; }   // si no se puede mirar, se trata como ocupada: nunca destruir
+    }
+
+    private static void MoverContenido(string de, string a)
+    {
+        foreach (var f in Directory.GetFiles(de))
+            File.Move(f, Path.Combine(a, Path.GetFileName(f)));
+        foreach (var d in Directory.GetDirectories(de))
+            Directory.Move(d, Path.Combine(a, Path.GetFileName(d)));
+        try { Directory.Delete(de, recursive: false); } catch { }
     }
 
     private static void Copiar(string de, string a)

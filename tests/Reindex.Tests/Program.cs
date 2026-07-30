@@ -2352,6 +2352,39 @@ public static class Program
 
     private static void MudanzaDeDatosDeUsuario()
     {
+        Seccion("Nombres históricos");
+
+        // Estos literales son los ÚNICOS del proyecto que no deben seguir al nombre de la app:
+        // nombran lo que dejó escrito la versión anterior y sirven para borrarlo. Cuando el
+        // rename se hizo con un buscar-y-reemplazar se fueron con el resto, y la limpieza quedó
+        // apuntando a claves que nunca existieron — sin lanzar, sin avisar, sin borrar nada.
+        //
+        // Los valores no se deducen del ensamblado: el assembly se llamaba «ShrinkVideo» pero en
+        // el registro se escribía «ShrinkStudio.*». Salen de leer el fichero de la v1.4.0.
+        Eq("ShrinkStudio", NombresHistoricos.CarpetaDatos, "la carpeta de datos de la v1.4.0");
+        Eq("ShrinkStudio.Comprimir", NombresHistoricos.VerboMenu, "el verbo del menú contextual");
+        Eq("ShrinkStudio.Video", NombresHistoricos.ProgId, "el ProgId de «Abrir con»");
+        Eq("ShrinkStudio.lnk", NombresHistoricos.AccesoSendTo, "el acceso directo de «Enviar a»");
+        Eq("ShrinkVideo.exe", NombresHistoricos.Ejecutable, "el ejecutable que borra el instalador");
+        Eq("ShrinkStudio", NombresHistoricos.Producto, "el nombre de los accesos directos");
+        // El mutex llevaba el nombre del ENSAMBLADO, no el del producto. Justo por eso hay que
+        // mirarlos uno a uno: no hay una regla que valga para todos.
+        Eq("ShrinkVideoSingleInstanceMutex", NombresHistoricos.Mutex, "el mutex de instancia única");
+
+        // Y la red de seguridad de verdad: ninguno puede haberse contagiado del nombre nuevo.
+        foreach (var (nombre, valor) in new[]
+                 {
+                     ("CarpetaDatos", NombresHistoricos.CarpetaDatos),
+                     ("VerboMenu", NombresHistoricos.VerboMenu),
+                     ("ProgId", NombresHistoricos.ProgId),
+                     ("AccesoSendTo", NombresHistoricos.AccesoSendTo),
+                     ("Ejecutable", NombresHistoricos.Ejecutable),
+                     ("Producto", NombresHistoricos.Producto),
+                     ("Mutex", NombresHistoricos.Mutex),
+                 })
+            Assert(!valor.Contains("Ondine", StringComparison.OrdinalIgnoreCase),
+                $"{nombre} no puede llevar el nombre actual de la app");
+
         Seccion("Mudanza de los datos de usuario");
 
         // Al cambiarle el nombre a la app, la carpeta de datos cambia con ella. Dentro está TODO
@@ -2405,6 +2438,25 @@ public static class Program
                 "la nueva NO se pisa con la vieja");
             Eq("vieja", File.ReadAllText(Path.Combine(Vieja("c"), "decisiones.json")),
                 "y la vieja sigue ahí, recuperable a mano");
+
+            // ── Caso 5: la nueva existe pero está VACÍA → sí se rellena ──
+            // Es el desenlace de una mudanza que falló: la app arranca igual y a los pocos
+            // segundos crea el destino ella misma (SettingsStore.Save y ReindexStore hacen
+            // CreateDirectory). Sin esta excepción, la regla del caso 4 sería cierta para siempre
+            // y un fallo transitorio —un fichero abierto, el antivirus— dejaría los datos varados
+            // sin posibilidad de reintento.
+            Directory.CreateDirectory(Path.Combine(Vieja("d"), "catalogos"));
+            File.WriteAllText(Path.Combine(Vieja("d"), "decisiones.json"), "las de siempre");
+            File.WriteAllText(Path.Combine(Vieja("d"), "catalogos", "bob.json"), "{}");
+            Directory.CreateDirectory(Nueva("d"));   // la app la creó, vacía
+
+            Assert(DatosDeUsuario.Mudar(Vieja("d"), Nueva("d")),
+                "una carpeta nueva VACÍA no bloquea la mudanza: se reintenta");
+            Eq("las de siempre", File.ReadAllText(Path.Combine(Nueva("d"), "decisiones.json")),
+                "los datos llegan al segundo intento");
+            Assert(File.Exists(Path.Combine(Nueva("d"), "catalogos", "bob.json")),
+                "con subcarpetas y todo");
+            Assert(!Directory.Exists(Vieja("d")), "y la vieja se retira, que ya no hace falta");
         }
         finally { try { Directory.Delete(baseTmp, true); } catch { } }
     }

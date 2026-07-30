@@ -44,7 +44,11 @@ ArchitecturesInstallIn64BitMode=x64compatible
 ; Cerrar automáticamente la app en ejecución al actualizar (usa el mutex de la app)
 CloseApplications=yes
 RestartApplications=no
-AppMutex=OndineSingleInstanceMutex
+; Los DOS mutex: la app se llamaba ShrinkStudio y su mutex era ShrinkVideoSingleInstanceMutex.
+; Justo en la actualización donde esto importa —la de la 1.4.0 a la siguiente— la app abierta es
+; la vieja, así que sin el segundo nombre el instalador no la ve y CloseApplications no cierra
+; nada. El segundo es un literal HISTÓRICO: no debe seguir al nombre de la app.
+AppMutex=OndineSingleInstanceMutex,ShrinkVideoSingleInstanceMutex
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
@@ -53,6 +57,27 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "Crear un acceso directo en el &Escritorio"; GroupDescription: "Accesos directos adicionales:"
 ; Solo aparece (y marcada) si NO se detecta FFmpeg en el sistema.
 Name: "installffmpeg"; Description: "Descargar e instalar FFmpeg (no detectado — necesario para funcionar)"; GroupDescription: "Dependencias:"; Check: NeedsFfmpeg
+
+; Limpieza de la instalación anterior, cuando la app se llamaba ShrinkStudio. Se ejecuta ANTES de
+; copiar los ficheros nuevos, que es justo lo que hace falta.
+;
+; Sin esto, actualizar desde la v1.4.0 deja al usuario con DOS de todo. El AppId es el mismo GUID
+; (a propósito: así la actualización es in-place), y con UsePreviousAppDir activo por defecto
+; {app} NO es el DefaultDirName nuevo sino la carpeta que quedó registrada: ...\Programs\ShrinkVideo.
+; Ahí se copia Ondine.exe, pero ShrinkVideo.exe sigue al lado; y los accesos directos que creó la
+; versión anterior se llaman «ShrinkStudio», así que tampoco se sobrescriben con los nuevos.
+; Resultado: el acceso directo que el usuario tiene anclado sigue abriendo la app VIEJA — que
+; además apunta a una carpeta de datos que ya se ha mudado.
+;
+; Los tres nombres son literales HISTÓRICOS y NO deben seguir al nombre de la app. Sus valores
+; están fijados por test en Ondine.NombresHistoricos.
+[InstallDelete]
+Type: files; Name: "{app}\ShrinkVideo.exe"
+Type: files; Name: "{app}\ShrinkVideo.dll"
+Type: files; Name: "{app}\ShrinkVideo.runtimeconfig.json"
+Type: files; Name: "{app}\ShrinkVideo.deps.json"
+Type: files; Name: "{autoprograms}\ShrinkStudio.lnk"
+Type: files; Name: "{autodesktop}\ShrinkStudio.lnk"
 
 [Files]
 Source: "..\publish\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
