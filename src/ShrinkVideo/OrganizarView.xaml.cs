@@ -181,10 +181,12 @@ public partial class OrganizarView : UserControl
             miQuitarHistorias.Header = r.Tambien.Count > 0
                 ? $"Quitar las {r.Tambien.Count} historias añadidas"
                 : "Quitar las historias añadidas";
+            miIgnorar.IsEnabled = _catalogoElegido != null && !r.Aplicado;
         };
         miElegirEpisodio.Click += (_, _) => OnElegirAMano(tabla, new RoutedEventArgs());
         miDejarComoEsta.Click += (_, _) => OnDejarComoEsta(tabla, new RoutedEventArgs());
         miAnadirHistoria.Click += (_, _) => AnadirHistoriaDeOtroEpisodio();
+        miIgnorar.Click += (_, _) => IgnorarSiempre();
         miQuitarHistorias.Click += (_, _) =>
         {
             if (tabla.SelectedItem is not OrganizarRow f) return;
@@ -731,6 +733,20 @@ public partial class OrganizarView : UserControl
         catch { /* la carpeta puede haber desaparecido; el guard de abajo lo dice */ }
 
         if (_catalogoCargado == null || _ficheros.Length == 0) return;
+
+        // Los que el catálogo manda ignorar ni se miran: son extras que no son episodios y, sin
+        // esto, vuelven a salir como conflicto en cada análisis. Decidir cien veces lo mismo no
+        // es decidir.
+        int ignorados = 0;
+        if (_catalogoCargado.Ignorar.Count > 0)
+        {
+            var antes = _ficheros.Length;
+            _ficheros = _ficheros.Where(f => !_catalogoCargado.SeIgnora(f)).ToArray();
+            ignorados = antes - _ficheros.Length;
+            if (ignorados > 0)
+                Escribir($"{ignorados} fichero(s) ignorados: el catálogo dice que no son de esta serie.");
+            if (_ficheros.Length == 0) return;
+        }
 
         // Se recuerda esta carpeta para este catálogo: la próxima vez que lo elijas se pre-rellena
         // sola y no tienes que volver a emparejar carpeta y catálogo.
@@ -1662,6 +1678,42 @@ public partial class OrganizarView : UserControl
         ActualizarContadores();
         Escribir($"«{fila.Original}» → se le añade el episodio {ep.Num}{win.SegElegido}. " +
                  "Queda con nombre compuesto; al reanalizar saldrá como duda (es un fichero que no es un episodio).");
+    }
+
+    /// <summary>
+    /// Apunta el fichero en la lista de ignorados DEL CATÁLOGO: un extra que no es un episodio no
+    /// tiene por qué salir como conflicto en cada análisis. Va al JSON y no a los ajustes de la
+    /// app para que la decisión viaje con el catálogo.
+    /// </summary>
+    private void IgnorarSiempre()
+    {
+        if (tabla.SelectedItem is not OrganizarRow fila || _catalogoElegido == null) return;
+        var nombre = Path.GetFileName(fila.RutaActual);
+
+        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Ignorar siempre",
+                $"«{nombre}»\n\nSe apuntará en el catálogo «{_catalogoElegido.Serie}» como fichero que " +
+                "NO es de esta serie, y dejará de aparecer al analizar.\n\n" +
+                "El fichero no se toca: solo se deja de proponerle un nombre. Puedes quitarlo de la " +
+                "lista editando el «ignorar» del JSON.",
+                "Ignorar siempre", "Cancelar"))
+            return;
+
+        try
+        {
+            if (ReindexCatalog.AnadirAIgnorar(_catalogoElegido.Ruta, nombre))
+            {
+                // El catálogo en memoria es otro objeto: se recarga para que el filtro valga ya.
+                CargarCatalogoElegido();
+                _filas.Remove(fila);
+                ActualizarContadores();
+                Escribir($"«{nombre}» apuntado en el catálogo como ajeno a la serie. No volverá a salir.");
+            }
+            else Escribir($"«{nombre}» ya estaba en la lista de ignorados del catálogo.");
+        }
+        catch (Exception ex)
+        {
+            Aviso($"No se pudo escribir en el catálogo: {ex.Message}");
+        }
     }
 
     private void OnDejarComoEsta(object sender, RoutedEventArgs e)

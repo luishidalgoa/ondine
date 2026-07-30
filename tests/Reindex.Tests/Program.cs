@@ -54,6 +54,7 @@ public static class Program
         HistoriasDeEpisodiosDistintos();
         QueMeFalta();
         QuitarPistas();
+        FicherosIgnorados();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2262,6 +2263,77 @@ public static class Program
         });
         Assert(p7.Fiable, "acepta los fundidos en cualquier orden");
         Assert(p7.Trozos[0].Hasta < p7.Trozos[1].Hasta, "y devuelve los trozos en orden");
+    }
+
+    // ───────────── Ficheros que el catálogo manda ignorar ─────────────
+
+    private static void FicherosIgnorados()
+    {
+        Seccion("Ficheros ignorados");
+
+        // El caso real: extras que no son episodios («La fiesta playera de Patchy») y que en cada
+        // análisis vuelven a salir como conflicto. Decidir una vez que sobran tiene que quedar
+        // apuntado, y en el CATÁLOGO —no en la app— para que la decisión viaje con él.
+        var cat = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0", "serie": "Serie",
+          "ignorar": ["Bob Esponja S1E00 El Zodiaco con Calamardo.mkv", "otro extra.mkv"],
+          "episodios": [ { "num": 1, "temporada": 1, "titulos": { "es": ["Uno"] } } ]
+        }
+        """);
+        Eq(2, cat.Ignorar.Count, "lee la lista de ficheros a ignorar");
+        Assert(cat.SeIgnora("Bob Esponja S1E00 El Zodiaco con Calamardo.mkv"), "reconoce el que está");
+        Assert(cat.SeIgnora("BOB ESPONJA S1E00 EL ZODIACO CON CALAMARDO.MKV"),
+            "sin distinguir mayúsculas: Windows tampoco las distingue");
+        Assert(!cat.SeIgnora("Bob Esponja - S1E1 - Uno.mkv"), "y no ignora lo que no está");
+
+        // Se puede dar la ruta entera: lo que se compara es el nombre del fichero. Con los DOS
+        // separadores, porque este código corre en Linux y macOS (la CLI es multiplataforma) con
+        // catálogos escritos en Windows — y allí Path.GetFileName no parte por la barra invertida.
+        Assert(cat.SeIgnora(@"C:\Series\Bob\otro extra.mkv"), "acepta una ruta de Windows");
+        Assert(cat.SeIgnora("/home/luis/Series/otro extra.mkv"), "y una de Linux");
+
+        // Un catálogo sin la lista funciona igual que siempre.
+        var sinLista = ReindexCatalog.Parse("""
+        { "esquema": "reindex/1.0", "serie": "S", "episodios": [ { "num": 1, "titulos": { "es": ["A"] } } ] }
+        """);
+        Eq(0, sinLista.Ignorar.Count, "un catálogo sin la lista no trae ninguno");
+        Assert(!sinLista.SeIgnora("cualquiera.mkv"), "y no ignora nada");
+
+        // — apuntarlo en el JSON del usuario —
+        // Es SU fichero: se edita el JSON conservando lo que haya, no se vuelve a serializar
+        // desde el modelo. El formato promete que los campos que la app no conoce se respetan,
+        // y reescribirlo entero se los llevaría por delante sin avisar.
+        var tmp = Path.Combine(Path.GetTempPath(), $"cat_{Guid.NewGuid():N}.json");
+        try
+        {
+            File.WriteAllText(tmp, """
+            {
+              "esquema": "reindex/1.0",
+              "serie": "Serie",
+              "cosa_rara_del_usuario": { "algo": [1, 2, 3] },
+              "episodios": [ { "num": 1, "titulos": { "es": ["Uno"] }, "nota_mia": "no la borres" } ]
+            }
+            """);
+
+            Assert(ReindexCatalog.AnadirAIgnorar(tmp, "extra raro.mkv"), "apunta el fichero");
+            var releido = ReindexCatalog.Load(tmp);
+            Assert(releido.SeIgnora("extra raro.mkv"), "y al releer el catálogo ya lo ignora");
+
+            var texto = File.ReadAllText(tmp);
+            Assert(texto.Contains("cosa_rara_del_usuario"), "conserva los campos que no conocemos");
+            Assert(texto.Contains("nota_mia"), "incluso dentro de los episodios");
+            Assert(texto.Contains("no la borres"), "con su contenido intacto");
+
+            // Dos veces el mismo no lo duplica.
+            Assert(!ReindexCatalog.AnadirAIgnorar(tmp, "extra raro.mkv"), "no lo apunta dos veces");
+            Eq(1, ReindexCatalog.Load(tmp).Ignorar.Count, "y la lista sigue con uno");
+
+            // Y se puede quitar, que uno se puede arrepentir.
+            Assert(ReindexCatalog.QuitarDeIgnorar(tmp, "extra raro.mkv"), "se puede dejar de ignorar");
+            Eq(0, ReindexCatalog.Load(tmp).Ignorar.Count, "la lista se queda vacía");
+        }
+        finally { try { File.Delete(tmp); } catch { } }
     }
 
     // ───────────── Quitar pistas sin recomprimir (remux) ─────────────
