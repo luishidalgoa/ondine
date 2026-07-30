@@ -37,26 +37,27 @@ completes, menos dudas tendrás que resolver a mano.
 | `notas` | no | Texto libre. Un buen sitio para apuntar rarezas de la serie. |
 | `total` | no | Cuántos episodios esperas. **La app no lo usa para recorrer nada**, solo es informativo. |
 | `idiomas` | no | Qué idioma se escribe y con cuáles se compara (ver abajo). Ausente = se escribe `es` y se compara contra todos. |
-| `ignorar` | no | Nombres de fichero que **no son de esta serie** y hay que dejar en paz (ver abajo). |
+| `dejar_como_esta` | no | Nombres de fichero que **ya están bien** con el nombre que tienen y no hay que tocar (ver abajo). |
 
-### `ignorar`: los que no son episodios
+### `dejar_como_esta`: los que no salen en el catálogo
 
-En casi toda carpeta acaban cayendo ficheros que no son capítulos: extras, cortos,
-presentaciones, tomas falsas. No están en el catálogo, así que la app no sabe qué son y los
-marca como conflicto… **en cada análisis**. Decidir cien veces que algo sobra no es decidir.
+En casi toda carpeta hay ficheros que no están en la lista de episodios: capítulos especiales que
+no aparecen en ningún anexo, cortos, presentaciones, tomas falsas. La app no sabe qué son y los
+marca como conflicto… **en cada análisis**. Decidir cien veces lo mismo no es decidir.
 
 ```json
-"ignorar": [
+"dejar_como_esta": [
   "Bob Esponja S1E00 El Zodiaco con Calamardo.mkv",
   "Bob Esponja S12E00 La fiesta playera de Patchy.mkv"
 ]
 ```
 
-Esos ficheros se saltan al analizar: no se tocan, simplemente se deja de proponerles un nombre.
+Esos ficheros **siguen apareciendo** al analizar, pero en verde y sin propuesta de nombre: no se
+tocan. Se dejan en la lista a propósito — quitarlos daría a entender que ya no están en la carpeta.
 
 Se compara **solo el nombre del fichero** (da igual la ruta) y **sin distinguir mayúsculas**.
 Puedes escribirlos a mano o dejar que lo haga la app: en Organizar, botón derecho sobre la fila →
-*«No es de esta serie: ignorarlo siempre»*.
+*«Dejarlo como está (y no volver a preguntar)»*.
 
 > **Por qué va aquí y no en los ajustes de la app**: es una decisión sobre ESTA serie. Guardada
 > en el catálogo, viaja con él si te llevas el JSON a otro equipo o se lo pasas a alguien; en los

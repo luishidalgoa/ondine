@@ -479,10 +479,9 @@
                    sale con el código compuesto («E1b+2b») a propósito: así se ve lo que hay. -->
               <MenuItem x:Name="miAnadirHistoria" Header="Añadir historia de otro episodio…"/>
               <MenuItem x:Name="miQuitarHistorias" Header="Quitar las historias añadidas"/>
-              <MenuItem x:Name="miDejarComoEsta" Header="Dejarlo como está"/>
-              <!-- Para los extras que no son episodios: se apunta EN EL CATÁLOGO, así la
-                   decisión viaja con él y no vuelve a preguntarse en cada análisis. -->
-              <MenuItem x:Name="miIgnorar" Header="No es de esta serie: ignorarlo siempre"/>
+              <!-- Se apunta EN EL CATÁLOGO, así la decisión viaja con él y no vuelve a
+                   preguntarse en cada análisis. -->
+              <MenuItem x:Name="miDejarComoEsta" Header="Dejarlo como está (y no volver a preguntar)"/>
               <Separator/>
               <!-- Encontrar un fichero problemático cuesta más que arreglarlo: esto lo
                    aparta para mañana sin tener que volver a buscarlo. -->

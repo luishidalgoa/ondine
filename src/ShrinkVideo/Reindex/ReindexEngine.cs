@@ -213,6 +213,20 @@ public static class ReindexEngine
         if (!string.IsNullOrEmpty(f.Error))
             return Fallo(r, ReindexEstado.Error, f.Error!);
 
+        // ── El usuario ya dijo que este fichero está bien como está ──
+        // Antes que nada, incluso antes que un override: es la palabra del usuario sobre un
+        // fichero que NO está en el catálogo (los especiales que no salen en ningún anexo), así
+        // que no hay nada que resolver. Sale en verde y sin propuesta, no desaparece de la lista:
+        // hacerlo desaparecer daría a entender que el fichero ya no está en la carpeta.
+        if (cat.SeDejaComoEsta(f.NombreArchivo))
+        {
+            r.Estado = ReindexEstado.Limpio;
+            r.Confianza = ReindexConfianza.Alta;
+            r.Motivo = "Dijiste que lo dejara como está";
+            r.Alternativas = Array.Empty<ReindexCandidato>();
+            return r;
+        }
+
         if (!f.TieneSeñales)
             return Fallo(r, ReindexEstado.Error, "El nombre no da ninguna pista (ni número, ni fecha, ni título).");
 
