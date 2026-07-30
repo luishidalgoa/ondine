@@ -26,11 +26,10 @@ public sealed class Preset
     public override string ToString() => Factory ? Name : Name + "  ·  guardado";
 }
 
-/// <summary>Presets de fábrica + los guardados por el usuario en %AppData%\ShrinkStudio\presets.json.</summary>
+/// <summary>Presets de fábrica + los guardados por el usuario en %AppData%\Ondine\presets.json.</summary>
 public static class PresetStore
 {
-    private static string Dir => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShrinkStudio");
+    private static string Dir => DatosDeUsuario.Raiz;
     private static string FilePath => Path.Combine(Dir, "presets.json");
 
     public static List<Preset> Factory() => new()

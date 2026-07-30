@@ -55,6 +55,7 @@ public static class Program
         QueMeFalta();
         QuitarPistas();
         FicherosIgnorados();
+        MudanzaDeDatosDeUsuario();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2345,6 +2346,61 @@ public static class Program
             Eq(0, ReindexCatalog.Load(tmp).DejarComoEsta.Count, "la lista se queda vacía");
         }
         finally { try { File.Delete(tmp); } catch { } }
+    }
+
+    // ───────────── La mudanza de %AppData%\ShrinkStudio a Ondine ─────────────
+
+    private static void MudanzaDeDatosDeUsuario()
+    {
+        Seccion("Mudanza de los datos de usuario");
+
+        // Al cambiarle el nombre a la app, la carpeta de datos cambia con ella. Dentro está TODO
+        // lo que el usuario ha ido construyendo: catálogos importados, la memoria de decisiones,
+        // los presets, los ajustes y los diarios de lote para deshacer. Si la mudanza falla en
+        // silencio, el usuario abre la versión nueva y se encuentra la app como recién instalada.
+        var baseTmp = Path.Combine(Path.GetTempPath(), $"mudanza_{Guid.NewGuid():N}");
+        try
+        {
+            string Vieja(string n) => Path.Combine(baseTmp, n, "ShrinkStudio");
+            string Nueva(string n) => Path.Combine(baseTmp, n, "Ondine");
+
+            // ── Caso 1: hay carpeta vieja y no hay nueva → se muda entera ──
+            Directory.CreateDirectory(Path.Combine(Vieja("a"), "catalogos"));
+            File.WriteAllText(Path.Combine(Vieja("a"), "decisiones.json"), "{\"x\":1}");
+            File.WriteAllText(Path.Combine(Vieja("a"), "catalogos", "bob.json"), "{}");
+
+            Assert(DatosDeUsuario.Mudar(Vieja("a"), Nueva("a")), "se muda cuando solo existe la vieja");
+            Assert(File.Exists(Path.Combine(Nueva("a"), "decisiones.json")), "las decisiones llegan");
+            Assert(File.Exists(Path.Combine(Nueva("a"), "catalogos", "bob.json")),
+                "y también lo que está en subcarpetas: los catálogos son lo más caro de rehacer");
+            Eq("{\"x\":1}", File.ReadAllText(Path.Combine(Nueva("a"), "decisiones.json")),
+                "con el contenido intacto");
+
+            // ── Caso 2: correrlo otra vez no hace nada ──
+            // Se llama en cada arranque, así que tiene que ser inofensivo la segunda vez.
+            Assert(!DatosDeUsuario.Mudar(Vieja("a"), Nueva("a")), "la segunda vez no hace nada");
+            Assert(File.Exists(Path.Combine(Nueva("a"), "decisiones.json")), "y no se lleva nada por delante");
+
+            // ── Caso 3: no hay nada que mudar ──
+            Assert(!DatosDeUsuario.Mudar(Vieja("b"), Nueva("b")), "sin carpeta vieja no hace nada");
+            Assert(!Directory.Exists(Nueva("b")), "y no inventa una carpeta vacía");
+
+            // ── Caso 4: ya existen las DOS → no se toca ni una ──
+            // El caso raro pero destructivo: alguien que ya usó la versión nueva y luego abre una
+            // vieja. Fusionar podría pisar datos buenos con datos viejos, así que no se fusiona:
+            // se deja la nueva como está y la vieja donde estaba, recuperable a mano.
+            Directory.CreateDirectory(Vieja("c"));
+            Directory.CreateDirectory(Nueva("c"));
+            File.WriteAllText(Path.Combine(Vieja("c"), "decisiones.json"), "vieja");
+            File.WriteAllText(Path.Combine(Nueva("c"), "decisiones.json"), "nueva");
+
+            Assert(!DatosDeUsuario.Mudar(Vieja("c"), Nueva("c")), "con las dos carpetas no se muda");
+            Eq("nueva", File.ReadAllText(Path.Combine(Nueva("c"), "decisiones.json")),
+                "la nueva NO se pisa con la vieja");
+            Eq("vieja", File.ReadAllText(Path.Combine(Vieja("c"), "decisiones.json")),
+                "y la vieja sigue ahí, recuperable a mano");
+        }
+        finally { try { Directory.Delete(baseTmp, true); } catch { } }
     }
 
     // ───────────── Quitar pistas sin recomprimir (remux) ─────────────

@@ -43,8 +43,7 @@ public sealed class Settings
 /// <summary>Carga/guarda las preferencias (junto a los presets).</summary>
 public static class SettingsStore
 {
-    private static string Dir => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShrinkStudio");
+    private static string Dir => DatosDeUsuario.Raiz;
     private static string FilePath => Path.Combine(Dir, "settings.json");
 
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
