@@ -1,13 +1,21 @@
 # Roadmap — Ondine
 
-Nació como relevo de HandBrake (comprimir por lotes sin pelearse con los ajustes) y hoy son tres
-herramientas: **Comprimir**, **Organizar** (poner nombre a una biblioteca a partir de un catálogo)
-y **Recortes** (partir un vídeo o quitarle un trozo).
+Nació como **ShrinkStudio**, relevo de HandBrake (comprimir por lotes sin pelearse con los
+ajustes), y hoy son tres herramientas: **Comprimir**, **Organizar** (poner nombre a una biblioteca
+a partir de un catálogo) y **Recortes** (partir un vídeo o quitarle un trozo).
 
 > **Hacia dónde va**: ser **la pieza que le falta a Plex y Jellyfin**. Esos servicios enseñan una
 > biblioteca preciosa, pero solo si los ficheros ya están bien nombrados y colocados; cuando no lo
 > están, se rinden. Preparar eso es lo que Organizar sabe hacer y ningún compresor hace.
-> Ver el epic [#153](https://github.com/luishidalgoa/shrink-studio/issues/153).
+> El cambio de nombre a **Ondine** viene de ahí. Ver el epic
+> [#153](https://github.com/luishidalgoa/shrink-studio/issues/153), y
+> [#168](https://github.com/luishidalgoa/shrink-studio/issues/168) para conducirla desde un agente
+> de IA por MCP.
+>
+> Dos avisos del análisis del nicho, que condicionan por dónde crecer: el **renombrado contra
+> catálogo está saturado** (FileBot lleva 15 años, y Sonarr/Radarr lo hacen gratis), así que no es
+> por ahí; y **recortar clips es la pata más floja** frente a LosslessCut. Lo que no hace nadie es
+> **partir episodios en sus historias**.
 
 Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 
