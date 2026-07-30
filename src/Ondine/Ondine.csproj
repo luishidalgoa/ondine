@@ -23,7 +23,7 @@
     <Copyright>© luishidalgoa</Copyright>
 
     <!-- Repo de GitHub del que la app descarga sus actualizaciones -->
-    <UpdateRepo>luishidalgoa/shrink-studio</UpdateRepo>
+    <UpdateRepo>luishidalgoa/ondine</UpdateRepo>
   </PropertyGroup>
 
   <!-- Marca de compilación local/dev. La build OFICIAL (build.ps1, en CI) pasa -p:Official=true

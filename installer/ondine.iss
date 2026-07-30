@@ -9,7 +9,7 @@
 #define MyAppName "Ondine"
 #define MyAppExeName "Ondine.exe"
 #define MyAppPublisher "luishidalgoa"
-#define MyAppURL "https://github.com/luishidalgoa/shrink-studio"
+#define MyAppURL "https://github.com/luishidalgoa/ondine"
 #define FfmpegUrl "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
 
 [Setup]

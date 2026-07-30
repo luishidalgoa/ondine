@@ -8,8 +8,8 @@ a partir de un catálogo) y **Recortes** (partir un vídeo o quitarle un trozo).
 > biblioteca preciosa, pero solo si los ficheros ya están bien nombrados y colocados; cuando no lo
 > están, se rinden. Preparar eso es lo que Organizar sabe hacer y ningún compresor hace.
 > El cambio de nombre a **Ondine** viene de ahí. Ver el epic
-> [#153](https://github.com/luishidalgoa/shrink-studio/issues/153), y
-> [#168](https://github.com/luishidalgoa/shrink-studio/issues/168) para conducirla desde un agente
+> [#153](https://github.com/luishidalgoa/ondine/issues/153), y
+> [#168](https://github.com/luishidalgoa/ondine/issues/168) para conducirla desde un agente
 > de IA por MCP.
 >
 > Dos avisos del análisis del nicho, que condicionan por dónde crecer: el **renombrado contra
@@ -61,14 +61,14 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ⬜ Leer el título del **metadato** del contenedor como una señal más.
 - ⬜ Catálogos **compartibles**: exportar/importar sin duplicar trabajo.
 
-## Organizar — más allá de las series ([epic #153](https://github.com/luishidalgoa/shrink-studio/issues/153))
+## Organizar — más allá de las series ([epic #153](https://github.com/luishidalgoa/ondine/issues/153))
 - 🔜 **Tipo de biblioteca** (serie / película): hoy todo asume que son episodios, y una película no
-  tiene temporada ni número. ([#154](https://github.com/luishidalgoa/shrink-studio/issues/154))
+  tiene temporada ni número. ([#154](https://github.com/luishidalgoa/ondine/issues/154))
 - ⬜ **Películas sin catálogo**: identificarlas contra una base de datos pública, porque para las
   películas no existe una lista que importar. El reto es que el nombre del fichero es una fuente
-  poco fiable. ([#155](https://github.com/luishidalgoa/shrink-studio/issues/155))
+  poco fiable. ([#155](https://github.com/luishidalgoa/ondine/issues/155))
 - ⬜ **Montar la estructura de carpetas**, no solo renombrar: hoy 200 capítulos sueltos se quedan
-  sueltos aunque queden bien nombrados. ([#156](https://github.com/luishidalgoa/shrink-studio/issues/156))
+  sueltos aunque queden bien nombrados. ([#156](https://github.com/luishidalgoa/ondine/issues/156))
 
 ## Recortes
 - ✅ Línea de tiempo con miniaturas, marcar tramos y exportar uno por tramo.
@@ -96,7 +96,7 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **FFmpeg**: el instalador lo detecta y, si falta, lo descarga e instala junto a la app (el usuario no configura nada).
 - ✅ **Compilación en la nube** (GitHub Actions): al empujar un tag `vX.Y.Z`, el instalador se compila y se adjunta al Release automáticamente.
 - ✅ **CLI** (`Ondine.Cli`) para comprimir, analizar y medir sin abrir la interfaz.
-- ✅ **Motor con tests** (560+) que corren en CI sin restaurar paquetes.
+- ✅ **Motor con tests** (640+) que corren en CI sin restaurar paquetes.
 - ✅ **Capturas en el README** de las tres herramientas, con datos reales dentro.
 - ⬜ Firmar el instalador (evitar el aviso de SmartScreen).
 - ⬜ Rediseño visual (brief en [`docs/design-brief.md`](docs/design-brief.md)).

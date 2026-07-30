@@ -89,7 +89,7 @@ el original solo se borra si salen todos.
 
 ### Windows — app de escritorio
 
-1. Descarga el instalador de la página de **[Releases](https://github.com/luishidalgoa/shrink-studio/releases/latest)** → `Ondine-Setup-X.Y.Z.exe`.
+1. Descarga el instalador de la página de **[Releases](https://github.com/luishidalgoa/ondine/releases/latest)** → `Ondine-Setup-X.Y.Z.exe`.
 2. Ejecútalo. Se instala **solo para tu usuario** (no pide permisos de administrador) y crea acceso
    directo en el menú Inicio (y opcionalmente en el Escritorio).
 3. Como el instalador no está firmado, Windows SmartScreen puede avisar: pulsa
@@ -102,7 +102,7 @@ el original solo se borra si salen todos.
 
 La interfaz gráfica usa WPF, que solo existe en Windows. Para el resto de sistemas se publica
 `ondine`, que comparte **exactamente el mismo motor**. Descarga el paquete de tu plataforma en
-[Releases](https://github.com/luishidalgoa/shrink-studio/releases/latest) y descomprímelo:
+[Releases](https://github.com/luishidalgoa/ondine/releases/latest) y descomprímelo:
 
 ```bash
 tar xzf ondine-linux-x64.tar.gz     # o linux-arm64, macos-arm64, macos-x64
