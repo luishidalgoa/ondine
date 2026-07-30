@@ -119,24 +119,25 @@ public sealed class ReindexCatalog
     [JsonPropertyName("idiomas")] public IdiomasCatalogo? Idiomas { get; set; }
 
     /// <summary>
-    /// Ficheros que NO son de esta serie y hay que dejar en paz: extras, cortos, presentaciones…
-    /// Sin esto, un fichero que no está en la lista de episodios vuelve a salir como conflicto en
-    /// cada análisis, y decidir cien veces que algo sobra no es decidir.
+    /// Ficheros que ya están bien con el nombre que tienen y no hay que tocar. El caso típico son
+    /// los capítulos especiales que SÍ son de la serie pero no salen en ningún anexo —así que no
+    /// están en la lista de episodios— y sin esto vuelven a salir como conflicto en cada análisis.
+    /// Decidir cien veces lo mismo no es decidir.
     ///
     /// Va en el CATÁLOGO y no en los ajustes de la app a propósito: es una decisión sobre ESTA
     /// serie, así que viaja con ella si te llevas el JSON a otro equipo o se lo pasas a alguien.
     /// </summary>
-    [JsonPropertyName("ignorar")] public List<string> Ignorar { get; set; } = new();
+    [JsonPropertyName("dejar_como_esta")] public List<string> DejarComoEsta { get; set; } = new();
 
     /// <summary>
     /// ¿Este fichero está en la lista de los que hay que dejar en paz? Acepta la ruta entera —se
     /// compara solo el nombre— y no distingue mayúsculas, porque Windows tampoco.
     /// </summary>
-    public bool SeIgnora(string rutaONombre)
+    public bool SeDejaComoEsta(string rutaONombre)
     {
-        if (Ignorar.Count == 0 || string.IsNullOrWhiteSpace(rutaONombre)) return false;
+        if (DejarComoEsta.Count == 0 || string.IsNullOrWhiteSpace(rutaONombre)) return false;
         var nombre = SoloNombre(rutaONombre);
-        return Ignorar.Any(i => string.Equals(SoloNombre(i), nombre, StringComparison.OrdinalIgnoreCase));
+        return DejarComoEsta.Any(i => string.Equals(SoloNombre(i), nombre, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -154,21 +155,21 @@ public sealed class ReindexCatalog
     }
 
     /// <summary>
-    /// Apunta un fichero en la lista de ignorados DEL JSON del usuario. Devuelve false si ya
-    /// estaba.
+    /// Apunta un fichero en la lista de «déjalo como está» DEL JSON del usuario. Devuelve false si
+    /// ya estaba.
     ///
     /// Se edita el árbol JSON en vez de volver a serializar desde el modelo: el catálogo es el
     /// fichero del usuario y el formato promete que los campos que la app no conoce se respetan.
     /// Reescribirlo desde el modelo se llevaría por delante sus notas y sus añadidos sin avisar.
     /// </summary>
-    public static bool AnadirAIgnorar(string rutaCatalogo, string nombreFichero) =>
-        TocarIgnorados(rutaCatalogo, nombreFichero, quitar: false);
+    public static bool AnadirADejarComoEsta(string rutaCatalogo, string nombreFichero) =>
+        TocarDejarComoEsta(rutaCatalogo, nombreFichero, quitar: false);
 
     /// <summary>Lo saca de la lista, por si te arrepientes. Devuelve false si no estaba.</summary>
-    public static bool QuitarDeIgnorar(string rutaCatalogo, string nombreFichero) =>
-        TocarIgnorados(rutaCatalogo, nombreFichero, quitar: true);
+    public static bool QuitarDeDejarComoEsta(string rutaCatalogo, string nombreFichero) =>
+        TocarDejarComoEsta(rutaCatalogo, nombreFichero, quitar: true);
 
-    private static bool TocarIgnorados(string rutaCatalogo, string nombreFichero, bool quitar)
+    private static bool TocarDejarComoEsta(string rutaCatalogo, string nombreFichero, bool quitar)
     {
         if (string.IsNullOrWhiteSpace(nombreFichero)) return false;
         var nombre = SoloNombre(nombreFichero);
@@ -177,7 +178,7 @@ public sealed class ReindexCatalog
                    as System.Text.Json.Nodes.JsonObject
                    ?? throw new ReindexCatalogException("El catálogo no es un objeto JSON.");
 
-        var lista = raiz["ignorar"] as System.Text.Json.Nodes.JsonArray;
+        var lista = raiz["dejar_como_esta"] as System.Text.Json.Nodes.JsonArray;
         var actuales = lista?.Select(n => n?.GetValue<string>() ?? "").ToList() ?? new List<string>();
         bool estaba = actuales.Any(x => string.Equals(SoloNombre(x), nombre, StringComparison.OrdinalIgnoreCase));
         if (quitar == !estaba) return false;   // quitar lo que no está, o añadir lo que ya está
@@ -189,7 +190,7 @@ public sealed class ReindexCatalog
 
         var nueva = new System.Text.Json.Nodes.JsonArray();
         foreach (var x in actuales.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)) nueva.Add(x);
-        raiz["ignorar"] = nueva;
+        raiz["dejar_como_esta"] = nueva;
 
         System.IO.File.WriteAllText(rutaCatalogo,
             raiz.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }),

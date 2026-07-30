@@ -181,12 +181,10 @@ public partial class OrganizarView : UserControl
             miQuitarHistorias.Header = r.Tambien.Count > 0
                 ? $"Quitar las {r.Tambien.Count} historias añadidas"
                 : "Quitar las historias añadidas";
-            miIgnorar.IsEnabled = _catalogoElegido != null && !r.Aplicado;
         };
         miElegirEpisodio.Click += (_, _) => OnElegirAMano(tabla, new RoutedEventArgs());
         miDejarComoEsta.Click += (_, _) => OnDejarComoEsta(tabla, new RoutedEventArgs());
         miAnadirHistoria.Click += (_, _) => AnadirHistoriaDeOtroEpisodio();
-        miIgnorar.Click += (_, _) => IgnorarSiempre();
         miQuitarHistorias.Click += (_, _) =>
         {
             if (tabla.SelectedItem is not OrganizarRow f) return;
@@ -734,19 +732,14 @@ public partial class OrganizarView : UserControl
 
         if (_catalogoCargado == null || _ficheros.Length == 0) return;
 
-        // Los que el catálogo manda ignorar ni se miran: son extras que no son episodios y, sin
-        // esto, vuelven a salir como conflicto en cada análisis. Decidir cien veces lo mismo no
-        // es decidir.
-        int ignorados = 0;
-        if (_catalogoCargado.Ignorar.Count > 0)
-        {
-            var antes = _ficheros.Length;
-            _ficheros = _ficheros.Where(f => !_catalogoCargado.SeIgnora(f)).ToArray();
-            ignorados = antes - _ficheros.Length;
-            if (ignorados > 0)
-                Escribir($"{ignorados} fichero(s) ignorados: el catálogo dice que no son de esta serie.");
-            if (_ficheros.Length == 0) return;
-        }
+        // Los que el catálogo marca como «déjalo como está» NO se filtran: siguen en la tabla,
+        // pero el motor los saca en verde y sin propuesta. Quitarlos de la lista daría a entender
+        // que el fichero ya no está en la carpeta, y sí está.
+        int dejadosComoEstan = _catalogoCargado.DejarComoEsta.Count == 0
+            ? 0
+            : _ficheros.Count(_catalogoCargado.SeDejaComoEsta);
+        if (dejadosComoEstan > 0)
+            Escribir($"{dejadosComoEstan} fichero(s) se dejan como están: ya lo decidiste y quedó apuntado en el catálogo.");
 
         // Se recuerda esta carpeta para este catálogo: la próxima vez que lo elijas se pre-rellena
         // sola y no tienes que volver a emparejar carpeta y catálogo.
@@ -1681,41 +1674,14 @@ public partial class OrganizarView : UserControl
     }
 
     /// <summary>
-    /// Apunta el fichero en la lista de ignorados DEL CATÁLOGO: un extra que no es un episodio no
-    /// tiene por qué salir como conflicto en cada análisis. Va al JSON y no a los ajustes de la
-    /// app para que la decisión viaje con el catálogo.
+    /// «Este fichero ya está bien; no lo toques.» Y que no haya que repetirlo: la decisión se
+    /// apunta en el CATÁLOGO, así que al reanalizar la fila sale en verde en vez de volver a
+    /// pedir que la despaches.
+    ///
+    /// El caso real son los capítulos especiales que SÍ son de la serie pero no aparecen en
+    /// ningún anexo, así que no están en la lista de episodios y sin esto son conflicto eterno.
+    /// Va al JSON del catálogo —no a los ajustes de la app— para que la decisión viaje con él.
     /// </summary>
-    private void IgnorarSiempre()
-    {
-        if (tabla.SelectedItem is not OrganizarRow fila || _catalogoElegido == null) return;
-        var nombre = Path.GetFileName(fila.RutaActual);
-
-        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Ignorar siempre",
-                $"«{nombre}»\n\nSe apuntará en el catálogo «{_catalogoElegido.Serie}» como fichero que " +
-                "NO es de esta serie, y dejará de aparecer al analizar.\n\n" +
-                "El fichero no se toca: solo se deja de proponerle un nombre. Puedes quitarlo de la " +
-                "lista editando el «ignorar» del JSON.",
-                "Ignorar siempre", "Cancelar"))
-            return;
-
-        try
-        {
-            if (ReindexCatalog.AnadirAIgnorar(_catalogoElegido.Ruta, nombre))
-            {
-                // El catálogo en memoria es otro objeto: se recarga para que el filtro valga ya.
-                CargarCatalogoElegido();
-                _filas.Remove(fila);
-                ActualizarContadores();
-                Escribir($"«{nombre}» apuntado en el catálogo como ajeno a la serie. No volverá a salir.");
-            }
-            else Escribir($"«{nombre}» ya estaba en la lista de ignorados del catálogo.");
-        }
-        catch (Exception ex)
-        {
-            Aviso($"No se pudo escribir en el catálogo: {ex.Message}");
-        }
-    }
-
     private void OnDejarComoEsta(object sender, RoutedEventArgs e)
     {
         if (tabla.SelectedItem is not OrganizarRow fila) return;
@@ -1726,6 +1692,24 @@ public partial class OrganizarView : UserControl
         fila.Res.Alternativas = Array.Empty<ReindexCandidato>();
         fila.Recalcular();
         ActualizarContadores();
+
+        // Sin catálogo elegido no hay dónde apuntarlo: la fila queda en verde para esta sesión y
+        // ya está. No es un error que merezca un aviso.
+        if (_catalogoElegido == null) return;
+        var nombre = Path.GetFileName(fila.RutaActual);
+        try
+        {
+            if (ReindexCatalog.AnadirADejarComoEsta(_catalogoElegido.Ruta, nombre))
+            {
+                // El catálogo en memoria es otro objeto: se recarga para que valga ya.
+                CargarCatalogoElegido();
+                Escribir($"«{nombre}» queda como está. Apuntado en el catálogo: no volverá a salir como duda.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Escribir($"«{nombre}» queda como está, pero no se pudo apuntar en el catálogo: {ex.Message}");
+        }
     }
 
     private void RecordarDecision(OrganizarRow fila, CatalogEpisode ep, string? seg = null)
