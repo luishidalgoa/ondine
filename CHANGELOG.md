@@ -29,6 +29,18 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Ficheros que no son de la serie: ignorarlos para siempre, y que quede en el catálogo.** En
+  casi toda carpeta acaban cayendo extras, cortos o presentaciones que no son capítulos. Como no
+  están en el catálogo, salían como conflicto **en cada análisis**. Ahora, con el botón derecho,
+  «No es de esta serie: ignorarlo siempre» lo apunta en el propio **JSON del catálogo** y deja de
+  aparecer. El fichero no se toca: solo se deja de proponerle un nombre. Va en el catálogo y no en
+  los ajustes de la app a propósito, para que la decisión **viaje con él** si te lo llevas a otro
+  equipo o se lo pasas a alguien; y al escribirlo se respeta el resto del JSON, incluidos los
+  campos y las notas que hayas añadido por tu cuenta. Para deshacerlo, basta con quitar la línea
+  de la lista `ignorar`.
+
 ## [1.3.0] - 2026-07-26
 
 Adelgazar un vídeo **sin recomprimirlo**: quitarle los doblajes y los subtítulos que no vas a usar.

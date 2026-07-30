@@ -118,6 +118,74 @@ public sealed class ReindexCatalog
     /// y comparación contra todos los idiomas que traiga el catálogo.</summary>
     [JsonPropertyName("idiomas")] public IdiomasCatalogo? Idiomas { get; set; }
 
+    /// <summary>
+    /// Ficheros que NO son de esta serie y hay que dejar en paz: extras, cortos, presentaciones…
+    /// Sin esto, un fichero que no está en la lista de episodios vuelve a salir como conflicto en
+    /// cada análisis, y decidir cien veces que algo sobra no es decidir.
+    ///
+    /// Va en el CATÁLOGO y no en los ajustes de la app a propósito: es una decisión sobre ESTA
+    /// serie, así que viaja con ella si te llevas el JSON a otro equipo o se lo pasas a alguien.
+    /// </summary>
+    [JsonPropertyName("ignorar")] public List<string> Ignorar { get; set; } = new();
+
+    /// <summary>
+    /// ¿Este fichero está en la lista de los que hay que dejar en paz? Acepta la ruta entera —se
+    /// compara solo el nombre— y no distingue mayúsculas, porque Windows tampoco.
+    /// </summary>
+    public bool SeIgnora(string rutaONombre)
+    {
+        if (Ignorar.Count == 0 || string.IsNullOrWhiteSpace(rutaONombre)) return false;
+        var nombre = System.IO.Path.GetFileName(rutaONombre.Trim());
+        return Ignorar.Any(i => string.Equals(System.IO.Path.GetFileName(i.Trim()), nombre,
+                                              StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Apunta un fichero en la lista de ignorados DEL JSON del usuario. Devuelve false si ya
+    /// estaba.
+    ///
+    /// Se edita el árbol JSON en vez de volver a serializar desde el modelo: el catálogo es el
+    /// fichero del usuario y el formato promete que los campos que la app no conoce se respetan.
+    /// Reescribirlo desde el modelo se llevaría por delante sus notas y sus añadidos sin avisar.
+    /// </summary>
+    public static bool AnadirAIgnorar(string rutaCatalogo, string nombreFichero) =>
+        TocarIgnorados(rutaCatalogo, nombreFichero, quitar: false);
+
+    /// <summary>Lo saca de la lista, por si te arrepientes. Devuelve false si no estaba.</summary>
+    public static bool QuitarDeIgnorar(string rutaCatalogo, string nombreFichero) =>
+        TocarIgnorados(rutaCatalogo, nombreFichero, quitar: true);
+
+    private static bool TocarIgnorados(string rutaCatalogo, string nombreFichero, bool quitar)
+    {
+        if (string.IsNullOrWhiteSpace(nombreFichero)) return false;
+        var nombre = System.IO.Path.GetFileName(nombreFichero.Trim());
+
+        var raiz = System.Text.Json.Nodes.JsonNode.Parse(System.IO.File.ReadAllText(rutaCatalogo))
+                   as System.Text.Json.Nodes.JsonObject
+                   ?? throw new ReindexCatalogException("El catálogo no es un objeto JSON.");
+
+        var lista = raiz["ignorar"] as System.Text.Json.Nodes.JsonArray;
+        var actuales = lista?.Select(n => n?.GetValue<string>() ?? "").ToList() ?? new List<string>();
+        bool estaba = actuales.Any(x => string.Equals(System.IO.Path.GetFileName(x.Trim()), nombre,
+                                                      StringComparison.OrdinalIgnoreCase));
+        if (quitar == !estaba) return false;   // quitar lo que no está, o añadir lo que ya está
+
+        if (quitar)
+            actuales.RemoveAll(x => string.Equals(System.IO.Path.GetFileName(x.Trim()), nombre,
+                                                  StringComparison.OrdinalIgnoreCase));
+        else
+            actuales.Add(nombre);
+
+        var nueva = new System.Text.Json.Nodes.JsonArray();
+        foreach (var x in actuales.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)) nueva.Add(x);
+        raiz["ignorar"] = nueva;
+
+        System.IO.File.WriteAllText(rutaCatalogo,
+            raiz.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }),
+            System.Text.Encoding.UTF8);
+        return true;
+    }
+
     /// <summary>La configuración efectiva, con los valores por defecto ya aplicados.</summary>
     [JsonIgnore] public IdiomasCatalogo IdiomasEfectivos => Idiomas ?? new IdiomasCatalogo();
 
