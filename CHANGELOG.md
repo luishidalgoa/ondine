@@ -34,6 +34,11 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Cambiado
 
+- **Logotipo nuevo.** El anterior era un cuadrado con degradado, un botón de *play* y dos flechas
+  apretándolo: decía «compresor de vídeo», que es justo lo que la app ya no es. El nuevo son tres
+  trazos que van de onda a recta —lo que entra revuelto sale ordenado— sin recuadro ni fondo. Se
+  ve en el icono de la aplicación, en la barra de tareas y en la barra de título. A tamaño de
+  bandeja lleva un dibujo aparte, hecho a medida para que se distinga a 16 píxeles.
 - **La app pasa a llamarse Ondine.** ShrinkStudio nació como relevo de HandBrake, y ese nombre
   contaba solo un tercio de lo que hace hoy: además de comprimir, ordena bibliotecas enteras
   contra un catálogo y parte episodios en sus historias. Lo que de verdad hace es **preparar tu
