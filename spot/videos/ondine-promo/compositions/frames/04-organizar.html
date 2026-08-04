@@ -1,0 +1,382 @@
+<template>
+  <div data-composition-id="04-organizar" data-width="1920" data-height="1080" data-start="0" data-duration="5.661">
+
+    <!-- El suelo va SIEMPRE en su propia capa .clip: un `background` en la raíz lo pierde el
+         compositor al recortar el frame a su ventana y el fotograma sale negro. -->
+    <div id="org-ground" class="clip" data-start="0" data-duration="5.661" data-track-index="0"></div>
+
+    <!-- El plano del bajón: no hay un suceso, hay una marea. Prohibidos los muelles, las
+         escalas y los destellos; una sola curva lineal gobierna los 5,16 s. -->
+    <div id="org-escena" class="clip" data-start="0" data-duration="5.661" data-track-index="1">
+
+      <div id="org-kicker"><span id="org-spike">✳</span>IDENTIFICADO</div>
+
+      <div id="org-cuerpo">
+        <div id="org-tabla"></div>
+
+        <div id="org-cifras">
+          <div class="org-cifra">
+            <span id="org-n-ok">0</span>
+            <span class="org-cifra-rot">CORRECTOS</span>
+          </div>
+          <div class="org-cifra">
+            <!-- El 0 de conflictos no se anima nunca: si se moviera, pediría atención. -->
+            <span id="org-n-conf">0</span>
+            <span class="org-cifra-rot">CONFLICTOS</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="org-aire"></div>
+    </div>
+
+    <!-- Los últimos 1,26 s el plano no tenía nada que decir. La guía dice que en este
+         plano la respuesta a «algo más» es no, pero un plano de 5 s en silencio total
+         es un plano que se puede aprovechar: entra la frase que nombra la función. -->
+    <div id="org-overlay" class="clip" data-layout-allow-overlap data-layout-allow-occlusion
+         data-start="0" data-duration="5.661" data-track-index="2">
+      <div id="org-velo"></div>
+      <span id="org-frase"><span class="org-linea">Cada capítulo,</span><span class="org-linea">con su nombre oficial</span></span>
+    </div>
+  </div>
+
+  <style>
+    #org-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #org-escena {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    #org-kicker {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 112px 136px 0;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+    }
+
+    #org-spike { color: #968ae0; letter-spacing: 0; }
+
+    #org-cuerpo {
+      flex: 1;
+      display: flex;
+      gap: 48px;
+      padding: 56px 136px 0;
+      min-height: 0;
+    }
+
+    #org-tabla {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .org-grupo-cab {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 0 14px;
+    }
+
+    .org-grupo-nom {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      letter-spacing: 0.18em;
+      color: #8a8fa3;
+    }
+
+    .org-grupo-linea {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, #2e3042, #2e3042 70%, transparent);
+    }
+
+    .org-fila {
+      height: 82px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      border-bottom: 1px solid #1e2030;
+    }
+
+    .org-original {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #6c7080;
+      width: 380px;
+      flex: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .org-propuesta {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #8a8fa3;
+      flex: 1;
+      /* Sin `min-width: 0` un flex-item con `nowrap` no baja de su ancho de contenido:
+         la elipsis no llegaría a aplicarse y el nombre se metería bajo la píldora. */
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .org-pildora-hueco {
+      flex: none;
+      width: 150px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .org-pildora {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(93, 184, 114, 0.14);
+      border: 1px solid rgba(93, 184, 114, 0.42);
+      font-size: 19px;
+      color: #5db872;
+      white-space: nowrap;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #org-cifras {
+      flex: none;
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 52px;
+      padding-top: 6px;
+    }
+
+    .org-cifra {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .org-cifra > span:first-child {
+      font-size: 132px;
+      font-weight: 500;
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      color: #4a4f63;
+    }
+
+    .org-cifra-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 21px;
+      letter-spacing: 0.16em;
+      color: #8a8fa3;
+    }
+
+    /* La banda vacía de abajo es el aire que hace que el plano se lea como respiro
+       y no como pantallazo de producto. */
+    #org-aire {
+      flex: none;
+      height: 150px;
+    }
+
+    /* ── el overlay de cierre ──────────────────────────────────────────────── */
+    #org-overlay {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    #org-velo {
+      position: absolute;
+      inset: 0;
+      background: rgba(22, 24, 38, 0.74);
+      opacity: 0;
+    }
+
+    #org-frase {
+      --barrido: 0px;
+      position: relative;
+      font-size: 80px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.18;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 1440px;
+    }
+
+    .org-linea { display: block; }
+    #org-frase .w { display: inline-block; opacity: 0; }
+
+    /* ── Acero ──────────────────────────────────────────────────────────
+       El degradado es una BALDOSA que se repite: ninguna letra se queda jamás sin
+       fondo, y una letra con `color: transparent` y sin fondo sencillamente no se
+       pinta. El primer alto de color y el último son el mismo, así que la baldosa
+       casa consigo misma y no hay costura al dar la vuelta.
+       Horizontal, no inclinado: con un ángulo la baldosa no casa con la siguiente
+       y aparece una costura diagonal en cada vuelta. */
+    .metal {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      /* Acero, no acero teñido: el acento no se gasta aquí.
+         Los altos de color van a distancias DESIGUALES —9, 8, 14, 7, 14, 9, 12, 11,
+         16 %— así que las luces llegan a destiempo en vez de a compás, y el ojo deja
+         de leerlo como un barrido. El recorrido de valor es corto (#AEB4BF a #F6F8FB)
+         para que sea materia y no destello. */
+      background-image: linear-gradient(to right,
+        #b9bec9 0%, #e8ebf0 9%, #c6cbd5 17%, #f6f8fb 31%, #d2d7e0 38%,
+        #aeb4bf 52%, #eef1f5 61%, #c1c6d1 73%, #e2e6ec 84%, #b9bec9 100%);
+      background-size: 1600px 100%;
+      background-repeat: repeat;
+    }
+  </style>
+
+  <script>
+    (() => {
+      // Este plano cae entero dentro del bajón de la música. Una sola curva LINEAR:
+      // ni curvas nombradas, ni muelles, ni destellos.
+      const LINEAR = "none";
+      // ── Acero · el barrido ──────────────────────────────────────────
+      // Va pieza a pieza (palabra o carácter), no en el contenedor, porque cada pieza
+      // lleva su propia opacidad de entrada: si el degradado estuviera arriba,
+      // `background-clip: text` lo pintaría a plena intensidad aunque la pieza
+      // estuviese todavía a opacidad 0. Cada pieza se desplaza su propio hueco dentro
+      // de la baldosa, así que las letras forman UN degradado continuo, no uno por letra.
+      const TEJA = 1600;
+      const metalizar = (caja, piezas) => {
+        const x0 = caja.getBoundingClientRect().left;
+        piezas.forEach((p) => {
+          p.classList.add("metal");
+          const dx = Math.round(p.getBoundingClientRect().left - x0);
+          p.style.backgroundPositionX = "calc(var(--barrido) - " + dx + "px)";
+        });
+      };
+      // Baldosa ancha y ciclo largo: dentro de la ventana en la que el rótulo está en
+      // pantalla no se llega a ver la vuelta, así que no hay bucle que reconocer.
+      const barrer = (caja, desde) => {
+        tl.fromTo(caja, { "--barrido": "0px" },
+          { "--barrido": TEJA + "px", duration: 7, ease: "none",
+            immediateRender: false }, desde);
+      };
+
+
+      const GRUPOS = [
+        ["TEMPORADA 1", [
+          ["Cap 12 (2).mkv", "Aqui no hay quien viva - S01E12 - Érase un portal"],
+          ["episodio final BUENO.mkv", "Aqui no hay quien viva - S01E13 - Érase un final"],
+          ["Sin titulo (copia).mkv", "Aqui no hay quien viva - S01E09 - Érase una portera"],
+          ["cap14.mkv", "Aqui no hay quien viva - S01E14 - Érase una boda"],
+        ]],
+        ["TEMPORADA 2", [
+          ["Temporada2_04.mkv", "Aqui no hay quien viva - S02E04 - Érase una okupa"],
+          ["Temporada2_05.mkv", "Aqui no hay quien viva - S02E05 - Érase un ascensor"],
+          ["aqui no hay quien viva 3x07.avi", "Aqui no hay quien viva - S02E07 - Érase una mudanza"],
+          ["nuevo_cap (1).mkv", "Aqui no hay quien viva - S02E08 - Érase un cumpleaños"],
+        ]],
+      ];
+
+      const CHECK =
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5DB872" ' +
+        'stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M4 13l5 5L20 6"></path></svg>';
+      const FLECHA =
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A4F63" ' +
+        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+        'style="flex:none"><path d="M4 12h14M13 7l5 5-5 5"></path></svg>';
+
+      let n = 0;
+      document.getElementById("org-tabla").innerHTML = GRUPOS.map((g) =>
+        '<div class="org-grupo"><div class="org-grupo-cab">' +
+        '<span class="org-grupo-nom">' + g[0] + "</span>" +
+        '<div class="org-grupo-linea"></div></div>' +
+        g[1].map((par) => {
+          const i = n++;
+          return '<div class="org-fila">' +
+            '<span class="org-original">' + par[0] + "</span>" + FLECHA +
+            '<span class="org-propuesta" id="org-prop-' + i + '">' + par[1] + ".mkv</span>" +
+            '<div class="org-pildora-hueco"><div class="org-pildora" id="org-pild-' + i + '">' +
+            CHECK + "<span>Correcto</span></div></div></div>";
+        }).join("") + "</div>").join("");
+
+      // ── La línea de tiempo ─────────────────────────────────────────────────
+      // El plano abre con la propuesta ya escrita. Nada entra.
+      const tl = gsap.timeline({ paused: true });
+
+      // 0,00 → 1,52 · las píldoras en cascada. Fundido y 6 px de subida, sin escala.
+      for (let i = 0; i < n; i++) {
+        const at = i * 0.19;
+        tl.fromTo("#org-pild-" + i, { y: 6, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.19, ease: LINEAR }, at);
+        // La propuesta se aclara con su píldora: es el mismo suceso, sin percusión.
+        tl.to("#org-prop-" + i, { color: "#e9e9ed", duration: 0.19, ease: LINEAR }, at);
+      }
+
+      // 0,00 → 4,30 · el contador sube en lineal, sin aceleración final.
+      const ok = { v: 0 };
+      const nOk = document.getElementById("org-n-ok");
+      tl.to(ok, {
+        v: 246, duration: 3.9, ease: LINEAR,
+        onUpdate: () => { nOk.textContent = String(Math.round(ok.v)); },
+      }, 0);
+
+      // …y su color recorre #4A4F63 → #8A8FA3 → #5DB872 a lo largo del conteo.
+      tl.to("#org-n-ok", { color: "#8a8fa3", duration: 1.95, ease: LINEAR }, 0);
+      tl.to("#org-n-ok", { color: "#5db872", duration: 1.95, ease: LINEAR }, 1.95);
+
+      // 3,90 · el velo se cierra y entra la frase. Curva lineal también aquí: el plano
+      // cae dentro del bajón y no admite ni una aceleración.
+      tl.to("#org-velo", { opacity: 1, duration: 0.5, ease: LINEAR }, 3.9);
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+      const wFrase = [];
+      document.querySelectorAll("#org-frase .org-linea")
+        .forEach((l) => palabras(l).forEach((w) => wFrase.push(w)));
+      tl.to(wFrase, { opacity: 1, duration: 0.26, ease: LINEAR, stagger: 0.06 }, 4.06);
+      metalizar(document.getElementById("org-frase"), wFrase);
+      barrer(document.getElementById("org-frase"), 4.06);
+
+      // 4,62 → 5,16 · quietud. El plano sigue acabando en silencio, ahora con la frase.
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["04-organizar"] = tl;
+    })();
+  </script>
+</template>

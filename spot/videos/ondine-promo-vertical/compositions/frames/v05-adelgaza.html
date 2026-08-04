@@ -1,0 +1,419 @@
+<template>
+  <div data-composition-id="v05-adelgaza" data-width="1080" data-height="1920" data-start="0" data-duration="2.581">
+
+    <div id="ad-ground" class="clip" data-start="0" data-duration="2.581" data-track-index="0"></div>
+
+    <!-- REGLA DURA: el fotograma del vídeo vive en SU PROPIA capa y no entra en ninguna
+         línea de tiempo. Ni escala, ni opacidad, ni desenfoque, ni sombra. Esa quietud
+         es el argumento del plano: no se recomprime nada. -->
+    <div id="ad-quieto" class="clip" data-start="0" data-duration="2.581" data-track-index="1">
+      <div id="ad-fotograma">
+        <div class="ad-fg-cielo"></div>
+        <div class="ad-fg-horizonte"></div>
+        <div class="ad-fg-luz"></div>
+        <div class="ad-fg-monte-a"></div>
+        <div class="ad-fg-monte-b"></div>
+        <span id="ad-fg-meta">00:12:04 · 1080p · HEVC</span>
+      </div>
+      <div id="ad-pie">
+        <span id="ad-pie-nombre">Cap 12.mkv</span>
+        <span id="ad-pie-sep"></span>
+        <span id="ad-pie-nota">fotograma sin tocar</span>
+      </div>
+    </div>
+
+    <div id="ad-movil" class="clip" data-start="0" data-duration="2.581" data-track-index="2">
+      <div id="ad-kicker"><span id="ad-spike">✳</span>SIN RECOMPRIMIR</div>
+
+      <div id="ad-datos">
+        <div id="ad-fila-cifras">
+          <div class="ad-bloque">
+            <span class="ad-rot">TAMAÑO</span>
+            <div id="ad-cifras">
+              <span id="ad-antes">1 GB<span id="ad-tachon"></span></span>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4A4F63"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   id="ad-flecha" aria-hidden="true"><path d="M4 12h14M13 7l5 5-5 5"></path></svg>
+              <span id="ad-despues">—</span>
+              <span id="ad-unidad">MB</span>
+            </div>
+          </div>
+          <div class="ad-bloque" id="ad-bloque-tiempo">
+            <span class="ad-rot">TIEMPO</span>
+            <span id="ad-crono">0,0 s</span>
+          </div>
+        </div>
+
+        <div class="ad-bloque">
+          <span class="ad-rot">PISTAS</span>
+          <div id="ad-pistas"></div>
+        </div>
+
+        <div id="ad-sello">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5DB872"
+               stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 13l5 5L20 6"></path>
+          </svg>
+          <span id="ad-sello-txt">vídeo idéntico</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #ad-ground { position: absolute; inset: 0; background: #161826; }
+
+    #ad-quieto,
+    #ad-movil {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    /* Sin sombra ni brillo, y con 60 px de aire por debajo hasta el primer dato: así
+       ningún movimiento roza su silueta. */
+    #ad-fotograma {
+      position: absolute;
+      left: 70px;
+      top: 380px;
+      width: 940px;
+      height: 529px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #101120;
+      border: 1px solid #2a2c3e;
+      will-change: auto;
+    }
+
+    .ad-fg-cielo {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(148deg, #2c2a4a 0%, #232838 42%, #1a2130 70%, #101120 100%);
+    }
+
+    .ad-fg-horizonte {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 44%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(181, 171, 252, 0.22) 30%,
+                  rgba(181, 171, 252, 0.22) 70%, transparent);
+    }
+
+    .ad-fg-luz {
+      position: absolute;
+      left: 34%;
+      top: 26%;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, rgba(181, 171, 252, 0.2), transparent 68%);
+    }
+
+    .ad-fg-monte-a {
+      position: absolute;
+      left: 12%;
+      bottom: 0;
+      width: 190px;
+      height: 220px;
+      background: #171a2a;
+      clip-path: polygon(0 100%, 42% 12%, 100% 100%);
+    }
+
+    .ad-fg-monte-b {
+      position: absolute;
+      left: 56%;
+      bottom: 0;
+      width: 315px;
+      height: 158px;
+      background: #141726;
+      clip-path: polygon(0 100%, 30% 22%, 68% 40%, 100% 100%);
+    }
+
+    #ad-fg-meta {
+      position: absolute;
+      left: 20px;
+      bottom: 16px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 18px;
+      color: #5a5f72;
+    }
+
+    #ad-pie {
+      position: absolute;
+      left: 70px;
+      top: 930px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 21px;
+    }
+
+    #ad-pie-nombre { color: #6c7080; }
+    #ad-pie-nota { color: #4a4f63; }
+    #ad-pie-sep { width: 1px; height: 20px; background: #2e3042; }
+
+    /* ── la columna que sí se mueve ────────────────────────────────────────── */
+    #ad-kicker {
+      position: absolute;
+      left: 70px;
+      top: 300px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+    }
+
+    #ad-spike { color: #968ae0; letter-spacing: 0; }
+
+    #ad-datos {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      top: 1010px;
+      display: flex;
+      flex-direction: column;
+      gap: 44px;
+    }
+
+    .ad-bloque { display: flex; flex-direction: column; gap: 8px; }
+
+    .ad-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      letter-spacing: 0.16em;
+      color: #8a8fa3;
+    }
+
+    #ad-fila-cifras { display: flex; align-items: flex-end; gap: 70px; }
+
+    #ad-cifras { display: flex; align-items: baseline; gap: 18px; white-space: nowrap; }
+
+    /* El tachado se dibuja con un hijo real y `scaleX`, no con `text-decoration`: una
+       decoración de texto no se puede animar de izquierda a derecha. */
+    #ad-antes {
+      position: relative;
+      font-size: 62px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      color: #4a4f63;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #ad-tachon {
+      position: absolute;
+      left: -4px;
+      right: -4px;
+      top: 54%;
+      height: 2px;
+      background: #4a4f63;
+      transform: scaleX(0);
+      transform-origin: 0% 50%;
+    }
+
+    #ad-flecha { flex: none; margin-bottom: 14px; }
+
+    #ad-despues {
+      font-size: 110px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+      color: #4a4f63;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #ad-unidad {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      color: #8a8fa3;
+      opacity: 0;
+    }
+
+    #ad-bloque-tiempo { padding-bottom: 10px; }
+
+    #ad-crono {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 46px;
+      color: #6c7080;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    #ad-pistas { display: flex; flex-direction: column; gap: 14px; }
+
+    .ad-pista {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 22px;
+      border-radius: 8px;
+      will-change: transform, opacity;
+    }
+
+    .ad-pista-icono { width: 30px; flex: none; display: grid; place-items: center; }
+
+    .ad-pista-lang {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 25px;
+      width: 78px;
+      flex: none;
+    }
+
+    .ad-pista-tipo { font-size: 23px; flex: 1; }
+
+    .ad-pista-estado {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 21px;
+    }
+
+    #ad-sello {
+      display: inline-flex;
+      align-self: flex-start;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 32px;
+      border-radius: 999px;
+      border: 2px solid #5db872;
+      background: rgba(93, 184, 114, 0.12);
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    #ad-sello-txt { font-size: 36px; color: #5db872; letter-spacing: 0.01em; }
+    #ad-sello-txt .w { display: inline-block; }
+  </style>
+
+  <script>
+    (() => {
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const EASE_IN = cb(0.7, 0, 0.84, 0);
+      const SPRING_DUR = 0.6;
+      const SPRING = (p) => {
+        if (p >= 1) return 1;
+        const t = p * SPRING_DUR;
+        return 1 - Math.exp(-11 * t) * (Math.cos(9.43 * t) + (11 / 9.43) * Math.sin(9.43 * t));
+      };
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+
+      const CHECK =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5DB872" ' +
+        'stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M4 13l5 5L20 6"></path></svg>';
+      const MENOS =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6C7080" ' +
+        'stroke-width="2.4" stroke-linecap="round" aria-hidden="true">' +
+        '<path d="M5 12h14"></path></svg>';
+
+      const PISTAS = [
+        ["spa", "Audio · castellano", true],
+        ["eng", "Audio · inglés", false],
+        ["spa", "Subtítulos · castellano", true],
+        ["eng", "Subtítulos · inglés", false],
+      ];
+      document.getElementById("ad-pistas").innerHTML = PISTAS.map((p, i) => {
+        const queda = p[2];
+        const estilo = queda
+          ? "background:rgba(93,184,114,0.10);border:1px solid rgba(93,184,114,0.38)"
+          : "background:transparent;border:1px solid #26283A";
+        const color = queda ? "#E9E9ED" : "#6C7080";
+        const meta = queda ? "#8A8FA3" : "#4A4F63";
+        return '<div class="ad-pista" id="ad-pista-' + i + '" style="' + estilo + '">' +
+          '<span class="ad-pista-icono">' + (queda ? CHECK : MENOS) + "</span>" +
+          '<span class="ad-pista-lang" style="color:' + color + '">' + p[0] + "</span>" +
+          '<span class="ad-pista-tipo" style="color:' + meta + '">' + p[1] + "</span>" +
+          '<span class="ad-pista-estado" style="color:' + meta + '">' +
+          (queda ? "se queda" : "se va") + "</span></div>";
+      }).join("");
+
+      const tl = gsap.timeline({ paused: true });
+
+      // 0,00 → 0,60 · el cronómetro corre en tiempo real. Que coincida con el reloj de
+      // verdad es parte del argumento.
+      const crono = { v: 0 };
+      const elCrono = document.getElementById("ad-crono");
+      tl.to(crono, {
+        v: 0.6, duration: 0.6, ease: "none",
+        onUpdate: () => { elCrono.textContent = crono.v.toFixed(1).replace(".", ",") + " s"; },
+      }, 0);
+      tl.to("#ad-crono", { color: "#e9e9ed", duration: 0.6, ease: "none" }, 0);
+
+      tl.fromTo("#ad-tachon", { scaleX: 0 },
+        { scaleX: 1, duration: 0.26, ease: EASE_OUT }, 0.35);
+
+      // Las pistas `eng` salen por la derecha, escalonadas. Las `spa` no se mueven.
+      tl.to("#ad-pista-1", { x: 120, opacity: 0, duration: 0.28, ease: EASE_IN }, 0.35);
+      tl.to("#ad-pista-3", { x: 120, opacity: 0, duration: 0.28, ease: EASE_IN }, 0.62);
+
+      // 0,50 → 1,85 · la cifra baja de 1024 a 133 MB. Tarda más que el cronómetro a
+      // propósito: el reloj mide lo que tarda la operación, el número solo se asienta.
+      const peso = { v: 1024 };
+      const elPeso = document.getElementById("ad-despues");
+      tl.to(peso, {
+        v: 133, duration: 1.35, ease: EASE_OUT,
+        onUpdate: () => { elPeso.textContent = String(Math.round(peso.v)); },
+      }, 0.5);
+      tl.to("#ad-despues", { color: "#e9e9ed", duration: 1.35, ease: EASE_OUT }, 0.5);
+      tl.fromTo("#ad-unidad", { opacity: 0 },
+        { opacity: 1, duration: 0.26, ease: EASE_OUT }, 0.5);
+
+      // 2,11 · el único golpe del plano. En la pista es el mismo instante que en la
+      // versión apaisada: 25,335 s del spot.
+      tl.fromTo("#ad-sello", { scale: 1.12 },
+        { scale: 1, duration: SPRING_DUR, ease: SPRING, immediateRender: false }, 2.11);
+      tl.fromTo("#ad-sello", { opacity: 0 },
+        { opacity: 1, duration: 0.26, ease: EASE_OUT, immediateRender: false }, 2.11);
+      tl.fromTo("#ad-sello",
+        { boxShadow: "0 0 0 10px rgba(93,184,114,0.18)" },
+        { boxShadow: "0 0 0 0px rgba(93,184,114,0)", duration: 0.24, ease: EASE_OUT,
+          immediateRender: false }, 2.11);
+
+      const pal = palabras(document.getElementById("ad-sello-txt"));
+      tl.fromTo(pal, { opacity: 0 },
+        { opacity: 1, duration: 0.26, ease: EASE_OUT, stagger: 0.06, immediateRender: false }, 2.19);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["v05-adelgaza"] = tl;
+    })();
+  </script>
+</template>

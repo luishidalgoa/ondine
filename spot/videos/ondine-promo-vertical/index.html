@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #161826;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── Ondine · spot vertical (9:16) ──────────────────────────────────────────
+         La misma pieza y la misma pista que el horizontal: 93 BPM, compás de 2,5806 s,
+         17 compases = 43,870 s. Cada plano cae en el mismo instante que su gemelo
+         apaisado, así que la sincronía con la música es idéntica.
+
+         Lo que cambia es el encuadre, y no por recorte: cada plano está recompuesto.
+         En 9:16 el eje largo es el vertical, así que lo que en apaisado se ponía en
+         paralelo (página y panel, las dos piezas del corte, el antes y el después)
+         aquí se apila. Y todo pierde detalle a propósito: esto se ve en un móvil,
+         normalmente sin sonido y de paso.
+
+         Franja segura para Stories: el contenido vive entre y=280 y y=1640; fuera de
+         ahí la interfaz de Instagram se come lo que haya. -->
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="43.870"
+      data-width="1080"
+      data-height="1920"
+      data-fps="60"
+    >
+      <div
+        id="el-01-hook"
+        class="scene"
+        data-composition-id="v01-hook"
+        data-composition-src="compositions/frames/v01-hook.html"
+        data-start="0"
+        data-duration="5.161"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-02-desorden"
+        class="scene"
+        data-composition-id="v02-desorden"
+        data-composition-src="compositions/frames/v02-desorden.html"
+        data-start="5.161"
+        data-duration="5.661"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-03-catalogo"
+        class="scene"
+        data-composition-id="v03-catalogo"
+        data-composition-src="compositions/frames/v03-catalogo.html"
+        data-start="10.322"
+        data-duration="7.742"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-04-organizar"
+        class="scene"
+        data-composition-id="v04-organizar"
+        data-composition-src="compositions/frames/v04-organizar.html"
+        data-start="18.064"
+        data-duration="5.661"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-05-adelgaza"
+        class="scene"
+        data-composition-id="v05-adelgaza"
+        data-composition-src="compositions/frames/v05-adelgaza.html"
+        data-start="23.225"
+        data-duration="2.581"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-06-corte"
+        class="scene"
+        data-composition-id="v06-corte"
+        data-composition-src="compositions/frames/v06-corte.html"
+        data-start="25.806"
+        data-duration="5.661"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-07-cierre"
+        class="scene"
+        data-composition-id="v07-comparativa"
+        data-composition-src="compositions/frames/v07-comparativa.html"
+        data-start="30.967"
+        data-duration="12.903"
+        data-track-index="0"
+      ></div>
+
+      <!-- BGM -->
+      <audio
+        id="el-bgm"
+        src="assets/musica.m4a"
+        data-start="0"
+        data-duration="43.870"
+        data-track-index="11"
+        data-volume="0.5"
+      ></audio>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      (function () { var tl = window.__timelines["main"];
+        tl.to("#el-02-desorden", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 10.322);
+        tl.fromTo("#el-03-catalogo", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 10.322);
+        tl.to("#el-04-organizar", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 23.225);
+        tl.fromTo("#el-05-adelgaza", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 23.225);
+        tl.to("#el-06-corte", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 30.967);
+        tl.fromTo("#el-07-cierre", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 30.967);
+        tl.to({}, { duration: 43.870 }, 0);
+      })();
+    </script>
+  </body>
+</html>

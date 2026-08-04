@@ -1,0 +1,324 @@
+<template>
+  <div data-composition-id="v04-organizar" data-width="1080" data-height="1920" data-start="0" data-duration="5.661">
+
+    <div id="og-ground" class="clip" data-start="0" data-duration="5.661" data-track-index="0"></div>
+
+    <!-- El plano del bajón: no hay un suceso, hay una marea. Prohibidos los muelles, las
+         escalas y los destellos; una sola curva lineal gobierna los 5,16 s.
+         En apaisado las cifras iban en una columna a la derecha. Aquí van arriba, que es
+         donde el pulgar mira primero, y la tabla cae debajo. Y cada fila apila el nombre
+         viejo sobre el nuevo en vez de ponerlos en paralelo: a lo ancho de un móvil no
+         caben los dos y el de verdad importante es el de abajo. -->
+    <div id="og-escena" class="clip" data-start="0" data-duration="5.661" data-track-index="1">
+
+      <div id="og-kicker"><span id="og-spike">✳</span>IDENTIFICADO</div>
+
+      <div id="og-cifras">
+        <div class="og-cifra">
+          <span id="og-n-ok">0</span>
+          <span class="og-cifra-rot">CORRECTOS</span>
+        </div>
+        <div class="og-cifra">
+          <!-- El 0 de conflictos no se anima nunca: si se moviera, pediría atención. -->
+          <span id="og-n-conf">0</span>
+          <span class="og-cifra-rot">CONFLICTOS</span>
+        </div>
+      </div>
+
+      <div id="og-tabla"></div>
+    </div>
+
+    <!-- Los últimos 1,26 s el plano no tenía nada que decir. -->
+    <div id="og-overlay" class="clip" data-layout-allow-overlap data-layout-allow-occlusion
+         data-start="0" data-duration="5.661" data-track-index="2">
+      <div id="og-velo"></div>
+      <span id="og-frase"><span class="og-linea">Cada capítulo,</span><span class="og-linea">con su nombre oficial</span></span>
+    </div>
+  </div>
+
+  <style>
+    #og-ground { position: absolute; inset: 0; background: #161826; }
+
+    #og-escena {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    #og-kicker {
+      position: absolute;
+      left: 70px;
+      top: 300px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+    }
+
+    #og-spike { color: #968ae0; letter-spacing: 0; }
+
+    #og-cifras {
+      position: absolute;
+      left: 70px;
+      top: 400px;
+      display: flex;
+      gap: 96px;
+    }
+
+    .og-cifra { display: flex; flex-direction: column; gap: 4px; }
+
+    .og-cifra > span:first-child {
+      font-size: 148px;
+      font-weight: 500;
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      color: #4a4f63;
+    }
+
+    .og-cifra-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 22px;
+      letter-spacing: 0.16em;
+      color: #8a8fa3;
+    }
+
+    #og-tabla {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      top: 690px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .og-grupo-cab {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 18px 0 12px;
+    }
+
+    .og-grupo-nom {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 20px;
+      letter-spacing: 0.18em;
+      color: #8a8fa3;
+    }
+
+    .og-grupo-linea {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, #2e3042, #2e3042 70%, transparent);
+    }
+
+    .og-fila {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 15px 0;
+      border-bottom: 1px solid #1e2030;
+    }
+
+    .og-nombres {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .og-original {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 18px;
+      color: #6c7080;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 22 px: el nombre propuesto más largo son 57 caracteres y a este cuerpo mide
+       752 px, justo dentro de los 770 que deja la píldora. A 24 se metía debajo. */
+    .og-propuesta {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 22px;
+      color: #8a8fa3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .og-pildora-hueco {
+      flex: none;
+      width: 150px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .og-pildora {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(93, 184, 114, 0.14);
+      border: 1px solid rgba(93, 184, 114, 0.42);
+      font-size: 19px;
+      color: #5db872;
+      white-space: nowrap;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* ── el overlay de cierre ──────────────────────────────────────────────── */
+    #og-overlay {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    #og-velo {
+      position: absolute;
+      inset: 0;
+      background: rgba(22, 24, 38, 0.74);
+      opacity: 0;
+    }
+
+    #og-frase {
+      --barrido: 0px;
+      position: relative;
+      font-size: 82px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 940px;
+    }
+
+    .og-linea { display: block; }
+    #og-frase .w { display: inline-block; opacity: 0; }
+
+    .metal {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(to right,
+        #b9bec9 0%, #e8ebf0 9%, #c6cbd5 17%, #f6f8fb 31%, #d2d7e0 38%,
+        #aeb4bf 52%, #eef1f5 61%, #c1c6d1 73%, #e2e6ec 84%, #b9bec9 100%);
+      background-size: 1600px 100%;
+      background-repeat: repeat;
+    }
+  </style>
+
+  <script>
+    (() => {
+      // Este plano cae dentro del bajón. Una sola curva LINEAR: ni curvas nombradas,
+      // ni muelles, ni destellos.
+      const LINEAR = "none";
+
+      const GRUPOS = [
+        ["TEMPORADA 1", [
+          ["Cap 12 (2).mkv", "Aqui no hay quien viva - S01E12 - Érase un portal"],
+          ["episodio final BUENO.mkv", "Aqui no hay quien viva - S01E13 - Érase un final"],
+          ["Sin titulo (copia).mkv", "Aqui no hay quien viva - S01E09 - Érase una portera"],
+          ["cap14.mkv", "Aqui no hay quien viva - S01E14 - Érase una boda"],
+        ]],
+        ["TEMPORADA 2", [
+          ["Temporada2_04.mkv", "Aqui no hay quien viva - S02E04 - Érase una okupa"],
+          ["Temporada2_05.mkv", "Aqui no hay quien viva - S02E05 - Érase un ascensor"],
+          ["aqui no hay quien viva 3x07.avi", "Aqui no hay quien viva - S02E07 - Érase una mudanza"],
+          ["nuevo_cap (1).mkv", "Aqui no hay quien viva - S02E08 - Érase un cumpleaños"],
+        ]],
+      ];
+
+      const CHECK =
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5DB872" ' +
+        'stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M4 13l5 5L20 6"></path></svg>';
+
+      let n = 0;
+      document.getElementById("og-tabla").innerHTML = GRUPOS.map((g) =>
+        '<div><div class="og-grupo-cab">' +
+        '<span class="og-grupo-nom">' + g[0] + "</span>" +
+        '<div class="og-grupo-linea"></div></div>' +
+        g[1].map((par) => {
+          const i = n++;
+          return '<div class="og-fila"><div class="og-nombres">' +
+            '<span class="og-original">' + par[0] + "</span>" +
+            '<span class="og-propuesta" id="og-prop-' + i + '">' + par[1] + ".mkv</span>" +
+            "</div>" +
+            '<div class="og-pildora-hueco"><div class="og-pildora" id="og-pild-' + i + '">' +
+            CHECK + "<span>Correcto</span></div></div></div>";
+        }).join("") + "</div>").join("");
+
+      const tl = gsap.timeline({ paused: true });
+
+      // 0,00 → 1,52 · las píldoras en cascada. Fundido y 6 px de subida, sin escala.
+      for (let i = 0; i < n; i++) {
+        const at = i * 0.19;
+        tl.fromTo("#og-pild-" + i, { y: 6, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.19, ease: LINEAR }, at);
+        tl.to("#og-prop-" + i, { color: "#e9e9ed", duration: 0.19, ease: LINEAR }, at);
+      }
+
+      // 0,00 → 3,90 · el contador sube en lineal, sin aceleración final.
+      const ok = { v: 0 };
+      const nOk = document.getElementById("og-n-ok");
+      tl.to(ok, {
+        v: 246, duration: 3.9, ease: LINEAR,
+        onUpdate: () => { nOk.textContent = String(Math.round(ok.v)); },
+      }, 0);
+      tl.to("#og-n-ok", { color: "#8a8fa3", duration: 1.95, ease: LINEAR }, 0);
+      tl.to("#og-n-ok", { color: "#5db872", duration: 1.95, ease: LINEAR }, 1.95);
+
+      // 3,90 · el velo se cierra y entra la frase. Lineal también aquí.
+      tl.to("#og-velo", { opacity: 1, duration: 0.5, ease: LINEAR }, 3.9);
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+      const wFrase = [];
+      document.querySelectorAll("#og-frase .og-linea")
+        .forEach((l) => palabras(l).forEach((w) => wFrase.push(w)));
+      tl.to(wFrase, { opacity: 1, duration: 0.26, ease: LINEAR, stagger: 0.06 }, 4.06);
+
+      const TEJA = 1600;
+      const caja = document.getElementById("og-frase");
+      const x0 = caja.getBoundingClientRect().left;
+      wFrase.forEach((p) => {
+        p.classList.add("metal");
+        const dx = Math.round(p.getBoundingClientRect().left - x0);
+        p.style.backgroundPositionX = "calc(var(--barrido) - " + dx + "px)";
+      });
+      tl.fromTo(caja, { "--barrido": "0px" },
+        { "--barrido": TEJA + "px", duration: 7, ease: "none", immediateRender: false }, 4.06);
+
+      // 4,62 → 5,16 · quietud. El plano sigue acabando en silencio, ahora con la frase.
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["v04-organizar"] = tl;
+    })();
+  </script>
+</template>

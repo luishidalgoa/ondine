@@ -1,0 +1,269 @@
+<template>
+  <div data-composition-id="v01-hook" data-width="1080" data-height="1920" data-start="0" data-duration="5.161">
+
+    <!-- El suelo va en su propia capa .clip: un `background` en la raíz lo puede perder
+         el compositor y el fotograma sale negro. -->
+    <div id="hk-ground" class="clip" data-start="0" data-duration="5.161"></div>
+
+    <div id="hk-stage" class="clip" data-start="0" data-duration="5.161">
+      <!-- Las partículas van en canvas y no en divs: en DOM el tope práctico son unas
+           cuarenta por el coste de escribir estilos cada fotograma, y aquí hacen falta
+           más de mil para que el trazo tenga grosor de verdad. En canvas se repinta
+           todo desde el valor del driver, así que la posición sigue siendo función
+           pura del tiempo — que es lo que hace que un salto a cualquier fotograma
+           caiga bien. -->
+      <canvas id="hk-canvas" width="1080" height="1920" data-layout-allow-overflow></canvas>
+
+      <!-- La marca, de donde se muestrean los puntos de destino. Oculta: solo es la
+           fuente geométrica. Es literalmente docs/marca/ondine-marca-oscuro.svg. -->
+      <svg id="hk-src" viewBox="0 0 64 64" width="64" height="64" fill="none"
+           stroke="#968AE0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <path id="hk-p0" d="M7 17 C 15.5 9 26.5 25 35 17 C 43.5 9 48.5 25 57 17"></path>
+        <path id="hk-p1" d="M7 32 C 16 28 26 36 35 32 C 44 28 48 36 57 32"></path>
+        <path id="hk-p2" d="M7 47 L 57 47"></path>
+      </svg>
+
+      <!-- El polvo que suelta el nombre al entrar. Va en SU PROPIO canvas porque el de
+           la marca se desplaza hacia arriba y el polvo tiene que quedarse quieto. -->
+      <canvas id="hk-dust" width="1080" height="1920"></canvas>
+
+      <div id="hk-word">Ondine</div>
+    </div>
+  </div>
+
+  <style>
+    #hk-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #hk-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #hk-canvas,
+    #hk-dust {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+    }
+
+    #hk-src {
+      position: absolute;
+      left: -400px;
+      top: -400px;
+      opacity: 0;
+    }
+
+    /* En apaisado el nombre va a la derecha de la marca. Aquí va DEBAJO: en 9:16 el eje
+       largo es el vertical, y poner el bloque en horizontal obligaría a encoger la
+       marca hasta que el trazo dejara de leerse. */
+    #hk-word {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 1215px;
+      text-align: center;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      font-size: 190px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      line-height: 1;
+      color: #e9e9ed;
+      white-space: nowrap;
+    }
+  </style>
+
+  <script>
+    (() => {
+      const DUR = 5.161;
+      const MARK_SCALE = 13;         // retícula 64 -> el trazo ocupa 650 px de ancho
+      const GROSOR = 6 * MARK_SCALE; // 78 px: el stroke-width real de la marca, a escala
+      const CX = 540, CY = 860;
+      const FLY = 1.15;              // lo que tarda UNA partícula en llegar
+      const START = 0.3;
+      const SPREAD = 0.85;           // escalonado izquierda->derecha: la marca «se escribe»
+      const SLIDE_AT = 2.44;         // sobre el primer acento de la música
+      const SLIDE_DUR = 0.65;        // termina en 3,09 = el acento siguiente
+      const WIPE_AT = SLIDE_AT + SLIDE_DUR;
+      const TOTAL = 1500;
+
+      // Ruido determinista: nada de Math.random, que rompería el render.
+      const prand = (n) => {
+        const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+        return x - Math.floor(x);
+      };
+
+      const canvas = document.getElementById("hk-canvas");
+      const ctx = canvas.getContext("2d");
+
+      const paths = ["hk-p0", "hk-p1", "hk-p2"].map((id) => document.getElementById(id));
+      const largos = paths.map((p) => p.getTotalLength());
+      const largoTotal = largos.reduce((a, b) => a + b, 0);
+
+      // Se muestrea la BANDA del trazo, no su línea central: sobre el eje del path la
+      // marca sale como un alambre. Cada partícula elige un punto del recorrido y un
+      // desplazamiento perpendicular dentro del ancho real del trazo.
+      const parts = [];
+      let i = 0;
+      paths.forEach((path, pi) => {
+        const cuantas = Math.round((largos[pi] / largoTotal) * TOTAL);
+        for (let k = 0; k < cuantas; k++) {
+          const s = (prand(i * 2.7 + 19) * 0.998 + 0.001) * largos[pi];
+          const pt = path.getPointAtLength(s);
+
+          const d = Math.min(0.6, largos[pi] * 0.02);
+          const a = path.getPointAtLength(Math.max(0, s - d));
+          const b = path.getPointAtLength(Math.min(largos[pi], s + d));
+          const tgx = b.x - a.x, tgy = b.y - a.y;
+          const norma = Math.hypot(tgx, tgy) || 1;
+          const nx = -tgy / norma, ny = tgx / norma;
+
+          const r = 2.0 + prand(i * 13.9 + 9) * 2.6;
+          const u = prand(i * 3.3 + 7) * 2 - 1;
+          const off = u * (GROSOR / 2 - r);
+
+          const tx = CX + (pt.x - 32) * MARK_SCALE + nx * off;
+          const ty = CY + (pt.y - 32) * MARK_SCALE + ny * off;
+
+          // En vertical las partículas entran desde arriba y abajo tanto como por los
+          // lados: el óvalo de nacimiento se invierte respecto al apaisado.
+          const ang = prand(i * 5.1 + 2) * Math.PI * 2;
+          const rad = 900 + prand(i * 7.7 + 3) * 1200;
+
+          parts.push({
+            tx, ty,
+            sx: CX + Math.cos(ang) * rad * 0.62,
+            sy: CY + Math.sin(ang) * rad,
+            delay: START + ((pt.x - 7) / 50) * SPREAD + prand(i * 11.3 + 5) * 0.16,
+            r,
+            claro: prand(i * 17.1 + 11) > 0.74,
+          });
+          i++;
+        }
+      });
+
+      const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+      function pintar(tiempo) {
+        ctx.clearRect(0, 0, 1080, 1920);
+        for (const p of parts) {
+          const local = (tiempo - p.delay) / FLY;
+          if (local <= 0) continue;
+          const q = local >= 1 ? 1 : easeOutCubic(local);
+          const x = p.sx + (p.tx - p.sx) * q;
+          const y = p.sy + (p.ty - p.sy) * q;
+          const alpha = Math.min(1, local * 2.6) * (0.6 + 0.4 * q);
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = p.claro ? "#B5ABFC" : "#968AE0";
+          ctx.beginPath();
+          ctx.arc(x, y, p.r * (1.5 - 0.5 * q), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      pintar(0);
+
+      // El ancho del nombre se mide UNA VEZ, en construcción, y entra horneado en los
+      // tweens: dentro de un callback no valdría, porque el render salta de fotograma
+      // en orden no lineal y la medida saldría de un DOM impredecible. El acotado
+      // tampoco es paranoia: si la fuente no ha cargado al medir, sale el ancho del
+      // tipo de repuesto. 628 px es lo que mide «Ondine» a 190 px de cuerpo.
+      const word = document.getElementById("hk-word");
+      const medido = Math.round(word.getBoundingClientRect().width);
+      const anchoNombre = (medido > 460 && medido < 800) ? medido : 628;
+      const NOMBRE_X = 540 - anchoNombre / 2;
+      const NOMBRE_Y = 1310;
+
+      // ── El polvo que suelta el nombre al entrar ─────────────────────────────
+      // Nace al paso del escalonado de las letras y se apaga enseguida: así el nombre
+      // y la marca están hechos del mismo material sin repetir el gesto del ensamblaje.
+      // Si el nombre también se montara átomo a átomo, el truco no sorprendería dos veces.
+      const dust = document.getElementById("hk-dust");
+      const dctx = dust.getContext("2d");
+      const POLVO = 300;
+      const VIDA = 0.55;
+
+      const chispas = [];
+      for (let j = 0; j < POLVO; j++) {
+        chispas.push({
+          u: prand(j * 4.1 + 31),
+          dy: (prand(j * 6.3 + 37) - 0.5) * 180,
+          vx: 18 + prand(j * 8.9 + 41) * 110,
+          vy: (prand(j * 10.7 + 43) - 0.5) * 140,
+          r: 1.3 + prand(j * 12.1 + 47) * 2.4,
+          retardo: prand(j * 14.3 + 53) * 0.06,
+          claro: prand(j * 16.7 + 59) > 0.6,
+        });
+      }
+
+      function pintarPolvo(tiempo) {
+        dctx.clearRect(0, 0, 1080, 1920);
+        const dur = 0.62;
+        for (const c of chispas) {
+          const nace = WIPE_AT + c.u * dur + c.retardo;
+          const v = (tiempo - nace) / VIDA;
+          if (v <= 0 || v >= 1) continue;
+          const x = NOMBRE_X + c.u * anchoNombre + c.vx * v * VIDA;
+          const y = NOMBRE_Y + c.dy + c.vy * v * VIDA;
+          dctx.globalAlpha = (1 - v) * (1 - v) * 0.9;
+          dctx.fillStyle = c.claro ? "#D2CEFD" : "#968AE0";
+          dctx.beginPath();
+          dctx.arc(x, y, c.r * (1 - v * 0.45), 0, Math.PI * 2);
+          dctx.fill();
+        }
+        dctx.globalAlpha = 1;
+      }
+
+      pintarPolvo(0);
+
+      const tl = gsap.timeline({ paused: true });
+
+      // Un solo driver lineal. La física vive en la fórmula, no en la curva.
+      const drive = { t: 0 };
+      tl.fromTo(drive, { t: 0 }, {
+        t: DUR,
+        duration: DUR,
+        ease: "none",
+        onUpdate: () => { pintar(drive.t); pintarPolvo(drive.t); },
+      }, 0);
+
+      // 2,44 · la marca sube para hacerle sitio al nombre. En apaisado se iba a la
+      // izquierda; aquí el hueco está debajo.
+      tl.fromTo("#hk-canvas", { y: 0 },
+        { y: -150, duration: SLIDE_DUR, ease: "power3.inOut" }, SLIDE_AT);
+
+      // `soft-blur-in` por carácter: cada letra aparece EN SU SITIO, desenfocada, y se
+      // enfoca al asentarse. Nada recorre nada, así que no hay cursor que imaginar.
+      const letras = [...word.textContent].map((c) => {
+        const sp = document.createElement("span");
+        sp.textContent = c;
+        sp.style.display = "inline-block";
+        return sp;
+      });
+      word.textContent = "";
+      letras.forEach((sp) => word.appendChild(sp));
+
+      tl.fromTo(letras,
+        { opacity: 0, filter: "blur(18px)", y: 10 },
+        {
+          opacity: 1, filter: "blur(0px)", y: 0,
+          duration: 0.42,
+          // 0,055 s entre letras: por debajo se lee como un bloque, por encima parece
+          // otra vez que alguien las va poniendo una a una.
+          stagger: 0.055,
+          ease: "power2.out",
+        },
+        WIPE_AT);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["v01-hook"] = tl;
+    })();
+  </script>
+</template>

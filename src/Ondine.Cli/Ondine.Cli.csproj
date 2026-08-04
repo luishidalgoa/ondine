@@ -22,7 +22,7 @@
     <Product>Ondine CLI</Product>
     <Company>luishidalgoa</Company>
     <Authors>luishidalgoa</Authors>
-    <Description>Ondine CLI — compresor de vídeo multiplataforma (el mismo motor que la app de escritorio).</Description>
+    <Description>Ondine CLI: cross-platform video compressor, running the same engine as the desktop app.</Description>
   </PropertyGroup>
 
   <!--

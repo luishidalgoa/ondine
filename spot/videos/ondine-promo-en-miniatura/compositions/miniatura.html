@@ -1,0 +1,583 @@
+<template>
+  <div data-composition-id="miniatura" data-width="1920" data-height="1080" data-start="0" data-duration="1">
+
+    <!-- ── La miniatura del spot ─────────────────────────────────────────────────
+         Un fotograma que la pieza no llega a tener: en el spot el divisor y los pies
+         se retiran justo antes de que entre la marca, así que la comparación y el
+         logotipo nunca coinciden en pantalla. Aquí sí, porque una miniatura tiene un
+         trabajo distinto — explicarse sola, sin sonido y a tamaño de pulgar. -->
+    <div id="min-ground" class="clip" data-start="0" data-duration="1" data-track-index="0"></div>
+
+    <div id="min-capa" class="clip" data-start="0" data-duration="1" data-track-index="1">
+      <div id="min-win-antes" class="min-win">
+        <div id="min-antes" class="min-biblio" data-layout-allow-occlusion></div>
+      </div>
+      <div id="min-win-despues" class="min-win">
+        <div id="min-despues" class="min-biblio" data-layout-allow-occlusion></div>
+      </div>
+
+      <div id="min-divisor"></div>
+      <div id="min-pie-scrim"></div>
+      <div id="min-pies">
+        <span class="min-pie" id="min-pie-antes">BEFORE</span>
+        <span class="min-pie" id="min-pie-despues">AFTER</span>
+      </div>
+    </div>
+
+    <div id="min-velo" class="clip" data-layout-allow-occlusion data-start="0" data-duration="1" data-track-index="2"></div>
+
+    <div id="min-frente" class="clip" data-layout-allow-overlap data-layout-allow-occlusion
+         data-start="0" data-duration="1" data-track-index="3">
+      <div id="min-marca">
+        <svg viewBox="0 0 64 64" width="132" height="132" fill="none" stroke="#B5ABFC" stroke-width="6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path>
+          <path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path>
+          <path d="M7 49 L 57 49"></path>
+        </svg>
+        <span id="min-marca-txt">Ondine</span>
+      </div>
+
+      <span id="min-frase">Your whole library, sorted in one click</span>
+
+      <div id="min-compat">
+        <span id="min-compat-rot">works with</span>
+        <div class="min-compat-marca">
+          <img src="assets/jellyfin.png" alt="Jellyfin" width="44" height="44" id="min-jellyfin" />
+          <span>Jellyfin</span>
+        </div>
+        <span class="min-compat-sep"></span>
+        <div class="min-compat-marca">
+          <div id="min-plex-caja">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E5A00D" stroke-width="2.6"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4l7 8-7 8"></path></svg>
+          </div>
+          <span>Plex</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #min-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #min-capa,
+    #min-velo,
+    #min-frente {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    /* Mismo encuadre que la comparativa del plano 7: dos pantallas enteras a 0,64,
+       no una maqueta partida por la mitad. */
+    .min-win {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #min-win-antes { clip-path: inset(0 50% 0 0); }
+    #min-win-despues { clip-path: inset(0 0 0 50%); }
+
+    .min-biblio {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1687px;
+      background: #101418;
+      overflow: hidden;
+      transform-origin: 0 0;
+      transform: scale(0.64);
+    }
+
+    #min-despues { transform: translateX(960px) scale(0.64); }
+
+    /* ── telón ──────────────────────────────────────────────────────────────── */
+    .min-telon {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 560px;
+      overflow: hidden;
+    }
+
+    .min-telon-fondo {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(122deg, #1d2a3a 0%, #2c2a4a 46%, #141726 100%);
+    }
+
+    .min-telon-arte {
+      position: absolute;
+      inset: -80px;
+      background: url("assets/simpsons-portada.jpg") center 22% / cover no-repeat;
+      filter: blur(46px) saturate(0.55) brightness(0.5);
+      opacity: 0.42;
+    }
+
+    .min-telon-fade {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      background: linear-gradient(to top, #101418 0%, rgba(16, 20, 24, 0.62) 46%,
+                  rgba(16, 20, 24, 0.78) 100%);
+    }
+
+    .min-barra {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 0 44px;
+      background: rgba(10, 13, 16, 0.72);
+      z-index: 2;
+    }
+
+    .min-espacio { flex: 1; }
+
+    .min-visor {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 74px;
+      bottom: 0;
+      overflow: hidden;
+    }
+
+    .min-lista { position: absolute; left: 0; right: 0; top: 0; }
+
+    /* ── cabecera ───────────────────────────────────────────────────────────── */
+    .min-cabecera {
+      position: relative;
+      height: 486px;
+      display: flex;
+      align-items: flex-end;
+      gap: 44px;
+      padding: 0 60px 34px;
+    }
+
+    .min-portada {
+      flex: none;
+      width: 320px;
+      height: 466px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #181d23;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .min-portada-arte {
+      position: absolute;
+      inset: 0;
+      background: url("assets/simpsons-portada.jpg") center / cover no-repeat;
+    }
+
+    .min-vacia {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .min-portada-nombre {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 22px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 18px;
+      line-height: 1.35;
+      color: #6c7080;
+      overflow-wrap: break-word;
+    }
+
+    .min-serie {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-bottom: 16px;
+      min-width: 0;
+    }
+
+    .min-serie-tit {
+      font-size: 52px;
+      font-weight: 500;
+      color: #e9e9ed;
+      letter-spacing: -0.015em;
+    }
+
+    .min-serie-crudo {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 40px;
+      color: #c9ccd6;
+      overflow-wrap: break-word;
+    }
+
+    .min-serie-meta {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 22px;
+      color: #8a8fa3;
+    }
+
+    .min-botonera {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-top: 8px;
+    }
+
+    .min-play {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #e9e9ed;
+      display: grid;
+      place-items: center;
+    }
+
+    /* ── capítulos ──────────────────────────────────────────────────────────── */
+    .min-capitulos {
+      display: flex;
+      flex-direction: column;
+      padding: 0 60px;
+    }
+
+    .min-cap {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 22px 0;
+      border-bottom: 1px solid #1a1f26;
+    }
+
+    .min-cap-mini {
+      flex: none;
+      width: 300px;
+      height: 170px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #181d23;
+    }
+
+    .min-cap-arte { position: absolute; inset: 0; }
+
+    .min-cap-mini-fade {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 44%;
+      background: linear-gradient(to top, rgba(16, 20, 24, 0.85), transparent);
+    }
+
+    .min-cap-mini-play {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 52px;
+      height: 52px;
+      margin: -26px 0 0 -26px;
+      border-radius: 50%;
+      background: rgba(233, 233, 237, 0.16);
+      display: grid;
+      place-items: center;
+    }
+
+    .min-cap-dur {
+      position: absolute;
+      right: 14px;
+      bottom: 12px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      color: #c9ccd6;
+    }
+
+    .min-cap-txt {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .min-cap-tit {
+      font-size: 30px;
+      font-weight: 500;
+      color: #c9ccd6;
+    }
+
+    .min-cap-meta {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #8a8fa3;
+    }
+
+    .min-cap-sin {
+      font-size: 21px;
+      line-height: 1.45;
+      color: #6c7080;
+      max-width: 1100px;
+    }
+
+    .min-crudo {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      color: #c9ccd6;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .min-crudo-meta {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #6c7080;
+    }
+
+    /* ── divisor y pies ─────────────────────────────────────────────────────── */
+    #min-divisor {
+      position: absolute;
+      left: 959px;
+      top: 0;
+      width: 2px;
+      height: 1080px;
+      background: linear-gradient(to bottom, transparent,
+                  rgba(233, 233, 237, 0.42) 10%, rgba(233, 233, 237, 0.42) 90%, transparent);
+    }
+
+    /* Los rótulos suben arriba: abajo va la marca, y en una miniatura no puede haber
+       dos cosas peleándose por el mismo sitio. */
+    #min-pie-scrim {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 150px;
+      background: linear-gradient(to bottom, rgba(10, 12, 18, 0.94), transparent);
+    }
+
+    #min-pies {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 30px;
+      display: flex;
+    }
+
+    .min-pie {
+      flex: 1;
+      text-align: center;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 32px;
+      letter-spacing: 0.28em;
+    }
+
+    #min-pie-antes { color: #8a8fa3; }
+    #min-pie-despues { color: #b5abfc; }
+
+    /* ── el velo ────────────────────────────────────────────────────────────── */
+    /* Un velo con peso abajo, no una viñeta: la mitad de arriba tiene que seguir
+       leyéndose —la comparación ES la mitad del mensaje— y la de abajo se hunde para
+       que la marca tenga suelo. */
+    #min-velo {
+      background: linear-gradient(to bottom,
+                  rgba(16, 17, 32, 0.26) 0%,
+                  rgba(16, 17, 32, 0.3) 32%,
+                  rgba(16, 17, 32, 0.84) 49%,
+                  rgba(16, 17, 32, 0.97) 62%,
+                  rgba(16, 17, 32, 0.99) 100%);
+    }
+
+    /* ── el frente ──────────────────────────────────────────────────────────── */
+    #min-frente {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 40px;
+      padding-bottom: 96px;
+    }
+
+    #min-marca {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+    }
+
+    #min-marca-txt {
+      font-size: 142px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: #e9e9ed;
+    }
+
+    #min-frase {
+      font-size: 74px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      color: #e9e9ed;
+      text-align: center;
+    }
+
+    #min-compat {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    #min-compat-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      color: #8a8fa3;
+    }
+
+    .min-compat-marca {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 32px;
+      font-weight: 500;
+      color: #c9ccd6;
+    }
+
+    #min-jellyfin {
+      display: block;
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .min-compat-sep {
+      width: 1px;
+      height: 32px;
+      background: #2e3042;
+    }
+
+    #min-plex-caja {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      background: #2a2c33;
+      display: grid;
+      place-items: center;
+    }
+  </style>
+
+  <script>
+    (() => {
+      const ARTES_CAP = [
+        "linear-gradient(150deg,#2C2A4A,#141726)", "linear-gradient(200deg,#1D2A3A,#101418)",
+        "linear-gradient(140deg,#302C52,#1A1C2E)", "linear-gradient(170deg,#232838,#101120)",
+        "linear-gradient(190deg,#2A2C46,#171A2A)", "linear-gradient(155deg,#1E2236,#101120)",
+      ];
+      const CAPS = [
+        ["4", "Bart Sells His Soul", "22 min · S07E04", "Bart sells his soul to Milhouse for five dollars and starts to suspect he needs it back."],
+        ["5", "Lisa the Vegetarian", "22 min · S07E05", "Lisa gives up meat and takes on the whole town, one barbecue at a time."],
+        ["6", "Treehouse of Horror VI", "22 min · S07E06", "Three tales of terror, one of them in a third dimension."],
+        ["7", "King-Size Homer", "22 min · S07E07", "Homer puts on weight on purpose so he can work from home."],
+        ["8", "Mother Simpson", "22 min · S07E08", "Homer discovers his mother is alive and has been in hiding for decades."],
+        ["9", "Sideshow Bob's Last Gleaming", "22 min · S07E09", "Bob threatens Springfield unless television goes off the air."],
+      ];
+      const CARPETA = "the simpsons season7";
+      const CRUDOS = [
+        "Ep 12 (2).mkv", "final episode GOOD.mkv", "Season7_04-05.mkv",
+        "Untitled (copy).mkv", "the simpsons 7x07.avi", "ep14.mkv",
+      ];
+
+      const ICONO = (d, color) =>
+        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="' + color +
+        '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        d + "</svg>";
+      const FILM = (px) =>
+        '<svg width="' + px + '" height="' + px + '" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="#39414D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ' +
+        'aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2"></rect>' +
+        '<path d="M7 4.5v15M17 4.5v15M2.5 9.5h4.5M2.5 14.5h4.5M17 9.5h4.5M17 14.5h4.5"></path></svg>';
+      const PLAY =
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="#101418" aria-hidden="true">' +
+        '<path d="M7 4l13 8-13 8z"></path></svg>';
+      const PLAY_MINI =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="#E9E9ED" aria-hidden="true">' +
+        '<path d="M7 4l13 8-13 8z"></path></svg>';
+      const BARRA =
+        '<div class="min-barra">' +
+        ICONO('<path d="M19 12H5M11 6l-6 6 6 6"></path>', "#C9CCD6") +
+        ICONO('<path d="M3 11l9-7 9 7v9H3z"></path>', "#C9CCD6") +
+        ICONO('<path d="M4 7h16M4 12h16M4 17h16"></path>', "#C9CCD6") +
+        '<span class="min-espacio"></span>' +
+        ICONO('<circle cx="11" cy="11" r="7"></circle><path d="M16 16l5 5"></path>', "#8A8FA3") +
+        ICONO('<circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.8-4 4.7-6 8-6s6.2 2 8 6"></path>', "#8A8FA3") +
+        "</div>";
+      const BOTONERA =
+        '<div class="min-botonera"><div class="min-play">' + PLAY + "</div>" +
+        ICONO('<path d="M4 13l5 5L20 6"></path>', "#8A8FA3") +
+        ICONO('<path d="M12 20s-7-4.6-7-9.4A4 4 0 0112 8a4 4 0 017 2.6c0 4.8-7 9.4-7 9.4z"></path>', "#8A8FA3") +
+        "</div>";
+
+      const biblioteca = (real) => {
+        const capitulos = CAPS.map((c, i) => {
+          const mini = real
+            ? '<div class="min-cap-arte" style="background:' + ARTES_CAP[i % ARTES_CAP.length] + '"></div>' +
+              '<div class="min-cap-mini-fade"></div>' +
+              '<div class="min-cap-mini-play">' + PLAY_MINI + "</div>" +
+              '<span class="min-cap-dur">' + c[2].split(" · ")[0] + "</span>"
+            : '<div class="min-vacia">' + FILM(46) + "</div>" +
+              '<span class="min-cap-dur">' + c[2].split(" · ")[0] + "</span>";
+          const texto = real
+            ? '<span class="min-cap-tit">' + c[0] + ". " + c[1] + "</span>" +
+              '<span class="min-cap-meta">' + c[2] + "</span>" +
+              '<span class="min-cap-sin">' + c[3] + "</span>"
+            : '<span class="min-crudo">' + CRUDOS[i] + "</span>" +
+              '<span class="min-crudo-meta">' + c[2].split(" · ")[0] + "</span>";
+          return '<div class="min-cap"><div class="min-cap-mini">' + mini + "</div>" +
+                 '<div class="min-cap-txt">' + texto + "</div></div>";
+        }).join("");
+
+        const serie = real
+          ? '<span class="min-serie-tit">The Simpsons</span>' +
+            '<div class="min-serie-meta"><span>Season 7</span><span>·</span>' +
+            "<span>13 episodes</span><span>·</span><span>1995</span></div>" + BOTONERA
+          : '<span class="min-serie-crudo">' + CARPETA + "</span>" +
+            '<div class="min-serie-meta"><span>12 vídeos</span></div>' + BOTONERA;
+
+        return '<div class="min-telon"><div class="min-telon-fondo"></div>' +
+          (real ? '<div class="min-telon-arte" data-layout-allow-overflow></div>' : "") +
+          '<div class="min-telon-fade"></div></div>' + BARRA +
+          '<div class="min-visor"><div class="min-lista">' +
+          '<div class="min-cabecera"><div class="min-portada">' +
+          (real ? '<div class="min-portada-arte"></div>'
+                : '<div class="min-vacia">' + FILM(76) + "</div>" +
+                  '<span class="min-portada-nombre">' + CARPETA + "</span>") +
+          '</div><div class="min-serie">' + serie + "</div></div>" +
+          '<div class="min-capitulos">' + capitulos + "</div></div></div>";
+      };
+
+      document.getElementById("min-antes").innerHTML = biblioteca(false);
+      document.getElementById("min-despues").innerHTML = biblioteca(true);
+
+      // Estática: no hay nada que animar, pero la composición necesita su línea.
+      window.__timelines = window.__timelines || {};
+      window.__timelines["miniatura"] = gsap.timeline({ paused: true });
+    })();
+  </script>
+</template>

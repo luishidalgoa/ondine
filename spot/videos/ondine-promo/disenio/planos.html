@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="28747dff-c671-4b41-a55d-a272415aa2f6"></script>
+
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <style>/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("ab3735ed-9c7e-4327-8827-83ee4c4a7fae") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("df728d93-35fd-4a03-8c12-cf2496d1642c") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("2470b570-fff8-46f9-a9cf-b8c5262c6a2e") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("b9d1ae83-713c-4f2d-9cf0-4eb3f25c4012") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("a4054212-e2c1-49b8-8951-95624d5a2e33") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("4126e7f1-a2f4-47a2-9924-f2a6ee99abb5") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("6ea58a58-69b8-4bbc-8092-413d6af44a7d") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("ab3735ed-9c7e-4327-8827-83ee4c4a7fae") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("df728d93-35fd-4a03-8c12-cf2496d1642c") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("2470b570-fff8-46f9-a9cf-b8c5262c6a2e") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("b9d1ae83-713c-4f2d-9cf0-4eb3f25c4012") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("a4054212-e2c1-49b8-8951-95624d5a2e33") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("4126e7f1-a2f4-47a2-9924-f2a6ee99abb5") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("6ea58a58-69b8-4bbc-8092-413d6af44a7d") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("a5f4bd26-cdc5-4306-b9e7-cb437c9ea16f") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("d3c7fa5b-56e6-4b1e-9fac-a921b62f0b4f") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("e5543f12-3b20-45cf-afc2-837911fba825") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("142e5a0a-0250-4162-9613-840777a69db4") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("0ad49c25-27ae-458d-92fa-9d404caa3cb5") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("6c97e3f6-6f7b-477e-b29f-c1431802712c") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("a5f4bd26-cdc5-4306-b9e7-cb437c9ea16f") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("d3c7fa5b-56e6-4b1e-9fac-a921b62f0b4f") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("e5543f12-3b20-45cf-afc2-837911fba825") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("142e5a0a-0250-4162-9613-840777a69db4") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("0ad49c25-27ae-458d-92fa-9d404caa3cb5") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("6c97e3f6-6f7b-477e-b29f-c1431802712c") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+  <style>
+    body{margin:0;background:#0B0C15}
+    a{color:#B5ABFC}a:hover{color:#D2CEFD}
+  </style>
+</helmet>
+<div style="padding:56px;display:flex;flex-direction:column;gap:80px;font-family:Inter,system-ui,sans-serif;width:6100px">
+
+  <div style="display:flex;flex-direction:column;gap:10px;color:#E9E9ED">
+    <span style="font-size:34px;font-weight:500;letter-spacing:-0.015em">Spot Ondine · planos 2 a 7</span>
+    <span style="font-size:15px;color:#8A8FA3;max-width:1100px;line-height:1.55">Cada fila es un plano; las tres columnas son inicio · medio · final a 1920×1080. 93 BPM, compás de 2,58 s. Debajo de cada fila, qué se mueve y los colores fuera de paleta si los hay.</span>
+  </div>
+
+  <sc-for list="{{ planos }}" as="pl" hint-placeholder-count="6">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:baseline;gap:16px;color:#E9E9ED">
+        <span style="font-size:26px;font-weight:500;letter-spacing:-0.01em">{{ pl.titulo }}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#968AE0">{{ pl.duracion }}</span>
+        <span style="font-size:14px;color:#8A8FA3;max-width:1500px;line-height:1.5">{{ pl.intro }}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:40px;max-width:5920px">
+        <sc-for list="{{ pl.frames }}" as="fr" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:10px;width:1920px">
+            <div style="display:flex;align-items:baseline;gap:14px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#968AE0;width:76px">{{ fr.t }}</span>
+              <span style="font-size:15px;font-weight:500;color:#E9E9ED">{{ fr.titulo }}</span>
+              <span style="font-size:13.5px;color:#8A8FA3">{{ fr.mov }}</span>
+            </div>
+            <div style="width:1920px;height:1080px;position:relative;overflow:hidden;background:#161826">
+
+              <sc-if value="{{ fr.esDesorden }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:-40px;filter:blur(18px);opacity:0.5;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(3,1fr);gap:34px;padding:40px">
+                  <sc-for list="{{ fichasVacias }}" as="fi" hint-placeholder-count="18">
+                    <div style="border-radius:10px;background:#1B1E2E;display:flex;flex-direction:column;justify-content:flex-end;padding:22px">
+                      <div style="height:16px;width:{{ fi.w }};border-radius:8px;background:#2A2E42"></div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="position:absolute;left:136px;top:150px;display:flex;align-items:center;gap:14px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;color:#968AE0">✳</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:0.22em;color:#C9CCD6">BIBLIOTECA SIN ORDENAR</span>
+                </div>
+                <div style="position:absolute;left:216px;top:290px;right:136px;display:flex;flex-direction:column;gap:34px">
+                  <sc-for list="{{ fr.lineas }}" as="l" hint-placeholder-count="5">
+                    <div style="height:74px;display:flex;align-items:center;gap:36px;opacity:{{ l.op }}">
+                      <div style="width:56px;height:56px;flex:none;position:relative;display:grid;place-items:center">
+                        <sc-if value="{{ l.aro }}" hint-placeholder-val="{{ false }}">
+                          <div style="position:absolute;width:172px;height:172px;border-radius:50%;border:2px solid #C64545;opacity:0.32"></div>
+                        </sc-if>
+                        <sc-if value="{{ l.equis }}" hint-placeholder-val="{{ false }}">
+                          <svg width="{{ l.equisPx }}" height="{{ l.equisPx }}" sc-camel-view-box="0 0 24 24" fill="none" stroke="#C64545" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+                        </sc-if>
+                      </div>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:58px;letter-spacing:-0.01em;color:{{ l.color }};white-space:nowrap">{{ l.txt }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ fr.esCatalogo }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;left:{{ fr.pagX }};top:140px;width:1040px;height:800px;background:#FBFBFD;border-radius:6px;box-shadow:0 40px 120px rgba(0,0,0,0.55);opacity:{{ fr.pagOp }};filter:blur({{ fr.pagBlur }});display:flex;flex-direction:column;overflow:hidden">
+                  <div style="flex:none;display:flex;align-items:center;gap:14px;padding:26px 40px 0">
+                    <div style="width:34px;height:34px;border:2px solid #55555F;border-radius:3px;transform:rotate(45deg)"></div>
+                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:19px;letter-spacing:0.14em;text-transform:uppercase;color:#55555F">Enciclopedia libre</span>
+                  </div>
+                  <div style="flex:none;padding:22px 40px 0">
+                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:52px;color:#17171F">Aquí no hay quien viva</span>
+                    <div style="height:1px;background:#D8D8E0;margin:18px 0 0"></div>
+                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#4A4A55">Anexo: episodios · Temporada 2</span>
+                  </div>
+                  <div style="flex:1;display:flex;gap:34px;padding:22px 40px 40px;min-height:0">
+                    <div style="flex:none;width:210px;display:flex;flex-direction:column;gap:12px;padding-right:26px;border-right:1px solid #E2E2E9">
+                      <span style="font-family:Georgia,serif;font-size:17px;color:#8C8C98;letter-spacing:0.08em;text-transform:uppercase">Temporadas</span>
+                      <sc-for list="{{ temporadas }}" as="tp" hint-placeholder-count="5">
+                        <span style="font-family:Georgia,serif;font-size:22px;color:{{ tp.color }}">{{ tp.txt }}</span>
+                      </sc-for>
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+                      <div style="display:flex;padding:12px 16px;background:#EFEFF4;font-size:16px;font-weight:500;color:#4A4A55;letter-spacing:0.04em">
+                        <span style="width:72px">Nº</span><span style="flex:1">Título</span><span style="width:150px">Emisión</span>
+                      </div>
+                      <sc-for list="{{ episodios }}" as="ep" hint-placeholder-count="7">
+                        <div style="display:flex;padding:13px 16px;background:{{ ep.bg }};font-family:Georgia,serif;font-size:22px;color:#22222B">
+                          <span style="width:72px;color:#6B6B78">{{ ep.n }}</span><span style="flex:1">{{ ep.titulo }}</span><span style="width:150px;color:#6B6B78;font-size:19px">{{ ep.fecha }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+                <div style="position:absolute;left:{{ fr.panelX }};top:150px;width:{{ fr.panelW }};height:780px;background:#232532;border-radius:14px;border:1px solid #2E3042;box-shadow:0 30px 90px rgba(0,0,0,0.5);opacity:{{ fr.panelOp }};display:flex;flex-direction:column;overflow:hidden">
+                  <div style="flex:none;display:flex;align-items:center;gap:12px;padding:20px 28px;border-bottom:1px solid #2E3042">
+                    <svg sc-camel-view-box="0 0 64 64" width="24" height="24" fill="none" stroke="#B5ABFC" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path><path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path><path d="M7 49 L 57 49"></path></svg>
+                    <span style="font-size:20px;font-weight:500;color:#E9E9ED;letter-spacing:0.01em">Ondine</span>
+                    <span style="flex:1"></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:#8A8FA3">Aquí no hay quien viva</span>
+                  </div>
+                  <div style="flex:1;display:flex;min-height:0">
+                    <div style="flex:none;width:420px;padding:30px;display:flex;flex-direction:column;gap:16px;border-right:1px solid #2E3042">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:17px;letter-spacing:0.2em;color:#8A8FA3">FUENTE</span>
+                      <span style="font-size:20px;line-height:1.45;color:#C9CCD6">Pega una lista de episodios de cualquier web.</span>
+                      <div style="height:64px;border-radius:8px;background:#292B31;border:1px solid {{ fr.campoBorde }};display:flex;align-items:center;padding:0 18px;font-family:'JetBrains Mono',monospace;font-size:17px;color:{{ fr.campoColor }};overflow:hidden;white-space:nowrap">{{ fr.campoTxt }}</div>
+                      <div style="height:70px;border-radius:8px;background:{{ fr.botonBg }};border:1px solid {{ fr.botonBorde }};display:grid;place-items:center;font-size:23px;color:{{ fr.botonColor }};box-shadow:{{ fr.botonGlow }}">Generar con IA…</div>
+                      <sc-if value="{{ fr.contador }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top:auto;display:flex;flex-direction:column;gap:2px">
+                          <span style="font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.2em;color:#8A8FA3">ENCONTRADOS</span>
+                          <div style="display:flex;align-items:baseline;gap:12px">
+                            <span style="font-size:84px;font-weight:500;color:#E9E9ED;letter-spacing:-0.02em">{{ fr.contador }}</span>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:22px;color:#8A8FA3">episodios</span>
+                          </div>
+                        </div>
+                      </sc-if>
+                    </div>
+                    <div style="flex:1;padding:20px;min-width:0;display:flex">
+                      <div style="flex:1;background:#101120;border-radius:10px;display:flex;flex-direction:column;overflow:hidden">
+                        <div style="flex:none;display:flex;align-items:center;padding:14px 22px;border-bottom:1px solid #1C1D2E;font-family:'JetBrains Mono',monospace;font-size:16px;color:#8A8FA3">
+                          catalogo.json<span style="flex:1"></span><span style="color:#5A5F72">reindex/1.0</span>
+                        </div>
+                        <div style="flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:14px;font-family:'JetBrains Mono',monospace;font-size:17px">
+                          <sc-for list="{{ fr.codigo }}" as="c" hint-placeholder-count="4">
+                            <div style="display:flex;gap:20px;opacity:{{ c.op }}">
+                              <span style="color:#4A4F63;width:26px;text-align:right">{{ c.n }}</span>
+                              <span style="color:#C9CCD6;white-space:nowrap">{{ c.txt }}<span style="color:#968AE0">{{ c.cursor }}</span></span>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="position:absolute;left:{{ fr.curX }};top:{{ fr.curY }};opacity:{{ fr.curOp }}">
+                  <svg width="30" height="30" sc-camel-view-box="0 0 24 24" fill="#E9E9ED" stroke="#161826" stroke-width="1.2"><path d="M5 2l14 12h-7l3.5 7-3 1.4L9 15.6 5 19z"></path></svg>
+                </div>
+                <div style="position:absolute;left:136px;top:60px;display:flex;align-items:center;gap:14px;opacity:{{ fr.rotOp }}">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;color:#968AE0">✳</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:0.22em;color:#C9CCD6">EL CATÁLOGO</span>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ fr.esOrdenado }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+                  <div style="flex:none;display:flex;align-items:center;gap:14px;padding:112px 136px 0">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:26px;color:#968AE0">✳</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:0.22em;color:#C9CCD6">IDENTIFICADO</span>
+                  </div>
+                  <div style="flex:1;display:flex;gap:64px;padding:56px 136px 0;min-height:0">
+                    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+                      <sc-for list="{{ fr.grupos }}" as="g" hint-placeholder-count="2">
+                        <div style="display:flex;flex-direction:column">
+                          <div style="display:flex;align-items:center;gap:20px;padding:0 0 14px">
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.18em;color:#8A8FA3">{{ g.nombre }}</span>
+                            <div style="flex:1;height:1px;background:linear-gradient(to right,#2E3042,#2E3042 70%,transparent)"></div>
+                          </div>
+                          <sc-for list="{{ g.filas }}" as="f" hint-placeholder-count="4">
+                            <div style="height:82px;display:flex;align-items:center;gap:26px;border-bottom:1px solid #1E2030">
+                              <span style="font-family:'JetBrains Mono',monospace;font-size:23px;color:#6C7080;width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.original }}</span>
+                              <svg width="22" height="22" sc-camel-view-box="0 0 24 24" fill="none" stroke="#4A4F63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 12h14M13 7l5 5-5 5"></path></svg>
+                              <span style="font-family:'JetBrains Mono',monospace;font-size:23px;color:{{ f.propColor }};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.propuesta }}</span>
+                              <div style="flex:none;width:150px;display:flex;justify-content:flex-end">
+                                <sc-if value="{{ f.ok }}" hint-placeholder-val="{{ true }}">
+                                  <div style="display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border-radius:999px;background:rgba(93,184,114,0.14);border:1px solid rgba(93,184,114,0.42)">
+                                    <svg width="15" height="15" sc-camel-view-box="0 0 24 24" fill="none" stroke="#5DB872" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l5 5L20 6"></path></svg>
+                                    <span style="font-size:19px;color:#5DB872">Correcto</span>
+                                  </div>
+                                </sc-if>
+                              </div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="flex:none;width:360px;display:flex;flex-direction:column;gap:52px;padding-top:6px">
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <span style="font-size:132px;font-weight:500;line-height:0.92;letter-spacing:-0.03em;color:{{ fr.okColor }};font-variant-numeric:tabular-nums">{{ fr.nOk }}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:21px;letter-spacing:0.16em;color:#8A8FA3">CORRECTOS</span>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <span style="font-size:132px;font-weight:500;line-height:0.92;letter-spacing:-0.03em;color:#4A4F63;font-variant-numeric:tabular-nums">0</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:21px;letter-spacing:0.16em;color:#8A8FA3">CONFLICTOS</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="flex:none;height:150px"></div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ fr.esAdelgaza }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;left:136px;top:112px;display:flex;align-items:center;gap:14px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;color:#968AE0">✳</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:0.22em;color:#C9CCD6">SIN RECOMPRIMIR</span>
+                </div>
+                <div style="position:absolute;left:136px;top:236px;width:896px;height:504px;border-radius:10px;overflow:hidden;background:#101120;border:1px solid #2A2C3E">
+                  <div style="position:absolute;inset:0;background:linear-gradient(148deg,#2C2A4A 0%,#232838 42%,#1A2130 70%,#101120 100%)"></div>
+                  <div style="position:absolute;left:0;right:0;top:44%;height:1px;background:linear-gradient(to right,transparent,rgba(181,171,252,0.22) 30%,rgba(181,171,252,0.22) 70%,transparent)"></div>
+                  <div style="position:absolute;left:34%;top:26%;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(181,171,252,0.20),transparent 68%)"></div>
+                  <div style="position:absolute;left:12%;bottom:0;width:180px;height:210px;background:#171A2A;clip-path:polygon(0 100%,42% 12%,100% 100%)"></div>
+                  <div style="position:absolute;left:56%;bottom:0;width:300px;height:150px;background:#141726;clip-path:polygon(0 100%,30% 22%,68% 40%,100% 100%)"></div>
+                  <span style="position:absolute;left:20px;bottom:16px;font-family:'JetBrains Mono',monospace;font-size:17px;color:#5A5F72">00:12:04 · 1080p · HEVC</span>
+                </div>
+                <div style="position:absolute;left:136px;top:766px;display:flex;align-items:center;gap:16px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:21px;color:#6C7080">Cap 12.mkv</span>
+                  <span style="width:1px;height:20px;background:#2E3042"></span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:21px;color:#4A4F63">fotograma sin tocar</span>
+                </div>
+                <div style="position:absolute;left:1136px;top:236px;width:648px;display:flex;flex-direction:column;gap:56px">
+                  <div style="display:flex;align-items:flex-end;gap:32px">
+                    <div style="flex:none;display:flex;flex-direction:column;gap:4px">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.16em;color:#8A8FA3">TAMAÑO</span>
+                      <div style="display:flex;align-items:baseline;gap:18px;white-space:nowrap">
+                        <span style="font-size:{{ fr.antesPx }};font-weight:500;letter-spacing:-0.03em;color:#4A4F63;text-decoration:{{ fr.antesLinea }};text-decoration-thickness:2px;font-variant-numeric:tabular-nums">{{ fr.antes }}</span>
+                        <svg width="30" height="30" sc-camel-view-box="0 0 24 24" fill="none" stroke="#4A4F63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-bottom:14px"><path d="M4 12h14M13 7l5 5-5 5"></path></svg>
+                        <span style="font-size:112px;font-weight:500;letter-spacing:-0.03em;line-height:0.9;color:{{ fr.despuesColor }};font-variant-numeric:tabular-nums">{{ fr.despues }}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:26px;color:#8A8FA3">{{ fr.despuesUnidad }}</span>
+                      </div>
+                    </div>
+                    <div style="flex:none;display:flex;flex-direction:column;gap:4px;padding-bottom:8px;white-space:nowrap">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.16em;color:#8A8FA3">TIEMPO</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:44px;color:{{ fr.cronoColor }};font-variant-numeric:tabular-nums;white-space:nowrap">{{ fr.crono }}</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:16px">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.16em;color:#8A8FA3">PISTAS</span>
+                    <sc-for list="{{ fr.pistas }}" as="p" hint-placeholder-count="4">
+                      <div style="height:74px;display:flex;align-items:center;gap:22px;padding:0 22px;border-radius:8px;background:{{ p.bg }};border:1px solid {{ p.borde }};opacity:{{ p.op }};transform:translateX({{ p.dx }})">
+                        <span style="width:34px;flex:none;display:grid;place-items:center">
+                          <sc-if value="{{ p.queda }}" hint-placeholder-val="{{ true }}">
+                            <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#5DB872" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l5 5L20 6"></path></svg>
+                          </sc-if>
+                          <sc-if value="{{ p.fuera }}" hint-placeholder-val="{{ false }}">
+                            <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#6C7080" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+                          </sc-if>
+                        </span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:25px;color:{{ p.color }};width:96px">{{ p.lang }}</span>
+                        <span style="font-size:22px;color:{{ p.metaColor }};flex:1">{{ p.tipo }}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:21px;color:{{ p.metaColor }}">{{ p.estado }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ fr.sello }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:inline-flex;align-self:flex-start;align-items:center;gap:16px;padding:18px 30px;border-radius:999px;border:2px solid #5DB872;background:rgba(93,184,114,0.12)">
+                      <svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="#5DB872" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l5 5L20 6"></path></svg>
+                      <span style="font-size:34px;color:#5DB872;letter-spacing:0.01em">vídeo idéntico</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ fr.esCorte }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;left:136px;top:150px;display:flex;align-items:center;gap:14px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;color:#968AE0">✳</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:0.22em;color:#C9CCD6">DOS CAPÍTULOS, UN FICHERO</span>
+                </div>
+                <span style="position:absolute;right:136px;top:150px;font-family:'JetBrains Mono',monospace;font-size:26px;color:#5A5F72">1:08:40</span>
+                <div style="position:absolute;left:0;right:0;top:262px;display:flex;justify-content:center">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:30px;color:{{ fr.origenColor }};text-decoration:{{ fr.origenLinea }};text-decoration-thickness:2px;opacity:{{ fr.origenOp }}">Temporada2_04-05.mkv</span>
+                </div>
+                <div style="position:absolute;left:136px;right:136px;top:360px;display:flex;justify-content:space-between">
+                  <sc-for list="{{ fr.piezas }}" as="p" hint-placeholder-count="2">
+                    <div style="width:{{ p.w }};display:flex;flex-direction:column;gap:22px;transform:translateX({{ p.dx }})">
+                      <div style="height:300px;border-radius:10px;overflow:hidden;position:relative;background:#101120;border:1px solid #2A2C3E">
+                        <div style="position:absolute;inset:0;display:flex">
+                          <sc-for list="{{ p.tiras }}" as="s" hint-placeholder-count="8">
+                            <div style="flex:1;background:{{ s.bg }}"></div>
+                          </sc-for>
+                        </div>
+                        <sc-if value="{{ p.pildora }}" hint-placeholder-val="{{ false }}">
+                          <div style="position:absolute;left:22px;top:22px;padding:8px 20px;border-radius:999px;background:#B5ABFC">
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:24px;color:#161826">{{ p.pildora }}</span>
+                          </div>
+                        </sc-if>
+                        <span style="position:absolute;left:22px;bottom:16px;font-family:'JetBrains Mono',monospace;font-size:21px;color:#8A8FA3;opacity:{{ p.tiempoOp }}">{{ p.tIni }}</span>
+                        <span style="position:absolute;right:22px;bottom:16px;font-family:'JetBrains Mono',monospace;font-size:21px;color:#8A8FA3;opacity:{{ p.tiempoOp }}">{{ p.tFin }}</span>
+                      </div>
+                      <div style="height:1px;background:linear-gradient(to right,transparent,#2E3042 40px,#2E3042 calc(100% - 40px),transparent)"></div>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:26px;color:#8A8FA3;opacity:{{ p.rangoOp }}">{{ p.rango }}</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:27px;line-height:1.42;color:#E9E9ED;opacity:{{ p.nombreOp }}">{{ p.nombre }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ fr.tajo }}" hint-placeholder-val="{{ true }}">
+                  <div style="position:absolute;left:959px;top:240px;width:2px;height:460px;background:linear-gradient(to bottom,transparent,#E7E5FE 12%,#E7E5FE 88%,transparent)"></div>
+                  <div style="position:absolute;left:900px;top:240px;width:120px;height:460px;background:radial-gradient(ellipse at center,rgba(231,229,254,0.22),transparent 70%)"></div>
+                </sc-if>
+              </sc-if>
+
+              <sc-if value="{{ fr.esBiblioteca }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;background:#101418;overflow:hidden">
+                  <div style="position:absolute;left:0;right:0;top:0;height:560px;overflow:hidden">
+                    <div style="position:absolute;inset:0;background:linear-gradient(122deg,#1D2A3A 0%,#2C2A4A 46%,#141726 100%)"></div>
+                    <div style="position:absolute;left:14%;top:-40px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle at 42% 38%,rgba(181,171,252,0.18),transparent 66%)"></div>
+                    <div style="position:absolute;left:58%;bottom:0;width:520px;height:280px;background:#171A2A;clip-path:polygon(0 100%,26% 26%,62% 44%,100% 100%)"></div>
+                    <div style="position:absolute;left:0;right:0;bottom:0;height:58%;background:linear-gradient(to top,#101418,rgba(16,20,24,0.2))"></div>
+                  </div>
+
+                  <div style="position:absolute;left:0;right:0;top:0;height:74px;display:flex;align-items:center;gap:34px;padding:0 44px;background:rgba(10,13,16,0.72)">
+                    <svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="#C9CCD6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+                    <svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="#C9CCD6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9H3z"></path></svg>
+                    <svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="#C9CCD6" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+                    <span style="flex:1"></span>
+                    <svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M16 16l5 5"></path></svg>
+                    <svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.8-4 4.7-6 8-6s6.2 2 8 6"></path></svg>
+                  </div>
+
+                  <div style="position:absolute;left:0;right:0;top:74px;bottom:0;overflow:hidden">
+                    <div style="position:absolute;left:0;right:0;top:0;transform:translateY({{ fr.scrollY }})">
+
+                      <div style="position:relative;height:486px;display:flex;align-items:flex-end;gap:44px;padding:0 60px 34px">
+                        <div style="flex:none;width:320px;height:466px;border-radius:8px;overflow:hidden;position:relative;background:linear-gradient(160deg,#2C2A4A,#141726);box-shadow:0 22px 60px rgba(0,0,0,0.6)">
+                          <div style="position:absolute;left:0;right:0;top:0;height:36%;background:linear-gradient(160deg,#3A3468,#232838)"></div>
+                          <div style="position:absolute;left:26px;bottom:26px;right:26px;display:flex;flex-direction:column;gap:8px">
+                            <span style="font-size:30px;font-weight:500;color:#E9E9ED;line-height:1.15">Aquí no hay quien viva</span>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:18px;color:#B5ABFC">Temporada 2</span>
+                          </div>
+                        </div>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:14px;padding-bottom:16px;min-width:0">
+                          <span style="font-size:52px;font-weight:500;color:#E9E9ED;letter-spacing:-0.015em">Aquí no hay quien viva</span>
+                          <div style="display:flex;align-items:center;gap:22px;font-family:'JetBrains Mono',monospace;font-size:22px;color:#8A8FA3">
+                            <span>Temporada 2</span><span>·</span><span>13 episodios</span><span>·</span><span>2004</span>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:18px;padding-top:8px">
+                            <div style="width:58px;height:58px;border-radius:50%;background:#E9E9ED;display:grid;place-items:center">
+                              <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="#101418"><path d="M7 4l13 8-13 8z"></path></svg>
+                            </div>
+                            <svg width="30" height="30" sc-camel-view-box="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l5 5L20 6"></path></svg>
+                            <svg width="30" height="30" sc-camel-view-box="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.6-7-9.4A4 4 0 0112 8a4 4 0 017 2.6c0 4.8-7 9.4-7 9.4z"></path></svg>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style="display:flex;flex-direction:column;gap:0;padding:0 60px">
+                        <sc-for list="{{ capitulos }}" as="cp" hint-placeholder-count="6">
+                          <div style="display:flex;align-items:center;gap:34px;padding:22px 0;border-bottom:1px solid #1A1F26">
+                            <div style="flex:none;width:300px;height:170px;border-radius:8px;overflow:hidden;position:relative;background:{{ cp.arte }}">
+                              <div style="position:absolute;left:0;right:0;bottom:0;height:44%;background:linear-gradient(to top,rgba(16,20,24,0.85),transparent)"></div>
+                              <div style="position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(233,233,237,0.16);display:grid;place-items:center">
+                                <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="#E9E9ED"><path d="M7 4l13 8-13 8z"></path></svg>
+                              </div>
+                              <span style="position:absolute;right:14px;bottom:12px;font-family:'JetBrains Mono',monospace;font-size:17px;color:#C9CCD6">{{ cp.dur }}</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:9px;min-width:0">
+                              <span style="font-size:30px;font-weight:500;color:#E9E9ED">{{ cp.n }}. {{ cp.titulo }}</span>
+                              <span style="font-family:'JetBrains Mono',monospace;font-size:19px;color:#8A8FA3">{{ cp.meta }}</span>
+                              <span style="font-size:21px;line-height:1.45;color:#6C7080;max-width:1100px">{{ cp.sinopsis }}</span>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 66% 56% at 50% 52%,rgba(16,17,32,{{ fr.veloCentro }}) 0%,rgba(16,17,32,{{ fr.veloBorde }}) 100%)"></div>
+
+                  <div style="position:absolute;left:0;right:0;top:0;bottom:0;display:grid;place-items:center">
+                    <span style="grid-area:1/1;font-size:80px;font-weight:500;letter-spacing:-0.015em;line-height:1.18;color:#E9E9ED;text-align:center;max-width:1440px;opacity:{{ fr.optimizaOp }};transform:translateY({{ fr.optimizaDy }})">Optimiza tus bibliotecas para tus plataformas favoritas</span>
+                    <div style="grid-area:1/1;display:flex;flex-direction:column;align-items:center;gap:48px;opacity:{{ fr.cierreOp }}">
+                    <div style="display:flex;align-items:center;gap:26px;opacity:{{ fr.marcaOp }};transform:scale({{ fr.marcaEsc }})">
+                      <svg sc-camel-view-box="0 0 64 64" width="88" height="88" fill="none" stroke="#B5ABFC" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path><path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path><path d="M7 49 L 57 49"></path></svg>
+                      <span style="font-size:96px;font-weight:500;letter-spacing:0.01em;color:#E9E9ED">Ondine</span>
+                    </div>
+                    <span style="font-size:76px;font-weight:500;letter-spacing:-0.015em;line-height:1.2;color:#E9E9ED;opacity:{{ fr.fraseOp }};text-align:center;max-width:1400px">Organización en un solo click</span>
+                    <div style="display:flex;align-items:center;gap:30px;opacity:{{ fr.pieOp }}">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:24px;color:#6C7080">funciona con</span>
+                      <div style="display:flex;align-items:center;gap:13px">
+                        <img src="b9e03e91-d1f3-4ddb-84f4-d0237c7a912f" alt="Jellyfin" width="40" height="40" style="display:block;width:40px;height:40px;object-fit:contain">
+                        <span style="font-size:30px;font-weight:500;color:#C9CCD6">Jellyfin</span>
+                      </div>
+                      <span style="width:1px;height:30px;background:#2E3042"></span>
+                      <div style="display:flex;align-items:center;gap:13px">
+                        <div style="width:40px;height:40px;border-radius:10px;background:#2A2C33;display:grid;place-items:center">
+                          <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#E5A00D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4l7 8-7 8"></path></svg>
+                        </div>
+                        <span style="font-size:30px;font-weight:500;color:#C9CCD6">Plex</span>
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ fr.esServidor }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:-40px;filter:blur({{ fr.blur }});opacity:{{ fr.gridOp }};display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(3,1fr);gap:34px;padding:40px">
+                  <sc-for list="{{ fr.fichas }}" as="fi" hint-placeholder-count="18">
+                    <div style="border-radius:10px;overflow:hidden;position:relative;background:{{ fi.bg }};display:flex;flex-direction:column;justify-content:flex-end">
+                      <sc-if value="{{ fi.arte }}" hint-placeholder-val="{{ false }}">
+                        <div style="position:absolute;inset:0;background:{{ fi.arte }}"></div>
+                        <div style="position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(to top,rgba(16,17,32,0.92),transparent)"></div>
+                      </sc-if>
+                      <div style="position:relative;padding:22px;display:flex;flex-direction:column;gap:8px">
+                        <sc-if value="{{ fi.titulo }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:26px;font-weight:500;color:#E9E9ED;line-height:1.2">{{ fi.titulo }}</span>
+                          <span style="font-family:'JetBrains Mono',monospace;font-size:19px;color:#B5ABFC">{{ fi.meta }}</span>
+                        </sc-if>
+                        <sc-if value="{{ fi.placa }}" hint-placeholder-val="{{ true }}">
+                          <div style="height:20px;width:{{ fi.w }};border-radius:10px;background:#2A2E42"></div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="position:absolute;inset:0;background:radial-gradient(ellipse 62% 54% at 50% 52%,rgba(22,24,38,{{ fr.veloCentro }}) 0%,rgba(22,24,38,{{ fr.veloBorde }}) 100%)"></div>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px">
+                  <div style="display:flex;align-items:center;gap:26px;opacity:{{ fr.marcaOp }};transform:scale({{ fr.marcaEsc }})">
+                    <svg sc-camel-view-box="0 0 64 64" width="88" height="88" fill="none" stroke="#B5ABFC" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path><path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path><path d="M7 49 L 57 49"></path></svg>
+                    <span style="font-size:96px;font-weight:500;letter-spacing:0.01em;color:#E9E9ED">Ondine</span>
+                  </div>
+                  <span style="font-size:76px;font-weight:500;letter-spacing:-0.015em;line-height:1.2;color:#E9E9ED;opacity:{{ fr.fraseOp }};text-align:center;max-width:1400px">Lo que pasas antes de que Plex escanee.</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:24px;color:#6C7080;opacity:{{ fr.pieOp }}">funciona con Plex, Jellyfin y Kodi</span>
+                </div>
+              </sc-if>
+
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:44px;color:#8A8FA3;font-size:14px;line-height:1.6;max-width:5900px">
+        <sc-for list="{{ pl.notas }}" as="nt" hint-placeholder-count="3">
+          <div style="flex:1"><strong style="color:#E9E9ED;font-weight:500">{{ nt.titulo }}</strong> — {{ nt.txt }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:6100,&quot;height&quot;:2400}}">
+class Component extends DCLogic {
+  renderVals() {
+    const anchos = ['58%','42%','66%','38%','52%','46%','62%','40%','56%','48%','64%','44%','54%','60%','40%','50%','66%','46%'];
+
+    // ── plano 2
+    const NOMBRES = ['Cap 12 (2).mkv','episodio final BUENO.mkv','Temporada2_04-05.mkv','Sin titulo (copia).mkv','aqui no hay quien viva 3x07.avi'];
+    const linea = (i, visible, marcada, aro) => ({
+      txt: NOMBRES[i], op: visible ? 1 : 0,
+      color: marcada ? '#6C7080' : '#E9E9ED',
+      equis: marcada, equisPx: aro ? 62 : 52, aro: !!aro,
+    });
+
+    // ── plano 3
+    const CODIGO = [
+      '{ "formato": "reindex/1.0", "serie": "Aquí no hay quien viva" }',
+      '{ "num": 4, "temp": 2, "titulo": "Érase una okupa" }',
+      '{ "num": 5, "temp": 2, "titulo": "Érase un ascensor" }',
+      '{ "num": 6, "temp": 2, "titulo": "Érase un vecino nuevo" }',
+    ];
+    const cod = (visibles, cursorEn) => CODIGO.map((txt, i) => ({
+      n: String(i + 1).padStart(2, '0'), txt: i < visibles ? txt : '',
+      op: i < visibles ? 1 : 0, cursor: i === cursorEn ? '▌' : '',
+    }));
+
+    // ── plano 4
+    const T1 = [
+      ['Cap 12 (2).mkv','Aqui no hay quien viva - S01E12 - Érase un portal'],
+      ['episodio final BUENO.mkv','Aqui no hay quien viva - S01E13 - Érase un final'],
+      ['Sin titulo (copia).mkv','Aqui no hay quien viva - S01E09 - Érase una portera'],
+      ['cap14.mkv','Aqui no hay quien viva - S01E14 - Érase una boda'],
+    ];
+    const T2 = [
+      ['Temporada2_04.mkv','Aqui no hay quien viva - S02E04 - Érase una okupa'],
+      ['Temporada2_05.mkv','Aqui no hay quien viva - S02E05 - Érase un ascensor'],
+      ['aqui no hay quien viva 3x07.avi','Aqui no hay quien viva - S02E07 - Érase una mudanza'],
+      ['nuevo_cap (1).mkv','Aqui no hay quien viva - S02E08 - Érase un cumpleaños'],
+    ];
+    const grupos = (n) => {
+      let i = 0;
+      const fila = (par) => {
+        const ok = i < n; i += 1;
+        return { original: par[0], propuesta: par[1] + '.mkv', ok, propColor: ok ? '#E9E9ED' : '#8A8FA3' };
+      };
+      return [{ nombre: 'TEMPORADA 1', filas: T1.map(fila) }, { nombre: 'TEMPORADA 2', filas: T2.map(fila) }];
+    };
+
+    // ── plano 5
+    const pista = (lang, tipo, modo, fase) => {
+      const fuera = modo === 'fuera';
+      const ido = fuera && fase === 'ido';
+      return {
+        lang, tipo, estado: fuera ? 'se va' : 'se queda', queda: !fuera, fuera,
+        bg: fuera ? 'transparent' : 'rgba(93,184,114,0.10)',
+        borde: fuera ? '#26283A' : 'rgba(93,184,114,0.38)',
+        color: fuera ? '#6C7080' : '#E9E9ED',
+        metaColor: fuera ? '#4A4F63' : '#8A8FA3',
+        op: ido ? 0 : fuera && fase === 'medio' ? 0.45 : 1,
+        dx: ido ? '120px' : fuera && fase === 'medio' ? '54px' : '0px',
+      };
+    };
+    const pistas = (fase) => [
+      pista('spa', 'Audio · castellano', 'queda', fase),
+      pista('eng', 'Audio · inglés', 'fuera', fase),
+      pista('spa', 'Subtítulos · castellano', 'queda', fase),
+      pista('eng', 'Subtítulos · inglés', 'fuera', fase),
+    ];
+
+    // ── plano 6
+    const TONOS = ['#1A1C2E','#242844','#2C2A4A','#1E2236','#262B48','#191C2C','#2A2E4C','#212539'];
+    const tiras = (d) => TONOS.map((_, i) => ({ bg: TONOS[(i + d) % TONOS.length] }));
+    const NOMBRES6 = [
+      'Aqui no hay quien viva - S02E04 -\nÉrase una okupa.mkv',
+      'Aqui no hay quien viva - S02E05 -\nÉrase un ascensor.mkv',
+    ];
+    const pieza = (i, fase) => {
+      const pleno = fase === 'final';
+      return {
+        w: fase === 'tajo' ? '820px' : '780px',
+        dx: fase === 'tajo' ? (i === 0 ? '-4px' : '4px') : '0px',
+        tiras: tiras(i * 3),
+        pildora: fase === 'tajo' ? '' : (i === 0 ? 'E04' : 'E05'),
+        tIni: i === 0 ? '0:00' : '34:12',
+        tFin: i === 0 ? '34:12' : '1:08:40',
+        tiempoOp: fase === 'tajo' ? 0.25 : 1,
+        rango: i === 0 ? '0:00 – 34:12' : '34:12 – 68:40',
+        rangoOp: pleno ? 1 : fase === 'medio' ? 0.5 : 0,
+        nombre: NOMBRES6[i], nombreOp: pleno ? 1 : 0,
+      };
+    };
+
+    // ── plano 7
+    const ARTES = [
+      'linear-gradient(155deg,#2C2A4A,#141726)','linear-gradient(155deg,#232838,#101120)',
+      'linear-gradient(200deg,#2A2C46,#171A2A)','linear-gradient(140deg,#1E2236,#101120)',
+      'linear-gradient(165deg,#302C52,#1A1C2E)','linear-gradient(190deg,#212539,#101120)',
+    ];
+    const TITULOS = [['Aquí no hay quien viva','2 temporadas'],['El faro de arena','1 temporada'],['Cumbres','1 temporada'],['Tres calles','3 temporadas'],['La casa del reloj','2 temporadas'],['Norte lento','1 temporada'],['Vecinos del 4º','4 temporadas'],['Marea baja','2 temporadas'],['El turno de noche','1 temporada'],['Puerto viejo','3 temporadas'],['Sal y niebla','1 temporada'],['La sobremesa','2 temporadas'],['Kilómetro cero','1 temporada'],['Los martes','2 temporadas'],['Aire de agosto','1 temporada'],['Camino de vuelta','3 temporadas'],['La azotea','1 temporada'],['Domingo largo','2 temporadas']];
+    const fichas7 = (resueltas) => anchos.map((w, i) => {
+      const ok = i < resueltas;
+      return { w, bg: ok ? '#101120' : '#1B1E2E', arte: ok ? ARTES[i % ARTES.length] : false,
+        titulo: ok ? TITULOS[i][0] : false, meta: ok ? TITULOS[i][1] : '', placa: !ok };
+    });
+
+    const planos = [
+      {
+        titulo: 'Plano 2 · El desorden', duracion: '5,16 s · golpes 0,18 → 5,02',
+        intro: 'Un nombre por golpe; las ✕ en 3,05 · 3,57 · 4,05. El 4,05 se lo doy a Temporada2_04-05.mkv, que es el fichero que se parte en el plano 6.',
+        frames: [
+          { esDesorden: true, t: '0,00 s', titulo: 'Inicio', mov: 'Solo el rótulo; los cinco nombres caen en los primeros cinco golpes.', lineas: NOMBRES.map((_, i) => linea(i, false, false)) },
+          { esDesorden: true, t: '2,59 s', titulo: 'Medio', mov: 'Los cinco puestos, ninguno juzgado: ~0,45 s de quietud antes de las marcas.', lineas: NOMBRES.map((_, i) => linea(i, true, false)) },
+          { esDesorden: true, t: '4,05 s', titulo: 'Final', mov: 'Tercera ✕ más grande y con aro; las otras dos ya apagaron su nombre.', lineas: [linea(0,true,true), linea(1,true,false), linea(2,true,true,true), linea(3,true,false), linea(4,true,true)] },
+        ],
+        notas: [
+          { titulo: 'Colores', txt: 'todo de paleta. Fichas #1B1E2E y placas #2A2E42 (dos pasos entre fondo y superficie, para que el desenfoque no se vuelva masa gris). Rojo #C64545 solo en las ✕; el acento aparece una vez, en el asterisco.' },
+          { titulo: 'Animación', txt: 'cada nombre entra desde 40 px abajo con desenfoque 6→0 px en 180 ms. Las ✕ no funden: escala 1,4→1 en 90 ms, seco. En el 4,05, aro con opacidad 0,45→0 en 500 ms y el nombre marcado baja a #6C7080.' },
+          { titulo: 'Composición', txt: 'la columna de ✕ va fuera del bloque de texto para que el ojo lea nombres primero y marcas después. El aire de la mitad inferior existe para que el golpe del 4,05 tenga a dónde expandirse.' },
+        ],
+      },
+      {
+        titulo: 'Plano 3 · Se lo pides a la IA', duracion: '6,45 s · el único plano claro',
+        intro: 'La página clara domina el primer tercio, se aparta al copiar la URL (2,11) y desaparece al pulsar el botón (2,76). El blanco es un préstamo, no un lugar.',
+        frames: [
+          { esCatalogo: true, t: '0,50 s', titulo: 'Inicio', mov: 'El cursor llega a la lista ajena; el panel de la app espera atenuado al fondo.',
+            pagX: '136px', pagOp: 1, pagBlur: '0px', panelX: '1240px', panelW: '1600px', panelOp: 0.28,
+            campoTxt: 'listados.example.org/serie/anexo…', campoColor: '#5A5F72', campoBorde: '#33364A',
+            botonBg: 'transparent', botonBorde: '#5D5294', botonColor: '#8A8FA3', botonGlow: 'none',
+            codigo: cod(0, -1), contador: false, curX: '760px', curY: '620px', curOp: 1, rotOp: 0.55 },
+          { esCatalogo: true, t: '2,76 s', titulo: 'Medio', mov: 'La URL aterriza en el campo y el botón se enciende: único voltaje del plano.',
+            pagX: '-140px', pagOp: 0.4, pagBlur: '8px', panelX: '480px', panelW: '1300px', panelOp: 1,
+            campoTxt: 'listados.example.org/serie/anexo-t2', campoColor: '#E9E9ED', campoBorde: '#968AE0',
+            botonBg: '#968AE0', botonBorde: '#968AE0', botonColor: '#161826', botonGlow: '0 0 0 6px rgba(150,138,224,0.18)',
+            codigo: cod(0, -1), contador: false, curX: '760px', curY: '470px', curOp: 1, rotOp: 1 },
+          { esCatalogo: true, t: '4,52 s', titulo: 'Final', mov: 'Catálogo escrito, una línea por golpe. La página clara ya no existe.',
+            pagX: '-1200px', pagOp: 0, pagBlur: '14px', panelX: '136px', panelW: '1648px', panelOp: 1,
+            campoTxt: 'listados.example.org/serie/anexo-t2', campoColor: '#8A8FA3', campoBorde: '#33364A',
+            botonBg: 'transparent', botonBorde: '#5D5294', botonColor: '#8A8FA3', botonGlow: 'none',
+            codigo: cod(4, 3), contador: '24', curX: '760px', curY: '470px', curOp: 0, rotOp: 1 },
+        ],
+        notas: [
+          { titulo: 'Fuera de paleta (a propósito)', txt: 'papel #FBFBFD, texto #17171F, cabecera #EFEFF4, filas alternas #F6F6FA, reglas #E2E2E9, y serifa Georgia. Es un mundo ajeno: con la paleta de Ondine parecería parte de la app y se perdería el «viene de fuera».' },
+          { titulo: 'La marca de enciclopedia', txt: 'rombo de trazo hueco + «ENCICLOPEDIA LIBRE» en versalitas. Neutro, genérico, sin parecido con ninguna marca real.' },
+          { titulo: 'Animación', txt: 'la página sale 180 px a la izquierda con desenfoque 0→10 px entre 2,11 y 2,60; el panel no entra, sube de 0,28 a 1 de opacidad. El botón en 2,76 hace 1→0,97→1 en 120 ms con halo que se apaga en 300 ms. Cuatro líneas de catálogo en 3,40 · 4,05 · 4,52 con cursor de bloque.' },
+        ],
+      },
+      {
+        titulo: 'Plano 4 · Queda ordenado', duracion: '5,16 s · sin golpes',
+        intro: 'El plano del bajón: no hay un suceso, hay una marea. Las píldoras avanzan a velocidad constante y el acento morado se retira del plano — el color que manda es el verde.',
+        frames: [
+          { esOrdenado: true, t: '0,00 s', titulo: 'Inicio', mov: 'Propuesta escrita, nada aprobado. Empieza la cascada de 190 ms por fila.', grupos: grupos(0), nOk: '0', okColor: '#4A4F63' },
+          { esOrdenado: true, t: '2,58 s', titulo: 'Medio', mov: 'Velocidad constante; el contador sube en lineal, sin aceleración.', grupos: grupos(4), nOk: '124', okColor: '#8A8FA3' },
+          { esOrdenado: true, t: '5,16 s', titulo: 'Final', mov: 'Los últimos 0,8 s no se mueve nada: el único plano que acaba en silencio total.', grupos: grupos(8), nOk: '246', okColor: '#5DB872' },
+        ],
+        notas: [
+          { titulo: 'Colores', txt: 'verde #5DB872 al 14 % de fondo y 42 % de borde; reglas de fila #1E2030. El morado solo sobrevive en el asterisco del rótulo.' },
+          { titulo: 'Animación', txt: 'una sola curva lineal de 5,16 s. Píldoras en cascada con fundido y 6 px de subida, sin escala ni rebote. Los contadores cuentan hasta 246 con la misma curva.' },
+          { titulo: 'Cuestiono una cosa', txt: '246 filas no caben ni deben. Ocho reales agrupadas por temporada y el contador carga con la escala; la banda vacía de 150 px abajo es el aire que hace que se lea como respiro y no como pantallazo de producto.' },
+        ],
+      },
+      {
+        titulo: 'Plano 5 · Adelgaza sin tocarse', duracion: '3,87 s · un golpe en 3,40',
+        intro: 'De 1 GB a 133 MB sin recomprimir. La regla dura manda la composición: el fotograma anclado a la izquierda, sin recorte ni escala, y todo lo que se mueve en columna a la derecha. Dos velocidades: 0 y todo.',
+        frames: [
+          { esAdelgaza: true, t: '0,00 s', titulo: 'Inicio', mov: 'Cuatro pistas, nada decidido. El cronómetro arranca.',
+            antes: '1 GB', antesPx: '64px', antesLinea: 'none', despues: '—', despuesUnidad: '', despuesColor: '#4A4F63', crono: '0,0 s', cronoColor: '#6C7080', pistas: pistas('inicio'), sello: false },
+          { esAdelgaza: true, t: '2,10 s', titulo: 'Medio', mov: 'Las pistas eng saliendo y el número bajando; lo único quieto es el fotograma.',
+            antes: '1 GB', antesPx: '64px', antesLinea: 'line-through', despues: '410', despuesUnidad: 'MB', despuesColor: '#C9CCD6', crono: '0,4 s', cronoColor: '#C9CCD6', pistas: pistas('medio'), sello: false },
+          { esAdelgaza: true, t: '3,40 s', titulo: 'Final', mov: '133 MB en 0,6 s y el sello entra en el golpe. Ahí se congela el plano.',
+            antes: '1 GB', antesPx: '64px', antesLinea: 'line-through', despues: '133', despuesUnidad: 'MB', despuesColor: '#E9E9ED', crono: '0,6 s', cronoColor: '#E9E9ED', pistas: pistas('ido'), sello: true },
+        ],
+        notas: [
+          { titulo: 'Colores', txt: 'el fotograma es un degradado de #2C2A4A a #101120 con siluetas planas — marcador de posición para metraje real, ya en paleta. Verde solo en el sello; sin rojo, porque quitar una pista que no usas no es un error.' },
+          { titulo: 'Animación', txt: 'las pistas eng salen 120 px a la derecha con opacidad 1→0 (280 ms, escalonadas); la de spa no se mueve. El número baja 155→134 en 900 ms y el cronómetro corre en tiempo real. El sello entra en 3,40 con escala 1,12→1.' },
+          { titulo: 'La regla dura, en el diseño', txt: 'el marco no tiene sombra ni brillo y no comparte eje vertical con nada animado: su borde inferior queda 26 px por debajo de la última pista, así ningún movimiento roza su silueta.' },
+        ],
+      },
+      {
+        titulo: 'Plano 6 · El corte', duracion: '5,16 s · el tajo cae en 0,01',
+        intro: 'El primer fotograma ya está partido: la música vuelve y el tajo es el mismo instante, así que el corte no se anima, se hereda. Todo lo demás llega en los siete golpes siguientes.',
+        frames: [
+          { esCorte: true, t: '0,01 s', titulo: 'Inicio', mov: 'El tajo y nada más. El destello dura 200 ms; las piezas ya están separadas 8 px.',
+            origenColor: '#C9CCD6', origenLinea: 'none', origenOp: 1, piezas: [pieza(0,'tajo'), pieza(1,'tajo')], tajo: true },
+          { esCorte: true, t: '2,60 s', titulo: 'Medio', mov: 'Piezas abiertas, píldoras puestas, tiempos entrando; el origen ya tachado.',
+            origenColor: '#4A4F63', origenLinea: 'line-through', origenOp: 1, piezas: [pieza(0,'medio'), pieza(1,'medio')], tajo: false },
+          { esCorte: true, t: '4,37 s', titulo: 'Final', mov: 'Los dos nombres canónicos han entrado; cierra quieto sobre ellos.',
+            origenColor: '#4A4F63', origenLinea: 'line-through', origenOp: 0.7, piezas: [pieza(0,'final'), pieza(1,'final')], tajo: false },
+        ],
+        notas: [
+          { titulo: 'Colores', txt: 'miniaturas como tiras planas entre #101120 y #2C2A4A: leen como fotogramas sin ser imágenes. El tajo es el punto más claro del spot (#E7E5FE) y solo aparece aquí, un instante.' },
+          { titulo: 'Animación', txt: 'destello 1→0 en 200 ms mientras las piezas abren a 88 px de hueco entre 0,01 y 0,50. Píldoras en 1,14 y 1,79 (escala 1,15→1); tiempos en 2,60 y 3,08; nombres en 3,73 y 4,37 desde 10 px abajo. El origen se tacha en 0,50.' },
+          { titulo: 'Una decisión que defiendo', txt: 'quité la línea de tiempo con marcador cruzando el centro: competía con el tajo justo en el eje donde el tajo tiene que reinar. Si la echas de menos, iría dentro de cada pieza como banda de 4 px al pie.' },
+        ],
+      },
+      {
+        titulo: 'Plano 7 · En tu servidor', duracion: '10,32 s · 4 compases · cierra el bucle',
+        intro: 'Alargado. Cuatro tiempos claros, uno por compás: la parrilla del plano 2 enfoca (compás 1) → la biblioteca del servidor se desplaza mostrando capítulos reales (compás 2) → entra «Optimiza tus bibliotecas para tus plataformas favoritas» (compás 3) → cierra el overlay de Ondine con la compatibilidad (compás 4). La biblioteca nunca se congela: sigue desplazándose despacio detrás del overlay, así el final respira y encadena con el negro del plano 1.',
+        frames: [
+          { esServidor: true, t: '0,02 s', titulo: 'Compás 1 — la parrilla enfoca',
+            mov: 'La parrilla con sus huecos del plano 2 pasa de 18 a 0 px de desenfoque; las placas se vuelven títulos.',
+            blur: '18px', gridOp: 0.55, fichas: fichas7(0), veloCentro: 0.1, veloBorde: 0.55, marcaOp: 0, marcaEsc: 0.96, fraseOp: 0, pieOp: 0 },
+          { esBiblioteca: true, t: '2,60 s', titulo: 'Compás 2 — la biblioteca, arriba',
+            mov: 'Corte a la ficha de la serie: portada, temporada y los primeros capítulos ya nombrados. El desplazamiento arranca lento.',
+            scrollY: '0px', veloCentro: 0, veloBorde: 0.28, optimizaOp: 0, optimizaDy: '18px', cierreOp: 0, marcaOp: 0, marcaEsc: 0.96, fraseOp: 0, pieOp: 0 },
+          { esBiblioteca: true, t: '5,20 s', titulo: 'Compás 3 — desplazándose y entra el texto',
+            mov: 'El scroll ha dejado la cabecera atrás y solo se ven capítulos. Sobre ellos entra la frase desde 18 px abajo mientras la viñeta se cierra.',
+            scrollY: '-520px', veloCentro: 0.62, veloBorde: 0.74, optimizaOp: 1, optimizaDy: '0px', cierreOp: 0, marcaOp: 0, marcaEsc: 0.96, fraseOp: 0, pieOp: 0 },
+          { esBiblioteca: true, t: '7,74 s', titulo: 'Compás 4 — relevo de textos',
+            mov: 'La frase sale hacia arriba y entra la marca; la biblioteca sigue desplazándose al fondo, ya muy atenuada.',
+            scrollY: '-980px', veloCentro: 0.8, veloBorde: 0.86, optimizaOp: 0, optimizaDy: '-22px', cierreOp: 1, marcaOp: 1, marcaEsc: 1, fraseOp: 0, pieOp: 0 },
+          { esBiblioteca: true, t: '10,32 s', titulo: 'Final — cierre y bucle',
+            mov: 'Frase de cierre y compatibilidad. Los últimos 300 ms la viñeta puede cerrar a negro para encadenar con el plano 1.',
+            scrollY: '-1240px', veloCentro: 0.88, veloBorde: 0.92, optimizaOp: 0, optimizaDy: '-22px', cierreOp: 1, marcaOp: 1, marcaEsc: 1, fraseOp: 1, pieOp: 1 },
+        ],
+        notas: [
+          { titulo: 'La biblioteca', txt: 'maqueta genérica de servidor de medios (barra superior, telón, portada, lista de capítulos): estructura funcional, no la interfaz de nadie. Portadas y miniaturas son formas planas de la paleta con títulos y sinopsis inventados — ninguna imagen de obra real. Fondo #101418 y reglas #1A1F26: un pelo más frío que el lienzo de Ondine, para que se lea como «otro programa».' },
+          { titulo: 'Los dos iconos', txt: 'la marca de Jellyfin va incrustada como imagen (uploads/jellyfin.png), no redibujada. Para Plex no reproduzco su logotipo —es marca registrada de un tercero y en una pieza promocional puede leerse como respaldo—: uso su chevrón ámbar #E5A00D como icono neutro más el nombre en texto. Si tienes permiso de uso de marca, se sustituye el recuadro por su logotipo oficial sin tocar nada más.' },
+          { titulo: 'Animación', txt: 'el scroll es lineal y continuo desde 2,60 hasta el final (~1240 px en 7,7 s): nunca se detiene, y eso es lo que hace que el cierre no se sienta congelado. Frase «Optimiza…» entra en 5,20 (opacidad 0→1 + 18 px arriba, 400 ms) y sale en 7,20 hacia arriba. Marca en 7,74 (escala 0,96→1), frase de cierre en 8,80, compatibilidad en 9,60.' },
+        ],
+      },
+    ];
+
+    const ARTES_CAP = ['linear-gradient(150deg,#2C2A4A,#141726)','linear-gradient(200deg,#1D2A3A,#101418)','linear-gradient(140deg,#302C52,#1A1C2E)','linear-gradient(170deg,#232838,#101120)','linear-gradient(190deg,#2A2C46,#171A2A)','linear-gradient(155deg,#1E2236,#101120)'];
+    const CAPS = [
+      ['4','Érase una okupa','34 min · S02E04','Una desconocida se instala en el 3ºA y el vecindario descubre que nadie sabe de quién es el piso.'],
+      ['5','Érase un ascensor','34 min · S02E05','El ascensor se avería con media escalera dentro y la reunión de vecinos acaba en el hueco.'],
+      ['6','Érase un vecino nuevo','33 min · S02E06','Llega un inquilino con demasiadas cajas y muy pocas explicaciones.'],
+      ['7','Érase una mudanza','35 min · S02E07','Dos familias se cambian de piso el mismo día y ninguna avisó al portero.'],
+      ['8','Érase un cumpleaños','34 min · S02E08','La fiesta sorpresa se organiza en el rellano porque nadie cabe en el salón.'],
+      ['9','Érase una portera','33 min · S02E09','La portería cambia de manos y con ella todas las llaves del edificio.'],
+    ];
+    const capitulos = CAPS.map((c, i) => ({ n: c[0], titulo: c[1], meta: c[2], sinopsis: c[3], dur: c[2].split(' · ')[0], arte: ARTES_CAP[i % ARTES_CAP.length] }));
+    return { planos, capitulos, fichasVacias: anchos.map(w => ({ w })), 
+      temporadas: ['Temporada 1','Temporada 2','Temporada 3','Temporada 4','Temporada 5'].map((txt, i) => ({ txt, color: i === 1 ? '#17171F' : '#8C8C98' })),
+      episodios: [['4','Érase una okupa','16 abr 2004'],['5','Érase un ascensor','23 abr 2004'],['6','Érase un vecino nuevo','30 abr 2004'],['7','Érase una mudanza','7 may 2004'],['8','Érase un cumpleaños','14 may 2004'],['9','Érase una portera','21 may 2004'],['10','Érase un okupa más','28 may 2004']].map((e, i) => ({ n: e[0], titulo: e[1], fecha: e[2], bg: i % 2 ? '#F6F6FA' : '#FBFBFD' })),
+    };
+  }
+}
+</script>
+
+
+</body></html>

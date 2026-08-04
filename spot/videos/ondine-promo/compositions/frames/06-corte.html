@@ -1,0 +1,417 @@
+<template>
+  <div data-composition-id="06-corte" data-width="1920" data-height="1080" data-start="0" data-duration="5.661">
+
+    <!-- El suelo va SIEMPRE en su propia capa .clip: un `background` en la raíz lo pierde el
+         compositor al recortar el frame a su ventana y el fotograma sale negro. -->
+    <div id="cor-ground" class="clip" data-start="0" data-duration="5.661" data-track-index="0"></div>
+
+    <!-- El plano abre con el fichero ENTERO y lo parte en el segundo golpe (0,50).
+         La guía lo quería al revés —partido desde el fotograma 1, para que el tajo
+         cayera en la entrada de la música— pero así el corte duraba menos de medio
+         segundo y no se leía: no había un «antes» contra el que compararlo. Ahora el
+         drop lo recoge la llegada del bloque completo y el tajo tiene medio segundo
+         de fichero entero delante y 0,64 s de apertura detrás. -->
+    <div id="cor-escena" class="clip" data-start="0" data-duration="5.661" data-track-index="1">
+
+      <div id="cor-kicker"><span id="cor-spike">✳</span>DOS CAPÍTULOS, UN FICHERO</div>
+      <span id="cor-total">1:08:40</span>
+
+      <div id="cor-origen-caja">
+        <span id="cor-origen">Temporada2_04-05.mkv<span id="cor-origen-tachon"></span></span>
+      </div>
+
+      <div id="cor-piezas">
+        <div class="cor-pieza" id="cor-pieza-0">
+          <div class="cor-tiras" id="cor-tiras-0">
+            <div class="cor-pildora" id="cor-pildora-0"><span>E04</span></div>
+            <span class="cor-t-ini" id="cor-tini-0">0:00</span>
+            <span class="cor-t-fin" id="cor-tfin-0">34:12</span>
+          </div>
+          <div class="cor-regla"></div>
+          <span class="cor-rango" id="cor-rango-0">0:00 – 34:12</span>
+          <span class="cor-nombre" id="cor-nombre-0">
+            <span class="cor-nombre-l">Aqui no hay quien viva - S02E04 -</span>
+            <span class="cor-nombre-l">Érase una okupa.mkv</span>
+          </span>
+        </div>
+
+        <div class="cor-pieza" id="cor-pieza-1">
+          <div class="cor-tiras" id="cor-tiras-1">
+            <div class="cor-pildora" id="cor-pildora-1"><span>E05</span></div>
+            <span class="cor-t-ini" id="cor-tini-1">34:12</span>
+            <span class="cor-t-fin" id="cor-tfin-1">1:08:40</span>
+          </div>
+          <div class="cor-regla"></div>
+          <span class="cor-rango" id="cor-rango-1">34:12 – 68:40</span>
+          <span class="cor-nombre" id="cor-nombre-1">
+            <span class="cor-nombre-l">Aqui no hay quien viva - S02E05 -</span>
+            <span class="cor-nombre-l">Érase un ascensor.mkv</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- El punto más claro de todo el spot, y solo aparece aquí, en el 0,50:
+           fogonazo que lava el cuadro, halo ancho y filo de 5 px. -->
+      <div id="cor-fogonazo"></div>
+      <div id="cor-tajo-halo"></div>
+      <div id="cor-tajo"></div>
+    </div>
+  </div>
+
+  <style>
+    #cor-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #cor-escena {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    #cor-kicker {
+      position: absolute;
+      left: 136px;
+      top: 150px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+    }
+
+    #cor-spike { color: #968ae0; letter-spacing: 0; }
+
+    #cor-total {
+      position: absolute;
+      right: 136px;
+      top: 150px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      color: #5a5f72;
+    }
+
+    #cor-origen-caja {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 262px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* El tachado se dibuja con un hijo real y `scaleX`: `text-decoration` no se anima. */
+    #cor-origen {
+      position: relative;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 30px;
+      color: #c9ccd6;
+    }
+
+    #cor-origen-tachon {
+      position: absolute;
+      left: -4px;
+      right: -4px;
+      top: 52%;
+      height: 2px;
+      background: #4a4f63;
+      transform: scaleX(0);
+      transform-origin: 0% 50%;
+    }
+
+    #cor-piezas {
+      position: absolute;
+      left: 136px;
+      right: 136px;
+      top: 360px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Ancho fijo: animar `width` está prohibido, así que la apertura se hace con
+       `translateX`. Las dos piezas nacen PEGADAS (44 px hacia dentro cada una) y
+       terminan con los 88 px de hueco de la maqueta. El estado de partida va en CSS,
+       no en un `tl.set` a 0: un set de duración cero en la posición 0 no llega a
+       pintar mientras el playhead está justo ahí, y el fotograma 1 saldría partido. */
+    #cor-pieza-0 { transform: translateX(44px); }
+    #cor-pieza-1 { transform: translateX(-44px); }
+
+    .cor-pieza {
+      width: 780px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      will-change: transform;
+    }
+
+    .cor-tiras {
+      height: 300px;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      background: #101120;
+      border: 1px solid #2a2c3e;
+      display: flex;
+    }
+
+    .cor-tira { flex: 1; }
+
+    /* Sin esquinas ni borde en la junta: pegadas, las dos piezas leen como un bloque. */
+    #cor-tiras-0 {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      border-right-width: 0;
+    }
+
+    #cor-tiras-1 {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-left-width: 0;
+    }
+
+    .cor-pildora {
+      position: absolute;
+      left: 22px;
+      top: 22px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      background: #b5abfc;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 24px;
+      color: #161826;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .cor-t-ini,
+    .cor-t-fin {
+      position: absolute;
+      bottom: 16px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 21px;
+      color: #8a8fa3;
+      opacity: 0.55;
+    }
+
+    /* Los dos tiempos de la junta son los que NACEN del corte: mientras el fichero
+       es uno solo, ahí no hay nada que leer. */
+    #cor-tfin-0,
+    #cor-tini-1 { opacity: 0; }
+
+    .cor-t-ini { left: 22px; }
+    .cor-t-fin { right: 22px; }
+
+    .cor-regla {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #2e3042 40px,
+                  #2e3042 calc(100% - 40px), transparent);
+    }
+
+    .cor-rango {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      color: #8a8fa3;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .cor-nombre {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 27px;
+      line-height: 1.42;
+      color: #e9e9ed;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .cor-nombre-l { display: block; }
+    .cor-nombre .w { display: inline-block; }
+
+    #cor-tajo {
+      position: absolute;
+      left: 957px;
+      top: 214px;
+      width: 5px;
+      height: 512px;
+      background: linear-gradient(to bottom, transparent, #ffffff 10%, #ffffff 90%, transparent);
+      opacity: 0;
+      will-change: opacity;
+    }
+
+    #cor-tajo-halo {
+      position: absolute;
+      left: 850px;
+      top: 200px;
+      width: 220px;
+      height: 540px;
+      background: radial-gradient(ellipse at center, rgba(231, 229, 254, 0.5), transparent 68%);
+      opacity: 0;
+      will-change: opacity;
+    }
+
+    /* El fogonazo lava el cuadro entero durante un suspiro. Es lo que hace que el
+       corte se note sin alargarlo: el ojo registra el cambio de luz global mucho
+       antes que una línea de cinco píxeles. */
+    #cor-fogonazo {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 46% 62% at 50% 44%,
+                  rgba(231, 229, 254, 0.3), rgba(231, 229, 254, 0.05) 55%, transparent 78%);
+      opacity: 0;
+      will-change: opacity;
+    }
+  </style>
+
+  <script>
+    (() => {
+      // ── Curvas y presets de la guía (§0 y §1) ──────────────────────────────
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const EASE_IN = cb(0.7, 0, 0.84, 0);
+      const SPRING_DUR = 0.6;
+      const SPRING = (p) => {
+        if (p >= 1) return 1;
+        const t = p * SPRING_DUR;
+        return 1 - Math.exp(-11 * t) * (Math.cos(9.43 * t) + (11 / 9.43) * Math.sin(9.43 * t));
+      };
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+
+      // ── Las miniaturas: tiras planas, no imágenes ──────────────────────────
+      // UNA sola secuencia de dieciséis, partida en dos ochos. Antes cada pieza tenía
+      // su propia serie y en la junta se veía el salto de color: con el fichero entero
+      // en pantalla eso delataba que eran dos bloques antes de que nadie los partiera.
+      const TONOS = [
+        "#1A1C2E", "#242844", "#2C2A4A", "#1E2236", "#262B48", "#191C2C", "#2A2E4C", "#212539",
+        "#1D2032", "#2A2E4A", "#22263C", "#2E3254", "#1B1E30", "#272B46", "#202438", "#2C3050",
+      ];
+      [0, 1].forEach((p) => {
+        const tiras = TONOS.slice(p * 8, p * 8 + 8).map((c) =>
+          '<div class="cor-tira" style="background:' + c + '"></div>').join("");
+        document.getElementById("cor-tiras-" + p).insertAdjacentHTML("afterbegin", tiras);
+      });
+
+      // ── La línea de tiempo ─────────────────────────────────────────────────
+      const tl = gsap.timeline({ paused: true });
+
+      // 0,00 → 0,50 · el fichero entero. El drop lo recoge su llegada: corte seco
+      // desde el plano anterior a un bloque que ocupa el ancho del lienzo. Nada se
+      // mueve — es el «antes» contra el que se va a leer el tajo.
+
+      // 0,50 · EL TAJO. El destello se apaga en tres tiempos: el fogonazo se va
+      // rápido, el halo lo sostiene y el filo es el último en irse. Así se apaga una
+      // chispa; un fundido único de 200 ms no daba tiempo ni a registrarlo.
+      tl.fromTo("#cor-fogonazo", { opacity: 1 },
+        { opacity: 0, duration: 0.22, ease: EASE_IN, immediateRender: false }, 0.5);
+      tl.fromTo("#cor-tajo-halo", { opacity: 1 },
+        { opacity: 0, duration: 0.36, ease: EASE_IN, immediateRender: false }, 0.5);
+      tl.fromTo("#cor-tajo", { opacity: 1 },
+        { opacity: 0, duration: 0.46, ease: EASE_IN, immediateRender: false }, 0.54);
+
+      // En el mismo fotograma aparece el filo interior de cada pieza: hasta aquí eran
+      // un bloque, a partir de aquí son dos ficheros.
+      tl.set("#cor-tiras-0",
+        { borderTopRightRadius: 10, borderBottomRightRadius: 10, borderRightWidth: 1 }, 0.5);
+      tl.set("#cor-tiras-1",
+        { borderTopLeftRadius: 10, borderBottomLeftRadius: 10, borderLeftWidth: 1 }, 0.5);
+
+      // 0,50 → 1,14 · las piezas abren hasta los 88 px de hueco. Más lento que antes
+      // (640 ms contra 490): es el suceso del plano y ahora tiene sitio para serlo.
+      tl.fromTo("#cor-pieza-0", { x: 44 },
+        { x: 0, duration: 0.64, ease: EASE_OUT, immediateRender: false }, 0.5);
+      tl.fromTo("#cor-pieza-1", { x: -44 },
+        { x: 0, duration: 0.64, ease: EASE_OUT, immediateRender: false }, 0.5);
+
+      // 1,14 · el nombre de origen se tacha y se apaga; nacen los tiempos de la junta.
+      tl.fromTo("#cor-origen-tachon", { scaleX: 0 },
+        { scaleX: 1, duration: 0.24, ease: EASE_OUT, immediateRender: false }, 1.14);
+      tl.to("#cor-origen", { color: "#4a4f63", duration: 0.3, ease: EASE_OUT }, 1.14);
+      tl.to([".cor-t-ini", ".cor-t-fin"],
+        { opacity: 1, duration: 0.24, ease: EASE_OUT }, 1.14);
+
+      // 1,79 · las dos píldoras, juntas. Antes ocupaban dos golpes (1,14 y 1,79) y ese
+      // era el tiempo que le faltaba al tajo: etiquetar las dos piezas es UN suceso,
+      // no dos, así que caben en un solo golpe con 80 ms entre ellas.
+      [0, 1].forEach((i) => {
+        const t = 1.79 + i * 0.08;
+        tl.fromTo("#cor-pildora-" + i, { scale: 1.15 },
+          { scale: 1, duration: SPRING_DUR, ease: SPRING, immediateRender: false }, t);
+        tl.fromTo("#cor-pildora-" + i, { opacity: 0 },
+          { opacity: 1, duration: 0.26, ease: EASE_OUT, immediateRender: false }, t);
+      });
+
+      // 2,60 y 3,08 · los rangos · short-slide-right.
+      [2.6, 3.08].forEach((t, i) => {
+        tl.fromTo("#cor-rango-" + i, { x: -18, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.22, ease: EASE_OUT }, t);
+      });
+
+      // 3,73 y 4,37 · la carga útil del plano: short-slide-down + depth-parallax-words.
+      // El stagger de 90 ms de la guía está pensado para frases cortas; un nombre de
+      // fichero son once palabras, así que se comprime para no invadir el golpe
+      // siguiente ni comerse la quietud del final.
+      [{ t: 3.73, ventana: 0.64 }, { t: 4.37, ventana: 0.79 }].forEach((n, i) => {
+        tl.fromTo("#cor-nombre-" + i, { y: -16, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.22, ease: EASE_OUT }, n.t);
+
+        const ws = [];
+        document.querySelectorAll("#cor-nombre-" + i + " .cor-nombre-l")
+          .forEach((l) => palabras(l).forEach((w) => ws.push(w)));
+
+        const paso = Math.min(0.09, (n.ventana - 0.34) / Math.max(1, ws.length - 1));
+        const ult = ws.length - 1;
+        ws.forEach((w, j) => {
+          tl.fromTo(w,
+            { opacity: 0, scale: 1 + 0.06 * (1 - j / ult), filter: "blur(3px)" },
+            { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.34, ease: EASE_OUT },
+            n.t + j * paso);
+        });
+      });
+
+      // El origen se retira un punto cuando entran los nombres canónicos: acompaña, no compite.
+      tl.to("#cor-origen", { opacity: 0.7, duration: 0.3, ease: EASE_OUT }, 3.73);
+
+      // 4,70 → 5,16 · quietud.
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["06-corte"] = tl;
+    })();
+  </script>
+</template>

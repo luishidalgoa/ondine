@@ -1,0 +1,793 @@
+<template>
+  <div data-composition-id="v03-catalogo" data-width="1080" data-height="1920" data-start="0" data-duration="7.742">
+
+    <div id="ct-ground" class="clip" data-start="0" data-duration="7.742" data-track-index="0"></div>
+
+    <div id="ct-escena" class="clip" data-start="0" data-duration="7.742" data-track-index="1">
+
+      <!-- El único plano claro de la pieza. Fuera de paleta a propósito (papel #FBFBFD,
+           serifa Georgia): es un mundo ajeno, y ese salto hace legible que el dato viene
+           de fuera. Lleva su barra de direcciones porque lo que se copia es la URL.
+           NOTA: el globo de Wikipedia es marca registrada de la Wikimedia Foundation.
+           Va aquí por decisión expresa del autor de la pieza. -->
+      <div id="ct-pagina" data-layout-allow-occlusion>
+        <div id="ct-nav">
+          <span class="ct-dot"></span><span class="ct-dot"></span><span class="ct-dot"></span>
+          <div id="ct-url-caja">
+            <div id="ct-seleccion"></div>
+            <span id="ct-url">es.wikipedia.org/wiki/Anexo:Episodios</span>
+          </div>
+        </div>
+
+        <div id="ct-marca">
+          <div id="ct-globo"></div>
+          <div id="ct-marca-txt">
+            <span id="ct-wordmark">WIKIPEDIA</span>
+            <span id="ct-tagline">La enciclopedia libre</span>
+          </div>
+        </div>
+
+        <div id="ct-titulos">
+          <span id="ct-h1">Aquí no hay quien viva</span>
+          <div id="ct-regla"></div>
+          <span id="ct-h2">Anexo: episodios · Temporada 2</span>
+        </div>
+
+        <div id="ct-cuerpo">
+          <div id="ct-lateral">
+            <span id="ct-lateral-tit">Temporadas</span>
+            <span class="ct-temp">Temporada 1</span>
+            <span class="ct-temp ct-temp-on">Temporada 2</span>
+            <span class="ct-temp">Temporada 3</span>
+            <span class="ct-temp">Temporada 4</span>
+            <span class="ct-temp">Temporada 5</span>
+          </div>
+          <div id="ct-tabla">
+            <div id="ct-tabla-cab">
+              <span class="ct-col-n">Nº</span><span class="ct-col-t">Título</span><span class="ct-col-f">Emisión</span>
+            </div>
+            <div id="ct-tabla-filas"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- El panel de la app. En apaisado convivía con la página y el movimiento de
+           cámara lo traía al borde del lienzo. Aquí no caben los dos a lo ancho, así
+           que se relevan: la página sale por arriba y el panel sube desde abajo. -->
+      <div id="ct-panel" data-layout-allow-occlusion>
+        <div id="ct-panel-cab">
+          <svg viewBox="0 0 64 64" width="26" height="26" fill="none" stroke="#B5ABFC"
+               stroke-width="6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path>
+            <path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path>
+            <path d="M7 49 L 57 49"></path>
+          </svg>
+          <span id="ct-panel-marca">Ondine</span>
+          <span class="ct-espacio"></span>
+          <span id="ct-panel-serie">Aquí no hay quien viva</span>
+        </div>
+
+        <div id="ct-fuente">
+          <span id="ct-fuente-rot">FUENTE</span>
+          <span id="ct-ayuda">Pega una lista de episodios de cualquier web.</span>
+          <div id="ct-campo"><span id="ct-campo-txt">es.wikipedia.org/…/Anexo:Episodios</span></div>
+          <div id="ct-boton-caja">
+            <div id="ct-boton">Generar con IA…</div>
+            <div id="ct-halo"></div>
+          </div>
+        </div>
+
+        <div id="ct-codigo">
+          <div id="ct-codigo-cab">
+            <span>catalogo.json</span><span class="ct-espacio"></span><span id="ct-codigo-ver">reindex/1.0</span>
+          </div>
+          <div id="ct-codigo-cuerpo"></div>
+        </div>
+
+        <div id="ct-contador">
+          <span id="ct-contador-rot">ENCONTRADOS</span>
+          <div id="ct-contador-linea">
+            <span id="ct-contador-n">0</span>
+            <span id="ct-contador-u">episodios</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="ct-cursor">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="#E9E9ED" stroke="#161826"
+             stroke-width="1.2" aria-hidden="true">
+          <path d="M5 2l14 12h-7l3.5 7-3 1.4L9 15.6 5 19z"></path>
+        </svg>
+      </div>
+
+      <div id="ct-kicker"><span id="ct-spike">✳</span><span id="ct-kicker-txt">EL CATÁLOGO</span></div>
+    </div>
+
+    <!-- El compás que se le quita al plano 5: la misma página, desenfocada, y encima la
+         frase. Cuando la frase sale, el desenfoque resuelve y el clip arranca. -->
+    <div id="ct-intro" class="clip" data-layout-allow-overlap data-layout-allow-occlusion
+         data-start="0" data-duration="7.742" data-track-index="2">
+      <div id="ct-intro-velo"></div>
+      <span id="ct-intro-txt"><span class="ct-linea">Construye el catálogo</span><span class="ct-linea">desde cualquier anexo</span></span>
+    </div>
+  </div>
+
+  <style>
+    #ct-ground { position: absolute; inset: 0; background: #161826; }
+
+    #ct-escena,
+    #ct-intro {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    .ct-espacio { flex: 1; }
+
+    /* ── página clara ──────────────────────────────────────────────────────── */
+    #ct-pagina {
+      position: absolute;
+      left: 80px;
+      top: 330px;
+      width: 920px;
+      height: 1150px;
+      background: #fbfbfd;
+      border-radius: 8px;
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      filter: blur(16px);
+      will-change: transform, filter;
+    }
+
+    #ct-nav {
+      flex: none;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 20px;
+      background: #ececee;
+      border-bottom: 1px solid #dcdce4;
+    }
+
+    .ct-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #c2c2cc;
+      flex: none;
+    }
+
+    #ct-url-caja {
+      position: relative;
+      flex: 1;
+      height: 34px;
+      margin-left: 12px;
+      border-radius: 17px;
+      background: #fbfbfd;
+      border: 1px solid #dcdce4;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    #ct-seleccion {
+      position: absolute;
+      left: 12px;
+      top: 5px;
+      height: 23px;
+      width: 10px;
+      background: rgba(150, 138, 224, 0.34);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transform-origin: 0% 50%;
+    }
+
+    #ct-url {
+      position: relative;
+      font-size: 17px;
+      color: #3a3a44;
+      white-space: nowrap;
+    }
+
+    #ct-marca {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 36px 0;
+    }
+
+    /* Solo el globo: la imagen trae el logotipo completo y el recorte se queda con su
+       parte superior. El nombre va al lado como texto, que es como se compone la
+       cabecera real. */
+    #ct-globo {
+      width: 74px;
+      height: 55px;
+      flex: none;
+      background: url("assets/wikipedia.png") center top / 74px auto no-repeat;
+    }
+
+    #ct-marca-txt { display: flex; flex-direction: column; gap: 2px; }
+
+    #ct-wordmark {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 29px;
+      letter-spacing: 0.02em;
+      color: #17171f;
+    }
+
+    #ct-tagline {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      color: #54545c;
+    }
+
+    #ct-titulos {
+      flex: none;
+      padding: 22px 36px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #ct-h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 50px;
+      color: #17171f;
+    }
+
+    #ct-regla { height: 1px; background: #d8d8e0; margin: 16px 0 0; }
+
+    #ct-h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 25px;
+      color: #4a4a55;
+      padding-top: 10px;
+    }
+
+    #ct-cuerpo {
+      flex: 1;
+      display: flex;
+      gap: 28px;
+      padding: 24px 36px 34px;
+      min-height: 0;
+    }
+
+    #ct-lateral {
+      flex: none;
+      width: 190px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-right: 24px;
+      border-right: 1px solid #e2e2e9;
+    }
+
+    #ct-lateral-tit {
+      font-family: Georgia, serif;
+      font-size: 17px;
+      color: #6e6e7a;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .ct-temp { font-family: Georgia, serif; font-size: 22px; color: #6e6e7a; }
+    .ct-temp-on { color: #17171f; }
+
+    #ct-tabla {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    #ct-tabla-cab {
+      display: flex;
+      padding: 12px 14px;
+      background: #efeff4;
+      font-size: 16px;
+      font-weight: 500;
+      color: #4a4a55;
+      letter-spacing: 0.04em;
+    }
+
+    .ct-fila {
+      display: flex;
+      padding: 13px 14px;
+      font-family: Georgia, serif;
+      font-size: 21px;
+      color: #22222b;
+    }
+
+    .ct-col-n { width: 56px; }
+    .ct-col-t { flex: 1; }
+    .ct-col-f { width: 120px; }
+    .ct-fila .ct-col-n { color: #6b6b78; }
+    .ct-fila .ct-col-f { color: #6b6b78; font-size: 18px; }
+
+    /* ── panel de la app ───────────────────────────────────────────────────── */
+    #ct-panel {
+      position: absolute;
+      left: 80px;
+      top: 330px;
+      width: 920px;
+      height: 1250px;
+      background: #232532;
+      border-radius: 16px;
+      border: 1px solid #2e3042;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      /* Origen arriba: al escalar, el panel crece hacia abajo y la cabecera no se mueve. */
+      transform-origin: 50% 0;
+      will-change: transform, opacity;
+    }
+
+    #ct-panel-cab {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 28px;
+      border-bottom: 1px solid #2e3042;
+    }
+
+    #ct-panel-marca {
+      font-size: 22px;
+      font-weight: 500;
+      color: #e9e9ed;
+      letter-spacing: 0.01em;
+    }
+
+    #ct-panel-serie {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      color: #8a8fa3;
+    }
+
+    #ct-fuente {
+      flex: none;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      border-bottom: 1px solid #2e3042;
+    }
+
+    #ct-fuente-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 18px;
+      letter-spacing: 0.2em;
+      color: #8a8fa3;
+    }
+
+    #ct-ayuda { font-size: 22px; line-height: 1.45; color: #c9ccd6; }
+
+    #ct-campo {
+      height: 64px;
+      flex: none;
+      border-radius: 8px;
+      background: #292b31;
+      border: 1px solid #33364a;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    #ct-campo-txt {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #5a5f72;
+      opacity: 0;
+    }
+
+    #ct-boton-caja { position: relative; height: 70px; flex: none; }
+
+    #ct-boton {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0);
+      border: 1px solid #5d5294;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      color: #8a8fa3;
+      will-change: transform;
+    }
+
+    #ct-halo {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      box-shadow: 0 0 0 6px rgba(150, 138, 224, 0.18);
+      opacity: 0;
+    }
+
+    #ct-codigo {
+      flex: 1;
+      margin: 20px;
+      background: #101120;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    #ct-codigo-cab {
+      flex: none;
+      display: flex;
+      align-items: center;
+      padding: 14px 22px;
+      border-bottom: 1px solid #1c1d2e;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      color: #8a8fa3;
+    }
+
+    #ct-codigo-ver { color: #5a5f72; }
+
+    #ct-codigo-cuerpo {
+      flex: 1;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      align-items: flex-start;
+    }
+
+    .ct-linea-cod {
+      display: flex;
+      gap: 18px;
+      opacity: 0;
+      white-space: nowrap;
+      will-change: transform;
+    }
+
+    .ct-linea-n { color: #4a4f63; width: 26px; text-align: right; flex: none; }
+
+    .ct-linea-cuerpo { position: relative; flex: none; }
+
+    /* El texto se revela recortando por la derecha con `steps`: en monoespaciada cada
+       paso cae justo en el borde de un carácter, así que no hay medios glifos. */
+    .ct-linea-txt {
+      display: inline-block;
+      color: #c9ccd6;
+      clip-path: inset(0 100% 0 0);
+    }
+
+    .ct-linea-caret {
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #968ae0;
+      opacity: 0;
+    }
+
+    #ct-contador {
+      flex: none;
+      padding: 0 28px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #ct-contador-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      letter-spacing: 0.2em;
+      color: #8a8fa3;
+    }
+
+    #ct-contador-linea { display: flex; align-items: baseline; gap: 14px; }
+
+    #ct-contador-n {
+      font-size: 92px;
+      font-weight: 500;
+      color: #e9e9ed;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #ct-contador-u {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 24px;
+      color: #8a8fa3;
+    }
+
+    /* ── cursor y rótulo ───────────────────────────────────────────────────── */
+    #ct-cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 34px;
+      height: 34px;
+      opacity: 0;
+      transform-origin: 20% 15%;
+      will-change: transform;
+    }
+
+    #ct-kicker {
+      position: absolute;
+      left: 90px;
+      top: 235px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #ct-spike { color: #968ae0; letter-spacing: 0; }
+
+    /* ── el compás de entrada ──────────────────────────────────────────────── */
+    #ct-intro { display: grid; place-items: center; }
+
+    #ct-intro-velo { position: absolute; inset: 0; background: rgba(22, 24, 38, 0.74); }
+
+    #ct-intro-txt {
+      --barrido: 0px;
+      position: relative;
+      font-size: 82px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 940px;
+      will-change: transform, filter, opacity;
+    }
+
+    .ct-linea { display: block; }
+    #ct-intro-txt .w { display: inline-block; opacity: 0; }
+
+    /* ── Acero ─────────────────────────────────────────────────────────────── */
+    .metal {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(to right,
+        #b9bec9 0%, #e8ebf0 9%, #c6cbd5 17%, #f6f8fb 31%, #d2d7e0 38%,
+        #aeb4bf 52%, #eef1f5 61%, #c1c6d1 73%, #e2e6ec 84%, #b9bec9 100%);
+      background-size: 1600px 100%;
+      background-repeat: repeat;
+    }
+  </style>
+
+  <script>
+    (() => {
+      const DUR = 7.742;
+      const T0 = 1.29;
+
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const EASE_IN = cb(0.7, 0, 0.84, 0);
+      const EASE_IN_OUT = cb(0.65, 0, 0.35, 1);
+      const SNAP = cb(0.34, 1.2, 0.64, 1);
+      const SPRING_DUR = 0.6;
+      const SPRING = (p) => {
+        if (p >= 1) return 1;
+        const t = p * SPRING_DUR;
+        return 1 - Math.exp(-11 * t) * (Math.cos(9.43 * t) + (11 / 9.43) * Math.sin(9.43 * t));
+      };
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+
+      const TEJA = 1600;
+      const metalizar = (caja, piezas) => {
+        const x0 = caja.getBoundingClientRect().left;
+        piezas.forEach((p) => {
+          p.classList.add("metal");
+          const dx = Math.round(p.getBoundingClientRect().left - x0);
+          p.style.backgroundPositionX = "calc(var(--barrido) - " + dx + "px)";
+        });
+      };
+      const barrer = (caja, desde) => {
+        tl.fromTo(caja, { "--barrido": "0px" },
+          { "--barrido": TEJA + "px", duration: 7, ease: "none", immediateRender: false }, desde);
+      };
+
+      // ── Contenido ──────────────────────────────────────────────────────────
+      const EPISODIOS = [
+        ["4", "Érase una okupa", "16 abr 2004"],
+        ["5", "Érase un ascensor", "23 abr 2004"],
+        ["6", "Érase un vecino nuevo", "30 abr 2004"],
+        ["7", "Érase una mudanza", "7 may 2004"],
+        ["8", "Érase un cumpleaños", "14 may 2004"],
+        ["9", "Érase una portera", "21 may 2004"],
+        ["10", "Érase un okupa más", "28 may 2004"],
+      ];
+      document.getElementById("ct-tabla-filas").innerHTML = EPISODIOS.map((e, i) =>
+        '<div class="ct-fila" style="background:' + (i % 2 ? "#f6f6fa" : "#fbfbfd") + '">' +
+        '<span class="ct-col-n">' + e[0] + "</span>" +
+        '<span class="ct-col-t">' + e[1] + "</span>" +
+        '<span class="ct-col-f">' + e[2] + "</span></div>").join("");
+
+      const CODIGO = [
+        '{ "formato": "reindex/1.0", "serie": "Aquí no hay..." }',
+        '{ "num": 4, "temp": 2, "titulo": "Érase una okupa" }',
+        '{ "num": 5, "temp": 2, "titulo": "Érase un ascensor" }',
+        '{ "num": 6, "temp": 2, "titulo": "Érase un vecino..." }',
+      ];
+      document.getElementById("ct-codigo-cuerpo").innerHTML = CODIGO.map((txt, i) =>
+        '<div class="ct-linea-cod" id="ct-linea-' + i + '">' +
+        '<span class="ct-linea-n">' + String(i + 1).padStart(2, "0") + "</span>" +
+        '<span class="ct-linea-cuerpo">' +
+        '<span class="ct-linea-txt" id="ct-txt-' + i + '">' + txt + "</span>" +
+        '<span class="ct-linea-caret" data-layout-allow-overlap id="ct-caret-' + i + '">▌</span>' +
+        "</span></div>").join("");
+
+      document.getElementById("ct-seleccion").style.width =
+        (document.getElementById("ct-url").offsetWidth + 6) + "px";
+
+      const tl = gsap.timeline({ paused: true });
+
+      // ── Compás de entrada ──────────────────────────────────────────────────
+      const wIntro = [];
+      document.querySelectorAll("#ct-intro-txt .ct-linea")
+        .forEach((l) => palabras(l).forEach((w) => wIntro.push(w)));
+      tl.to(wIntro, { opacity: 1, duration: 0.26, ease: EASE_OUT, stagger: 0.06 }, 0.06);
+      metalizar(document.getElementById("ct-intro-txt"), wIntro);
+      barrer(document.getElementById("ct-intro-txt"), 0.06);
+
+      tl.to("#ct-intro-txt",
+        { y: -28, filter: "blur(10px)", opacity: 0, duration: 0.32, ease: EASE_IN }, 0.9);
+      tl.to("#ct-intro-velo", { opacity: 0, duration: 0.39, ease: EASE_IN_OUT }, 0.9);
+      tl.to("#ct-pagina", { filter: "blur(0px)", duration: 0.42, ease: EASE_OUT }, 0.9);
+
+      // ── El clip ────────────────────────────────────────────────────────────
+      tl.fromTo("#ct-kicker", { x: -18, opacity: 0 },
+        { x: 0, opacity: 0.55, duration: 0.22, ease: EASE_OUT, immediateRender: false }, T0);
+      tl.to("#ct-kicker", { opacity: 1, duration: 0.24, ease: EASE_OUT }, T0 + 2.76);
+
+      // El panel espera fuera de cuadro, por abajo.
+      tl.set("#ct-panel", { y: 1320, scale: 0.96 }, 0);
+      tl.set("#ct-cursor", { x: 860, y: 1560 }, 0);
+      tl.to("#ct-cursor", { opacity: 1, duration: 0.18, ease: EASE_OUT }, T0);
+
+      // 0,50 · el cursor llega a la barra de direcciones.
+      tl.to("#ct-cursor", { x: 400, y: 352, duration: 0.42, ease: EASE_IN_OUT }, T0 + 0.5);
+      tl.to("#ct-cursor", { scale: 0.88, duration: 0.06, ease: SNAP }, T0 + 1.13);
+      tl.to("#ct-cursor", { scale: 1, duration: 0.06, ease: SNAP }, T0 + 1.19);
+
+      // 1,52 · la URL se selecciona de un barrido. Es lo que se copia.
+      tl.fromTo("#ct-seleccion", { scaleX: 0 },
+        { scaleX: 1, duration: 0.24, ease: EASE_OUT, immediateRender: false }, T0 + 1.52);
+
+      // 2,11 · relevo por el eje vertical: la página se va por arriba y el panel sube.
+      tl.to("#ct-pagina",
+        { y: -420, filter: "blur(8px)", opacity: 0.4, duration: 0.49, ease: EASE_IN }, T0 + 2.11);
+      tl.to("#ct-panel", { y: 0, opacity: 1, duration: 0.49, ease: EASE_OUT }, T0 + 2.11);
+
+      tl.fromTo("#ct-campo-txt", { x: -18, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.22, ease: EASE_OUT, immediateRender: false }, T0 + 2.11);
+      tl.to("#ct-campo-txt", { color: "#e9e9ed", duration: 0.2, ease: EASE_OUT }, T0 + 2.11);
+      tl.to("#ct-campo", { borderColor: "#968ae0", duration: 0.2, ease: EASE_OUT }, T0 + 2.11);
+
+      // El cursor cruza al botón para que el golpe del 2,76 tenga autor. Con el panel a
+      // escala 0,96 y origen arriba, el botón cae en (540, 602) del lienzo.
+      tl.to("#ct-cursor", { x: 540, y: 602, duration: 0.42, ease: EASE_IN_OUT }, T0 + 2.3);
+
+      // 2,76 · el golpe.
+      tl.to("#ct-boton", { scale: 0.97, duration: 0.06, ease: SNAP }, T0 + 2.76);
+      tl.to("#ct-boton", { scale: 1, duration: 0.06, ease: SNAP }, T0 + 2.82);
+      tl.to("#ct-boton",
+        { backgroundColor: "#968ae0", borderColor: "#968ae0", color: "#161826", duration: 0.09, ease: EASE_OUT },
+        T0 + 2.76);
+      tl.to("#ct-cursor", { scale: 0.88, duration: 0.06, ease: SNAP }, T0 + 2.76);
+      tl.to("#ct-cursor", { scale: 1, duration: 0.06, ease: SNAP }, T0 + 2.82);
+      tl.fromTo("#ct-halo", { opacity: 0.18 },
+        { opacity: 0, duration: 0.3, ease: EASE_OUT, immediateRender: false }, T0 + 2.76);
+
+      tl.to("#ct-pagina",
+        { y: -1700, opacity: 0, filter: "blur(14px)", duration: 0.4, ease: EASE_IN }, T0 + 2.76);
+
+      // 3,00 · el único movimiento de cámara. En apaisado el panel viajaba al borde del
+      // lienzo; aquí ya lo ocupa, así que la cámara empuja: crece hacia abajo y el
+      // bloque de código gana presencia justo cuando va a escribirse.
+      tl.to("#ct-panel", { scale: 1, duration: 0.52, ease: EASE_IN_OUT }, T0 + 3.0);
+      tl.to("#ct-cursor", { opacity: 0, duration: 0.3, ease: EASE_IN }, T0 + 3.0);
+
+      tl.to("#ct-boton",
+        { backgroundColor: "rgba(0,0,0,0)", borderColor: "#5d5294", color: "#8a8fa3", duration: 0.3, ease: EASE_OUT },
+        T0 + 3.4);
+      tl.to("#ct-campo", { borderColor: "#33364a", duration: 0.3, ease: EASE_OUT }, T0 + 3.4);
+      tl.to("#ct-campo-txt", { color: "#8a8fa3", duration: 0.3, ease: EASE_OUT }, T0 + 3.4);
+
+      // ── El catálogo se escribe solo · una línea por golpe ──────────────────
+      const GOLPES = [T0 + 3.4, T0 + 4.05, T0 + 4.52, T0 + 5.0];
+      const FIN = T0 + 5.9;
+
+      CODIGO.forEach((txt, i) => {
+        const at = GOLPES[i];
+        const hueco = (i + 1 < GOLPES.length ? GOLPES[i + 1] : FIN) - at;
+        const dur = Math.min(txt.length * 0.022, hueco - 0.08);
+        const pasos = txt.length;
+
+        tl.fromTo("#ct-linea-" + i, { y: -16, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.22, ease: EASE_OUT, immediateRender: false }, at);
+        tl.fromTo("#ct-txt-" + i,
+          { clipPath: "inset(0 100% 0 0)" },
+          { clipPath: "inset(0 0% 0 0)", duration: dur, ease: "steps(" + pasos + ")",
+            immediateRender: false }, at);
+
+        const ancho = document.getElementById("ct-txt-" + i).offsetWidth;
+        tl.set("#ct-caret-" + i, { opacity: 1 }, at);
+        tl.fromTo("#ct-caret-" + i, { x: 0 },
+          { x: ancho, duration: dur, ease: "steps(" + pasos + ")", immediateRender: false }, at);
+        const hasta = i + 1 < GOLPES.length ? GOLPES[i + 1] : DUR;
+        const ciclos = Math.max(1, Math.ceil((hasta - at - dur) / 0.5));
+        tl.to("#ct-caret-" + i,
+          { opacity: 0, duration: 0.25, repeat: ciclos * 2, yoyo: true, ease: "none" }, at + dur);
+        tl.set("#ct-caret-" + i, { opacity: 0 },
+          i + 1 < GOLPES.length ? GOLPES[i + 1] : DUR - 0.001);
+      });
+
+      // 5,30 · la cifra aterriza y cuenta hasta 24 en lineal.
+      tl.fromTo("#ct-contador", { scale: 0.94 },
+        { scale: 1, duration: SPRING_DUR, ease: SPRING, immediateRender: false }, T0 + 5.3);
+      tl.fromTo("#ct-contador", { opacity: 0 },
+        { opacity: 1, duration: 0.26, ease: EASE_OUT, immediateRender: false }, T0 + 5.3);
+      const cifra = { v: 0 };
+      tl.to(cifra, {
+        v: 24, duration: 0.6, ease: "none",
+        onUpdate: () => {
+          document.getElementById("ct-contador-n").textContent = String(Math.round(cifra.v));
+        },
+      }, T0 + 5.3);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["v03-catalogo"] = tl;
+    })();
+  </script>
+</template>
