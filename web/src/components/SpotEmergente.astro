@@ -1,20 +1,13 @@
 ---
-import Ficha from "./Ficha.astro";
-import { BIBLIOTECA } from "../data/biblioteca";
-
-// Alternativa B del spot: el vídeo EMERGE desde detrás de un primer plano
-// mientras se hace scroll, en vez de aparecer entero de golpe.
+// El spot: el vídeo EMERGE desde detrás de un primer plano mientras se hace
+// scroll, en vez de aparecer entero de golpe.
 //
-// En el ejemplo de referencia el primer plano son unas colinas, o sea
-// decoración. Aquí son las fichas de la biblioteca, que es lo que la página ya
-// tiene y además significa algo: el spot sale de detrás de la biblioteca que
-// acabas de ver ordenarse.
-//
-// Autorreproducido, en bucle y sin barra de controles, igual que la A. Y con
-// las mismas dos consecuencias: empieza en silencio porque los navegadores no
+// Autorreproducido, en bucle y sin barra de controles. Con las dos
+// consecuencias que eso obliga: empieza en silencio porque los navegadores no
 // autorreproducen con sonido, y a quien tiene las animaciones desactivadas no
 // se le mueve nada solo.
-const PRIMER_PLANO = BIBLIOTECA.slice(0, 6);
+//
+// PENDIENTE: el primer plano está vacío. Sin él, el vídeo solo sube y crece.
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -44,12 +37,12 @@ const base = import.meta.env.BASE_URL;
         </button>
       </div>
 
-      <!-- El primer plano. Va por delante del vídeo y se mueve al revés que
-           él, que es lo que produce la sensación de que el vídeo sale de
-           detrás en vez de simplemente crecer. -->
-      <div class="primer-plano" data-primer aria-hidden="true">
-        {PRIMER_PLANO.map((f, i) => <Ficha ficha={f} indice={i} estado="resuelto" />)}
-      </div>
+      <!-- PENDIENTE · el primer plano.
+           Aquí iba una fila de fichas de la biblioteca y se ha retirado. Sin
+           nada delante, el vídeo solo sube y crece: el efecto se lee como un
+           zoom, no como que sale de detrás de algo. Falta decidir el dibujo
+           que ocupa este sitio. -->
+      <div class="primer-plano" data-primer aria-hidden="true"></div>
     </div>
   </div>
 </section>
@@ -147,26 +140,15 @@ const base = import.meta.env.BASE_URL;
   /* ── el primer plano ───────────────────────────────────────────────────── */
   /* Se sale por los dos lados y por abajo a propósito: tiene que leerse como
      que la fila sigue más allá del encuadre, no como seis fichas centradas. */
+  /* Se sale por los dos lados y por abajo a propósito: tiene que leerse como
+     que sigue más allá del encuadre, no como una pieza centrada. */
   .primer-plano {
     position: absolute;
     left: -6%;
     right: -6%;
     bottom: -12%;
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 14px;
-    padding: 0 1.5rem;
     pointer-events: none;
     will-change: transform;
-  }
-
-  .primer-plano :global(.ficha) {
-    box-shadow: 0 -14px 40px rgb(8 9 16 / 0.5);
-  }
-
-  @media (max-width: 900px) {
-    .primer-plano { grid-template-columns: repeat(3, 1fr); }
-    .primer-plano :global(.ficha:nth-child(n + 4)) { display: none; }
   }
 
   /* Fotograma quieto: sin anclaje, sin emerger y sin autorreproducción. El
