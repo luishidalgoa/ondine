@@ -1,26 +1,41 @@
 ---
-// El spot: el vídeo EMERGE desde detrás de un primer plano mientras se hace
+import Escenario from "./Escenario.astro";
+
+// El spot: el vídeo EMERGE desde detrás de un decorado mientras se hace
 // scroll, en vez de aparecer entero de golpe.
 //
+// El decorado son cuatro planos a distinta distancia (ver Escenario.astro), y
+// cada uno se mueve a su velocidad: el cielo casi nada, el plano cercano
+// mucho. Esa diferencia es lo que convierte «el vídeo crece» en «el vídeo sale
+// de detrás».
+//
 // Autorreproducido, en bucle y sin barra de controles. Con las dos
-// consecuencias que eso obliga: empieza en silencio porque los navegadores no
+// consecuencias que eso obliga: empieza en silencio, porque los navegadores no
 // autorreproducen con sonido, y a quien tiene las animaciones desactivadas no
 // se le mueve nada solo.
 //
-// PENDIENTE: el primer plano está vacío. Sin él, el vídeo solo sube y crece.
+// El vídeo original pesaba 15,9 MB. Aquí va a 3,1 MB, a 1280 de ancho y con
+// los metadatos al principio del fichero. Lo comprimió Ondine.
+
+interface Props {
+  escenario?: "agua" | "tira";
+  titulo?: string;
+}
+const { escenario = "agua", titulo = "Cuarenta y cuatro segundos." } =
+  Astro.props;
 const base = import.meta.env.BASE_URL;
 ---
 
-<section id="spot-b" class="emergente">
+<section class="emergente" data-spot data-cual={escenario}>
   <div class="lienzo">
-    <div class="cielo" aria-hidden="true"></div>
+    <Escenario cual={escenario} />
 
-    <h2 class="acero titulo">Cuarenta y cuatro segundos.</h2>
+    <h2 class="acero titulo">{titulo}</h2>
 
     <div class="escena">
       <div class="marco-video" data-marco>
         <video
-          data-video-b
+          data-video
           poster={`${base}/spot-portada.jpg`}
           preload="metadata"
           muted
@@ -32,17 +47,10 @@ const base = import.meta.env.BASE_URL;
           <source src={`${base}/spot-ondine.mp4`} type="video/mp4" />
         </video>
 
-        <button class="sonido" data-sonido-b type="button" aria-pressed="false">
-          <span data-sonido-b-texto>Activar sonido</span>
+        <button class="sonido" data-sonido type="button" aria-pressed="false">
+          <span data-sonido-texto>Activar sonido</span>
         </button>
       </div>
-
-      <!-- PENDIENTE · el primer plano.
-           Aquí iba una fila de fichas de la biblioteca y se ha retirado. Sin
-           nada delante, el vídeo solo sube y crece: el efecto se lee como un
-           zoom, no como que sale de detrás de algo. Falta decidir el dibujo
-           que ocupa este sitio. -->
-      <div class="primer-plano" data-primer aria-hidden="true"></div>
     </div>
   </div>
 </section>
@@ -50,7 +58,7 @@ const base = import.meta.env.BASE_URL;
 <style>
   .emergente {
     position: relative;
-    height: 230vh;
+    height: 250vh;
   }
 
   .lienzo {
@@ -64,23 +72,9 @@ const base = import.meta.env.BASE_URL;
     padding-top: clamp(4.5rem, 11vh, 7rem);
   }
 
-  /* Un cielo muy contenido, del propio lienzo a un morado hondo. Nada de
-     degradado de colores: es la misma familia de la paleta, solo que el fondo
-     se aclara un poco hacia el horizonte para que el vídeo recorte contra él. */
-  .cielo {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(
-        120% 70% at 50% 78%,
-        rgb(93 82 148 / 0.28) 0%,
-        rgb(22 24 38 / 0) 62%
-      ),
-      linear-gradient(to bottom, #161826 0%, #191b2b 55%, #161826 100%);
-  }
-
   .titulo {
     position: relative;
+    z-index: 2;
     font-size: clamp(26px, 3.4vw, 42px);
     line-height: 1.12;
     font-weight: 500;
@@ -91,6 +85,7 @@ const base = import.meta.env.BASE_URL;
 
   .escena {
     position: relative;
+    z-index: 1;
     flex: 1;
     width: 100%;
     max-width: 1400px;
@@ -102,7 +97,7 @@ const base = import.meta.env.BASE_URL;
 
   .marco-video {
     position: relative;
-    width: min(100%, 940px);
+    width: min(100%, 900px);
     border-radius: 14px;
     overflow: hidden;
     background: #101120;
@@ -117,6 +112,10 @@ const base = import.meta.env.BASE_URL;
     width: 100%;
     height: auto;
   }
+
+  /* El plano cercano va por delante del vídeo; el resto, por detrás. Ese
+     sandwich es lo que hace que parezca que sale de dentro del decorado. */
+  .lienzo :global([data-capa="3"]) { z-index: 3; }
 
   .sonido {
     position: absolute;
@@ -137,29 +136,14 @@ const base = import.meta.env.BASE_URL;
   }
   .sonido:hover { background: rgb(22 24 38 / 0.9); color: #e9e9ed; }
 
-  /* ── el primer plano ───────────────────────────────────────────────────── */
-  /* Se sale por los dos lados y por abajo a propósito: tiene que leerse como
-     que la fila sigue más allá del encuadre, no como seis fichas centradas. */
-  /* Se sale por los dos lados y por abajo a propósito: tiene que leerse como
-     que sigue más allá del encuadre, no como una pieza centrada. */
-  .primer-plano {
-    position: absolute;
-    left: -6%;
-    right: -6%;
-    bottom: -12%;
-    pointer-events: none;
-    will-change: transform;
-  }
-
   /* Fotograma quieto: sin anclaje, sin emerger y sin autorreproducción. El
-     vídeo se queda en su portada con sus controles, que es lo que espera quien
-     ha pedido que nada se mueva solo. */
+     vídeo se queda en su portada con sus controles, sobre el decorado parado.
+     Es lo que espera quien ha pedido que nada se mueva solo. */
   @media (prefers-reduced-motion: reduce) {
     .emergente { height: auto; padding: 4rem 0; }
-    .lienzo { position: static; height: auto; padding-bottom: 3rem; }
+    .lienzo { position: static; height: auto; padding-bottom: 4rem; }
     .escena { display: block; padding-top: 2rem; }
     .marco-video { margin: 0 auto; }
-    .primer-plano { display: none; }
   }
 </style>
 
@@ -169,60 +153,82 @@ const base = import.meta.env.BASE_URL;
 
   gsap.registerPlugin(ScrollTrigger);
 
-  const video = document.querySelector<HTMLVideoElement>("[data-video-b]");
-  const sonido = document.querySelector<HTMLButtonElement>("[data-sonido-b]");
-  const texto = document.querySelector<HTMLElement>("[data-sonido-b-texto]");
   const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  if (video) {
+  // Se recorren todas las instancias y cada una se ata a la suya. En la
+  // portada solo hay una, pero la página de comparación lleva las dos y con
+  // selectores sueltos se pisarían.
+  document.querySelectorAll<HTMLElement>("[data-spot]").forEach((seccion) => {
+    const video = seccion.querySelector<HTMLVideoElement>("[data-video]");
+    const sonido = seccion.querySelector<HTMLButtonElement>("[data-sonido]");
+    const texto = seccion.querySelector<HTMLElement>("[data-sonido-texto]");
+    if (!video) return;
+
     if (quieto) {
       video.controls = true;
       if (sonido) sonido.hidden = true;
-    } else {
-      const ojo = new IntersectionObserver(
-        ([e]) => (e.isIntersecting ? void video.play().catch(() => {}) : video.pause()),
-        { threshold: 0.3 },
-      );
-      ojo.observe(video);
-
-      sonido?.addEventListener("click", () => {
-        video.muted = !video.muted;
-        sonido.setAttribute("aria-pressed", String(!video.muted));
-        if (texto) texto.textContent = video.muted ? "Activar sonido" : "Silenciar";
-      });
-
-      // El vídeo sube y crece; el primer plano baja. Los dos a la vez son lo
-      // que hace que parezca que sale de detrás. Si solo creciera el vídeo,
-      // se leería como un simple zoom.
-      const linea = gsap.timeline({
-        scrollTrigger: {
-          trigger: ".emergente",
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 0.6,
-        },
-      });
-
-      linea.fromTo(
-        "[data-marco]",
-        { yPercent: 26, scale: 0.74 },
-        { yPercent: 0, scale: 1, ease: "none" },
-        0,
-      );
-      linea.fromTo(
-        "[data-primer]",
-        { yPercent: -6 },
-        { yPercent: 26, ease: "none" },
-        0,
-      );
-
-      gsap.from("#spot-b .titulo", {
-        opacity: 0,
-        y: 22,
-        duration: 0.7,
-        ease: "power2.out",
-        scrollTrigger: { trigger: ".emergente", start: "top 70%" },
-      });
+      return;
     }
-  }
+
+    // Solo se reproduce mientras se está viendo. Un vídeo corriendo fuera de
+    // pantalla gasta batería y datos sin que nadie lo mire.
+    new IntersectionObserver(
+      ([e]) => (e.isIntersecting ? void video.play().catch(() => {}) : video.pause()),
+      { threshold: 0.3 },
+    ).observe(video);
+
+    sonido?.addEventListener("click", () => {
+      video.muted = !video.muted;
+      sonido.setAttribute("aria-pressed", String(!video.muted));
+      if (texto) texto.textContent = video.muted ? "Activar sonido" : "Silenciar";
+    });
+
+    const linea = gsap.timeline({
+      scrollTrigger: {
+        trigger: seccion,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.6,
+      },
+    });
+
+    // El vídeo sube y crece.
+    linea.fromTo(
+      seccion.querySelector("[data-marco]"),
+      { yPercent: 30, scale: 0.72 },
+      { yPercent: 0, scale: 1, ease: "none" },
+      0,
+    );
+
+    // Y los planos bajan, cada uno más que el anterior. Las cantidades no son
+    // arbitrarias: si el cercano no se mueve bastante más que el lejano, los
+    // cuatro se leen pegados y no hay profundidad, solo capas.
+    const RECORRIDOS: Record<string, number> = { "1": 14, "2": 30, "3": 58 };
+    for (const [capa, y] of Object.entries(RECORRIDOS)) {
+      linea.fromTo(
+        seccion.querySelector(`[data-capa="${capa}"]`),
+        { yPercent: -y * 0.35 },
+        { yPercent: y, ease: "none" },
+        0,
+      );
+    }
+
+    // El cielo se abre por el horizonte a la vez. Es el equivalente al
+    // atardecer del ejemplo, pero sin salirse de la paleta: no cambia de
+    // color, cambia de apertura.
+    linea.fromTo(
+      seccion.querySelector("[data-cielo]"),
+      { "--alto": 0 },
+      { "--alto": 1, ease: "none" },
+      0,
+    );
+
+    gsap.from(seccion.querySelector(".titulo"), {
+      opacity: 0,
+      y: 22,
+      duration: 0.7,
+      ease: "power2.out",
+      scrollTrigger: { trigger: seccion, start: "top 70%" },
+    });
+  });
 </script>

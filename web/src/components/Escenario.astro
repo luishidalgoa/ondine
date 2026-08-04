@@ -1,0 +1,149 @@
+---
+// Los decorados del spot. Cada uno son CUATRO planos a distinta distancia, no
+// un dibujo pegado delante:
+//
+//   cielo   · el fondo, que cambia de color mientras se baja
+//   lejos   · casi del color del cielo, apenas se despega
+//   medio   · un punto más oscuro
+//   cerca   · silueta plana, la más oscura, saliéndose por abajo
+//
+// Ese escalado de claro a oscuro es perspectiva atmosférica: lo que está lejos
+// pierde contraste contra el fondo. Es lo que da profundidad de verdad, más
+// que mover cada capa a una velocidad, que es solo la mitad del truco.
+//
+// Y el cielo transiciona: arranca cerrado y de noche, y al bajar se abre por
+// el horizonte. No es un atardecer de colores, que se saldría de la paleta;
+// es el mismo lienzo abriéndose con los morados hondos que ya existen.
+
+interface Props {
+  cual: "agua" | "tira";
+}
+const { cual } = Astro.props;
+---
+
+<div class="escenario-fondo" data-escenario={cual} aria-hidden="true">
+  <div class="cielo" data-cielo></div>
+
+  {
+    cual === "agua" && (
+      <>
+        {/* El agua: tres crestas, cada una más cerca y más oscura. La más
+            cercana se abre por el centro, justo donde sale el vídeo. */}
+        <svg class="capa lejos" data-capa="1" viewBox="0 0 1440 180" preserveAspectRatio="none">
+          <path d="M0 96 C 180 78 300 104 480 92 C 660 80 780 100 960 90 C 1140 80 1290 98 1440 88 L1440 180 L0 180 Z" />
+        </svg>
+
+        <svg class="capa medio" data-capa="2" viewBox="0 0 1440 200" preserveAspectRatio="none">
+          <path d="M0 118 C 160 92 320 130 500 106 C 680 82 820 118 1000 100 C 1180 82 1320 116 1440 98 L1440 200 L0 200 Z" />
+        </svg>
+
+        <svg class="capa cerca" data-capa="3" viewBox="0 0 1440 240" preserveAspectRatio="none">
+          <path d="M0 150 C 150 118 300 168 470 128 C 600 97 680 88 720 86 C 760 88 840 97 970 128 C 1140 168 1290 118 1440 150 L1440 240 L0 240 Z" />
+        </svg>
+      </>
+    )
+  }
+
+  {
+    cual === "tira" && (
+      <>
+        {/* La película: tres tiras cruzando, cada una más cerca, más grande y
+            más oscura. La de delante enseña la perforación a tamaño real. */}
+        <svg class="capa lejos" data-capa="1" viewBox="0 0 1440 120" preserveAspectRatio="none">
+          <rect x="-40" y="34" width="1520" height="52" />
+          {Array.from({ length: 34 }, (_, i) => (
+            <rect class="hueco" x={-30 + i * 45} y="46" width="20" height="28" rx="4" />
+          ))}
+        </svg>
+
+        <svg class="capa medio" data-capa="2" viewBox="0 0 1440 170" preserveAspectRatio="none">
+          <rect x="-60" y="44" width="1560" height="80" />
+          {Array.from({ length: 24 }, (_, i) => (
+            <rect class="hueco" x={-40 + i * 64} y="62" width="30" height="44" rx="6" />
+          ))}
+        </svg>
+
+        <svg class="capa cerca" data-capa="3" viewBox="0 0 1440 260" preserveAspectRatio="none">
+          <rect x="-80" y="70" width="1600" height="200" />
+          {Array.from({ length: 16 }, (_, i) => (
+            <rect class="hueco" x={-50 + i * 96} y="98" width="46" height="66" rx="9" />
+          ))}
+        </svg>
+      </>
+    )
+  }
+</div>
+
+<style>
+  .escenario-fondo {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* ── el cielo ──────────────────────────────────────────────────────────── */
+  /* Los dos altos de color son variables porque GSAP los mueve con el scroll.
+     Arranca cerrado y se abre por el horizonte al bajar. */
+  .cielo {
+    --alto: 0;
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        130% 62% at 50% calc(78% + var(--alto) * 8%),
+        rgb(93 82 148 / calc(0.1 + var(--alto) * 0.26)) 0%,
+        rgb(121 108 191 / calc(var(--alto) * 0.09)) 34%,
+        rgb(22 24 38 / 0) 66%
+      ),
+      linear-gradient(
+        to bottom,
+        #12131f 0%,
+        #161826 46%,
+        #191b2b calc(72% + var(--alto) * 6%),
+        #161826 100%
+      );
+  }
+
+  /* ── las capas ─────────────────────────────────────────────────────────── */
+  .capa {
+    position: absolute;
+    left: -8%;
+    width: 116%;
+    display: block;
+    will-change: transform;
+  }
+
+  /* De lejos a cerca: más abajo, más alta y más oscura. La pérdida de
+     contraste contra el cielo es lo que coloca cada plano a su distancia. */
+  .lejos {
+    bottom: 26%;
+    height: clamp(70px, 13vh, 130px);
+    fill: #232532;
+    opacity: 0.55;
+  }
+
+  .medio {
+    bottom: 12%;
+    height: clamp(96px, 18vh, 180px);
+    fill: #1b1d2c;
+  }
+
+  .cerca {
+    bottom: -2%;
+    height: clamp(130px, 26vh, 250px);
+    fill: #101120;
+  }
+
+  /* En la tira, los huecos de la perforación se recortan con el color del
+     plano de detrás para que se vea a través sin tener que enmascarar. */
+  [data-escenario="tira"] .lejos .hueco { fill: #191b2b; }
+  [data-escenario="tira"] .medio .hueco { fill: #161826; }
+  [data-escenario="tira"] .cerca .hueco { fill: #191b2b; }
+
+  /* Sin movimiento, el decorado se queda en su fotograma de partida. Un fondo
+     quieto sigue siendo un fondo; lo que no puede es desaparecer. */
+  @media (prefers-reduced-motion: reduce) {
+    .cielo { --alto: 0.6; }
+  }
+</style>

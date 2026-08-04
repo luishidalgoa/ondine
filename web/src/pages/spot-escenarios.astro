@@ -1,0 +1,110 @@
+---
+import Base from "../layouts/Base.astro";
+import SpotEmergente from "../components/SpotEmergente.astro";
+
+// Página de comparación de los dos decorados. No se enlaza desde el sitio.
+// Cuando esté decidido, se borra y el que gane se queda en la portada.
+//
+// Se ven seguidas a propósito: la diferencia entre las dos no está en el
+// dibujo, está en cómo se comporta el conjunto al bajar, y eso solo se juzga
+// haciendo scroll.
+---
+
+<Base
+  titulo="Spot · dos decorados"
+  descripcion="Comparación de los dos decorados por capas del módulo de vídeo."
+>
+  <div class="rotulo">
+    <span class="letra">1</span>
+    <div>
+      <h3>Agua</h3>
+      <p>
+        Tres crestas a distinta distancia, y la más cercana se abre justo por
+        el centro, donde sale el vídeo. Ondine es un espíritu del agua y la
+        marca son ondas, así que el nombre, el logotipo y el gesto de la
+        sección dicen lo mismo a la vez. Es la única de las dos que aprovecha
+        eso.
+      </p>
+    </div>
+  </div>
+
+  <SpotEmergente escenario="agua" />
+
+  <div class="rotulo">
+    <span class="letra">2</span>
+    <div>
+      <h3>Tira de película</h3>
+      <p>
+        Tres tiras perforadas cruzando la pantalla, cada una más grande y más
+        cerca. Habla de vídeo al instante y no hay que explicarla. En contra:
+        habla de vídeo <em>analógico</em>, y Ondine trabaja con ficheros; y es
+        un recurso muy visto.
+      </p>
+    </div>
+  </div>
+
+  <SpotEmergente escenario="tira" />
+
+  <div class="cierre">
+    <p>
+      En las dos, el cielo se abre por el horizonte mientras bajas y los cuatro
+      planos se mueven a velocidades distintas. Esa diferencia de velocidad es
+      lo que convierte «el vídeo crece» en «el vídeo sale de detrás».
+    </p>
+  </div>
+</Base>
+
+<style>
+  .rotulo {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 2rem;
+    border-top: 1px solid rgb(255 255 255 / 0.07);
+  }
+  @media (min-width: 1024px) {
+    .rotulo { padding-left: 2.5rem; padding-right: 2.5rem; }
+  }
+
+  .letra {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 999px;
+    background: rgb(150 138 224 / 0.14);
+    box-shadow: inset 0 0 0 1px rgb(150 138 224 / 0.42);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: #b5abfc;
+  }
+
+  .rotulo h3 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .rotulo p {
+    margin-top: 0.5rem;
+    max-width: 64ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #8a8fa3;
+  }
+
+  .cierre {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+  }
+  .cierre p {
+    max-width: 64ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #6c7080;
+  }
+</style>
