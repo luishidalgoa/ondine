@@ -1,5 +1,6 @@
 ---
 import Escenario from "./Escenario.astro";
+import { textos } from "../i18n/textos";
 
 // El spot: el vídeo EMERGE desde detrás de un decorado mientras se hace
 // scroll, en vez de aparecer entero de golpe.
@@ -30,6 +31,7 @@ interface Props {
 }
 const { titulo } = Astro.props;
 const base = import.meta.env.BASE_URL;
+const t = textos(Astro.currentLocale);
 ---
 
 <section class="emergente" data-spot>
@@ -51,10 +53,19 @@ const base = import.meta.env.BASE_URL;
           height="1080"
         >
           <source src={`${base}/spot-ondine.mp4`} type="video/mp4" />
+          {t.spot.sinVideo}
+          <a href={`${base}/spot-ondine.mp4`}>{t.spot.descargarSpot}</a>.
         </video>
 
-        <button class="sonido" data-sonido type="button" aria-pressed="false">
-          <span data-sonido-texto>Activar sonido</span>
+        <button
+          class="sonido"
+          data-sonido
+          type="button"
+          aria-pressed="false"
+          data-activar={t.spot.activarSonido}
+          data-silenciar={t.spot.silenciar}
+        >
+          <span data-sonido-texto>{t.spot.activarSonido}</span>
         </button>
       </div>
     </div>
@@ -183,10 +194,16 @@ const base = import.meta.env.BASE_URL;
       { threshold: 0.3 },
     ).observe(video);
 
+    // Los dos rótulos vienen del propio botón: escritos aquí se quedaban en
+    // español en la versión inglesa.
     sonido?.addEventListener("click", () => {
       video.muted = !video.muted;
       sonido.setAttribute("aria-pressed", String(!video.muted));
-      if (texto) texto.textContent = video.muted ? "Activar sonido" : "Silenciar";
+      if (texto) {
+        texto.textContent = video.muted
+          ? (sonido.dataset.activar ?? "")
+          : (sonido.dataset.silenciar ?? "");
+      }
     });
 
     const linea = gsap.timeline({

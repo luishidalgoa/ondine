@@ -1,6 +1,9 @@
 ---
 import Ficha from "./Ficha.astro";
 import { BIBLIOTECA } from "../data/biblioteca";
+import { textos } from "../i18n/textos";
+
+const t = textos(Astro.currentLocale);
 
 // El hero es la biblioteca resolviéndose. No hay captura de la aplicación
 // porque a tamaño grande una ventana de Windows con tablas se lee como
@@ -47,23 +50,18 @@ const COLUMNAS = [
   <div class="contenido">
     <div class="mx-auto w-full max-w-[1400px] px-6 lg:px-10">
       <div class="columna-texto">
-        <h1 class="acero titular" data-entra>
-          Ordena bibliotecas de series y películas
-        </h1>
+        <h1 class="acero titular" data-entra>{t.hero.titular}</h1>
 
         <!-- La bajada NO nombra a ningún servidor. Nombrarlos aquí hace que
              Ondine suene a extensión de ellos, y no lo es: es una herramienta
              aparte cuyo resultado está escrito para que sus catálogos lo
              entiendan. Quien dice eso es la banda de compatibilidad de
              debajo, con los logotipos, que es donde no se malinterpreta. -->
-        <p class="bajada" data-entra>
-          Cada capítulo con su título, su número y su temporada. Escrito como
-          los metadatos esperan encontrarlo.
-        </p>
+        <p class="bajada" data-entra>{t.hero.bajada}</p>
 
         <div class="botones" data-entra>
-          <a href="#descarga" class="boton-primario">Descargar para Windows</a>
-          <a href="#descarga" class="boton-secundario">Instalar por terminal</a>
+          <a href="#descarga" class="boton-primario">{t.hero.descargar}</a>
+          <a href="#descarga" class="boton-secundario">{t.hero.terminal}</a>
         </div>
       </div>
     </div>

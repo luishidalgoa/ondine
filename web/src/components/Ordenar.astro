@@ -9,51 +9,50 @@ import { SERIE } from "../data/biblioteca";
 // se ha renombrado a ciegas. Por eso el cero pesa lo mismo que el 246 aunque
 // sea un número más pequeño.
 
-const FILAS = [
-  { crudo: "capitulo 1 (2).mkv",            titulo: "Sin blanca Navidad",       episodio: "S01E01" },
-  { crudo: "bart suspende.avi",             titulo: "Bart suspende",            episodio: "S02E01" },
-  { crudo: "Sin titulo (copia).mkv",        titulo: "Simpson y Dalila",         episodio: "S02E02" },
-  { crudo: "cap nuevo BUENO.mkv",           titulo: "Homer, el hereje",         episodio: "S04E03" },
-  { crudo: "simpsons temporada 4 - 12.mkv", titulo: "Marge contra el monorraíl", episodio: "S04E12" },
-  { crudo: "los simpson 5x02.avi",          titulo: "Cabo Miedo",               episodio: "S05E02" },
-];
+import { BIBLIOTECA } from "../data/biblioteca";
+import { idiomaDe, textos } from "../i18n/textos";
+
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
+const serie = SERIE[idioma];
+
+// Las seis primeras de la biblioteca, en vez de una copia a mano: repetidas
+// se desincronizan, y ya pasó una vez con la numeración de un episodio.
+const FILAS = BIBLIOTECA.slice(0, 6).map((f) => ({
+  episodio: f.episodio,
+  ...f.textos[idioma],
+}));
 ---
 
 <section id="ordenar" class="ordenar">
   <div class="marco">
-    <h2 class="acero titulo">El catálogo no lo tecleas tú.</h2>
+    <h2 class="acero titulo">{t.ordenar.titulo}</h2>
     <p class="cuerpo">
-      Ondine te escribe el encargo para que cualquier IA convierta un anexo de
-      episodios en su catálogo. Lo ejecutas donde quieras y pegas el resultado:
-      no hay clave ni servicio de por medio. Después coteja cada vídeo contra
-      ese catálogo y <strong>propone</strong>. No renombra nada sin que se lo
-      digas.
+      {t.ordenar.cuerpoA}<strong>{t.ordenar.cuerpoDestacado}</strong>{t.ordenar.cuerpoB}
     </p>
 
     <div class="codigo" data-codigo>
-      <code
-        >&#123; "num": 12, "temp": 4, "titulo": "Marge contra el monorraíl" &#125;</code
-      >
+      <code>{t.ordenar.json}</code>
     </div>
 
     <div class="cifras-fila">
       <div class="cifra">
         <span class="numero cifras" data-contador="246">0</span>
-        <span class="rot">CORRECTOS</span>
+        <span class="rot">{t.ordenar.correctos}</span>
       </div>
       <div class="cifra">
         <!-- El cero no se anima nunca. Si se moviera, pediría atención, y lo
              que dice es justamente que no ha pasado nada. -->
         <span class="numero cifras es-cero">0</span>
-        <span class="rot">CONFLICTOS</span>
+        <span class="rot">{t.ordenar.conflictos}</span>
       </div>
     </div>
 
-    <div class="tabla" role="table" aria-label="Nombres propuestos">
+    <div class="tabla" role="table" aria-label={t.ordenar.tabla}>
       <div class="cabecera" role="row">
-        <span role="columnheader">Fichero original</span>
-        <span role="columnheader">Propuesta</span>
-        <span role="columnheader" class="col-estado">Estado</span>
+        <span role="columnheader">{t.ordenar.colOriginal}</span>
+        <span role="columnheader">{t.ordenar.colPropuesta}</span>
+        <span role="columnheader" class="col-estado">{t.ordenar.colEstado}</span>
       </div>
       {
         FILAS.map((f) => (
@@ -62,10 +61,10 @@ const FILAS = [
               {f.crudo}
             </span>
             <span class="propuesta" role="cell">
-              {SERIE} - {f.episodio} - {f.titulo}.mkv
+              {serie} - {f.episodio} - {f.titulo}.mkv
             </span>
             <span class="col-estado" role="cell">
-              <span class="pildora">Correcto</span>
+              <span class="pildora">{t.ordenar.correcto}</span>
             </span>
           </div>
         ))

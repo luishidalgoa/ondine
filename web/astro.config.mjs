@@ -7,6 +7,18 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: "https://luishidalgoa.github.io",
   base: "/ondine",
+
+  // El español no lleva prefijo: la portada sigue siendo `/ondine/` y no
+  // `/ondine/es/`. Cambiarla ahora romperia los enlaces que ya existen, y el
+  // sitio nacio en español.
+  i18n: {
+    defaultLocale: "es",
+    locales: ["es", "en"],
+    routing: {
+      prefixDefaultLocale: false,
+    },
+  },
+
   vite: {
     plugins: [tailwindcss()],
   },

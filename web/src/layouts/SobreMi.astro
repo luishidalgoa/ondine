@@ -1,0 +1,309 @@
+---
+import Base from "./Base.astro";
+import Marca from "../components/Marca.astro";
+import { idiomaDe, textos } from "../i18n/textos";
+import { siGithub } from "simple-icons";
+
+// La página de «sobre mí», compartida por los dos idiomas. Todo lo que se
+// cuenta aquí del proyecto sale de leer el código, no de lo que suena bien:
+// los csproj, el motor y los flujos de CI. Un apartado técnico con datos
+// inventados lo detecta justo el público al que va dirigido.
+const base = import.meta.env.BASE_URL;
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
+
+const REPO = "https://github.com/luishidalgoa/ondine";
+const PORTFOLIO = "https://portfolio.hdglabs.com";
+
+// El retrato se sirve desde su origen, no copiado al repositorio: así se cambia
+// en un sitio y se actualiza aquí sola. A cambio, la página depende de que ese
+// host responda, y por eso el monograma sigue debajo: si la imagen no llega,
+// `onerror` la retira y queda lo de detrás, no un icono roto.
+const RETRATO = "https://s3.minio.hdglabs.com/portfolio/shared/perfil.png";
+
+const INICIALES = t.sobreMi.nombre
+  .split(" ")
+  .map((p) => p[0])
+  .join("");
+---
+
+<Base titulo={t.meta.tituloSobreMi} descripcion={t.meta.descripcionSobreMi}>
+  <div class="pagina">
+    <a class="miga" href={idioma === "es" ? `${base}/` : `${base}/en/`}>
+      {t.sobreMi.volver}
+    </a>
+
+    <!-- Presentación -->
+    <section class="tarjeta presentacion">
+      <div class="retrato">
+        <span class="monograma" aria-hidden="true">{INICIALES}</span>
+        <img
+          src={RETRATO}
+          alt={t.sobreMi.nombre}
+          width="132"
+          height="132"
+          loading="lazy"
+          decoding="async"
+          onerror="this.remove()"
+        />
+      </div>
+
+      <div class="quien">
+        <p class="rotulo"><span class="asterisco">✳</span>{t.sobreMi.rotulo}</p>
+        <h1>{t.sobreMi.nombre}</h1>
+        <p class="bio">{t.sobreMi.bio}</p>
+
+        <div class="botones">
+          <a class="primario" href={PORTFOLIO}>{t.sobreMi.verPortfolio}</a>
+          <a class="secundario" href="https://github.com/luishidalgoa">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d={siGithub.path} /></svg>
+            GitHub
+          </a>
+          <a class="secundario" href={REPO}>
+            <Marca clase="marquita" />
+            {t.sobreMi.codigoDeOndine}
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <div class="pareja">
+      <section class="tarjeta">
+        <h2>{t.sobreMi.queEsTitulo}</h2>
+        <p>{t.sobreMi.queEsCuerpo}</p>
+        <ul class="lista">
+          {t.sobreMi.queHace.map((q) => <li>{q}</li>)}
+        </ul>
+      </section>
+
+      <section class="tarjeta">
+        <h2>{t.sobreMi.hablamosTitulo}</h2>
+        <p>{t.sobreMi.hablamosCuerpo}</p>
+        <a class="primario suelto" href={PORTFOLIO}>{t.sobreMi.abrirPortfolio}</a>
+      </section>
+    </div>
+
+    <section class="tarjeta">
+      <h2>{t.sobreMi.pilaTitulo}</h2>
+      <div class="pila">
+        {
+          t.sobreMi.pila.map((p) => (
+            <div class="area">
+              <h3>{p.area}</h3>
+              <ul>
+                {p.cosas.map((c) => (
+                  <li>{c}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .pagina {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 7rem 1.5rem 5rem;
+    display: grid;
+    gap: 1.25rem;
+  }
+  @media (min-width: 1024px) {
+    .pagina { padding-inline: 2.5rem; }
+  }
+
+  .miga {
+    justify-self: start;
+    font-size: 14px;
+    color: #8a8fa3;
+    transition: color 0.2s;
+  }
+  .miga:hover { color: #e9e9ed; }
+
+  .tarjeta {
+    padding: clamp(1.5rem, 3.5vw, 2.25rem);
+    border-radius: 12px;
+    background: rgb(35 37 50 / 0.72);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+    backdrop-filter: blur(6px);
+  }
+
+  /* ── presentación ──────────────────────────────────────────────────────── */
+  .presentacion {
+    display: grid;
+    gap: 1.75rem;
+    align-items: start;
+  }
+  @media (min-width: 700px) {
+    .presentacion { grid-template-columns: auto minmax(0, 1fr); gap: 2.25rem; }
+  }
+
+  .retrato {
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: #292b31;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  }
+  .retrato img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .monograma {
+    font-size: 38px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: #8a8fa3;
+  }
+
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: #8a8fa3;
+  }
+  .asterisco { color: #968ae0; letter-spacing: 0; }
+
+  h1 {
+    margin-top: 0.9rem;
+    font-size: clamp(30px, 4.4vw, 44px);
+    line-height: 1.08;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  .bio {
+    margin-top: 1rem;
+    max-width: 62ch;
+    font-size: 16px;
+    line-height: 1.65;
+    color: #8a8fa3;
+  }
+
+  .botones {
+    margin-top: 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .primario,
+  .secundario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.35rem;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.1s;
+  }
+  .primario { background: #968ae0; color: #12101f; }
+  .primario:hover { background: #b5abfc; }
+
+  .secundario {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+    color: #c9ccd6;
+  }
+  .secundario:hover {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.28);
+    color: #e9e9ed;
+  }
+  .primario:active,
+  .secundario:active { transform: translateY(1px); }
+
+  .secundario svg { width: 17px; height: 17px; fill: currentColor; flex: none; }
+  .secundario :global(.marquita) {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    color: #968ae0;
+  }
+
+  .suelto { margin-top: 1.5rem; }
+
+  /* ── las dos tarjetas ──────────────────────────────────────────────────── */
+  .pareja {
+    display: grid;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .pareja { grid-template-columns: 1.25fr 1fr; }
+  }
+
+  h2 {
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .tarjeta p {
+    margin-top: 0.9rem;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #8a8fa3;
+  }
+
+  .lista {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .lista li {
+    position: relative;
+    padding-left: 1.4rem;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #c9ccd6;
+  }
+
+  /* Una raya corta en vez de un punto de color: los puntos delante de cada
+     línea son adorno, y aquí lo que se lee es la frase. */
+  .lista li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.68em;
+    width: 8px;
+    height: 1px;
+    background: #6c7080;
+  }
+
+  /* ── la pila ───────────────────────────────────────────────────────────── */
+  .pila {
+    margin-top: 1.75rem;
+    display: grid;
+    gap: 1.75rem 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
+
+  .area h3 {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #968ae0;
+  }
+
+  .area ul {
+    margin-top: 0.85rem;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .area li {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #8a8fa3;
+  }
+</style>

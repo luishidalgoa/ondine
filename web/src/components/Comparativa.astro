@@ -9,14 +9,22 @@ import { BIBLIOTECA, SERIE } from "../data/biblioteca";
 // Esto no es la pantalla partida en dos que se prohíbe en el resto de la
 // página: aquí las dos mitades son el mismo objeto en dos momentos, superpuesto
 // y en el mismo sitio. Por eso funciona aquí y no funcionaría en «Partir».
+import { idiomaDe, textos } from "../i18n/textos";
+
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
 const OCHO = BIBLIOTECA.slice(0, 8);
 ---
 
-<section id="comparativa" class="comparativa">
+<section
+  id="comparativa"
+  class="comparativa"
+  style={`--rotulo-antes: "${t.comparativa.antes}"; --rotulo-despues: "${t.comparativa.despues}"`}
+>
   <div class="lienzo">
     <div class="cabecera">
-      <h2 class="acero titulo">La misma carpeta, antes y después.</h2>
-      <p class="serie">{SERIE}</p>
+      <h2 class="acero titulo">{t.comparativa.titulo}</h2>
+      <p class="serie">{SERIE[idioma]}</p>
     </div>
 
     <div class="escenario">
@@ -38,8 +46,8 @@ const OCHO = BIBLIOTECA.slice(0, 8);
     </div>
 
     <div class="pies">
-      <p class="pie antes">ANTES</p>
-      <p class="pie despues">DESPUÉS</p>
+      <p class="pie antes">{t.comparativa.antes}</p>
+      <p class="pie despues">{t.comparativa.despues}</p>
     </div>
   </div>
 </section>
@@ -171,6 +179,8 @@ const OCHO = BIBLIOTECA.slice(0, 8);
     }
     .cortina { display: none; }
     .pies { display: none; }
+    /* Los rótulos vienen de variables puestas en el marcado: escritos aquí se
+       quedaban en español al cambiar de idioma, y en CSS eso no se ve venir. */
     .capa::before {
       display: block;
       margin-bottom: 0.75rem;
@@ -178,11 +188,11 @@ const OCHO = BIBLIOTECA.slice(0, 8);
       font-size: 12px;
       letter-spacing: 0.22em;
       color: #8a8fa3;
-      content: "ANTES";
+      content: var(--rotulo-antes);
     }
     .encima::before {
       color: #b5abfc;
-      content: "DESPUÉS";
+      content: var(--rotulo-despues);
     }
   }
 </style>

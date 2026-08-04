@@ -5,48 +5,53 @@
 //
 // La familia de composición es la de «una sola cifra enorme», que no se repite
 // en ninguna otra sección de la página.
+import { textos } from "../i18n/textos";
+
+const t = textos(Astro.currentLocale);
 ---
 
 <section id="tamano" class="tamano">
   <div class="marco">
-    <p class="rotulo"><span class="asterisco">✳</span>EL TAMAÑO</p>
+    <p class="rotulo"><span class="asterisco">✳</span>{t.tamano.rotulo}</p>
 
     <!-- Tiempo 1: el que sorprende. -->
     <div class="acto">
-      <h2 class="acero titulo">Adelgaza sin recomprimir.</h2>
+      <h2 class="acero titulo">{t.tamano.titulo}</h2>
       <p class="cuerpo">
-        Un vídeo trae doblajes y subtítulos que nunca vas a usar. Quitarlos no
-        es recodificar: es descartar pistas. El vídeo que queda es
-        <strong>idéntico bit a bit</strong> al de partida.
+        {t.tamano.cuerpoA}<strong>{t.tamano.cuerpoDestacado}</strong>{t.tamano.cuerpoB}
       </p>
 
       <div class="numeraco">
         <div class="salto">
-          <span class="antes cifras">1 GB</span>
+          <span class="antes cifras">{t.tamano.pesoAntes}</span>
           <span class="flecha" aria-hidden="true"></span>
-          <span class="despues cifras" data-peso>133 MB</span>
+          <span class="despues cifras" data-peso data-unidad={t.tamano.unidad}>
+            {t.tamano.pesoDespues}
+          </span>
         </div>
-        <p class="crono">en <span class="cifras">0,6 s</span></p>
+        <p class="crono">
+          {t.tamano.en} <span class="cifras">{t.tamano.crono}</span>
+        </p>
       </div>
 
       <ul class="pistas">
-        <li class="queda"><span class="lengua">spa</span> audio · se queda</li>
-        <li class="va"><span class="lengua">eng</span> audio · se va</li>
-        <li class="va"><span class="lengua">eng</span> subtítulos · se va</li>
+        {
+          t.tamano.pistas.map((p) => (
+            <li class={p.queda ? "queda" : "va"}>
+              <span class="lengua">{p.lengua}</span> {p.texto}
+            </li>
+          ))
+        }
       </ul>
 
-      <p class="sello" data-sello>vídeo idéntico</p>
+      <p class="sello" data-sello>{t.tamano.sello}</p>
     </div>
 
     <!-- Tiempo 2: el que ya se espera. Menos aire y menos cuerpo de letra. -->
     <div class="acto secundario">
-      <h3 class="subtitulo">Y si sí quieres recomprimir.</h3>
+      <h3 class="subtitulo">{t.tamano.subtitulo}</h3>
       <p class="cuerpo-2">
-        Reduce entre un <strong>80 y un 90 %</strong> con aceleración por
-        hardware. Pero antes de empezar te enseña un pronóstico del tamaño
-        final, y si quieres afinarlo lo mide de verdad codificando muestras
-        cortas. Ese «te lo digo antes de hacerlo» es el argumento, no el
-        porcentaje.
+        {t.tamano.cuerpo2A}<strong>{t.tamano.cuerpo2Destacado}</strong>{t.tamano.cuerpo2B}
       </p>
     </div>
   </div>
@@ -240,12 +245,15 @@
     // escribe «GB» en el punto de partida, que es donde la unidad cambia.
     const peso = document.querySelector<HTMLElement>("[data-peso]");
     if (peso) {
+      // La unidad viene del propio elemento, no escrita aquí: en inglés la
+      // sección entera cambia de idioma y el contador se quedaba en español.
+      const unidad = peso.dataset.unidad ?? "MB";
       const v = { n: 1024 };
       gsap.to(v, {
         n: 133,
         duration: 1.3,
         ease: "power2.out",
-        onUpdate: () => (peso.textContent = `${Math.round(v.n)} MB`),
+        onUpdate: () => (peso.textContent = `${Math.round(v.n)} ${unidad}`),
         scrollTrigger: { trigger: ".numeraco", start: "top 80%" },
       });
     }

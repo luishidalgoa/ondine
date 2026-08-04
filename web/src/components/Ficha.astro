@@ -1,6 +1,7 @@
 ---
 import type { Ficha } from "../data/biblioteca";
 import { fotograma } from "../data/caps";
+import { idiomaDe, textos } from "../i18n/textos";
 
 // Una ficha de episodio con sus dos estados apilados: el de arriba es cómo
 // llega el fichero (sin fotograma, con el nombre a pelo, que es exactamente lo
@@ -25,6 +26,10 @@ const { ficha, indice, estado = "ambos" } = Astro.props;
 // Se busca el fichero de verdad en la carpeta, sin exigir un nombre clavado.
 // Si no hay ninguno, no se pinta la etiqueta <img> siquiera.
 const imagen = fotograma(ficha.episodio, import.meta.env.BASE_URL);
+
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
+const v = ficha.textos[idioma];
 ---
 
 <article
@@ -53,7 +58,7 @@ const imagen = fotograma(ficha.episodio, import.meta.env.BASE_URL);
         imagen && (
           <img
             src={imagen}
-            alt={`Fotograma de ${ficha.titulo}`}
+            alt={`${t.ficha.fotogramaDe} ${v.titulo}`}
             loading="lazy"
             decoding="async"
           />
@@ -61,7 +66,7 @@ const imagen = fotograma(ficha.episodio, import.meta.env.BASE_URL);
       }
     </div>
     <div class="pie">
-      <h3 class="titulo">{ficha.titulo}</h3>
+      <h3 class="titulo">{v.titulo}</h3>
       <p class="episodio">{ficha.episodio}</p>
     </div>
   </div>
@@ -69,7 +74,7 @@ const imagen = fotograma(ficha.episodio, import.meta.env.BASE_URL);
   <!-- Cómo llega -->
   <div class="cara cruda" aria-hidden="true">
     <div class="hueco"></div>
-    <p class="nombre-crudo">{ficha.crudo}</p>
+    <p class="nombre-crudo">{v.crudo}</p>
   </div>
 </article>
 
