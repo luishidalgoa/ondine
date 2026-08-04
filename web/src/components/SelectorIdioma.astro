@@ -1,5 +1,29 @@
 ---
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { IDIOMAS, NOMBRE_IDIOMA, idiomaDe, textos } from "../i18n/textos";
+
+// Las banderas se leen del paquete EN COMPILACIÓN y se incrustan: pesan menos
+// de 1 KB cada una, así que no compensa una petición extra por bandera.
+//
+// Y son SVG y no emoji a propósito: en Windows, los emoji de bandera no se
+// pintan como banderas, sino como las dos letras del código de país. Justo el
+// sistema de la gente que usa Ondine.
+//
+// Bandera del Reino Unido y no de Estados Unidos porque el texto está escrito
+// en inglés británico: «licence», «organise», «film».
+const BANDERAS: Record<string, string> = Object.fromEntries(
+  ([
+    ["en", "GB"],
+    ["es", "ES"],
+  ] as const).map(([idioma, pais]) => [
+    idioma,
+    readFileSync(
+      join(process.cwd(), "node_modules/country-flag-icons/3x2", `${pais}.svg`),
+      "utf8",
+    ),
+  ]),
+);
 
 // El selector de idioma.
 //
@@ -17,11 +41,13 @@ const base = import.meta.env.BASE_URL;
 // La ruta equivalente en el otro idioma. Se calcula quitando el prefijo de
 // idioma y el de despliegue, y volviendo a montarlos: asi «/ondine/en/about»
 // sabe volver a «/ondine/sobre-mi» y no a la portada.
+// El inglés es el idioma por defecto, así que va sin prefijo y el castellano
+// cuelga de `es`.
 const EQUIVALENTES: Record<string, Record<string, string>> = {
-  "": { es: "", en: "en/" },
-  "sobre-mi": { es: "sobre-mi", en: "en/about" },
-  "en/about": { es: "sobre-mi", en: "en/about" },
-  "en": { es: "", en: "en/" },
+  "": { en: "", es: "es/" },
+  "es": { en: "", es: "es/" },
+  "about": { en: "about", es: "es/sobre-mi" },
+  "es/sobre-mi": { en: "about", es: "es/sobre-mi" },
 };
 
 const ruta = Astro.url.pathname
@@ -30,18 +56,14 @@ const ruta = Astro.url.pathname
 
 const destino = (idioma: string) => {
   const par = EQUIVALENTES[ruta];
-  const trozo = par ? par[idioma] : idioma === "es" ? "" : "en/";
+  const trozo = par ? par[idioma] : idioma === "en" ? "" : "es/";
   return `${base}/${trozo}`.replace(/\/{2,}/g, "/");
 };
 ---
 
 <details class="idioma" data-idioma>
   <summary aria-label={t.armazon.idioma}>
-    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
-      <circle cx="12" cy="12" r="9"></circle>
-      <path d="M3 12h18"></path>
-      <path d="M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9s1.3-6.3 3.9-9Z"></path>
-    </svg>
+    <span class="bandera" aria-hidden="true" set:html={BANDERAS[actual]} />
     <span class="codigo">{actual.toUpperCase()}</span>
     <span class="punta" aria-hidden="true"></span>
   </summary>
@@ -51,8 +73,9 @@ const destino = (idioma: string) => {
       IDIOMAS.map((i) => (
         <li>
           <a href={destino(i)} hreflang={i} aria-current={i === actual ? "true" : undefined}>
-            <span class="marca-actual" aria-hidden="true" />
+            <span class="bandera" aria-hidden="true" set:html={BANDERAS[i]} />
             {NOMBRE_IDIOMA[i]}
+            <span class="marca-actual" aria-hidden="true" />
           </a>
         </li>
       ))
@@ -84,7 +107,22 @@ const destino = (idioma: string) => {
     color: #e9e9ed;
   }
 
-  summary svg { width: 17px; height: 17px; flex: none; }
+  /* La bandera lleva un filo tenue por dentro: las dos tienen blanco en el
+     borde y sin él se derraman sobre el fondo oscuro. */
+  .bandera {
+    display: block;
+    width: 21px;
+    aspect-ratio: 3 / 2;
+    flex: none;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16);
+  }
+  .bandera :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
 
   .codigo {
     font-family: var(--font-mono);
@@ -120,7 +158,7 @@ const destino = (idioma: string) => {
   ul a {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.65rem;
     padding: 0.55rem 0.7rem;
     border-radius: 8px;
     font-size: 14px;
@@ -130,11 +168,13 @@ const destino = (idioma: string) => {
   ul a:hover { background: #292b31; color: #e9e9ed; }
 
   /* El idioma en curso se marca con un punto, y aquí sí está justificado: no
-     es adorno, es el único dato que distingue una opción de la otra. */
+     es adorno, es el único dato que distingue una opción de la otra. Va al
+     final para que las banderas queden alineadas entre sí. */
   .marca-actual {
     width: 5px;
     height: 5px;
     flex: none;
+    margin-left: auto;
     border-radius: 50%;
     background: transparent;
   }
