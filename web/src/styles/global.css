@@ -14,9 +14,16 @@
 
   --color-tinta: #e9e9ed;
   --color-tinta-2: #c9ccd6;
+  /* OJO con los dos últimos: NO son colores de texto.
+     Sobre el gradiente de fondo, el punto más claro deja a #8A8FA3 en 4,65 de
+     contraste, justo por encima del mínimo AA de 4,5. Cualquier gris más
+     oscuro que ese ya no llega: #6C7080 se queda en 2,93 y #4A4F63 en 1,84.
+     O sea que esta paleta admite UN solo gris de texto, y la jerarquía por
+     debajo tiene que salir del tamaño y del peso, no del color.
+     Estos dos se quedan para trazos, rayas y bordes. */
   --color-tinta-3: #8a8fa3;
-  --color-tinta-4: #6c7080;
-  --color-tinta-5: #4a4f63;
+  --color-trazo: #6c7080;
+  --color-trazo-tenue: #4a4f63;
 
   --color-acento: #968ae0;
   --color-acento-claro: #b5abfc;

@@ -1,0 +1,372 @@
+---
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import Base from "../layouts/Base.astro";
+import Marca from "../components/Marca.astro";
+import { siGithub } from "simple-icons";
+
+// La página de «sobre mí». Todo lo que se cuenta aquí del proyecto sale de leer
+// el código, no de lo que suena bien: los csproj, el motor y los flujos de CI.
+// Un apartado técnico con datos inventados lo detecta justo el público al que
+// va dirigido.
+const base = import.meta.env.BASE_URL;
+const REPO = "https://github.com/luishidalgoa/ondine";
+const PORTFOLIO = "https://portfolio.hdglabs.com";
+
+// El retrato es opcional: si no está el fichero, sale el monograma y no un
+// hueco roto. Basta con dejar la foto en `web/public/img/retrato.jpg`.
+const RETRATO = ["retrato.jpg", "retrato.png", "retrato.webp"]
+  .map((f) => ({ f, ruta: join(process.cwd(), "public/img", f) }))
+  .find(({ ruta }) => existsSync(ruta));
+
+const QUE_HACE = [
+  "Identifica cada episodio contra un catálogo y propone su nombre",
+  "Parte los ficheros que traen dos capítulos pegados",
+  "Quita doblajes y subtítulos sin recomprimir el vídeo",
+  "Comprime con aceleración por hardware y pronostica el tamaño antes",
+  "Nunca toca los originales salvo que se lo pidas",
+];
+
+const PILA = [
+  {
+    area: "Escritorio",
+    cosas: [
+      "C# 13 sobre .NET 9",
+      "WPF, con tema propio",
+      "Cero dependencias de NuGet",
+    ],
+  },
+  {
+    area: "Terminal",
+    cosas: [
+      ".NET 9 multiplataforma",
+      "Fichero único y autocontenido",
+      "Recortado: de 68 MB a 13",
+    ],
+  },
+  {
+    area: "Motor de vídeo",
+    cosas: ["ffmpeg y ffprobe", "HEVC, H.264 y AV1", "MKV, MP4 y WebM"],
+  },
+  {
+    area: "Aceleración",
+    cosas: [
+      "Intel Quick Sync",
+      "NVIDIA NVENC",
+      "AMD AMF",
+      "Respaldo por software si no hay",
+    ],
+  },
+  {
+    area: "Catálogo",
+    cosas: [
+      "Encargo escrito para la IA que tú uses",
+      "Sin clave ni servicio propio",
+      "Esquema reindex/1.0",
+    ],
+  },
+  {
+    area: "Distribución",
+    cosas: [
+      "GitHub Actions",
+      "Inno Setup para el instalador",
+      "Autoactualización desde Releases",
+      "96 pruebas en cada cambio",
+    ],
+  },
+];
+---
+
+<Base
+  titulo="Sobre mí · Ondine"
+  descripcion="Quién hay detrás de Ondine y con qué está construido."
+>
+  <div class="pagina">
+    <a class="miga" href={`${base}/`}>Volver a la portada</a>
+
+    <!-- Presentación -->
+    <section class="tarjeta presentacion">
+      <div class="retrato">
+        {
+          RETRATO ? (
+            <img src={`${base}/img/${RETRATO.f}`} alt="Luis Hidalgo" width="132" height="132" />
+          ) : (
+            <span class="monograma">LH</span>
+          )
+        }
+      </div>
+
+      <div class="quien">
+        <p class="rotulo"><span class="asterisco">✳</span>SOBRE MÍ</p>
+        <h1>Luis Hidalgo</h1>
+        <p class="bio">
+          Desarrollador full-stack. Diseño y construyo productos de principio a
+          fin: de la base de datos a la interfaz, pasando por infraestructura,
+          integraciones y diseño. Ondine es uno de esos productos, y este sitio
+          también.
+        </p>
+
+        <div class="botones">
+          <a class="primario" href={PORTFOLIO}>Ver mi portfolio</a>
+          <a class="secundario" href="https://github.com/luishidalgoa">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d={siGithub.path} /></svg>
+            GitHub
+          </a>
+          <a class="secundario" href={REPO}>
+            <Marca clase="marquita" />
+            Código de Ondine
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <div class="pareja">
+      <section class="tarjeta">
+        <h2>Qué es Ondine</h2>
+        <p>
+          Una aplicación de escritorio para Windows, y una herramienta de
+          terminal para Linux, macOS y Windows, que prepara una biblioteca de
+          series y películas antes de que Plex, Jellyfin o Kodi la escaneen.
+          Esos servidores enseñan una biblioteca preciosa, pero solo si los
+          ficheros ya vienen bien nombrados. Ondine es el paso intermedio.
+        </p>
+        <ul class="lista">
+          {QUE_HACE.map((q) => <li>{q}</li>)}
+        </ul>
+      </section>
+
+      <section class="tarjeta">
+        <h2>¿Hablamos?</h2>
+        <p>
+          Si quieres colaborar, contratarme o preguntarme cómo está hecho algo
+          de esto, en mi portfolio están los enlaces, la experiencia, el resto
+          de proyectos y las formas de contacto.
+        </p>
+        <a class="primario suelto" href={PORTFOLIO}>Abrir portfolio.hdglabs.com</a>
+      </section>
+    </div>
+
+    <section class="tarjeta">
+      <h2>Con qué está construido</h2>
+      <div class="pila">
+        {
+          PILA.map((p) => (
+            <div class="area">
+              <h3>{p.area}</h3>
+              <ul>
+                {p.cosas.map((c) => (
+                  <li>{c}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .pagina {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 7rem 1.5rem 5rem;
+    display: grid;
+    gap: 1.25rem;
+  }
+  @media (min-width: 1024px) {
+    .pagina { padding-inline: 2.5rem; }
+  }
+
+  .miga {
+    justify-self: start;
+    font-size: 14px;
+    color: #8a8fa3;
+    transition: color 0.2s;
+  }
+  .miga:hover { color: #e9e9ed; }
+
+  .tarjeta {
+    padding: clamp(1.5rem, 3.5vw, 2.25rem);
+    border-radius: 12px;
+    background: rgb(35 37 50 / 0.72);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+    backdrop-filter: blur(6px);
+  }
+
+  /* ── presentación ──────────────────────────────────────────────────────── */
+  .presentacion {
+    display: grid;
+    gap: 1.75rem;
+    align-items: start;
+  }
+  @media (min-width: 700px) {
+    .presentacion { grid-template-columns: auto minmax(0, 1fr); gap: 2.25rem; }
+  }
+
+  .retrato {
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: #292b31;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  }
+  .retrato img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .monograma {
+    font-size: 38px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: #8a8fa3;
+  }
+
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: #8a8fa3;
+  }
+  .asterisco { color: #968ae0; letter-spacing: 0; }
+
+  h1 {
+    margin-top: 0.9rem;
+    font-size: clamp(30px, 4.4vw, 44px);
+    line-height: 1.08;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  .bio {
+    margin-top: 1rem;
+    max-width: 62ch;
+    font-size: 16px;
+    line-height: 1.65;
+    color: #8a8fa3;
+  }
+
+  .botones {
+    margin-top: 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .primario,
+  .secundario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.35rem;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.1s;
+  }
+  .primario { background: #968ae0; color: #12101f; }
+  .primario:hover { background: #b5abfc; }
+
+  .secundario {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+    color: #c9ccd6;
+  }
+  .secundario:hover {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.28);
+    color: #e9e9ed;
+  }
+  .primario:active,
+  .secundario:active { transform: translateY(1px); }
+
+  .secundario svg { width: 17px; height: 17px; fill: currentColor; flex: none; }
+  .secundario :global(.marquita) {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    color: #968ae0;
+  }
+
+  .suelto { margin-top: 1.5rem; }
+
+  /* ── las dos tarjetas ──────────────────────────────────────────────────── */
+  .pareja {
+    display: grid;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .pareja { grid-template-columns: 1.25fr 1fr; }
+  }
+
+  h2 {
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .tarjeta p {
+    margin-top: 0.9rem;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #8a8fa3;
+  }
+
+  .lista {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .lista li {
+    position: relative;
+    padding-left: 1.4rem;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #c9ccd6;
+  }
+
+  /* Una raya corta en vez de un punto de color: los puntos delante de cada
+     línea son adorno, y aquí lo que se lee es la frase. */
+  .lista li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.68em;
+    width: 8px;
+    height: 1px;
+    background: #6c7080;
+  }
+
+  /* ── la pila ───────────────────────────────────────────────────────────── */
+  .pila {
+    margin-top: 1.75rem;
+    display: grid;
+    gap: 1.75rem 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
+
+  .area h3 {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #968ae0;
+  }
+
+  .area ul {
+    margin-top: 0.85rem;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .area li {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #8a8fa3;
+  }
+</style>
