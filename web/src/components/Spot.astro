@@ -1,12 +1,15 @@
 ---
-// El spot ya está producido y es el mejor material que existe. Se gana su sitio
-// justo antes de la descarga: quien llega hasta aquí ya está convencido y el
-// vídeo es lo que acaba de decidirlo.
+// El spot, servido desde la propia página. Nada de YouTube: un incrustado de
+// terceros mete scripts y cookies a quien solo pasaba por aquí, y además saca
+// al visitante de la página justo antes de la descarga, que es lo último que
+// interesa.
 //
-// Va como fachada: hasta que no se pulsa, no se carga nada de YouTube. Así la
-// página no arrastra scripts de terceros en la primera carga, ni pone una
-// cookie a quien solo pasaba por aquí.
-const VIDEO = "L8F6kxHy2z8";
+// El vídeo original pesaba 15,9 MB. Aquí va a 3,1 MB, a 1280 de ancho y con
+// los metadatos al principio del fichero para que empiece antes de acabar de
+// bajar. Lo comprimió Ondine, que es de lo que va esto.
+//
+// `preload="metadata"` es deliberado: sin pulsar no se descargan los 3 MB,
+// solo la cabecera. La portada es una imagen aparte de 59 KB.
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -14,27 +17,31 @@ const base = import.meta.env.BASE_URL;
   <div class="marco">
     <h2 class="acero titulo">Cuarenta y cuatro segundos.</h2>
 
-    <div class="marco-video">
-      <button class="fachada" data-fachada type="button" data-video={VIDEO}>
-        <img
-          src={`${base}/img/spot-portada.png`}
-          alt="Portada del spot de Ondine"
-          width="1920"
-          height="1080"
-          loading="lazy"
-          decoding="async"
-        />
-        <span class="disco" aria-hidden="true">
-          <span class="punta"></span>
-        </span>
-        <span class="rotulo-boton">Reproducir el spot</span>
+    <div class="reproductor" data-reproductor>
+      <video
+        data-video
+        poster={`${base}/spot-portada.jpg`}
+        preload="metadata"
+        playsinline
+        width="1920"
+        height="1080"
+      >
+        <source src={`${base}/spot-ondine.mp4`} type="video/mp4" />
+        Tu navegador no reproduce vídeo. <a href={`${base}/spot-ondine.mp4`}>
+          Descarga el spot</a
+        >.
+      </video>
+
+      <button class="disparo" data-disparo type="button">
+        <span class="disco" aria-hidden="true"><span class="punta"></span></span>
+        <span class="rotulo">Reproducir el spot</span>
       </button>
     </div>
   </div>
 </section>
 
 <style>
-  .spot { padding: clamp(5rem, 10vh, 8rem) 0; }
+  .spot { padding: clamp(3.5rem, 7vh, 5.5rem) 0; }
 
   .marco {
     margin: 0 auto;
@@ -50,81 +57,69 @@ const base = import.meta.env.BASE_URL;
     letter-spacing: -0.025em;
   }
 
-  .marco-video {
-    margin-top: clamp(1.75rem, 4vh, 2.75rem);
+  .reproductor {
+    position: relative;
+    margin-top: clamp(1.5rem, 3.5vh, 2.25rem);
     border-radius: 12px;
     overflow: hidden;
     background: #101120;
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
   }
 
-  .fachada {
-    position: relative;
-    display: block;
-    width: 100%;
-    cursor: pointer;
-    border: 0;
-    padding: 0;
-    background: none;
-  }
-
-  .fachada img {
+  .reproductor video {
     display: block;
     width: 100%;
     height: auto;
-    transition: opacity 0.3s;
   }
-  .fachada:hover img { opacity: 0.82; }
+
+  /* El disparador tapa el vídeo entero mientras no se ha pulsado. Al pulsar,
+     se retira y aparecen los controles nativos, que es lo que la gente ya
+     sabe manejar. */
+  .disparo {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    gap: 1rem;
+    border: 0;
+    padding: 0;
+    background: rgb(22 24 38 / 0.28);
+    cursor: pointer;
+    transition: opacity 0.35s, background-color 0.3s;
+  }
+  .disparo:hover { background: rgb(22 24 38 / 0.14); }
+  .disparo[hidden] { display: none; }
 
   .disco {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: clamp(60px, 7vw, 84px);
+    width: clamp(58px, 6.5vw, 82px);
     aspect-ratio: 1;
-    transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: rgb(150 138 224 / 0.92);
+    background: rgb(150 138 224 / 0.94);
     display: grid;
     place-items: center;
     transition: transform 0.2s, background-color 0.2s;
   }
-  .fachada:hover .disco {
-    background: #b5abfc;
-    transform: translate(-50%, -50%) scale(1.06);
-  }
+  .disparo:hover .disco { background: #b5abfc; transform: scale(1.06); }
 
-  /* El triángulo es geometría, no un icono dibujado a mano. */
+  /* Triángulo de geometría pura, no un icono dibujado a mano. */
   .punta {
     width: 0;
     height: 0;
-    margin-left: 15%;
+    margin-left: 16%;
+    font-size: clamp(15px, 1.7vw, 20px);
     border-top: 0.55em solid transparent;
     border-bottom: 0.55em solid transparent;
     border-left: 0.95em solid #12101f;
-    font-size: clamp(15px, 1.7vw, 20px);
   }
 
-  .rotulo-boton {
-    position: absolute;
-    left: 50%;
-    bottom: clamp(1rem, 4vh, 2rem);
-    transform: translateX(-50%);
-    padding: 0.45rem 1rem;
+  .rotulo {
+    padding: 0.4rem 0.95rem;
     border-radius: 999px;
-    background: rgb(22 24 38 / 0.78);
+    background: rgb(22 24 38 / 0.8);
     font-family: var(--font-mono);
     font-size: 12px;
     letter-spacing: 0.14em;
     color: #c9ccd6;
-    white-space: nowrap;
-  }
-
-  .marco-video :global(iframe) {
-    display: block;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border: 0;
   }
 </style>
 
@@ -134,30 +129,35 @@ const base = import.meta.env.BASE_URL;
 
   gsap.registerPlugin(ScrollTrigger);
 
-  const fachada = document.querySelector<HTMLButtonElement>("[data-fachada]");
-  fachada?.addEventListener("click", () => {
-    const id = fachada.dataset.video;
-    const marco = fachada.parentElement;
-    if (!id || !marco) return;
+  const video = document.querySelector<HTMLVideoElement>("[data-video]");
+  const disparo = document.querySelector<HTMLButtonElement>("[data-disparo]");
 
-    const iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
-    iframe.title = "Spot de Ondine";
-    iframe.allow =
-      "accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture";
-    iframe.allowFullscreen = true;
-    marco.replaceChildren(iframe);
+  disparo?.addEventListener("click", () => {
+    if (!video) return;
+    video.controls = true;
+    disparo.hidden = true;
+    // La reproducción la ha pedido una persona pulsando, así que puede sonar.
+    void video.play();
+  });
+
+  // Si se acaba, vuelve la portada: deja la sección como estaba en vez de
+  // quedarse con el último fotograma congelado.
+  video?.addEventListener("ended", () => {
+    if (!disparo) return;
+    video.controls = false;
+    video.load();
+    disparo.hidden = false;
   });
 
   const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!quieto) {
-    gsap.from("#spot .titulo, #spot .marco-video", {
+    gsap.from("#spot .titulo, #spot .reproductor", {
       opacity: 0,
       y: 26,
       duration: 0.75,
       stagger: 0.12,
       ease: "power2.out",
-      scrollTrigger: { trigger: "#spot", start: "top 75%" },
+      scrollTrigger: { trigger: "#spot", start: "top 78%" },
     });
   }
 </script>

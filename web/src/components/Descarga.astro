@@ -1,16 +1,68 @@
 ---
-// La descarga. Repite la llamada del hero con el MISMO texto: dos etiquetas
-// distintas para la misma intención es lo que hace dudar de dónde hay que
-// pulsar.
+// La descarga. Hay seis artefactos publicados y en lista plana serían seis
+// filas sin jerarquía, así que el botón abre un modal y allí se elige. Fuera
+// del modal solo hay una decisión: descargar o no.
 //
-// Las tres promesas van aquí dentro y no como sección propia. Son exactamente
-// lo que este público comprueba antes de instalar nada, pero no aguantan una
-// pantalla para ellas solas.
+// El modal es un <dialog> nativo. Trae encierro del foco, cierre con Escape y
+// fondo inerte de serie, sin librería ni JavaScript propio para nada de eso.
 
-const SALIDAS = [
-  { sistema: "Linux", orden: "curl -fsSL https://ondine.sh/instalar | sh" },
-  { sistema: "macOS", orden: "brew install ondine" },
-  { sistema: "Windows", orden: "winget install ondine" },
+const REPO = "https://github.com/luishidalgoa/ondine";
+const ULTIMA = `${REPO}/releases/latest/download`;
+
+const GRUPOS = [
+  {
+    sistema: "Windows",
+    opciones: [
+      {
+        etiqueta: "Instalador",
+        detalle: "Lo habitual. Crea accesos y se actualiza solo.",
+        // El instalador lleva la versión en el nombre, así que no admite
+        // enlace fijo a la última. Va a la página de versiones.
+        href: `${REPO}/releases/latest`,
+        peso: "55 MB",
+      },
+      {
+        etiqueta: "Portable",
+        detalle: "Un ejecutable suelto. No instala nada.",
+        href: `${ULTIMA}/ondine-windows-x64.exe`,
+        peso: "13 MB",
+      },
+    ],
+  },
+  {
+    sistema: "macOS",
+    opciones: [
+      {
+        etiqueta: "Apple Silicon",
+        detalle: "M1 en adelante.",
+        href: `${ULTIMA}/ondine-macos-arm64.tar.gz`,
+        peso: "5 MB",
+      },
+      {
+        etiqueta: "Intel",
+        detalle: "Mac anteriores a 2020.",
+        href: `${ULTIMA}/ondine-macos-x64.tar.gz`,
+        peso: "6 MB",
+      },
+    ],
+  },
+  {
+    sistema: "Linux",
+    opciones: [
+      {
+        etiqueta: "x64",
+        detalle: "La mayoría de equipos y servidores.",
+        href: `${ULTIMA}/ondine-linux-x64.tar.gz`,
+        peso: "6 MB",
+      },
+      {
+        etiqueta: "ARM64",
+        detalle: "Raspberry Pi y equipos ARM.",
+        href: `${ULTIMA}/ondine-linux-arm64.tar.gz`,
+        peso: "5 MB",
+      },
+    ],
+  },
 ];
 
 const PROMESAS = [
@@ -23,21 +75,11 @@ const PROMESAS = [
 <section id="descarga" class="descarga">
   <div class="marco">
     <h2 class="acero titulo">Ordena tu biblioteca.</h2>
+    <p class="apoyo">
+      Escritorio para Windows, y binarios para macOS y Linux.
+    </p>
 
-    <a class="boton-grande" href="https://github.com/luishidalgoa/ondine/releases/latest">
-      Descargar para Windows
-    </a>
-
-    <ul class="salidas">
-      {
-        SALIDAS.map((s) => (
-          <li>
-            <span class="sistema">{s.sistema}</span>
-            <code class="orden">{s.orden}</code>
-          </li>
-        ))
-      }
-    </ul>
+    <button class="boton-grande" type="button" data-abre>Descargar</button>
 
     <ul class="promesas">
       {PROMESAS.map((p) => <li>{p}</li>)}
@@ -45,9 +87,45 @@ const PROMESAS = [
   </div>
 </section>
 
+<dialog class="modal" data-modal aria-labelledby="modal-titulo">
+  <div class="modal-cabecera">
+    <h3 id="modal-titulo">Elige tu sistema</h3>
+    <button class="cerrar" type="button" data-cierra aria-label="Cerrar">
+      <span aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="grupos">
+    {
+      GRUPOS.map((g) => (
+        <section class="grupo">
+          <h4>{g.sistema}</h4>
+          <ul>
+            {g.opciones.map((o) => (
+              <li>
+                <a href={o.href}>
+                  <span class="etiqueta">{o.etiqueta}</span>
+                  <span class="detalle">{o.detalle}</span>
+                  <span class="peso">{o.peso}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+
+  <p class="modal-pie">
+    Todas las versiones y sus notas están en <a href={`${REPO}/releases`}
+      >la página de versiones</a
+    >.
+  </p>
+</dialog>
+
 <style>
   .descarga {
-    padding: clamp(6rem, 13vh, 10rem) 0;
+    padding: clamp(4.5rem, 9vh, 7rem) 0;
     border-top: 1px solid rgb(255 255 255 / 0.05);
   }
 
@@ -65,73 +143,46 @@ const PROMESAS = [
     letter-spacing: -0.03em;
   }
 
+  .apoyo {
+    margin-top: 1rem;
+    max-width: 44ch;
+    font-size: 17px;
+    line-height: 1.6;
+    color: #8a8fa3;
+  }
+
   .boton-grande {
-    display: inline-block;
-    margin-top: 2.25rem;
-    padding: 1.1rem 2.25rem;
+    margin-top: 2rem;
+    padding: 1.1rem 2.5rem;
+    border: 0;
     border-radius: 999px;
     background: #968ae0;
     color: #12101f;
+    font-family: inherit;
     font-size: 17px;
     font-weight: 500;
-    white-space: nowrap;
+    cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
   }
   .boton-grande:hover { background: #b5abfc; }
   .boton-grande:active { transform: translateY(1px); }
 
-  /* ── las otras salidas ─────────────────────────────────────────────────── */
-  .salidas {
-    margin-top: clamp(2.5rem, 6vh, 3.5rem);
-    display: grid;
-    gap: 0.75rem;
-    max-width: 760px;
-  }
-
-  .salidas li {
-    display: grid;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  @media (min-width: 640px) {
-    .salidas li { grid-template-columns: 92px minmax(0, 1fr); gap: 1rem; }
-  }
-
-  .sistema {
-    font-size: 14px;
-    color: #8a8fa3;
-  }
-
-  .orden {
-    display: block;
-    padding: 0.7rem 1rem;
-    border-radius: 8px;
-    background: #101120;
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: #c9ccd6;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  /* ── las promesas ──────────────────────────────────────────────────────── */
   .promesas {
-    margin-top: clamp(3rem, 7vh, 4.5rem);
+    margin-top: clamp(2.5rem, 5vh, 3.5rem);
     display: grid;
-    gap: 1rem;
+    gap: 0.85rem;
     max-width: 70ch;
   }
 
   .promesas li {
-    padding-left: 1.4rem;
     position: relative;
+    padding-left: 1.4rem;
     font-size: 15px;
     line-height: 1.6;
     color: #6c7080;
   }
 
-  /* Una raya corta en vez de un punto de color: los puntos de color delante de
+  /* Una raya corta y no un punto de color: los puntos de color delante de
      cada línea son adorno, y aquí lo que se lee es la frase. */
   .promesas li::before {
     content: "";
@@ -142,6 +193,138 @@ const PROMESAS = [
     height: 1px;
     background: #4a4f63;
   }
+
+  /* ── el modal ──────────────────────────────────────────────────────────── */
+  .modal {
+    width: min(560px, calc(100vw - 2rem));
+    max-height: min(80vh, 720px);
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: #232532;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.08),
+      0 24px 70px rgb(8 9 16 / 0.6);
+    color: #e9e9ed;
+    overflow: hidden;
+  }
+
+  .modal::backdrop {
+    background: rgb(12 13 22 / 0.72);
+    backdrop-filter: blur(3px);
+  }
+
+  .modal-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.35rem 1.5rem 1.1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  }
+
+  .modal-cabecera h3 {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .cerrar {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .cerrar:hover { background: rgb(255 255 255 / 0.07); }
+
+  /* La equis son dos trazos cruzados, no un icono dibujado a mano. */
+  .cerrar span,
+  .cerrar span::before {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 13px;
+    height: 1.5px;
+    background: #8a8fa3;
+    border-radius: 2px;
+  }
+  .cerrar span {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+  .cerrar span::before {
+    content: "";
+    left: 0;
+    top: 0;
+    transform: rotate(90deg);
+  }
+
+  .grupos {
+    padding: 0.5rem 1.5rem 0.75rem;
+    overflow-y: auto;
+    max-height: calc(80vh - 140px);
+  }
+
+  .grupo { padding: 1.1rem 0; }
+  .grupo + .grupo { border-top: 1px solid rgb(255 255 255 / 0.06); }
+
+  .grupo h4 {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #6c7080;
+  }
+
+  .grupo ul {
+    margin-top: 0.6rem;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .grupo a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.15rem 1rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 8px;
+    transition: background-color 0.15s;
+  }
+  .grupo a:hover { background: #292b31; }
+
+  .etiqueta {
+    font-size: 15px;
+    font-weight: 500;
+    color: #e9e9ed;
+  }
+
+  .detalle {
+    grid-column: 1;
+    font-size: 13px;
+    color: #6c7080;
+  }
+
+  .peso {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #4a4f63;
+    white-space: nowrap;
+  }
+
+  .modal-pie {
+    padding: 1rem 1.5rem 1.35rem;
+    border-top: 1px solid rgb(255 255 255 / 0.07);
+    font-size: 13px;
+    color: #6c7080;
+  }
+  .modal-pie a { color: #b5abfc; text-decoration: underline; text-underline-offset: 3px; }
 </style>
 
 <script>
@@ -150,17 +333,39 @@ const PROMESAS = [
 
   gsap.registerPlugin(ScrollTrigger);
 
+  const modal = document.querySelector<HTMLDialogElement>("[data-modal]");
+
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-abre]")
+    .forEach((b) => b.addEventListener("click", () => modal?.showModal()));
+
+  document
+    .querySelector<HTMLButtonElement>("[data-cierra]")
+    ?.addEventListener("click", () => modal?.close());
+
+  // Pulsar fuera del cuadro cierra. El <dialog> reparte los clics del fondo al
+  // propio elemento, así que basta con comprobar que el clic no cayó dentro.
+  modal?.addEventListener("click", (e) => {
+    const c = modal.getBoundingClientRect();
+    const fuera =
+      e.clientX < c.left ||
+      e.clientX > c.right ||
+      e.clientY < c.top ||
+      e.clientY > c.bottom;
+    if (fuera) modal.close();
+  });
+
   const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!quieto) {
     gsap.from(
-      "#descarga .titulo, #descarga .boton-grande, #descarga .salidas li, #descarga .promesas li",
+      "#descarga .titulo, #descarga .apoyo, #descarga .boton-grande, #descarga .promesas li",
       {
         opacity: 0,
         y: 20,
         duration: 0.6,
         stagger: 0.07,
         ease: "power2.out",
-        scrollTrigger: { trigger: "#descarga", start: "top 72%" },
+        scrollTrigger: { trigger: "#descarga", start: "top 75%" },
       },
     );
   }
