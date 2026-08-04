@@ -108,13 +108,16 @@ const OCHO = BIBLIOTECA.slice(0, 8);
     will-change: clip-path;
   }
 
+  /* Ocho fichas apaisadas: dos columnas en móvil y cuatro en escritorio, en
+     dos filas. En una sola fila de ocho quedarían tan estrechas que el
+     fotograma no se vería. */
   .rejilla {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: clamp(0.5rem, 1.2vw, 1rem);
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(0.6rem, 1.4vw, 1.1rem);
   }
   @media (min-width: 900px) {
-    .rejilla { grid-template-columns: repeat(8, 1fr); }
+    .rejilla { grid-template-columns: repeat(4, 1fr); }
   }
 
   .cortina {

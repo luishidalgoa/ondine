@@ -13,13 +13,13 @@ import { BIBLIOTECA } from "../data/biblioteca";
 // paralaje sale de que el plano está inclinado en perspectiva, no de un
 // fundido.
 //
-// Las columnas se reparten en cuatro para que el ojo tenga profundidad; la
-// primera queda casi entera bajo el velo y solo se intuye.
+// Tres columnas de cuatro. Con las fichas apaisadas, cuatro columnas salían
+// bajas y anchas y el mural dejaba de leerse como una pared; en tres, cada
+// columna gana alto y el paralaje tiene de qué tirar.
 const COLUMNAS = [
-  BIBLIOTECA.slice(0, 3),
-  BIBLIOTECA.slice(3, 6),
-  BIBLIOTECA.slice(6, 9),
-  BIBLIOTECA.slice(9, 12),
+  BIBLIOTECA.slice(0, 4),
+  BIBLIOTECA.slice(4, 8),
+  BIBLIOTECA.slice(8, 12),
 ];
 ---
 
@@ -30,7 +30,7 @@ const COLUMNAS = [
         COLUMNAS.map((columna, c) => (
           <div class="columna" data-columna={c}>
             {columna.map((ficha, f) => (
-              <Ficha ficha={ficha} indice={c * 3 + f} />
+              <Ficha ficha={ficha} indice={c * 4 + f} />
             ))}
           </div>
         ))
@@ -92,10 +92,10 @@ const COLUMNAS = [
     position: absolute;
     top: 50%;
     left: 34%;
-    width: min(1240px, 118vw);
+    width: min(1180px, 112vw);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
     transform: translateY(-50%) perspective(1500px) rotateY(-17deg) rotateX(7deg)
       rotate(-2.5deg);
     transform-origin: center center;
@@ -104,16 +104,15 @@ const COLUMNAS = [
   .columna {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 22px;
     will-change: transform;
   }
 
   /* Las columnas arrancan a distinta altura para que el mural no se lea como
      una retícula, sino como una pared. */
-  .columna[data-columna="0"] { margin-top: -190px; }
-  .columna[data-columna="1"] { margin-top: -60px; }
-  .columna[data-columna="2"] { margin-top: -240px; }
-  .columna[data-columna="3"] { margin-top: -110px; }
+  .columna[data-columna="0"] { margin-top: -120px; }
+  .columna[data-columna="1"] { margin-top: 40px; }
+  .columna[data-columna="2"] { margin-top: -170px; }
 
   /* ── el velo ───────────────────────────────────────────────────────────── */
   /* Sin esto el texto no se lee sobre el mural. Es un degradado del propio
@@ -264,7 +263,7 @@ const COLUMNAS = [
     // arriba-izquierda a abajo-derecha, que es como se recorre una pared.
     const orden = (el: HTMLElement) => {
       const i = Number(el.dataset.indice ?? 0);
-      return (i % 3) * 1.35 + Math.floor(i / 3);
+      return (i % 4) + Math.floor(i / 4) * 1.35;
     };
     fichas.sort((a, b) => orden(a) - orden(b));
 
@@ -297,7 +296,7 @@ const COLUMNAS = [
     // Paralaje. Cada columna se desplaza una cantidad distinta mientras el
     // hero sale de pantalla, y el plano se aleja un poco: con la perspectiva
     // puesta, eso se lee como profundidad y no como un simple deslizamiento.
-    const recorridos = [-150, -260, -80, -205];
+    const recorridos = [-160, -280, -95];
     recorridos.forEach((y, c) => {
       gsap.to(`[data-columna="${c}"]`, {
         y,

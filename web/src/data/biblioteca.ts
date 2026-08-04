@@ -24,11 +24,14 @@ export interface Ficha {
   crudo: string;
   /** Título del episodio que Ondine resuelve. */
   titulo: string;
-  /** Temporada y episodio ya identificados. */
+  /** Temporada y episodio ya identificados. También da el nombre del fichero
+   *  de imagen: S01E01 busca `img/caps/s01e01.jpg`. */
   episodio: string;
-  /** Tinte de la portada. Desaturado a propósito: la portada es contenido,
-   *  no interfaz, y el morado tiene que seguir siendo el único acento. */
+  /** Tinte de reserva. Va DEBAJO del fotograma, así que si la imagen falta o
+   *  todavía no está puesta, la ficha se degrada a un rectángulo de color de
+   *  la paleta en vez de a un icono de imagen rota. */
   tinte: string;
+  /** Geometría que se dibuja cuando no hay fotograma. */
   variante: Variante;
 }
 
