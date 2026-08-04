@@ -36,6 +36,13 @@
     <div class="hondura"></div>
     <div class="grano"></div>
   </div>
+
+  <!-- E · Gradiente en movimiento -->
+  <div class="capa" data-cual="e">
+    <span class="mancha m1"></span>
+    <span class="mancha m2"></span>
+    <span class="mancha m3"></span>
+  </div>
 </div>
 
 <style>
@@ -56,7 +63,8 @@
   :global(body[data-fondo="a"]) .capa[data-cual="a"],
   :global(body[data-fondo="b"]) .capa[data-cual="b"],
   :global(body[data-fondo="c"]) .capa[data-cual="c"],
-  :global(body[data-fondo="d"]) .capa[data-cual="d"] {
+  :global(body[data-fondo="d"]) .capa[data-cual="d"],
+  :global(body[data-fondo="e"]) .capa[data-cual="e"] {
     opacity: 1;
   }
 
@@ -67,13 +75,22 @@
      lo único que se mueve es una luz que la recorre muy despacio. */
   .reticula {
     position: absolute;
-    inset: 0;
+    /* Sobra por los cuatro lados: al derivar no puede asomar el borde. */
+    inset: -80px;
     background-image:
       linear-gradient(to right, rgb(255 255 255 / 0.035) 1px, transparent 1px),
       linear-gradient(to bottom, rgb(255 255 255 / 0.035) 1px, transparent 1px);
     background-size: 68px 68px;
     /* Se desvanece hacia los bordes para que no acabe en un corte seco. */
     mask-image: radial-gradient(120% 100% at 50% 35%, #000 30%, transparent 78%);
+    /* Deriva de una celda exacta y vuelve a empezar: el bucle es invisible
+       porque la retícula acaba justo donde empezó. */
+    animation: derivar 22s linear infinite;
+  }
+
+  @keyframes derivar {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(68px, 68px, 0); }
   }
 
   .barrido {
@@ -115,18 +132,91 @@
   /* El grano va en una capa fija y sin eventos, nunca sobre algo que se
      desplace: repintar ruido en un contenedor que hace scroll hunde los
      fotogramas por segundo en el móvil. */
+  /* El grano salta a ocho pasos por vuelta, no se desliza. Un grano que se
+     desplaza suave se lee como una textura arrastrándose; el de película
+     cambia de sitio de golpe cada fotograma. Se mueve con `transform`, que no
+     obliga a recalcular nada, y por eso sobra por los bordes. */
   .grano {
     position: absolute;
-    inset: 0;
+    inset: -60px;
     opacity: 0.4;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23r)' opacity='0.32'/%3E%3C/svg%3E");
+    animation: granear 0.72s steps(1, end) infinite;
   }
 
-  /* Sin movimiento se quedan los cuatro, pero quietos: la retícula sin luz que
-     pase, la hondura sin respirar, y los dos de lienzo pintan un solo
-     fotograma y paran. Un fondo quieto sigue siendo un fondo. */
+  @keyframes granear {
+    0%   { transform: translate3d(0, 0, 0); }
+    12%  { transform: translate3d(-22px, 14px, 0); }
+    25%  { transform: translate3d(17px, -26px, 0); }
+    37%  { transform: translate3d(-31px, -9px, 0); }
+    50%  { transform: translate3d(24px, 21px, 0); }
+    62%  { transform: translate3d(-12px, 30px, 0); }
+    75%  { transform: translate3d(29px, -17px, 0); }
+    87%  { transform: translate3d(-25px, -28px, 0); }
+  }
+
+  /* ── E · gradiente en movimiento ───────────────────────────────────────── */
+  /* Tres manchas grandes y muy difuminadas, cada una con su recorrido y su
+     duración. Como las duraciones no son múltiplos entre sí, la combinación
+     tarda muchísimo en repetirse y nunca se ve el bucle.
+     La brida que le mantengo: SOLO colores de la paleta. Un gradiente con
+     tonos inventados es lo que hace que una página se lea como generada; con
+     los morados de la marca, es la marca difuminada. */
+  .mancha {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform;
+  }
+
+  .m1 {
+    width: 62vw; height: 62vw;
+    top: -18%; left: -12%;
+    background: rgb(93 82 148 / 0.5);
+    animation: vagar1 31s ease-in-out infinite alternate;
+  }
+
+  .m2 {
+    width: 54vw; height: 54vw;
+    top: 24%; right: -16%;
+    background: rgb(121 108 191 / 0.34);
+    animation: vagar2 43s ease-in-out infinite alternate;
+  }
+
+  /* La tercera es la más pequeña y la más clara, y va abajo: sin ella el
+     gradiente se queda todo en la mitad de arriba y la página parece que se
+     apaga según bajas. */
+  .m3 {
+    width: 44vw; height: 44vw;
+    bottom: -22%; left: 26%;
+    background: rgb(150 138 224 / 0.22);
+    animation: vagar3 37s ease-in-out infinite alternate;
+  }
+
+  @keyframes vagar1 {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(16vw, 12vh, 0) scale(1.18); }
+  }
+  @keyframes vagar2 {
+    from { transform: translate3d(0, 0, 0) scale(1.1); }
+    to   { transform: translate3d(-14vw, -10vh, 0) scale(0.92); }
+  }
+  @keyframes vagar3 {
+    from { transform: translate3d(0, 0, 0) scale(0.95); }
+    to   { transform: translate3d(-11vw, -14vh, 0) scale(1.22); }
+  }
+
+  /* Sin movimiento se quedan los cinco, pero quietos: cada uno en un fotograma
+     que aguante solo. Un fondo quieto sigue siendo un fondo; lo que no puede
+     es desaparecer. */
   @media (prefers-reduced-motion: reduce) {
-    .barrido, .hondura { animation: none; }
+    .barrido,
+    .hondura,
+    .reticula,
+    .grano,
+    .mancha {
+      animation: none;
+    }
   }
 </style>
 

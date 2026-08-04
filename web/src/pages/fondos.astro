@@ -6,6 +6,10 @@ import Marca from "../components/Marca.astro";
 // Página para elegir fondo. No se enlaza desde el sitio. Se prueban sobre el
 // contenido real del hero, porque un fondo no se juzga solo: se juzga por si
 // deja leer lo que lleva encima.
+//
+// Los cinco se mueven. Solo dibuja el que está encendido: los de lienzo paran
+// su bucle y los de CSS quedan ocultos, así que no hay cinco fondos
+// animándose a la vez detrás de nada.
 const OPCIONES = [
   {
     id: "a",
@@ -31,9 +35,16 @@ const OPCIONES = [
   {
     id: "d",
     nombre: "Profundidad",
-    idea: "Casi nada: una respiración muy lenta y una capa de grano.",
+    idea: "Una respiración muy lenta y grano de película, saltando a ocho pasos por segundo.",
     pro: "El grano es lo que le quita a un fondo oscuro el aspecto de plano digital.",
     contra: "Puede leerse como que no hay fondo. Es la opción de no arriesgar.",
+  },
+  {
+    id: "e",
+    nombre: "Gradiente",
+    idea: "Tres manchas grandes y difuminadas, cada una con su recorrido y su duración.",
+    pro: "El más suave de los cinco y el que mejor deja leer lo que lleva encima. Como las duraciones no son múltiplos entre sí, el bucle no se ve nunca.",
+    contra: "Es la familia del fondo por defecto de cualquier página generada. Solo se salva porque usa los morados de la marca y ningún tono inventado; con otra paleta sería intercambiable con miles de sitios.",
   },
 ];
 ---
@@ -45,7 +56,7 @@ const OPCIONES = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark" />
-    <title>Fondos · cuatro pruebas</title>
+    <title>Fondos · cinco pruebas</title>
   </head>
   <body data-fondo="b">
     <Fondos />
