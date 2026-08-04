@@ -5,208 +5,242 @@
 <h1 align="center">Ondine</h1>
 
 <p align="center">
-  <b>Lo que pasas antes de que Plex escanee.</b>
+  <b>The step you run before Plex scans.</b>
 </p>
 
 <p align="center">
-  Plex, Jellyfin y Kodi enseñan una biblioteca preciosa — pero solo si los ficheros ya están
-  bien nombrados y colocados. Cuando no lo están, se rinden: el episodio sale como
-  «Desconocido», la película se confunde con otra, o directamente no aparece.
-  Ondine es la herramienta que pasas <b>antes</b>.
+  Plex, Jellyfin and Kodi show you a beautiful library, but only when the files are already
+  named and filed properly. When they are not, those servers give up: the episode shows up as
+  «Unknown», the film gets mistaken for another one, or it simply never appears.
+  Ondine is the step you run <b>before</b>.
 </p>
 
 <p align="center">
-  <b>App de escritorio para Windows</b> · <b>herramienta de terminal para Linux, macOS y Windows</b>
+  <b>Desktop app for Windows</b> · <b>terminal tool for Linux, macOS and Windows</b>
 </p>
 
 <p align="center">
-  <i>Antes se llamaba ShrinkStudio.</i>
+  <a href="README.es.md">Español</a> · <b>English</b>
 </p>
 
 ---
 
-Tres cosas, y las tres suben la **calidad del dato** de tu biblioteca:
+<p align="center">
+  <a href="https://ondine.hdglabs.com">
+    <img src="docs/img/spot-en.jpg" alt="Watch the Ondine spot" width="760">
+  </a>
+</p>
 
-- **Comprimir** — para que quepa. Reduce típicamente **un 80–90 %** manteniendo muy buena calidad
-  visual, con aceleración por hardware. Antes de empezar te enseña un **pronóstico** del tamaño
-  final, y si quieres afinarlo puede **medirlo de verdad** codificando muestras cortas. También
-  sabe **quitar doblajes y subtítulos sin recomprimir**: un episodio de 155 MB baja a 134 MB en
-  0,6 s, con el vídeo **idéntico bit a bit**.
-- **Organizar** — para que el servidor la reconozca. Identifica cada episodio de una carpeta
-  contra un catálogo y propone su nombre canónico. Entiende que **un episodio puede traer varias
-  historias dentro** (`E1a`, `E1b`, `E1c`), sabe **partirlo** en ficheros independientes, y te dice
-  **qué capítulos te faltan**.
-- **Recortes** — para quitar lo que sobra. Partir un vídeo en varios o cortarle un trozo, sin abrir
-  un editor.
+<p align="center">
+  <i>Forty-four seconds · <a href="https://ondine.hdglabs.com">plays on ondine.hdglabs.com</a></i>
+</p>
 
-**Nunca toca los originales** salvo que se lo pidas explícitamente, y en ese caso van a la papelera,
-nunca a borrado definitivo. Todo ocurre **en tu máquina**: no manda tus ficheros a ninguna parte.
+---
 
-> Cambios de cada versión: [`CHANGELOG.md`](CHANGELOG.md) · Hacia dónde va: [`ROADMAP.md`](ROADMAP.md).
+Three things, and all three raise the **quality of the data** in your library:
 
-## Así se ve
+- **Compress**, so it fits. Typically **80 to 90% smaller** while keeping the picture where it
+  should be, using hardware acceleration. Before it starts it shows you a **forecast** of the
+  final size, and if you want that sharper it can **measure it for real** by encoding short
+  samples. It also knows how to **drop dubs and subtitles without re-encoding**: a 155 MB
+  episode falls to 134 MB in 0.6 s, with the video **identical bit for bit**.
+- **Organise**, so the server recognises it. It matches every episode in a folder against a
+  catalogue and proposes its canonical name. It understands that **one episode can carry several
+  stories inside** (`E1a`, `E1b`, `E1c`), knows how to **split it** into separate files, and tells
+  you **which episodes you are missing**.
+- **Trim**, to remove what does not belong. Split a video into several, or cut a chunk out of it,
+  without opening an editor.
 
-**Comprimir** — analiza una carpeta entera y enseña las pistas de cada vídeo: códec, duración,
-idiomas de audio y subtítulos. Después comprime en tanda, y el panel de la derecha pronostica el
-tamaño final y el ahorro.
+**It never touches the originals** unless you explicitly ask it to, and even then they go to the
+recycle bin, never to permanent deletion. Everything happens **on your machine**: it sends your
+files nowhere.
 
-![La pestaña Comprimir con una temporada analizada: 26 vídeos con su códec, duración e idiomas](docs/img/comprimir.png)
+> What changed in each version: [`CHANGELOG.md`](CHANGELOG.md) · Where it is going:
+> [`ROADMAP.md`](ROADMAP.md).
 
-**Organizar** — compara los ficheros de una carpeta con un catálogo de episodios y propone el nombre
-de cada uno, agrupados por temporada. El color dice de qué fiarte, y no se renombra nada hasta que lo
-apruebas.
+## What it looks like
 
-![La pestaña Organizar: 246 ficheros contra el catálogo, 246 correctos y ningún conflicto](docs/img/organizar.png)
+> The interface is currently in Spanish. English is on the way; the screenshots below are the
+> real app, not mock-ups.
 
-**Recortes** — parte un vídeo en varios o quítale un trozo. Cada tramo sale como un fichero aparte, y
-el original solo se borra si salen todos. Cuando el nombre trae dos títulos, el segundo tramo se
-bautiza solo.
+**Compress** scans a whole folder and lists the tracks of every video: codec, duration, audio and
+subtitle languages. Then it compresses in batch, and the panel on the right forecasts the final
+size and the saving.
 
-![La pestaña Recortes con un capítulo partido en sus dos historias](docs/img/recortes.png)
+![The Compress tab with a season analysed: 26 videos with their codec, duration and languages](docs/img/comprimir.png)
 
-## Qué sabe hacer
+**Organise** compares the files in a folder against an episode catalogue and proposes a name for
+each one, grouped by season. Colour tells you what to trust, and nothing gets renamed until you
+approve it.
 
-- **Lotes de verdad.** Selección estilo explorador en la tabla: arrastra en banda, `Ctrl`/`Mayús`+clic,
-  `Ctrl+A`. Se procesa lo que esté seleccionado. `Supr` quita de la lista (sin tocar el archivo) y el
-  botón derecho abre un menú con más opciones.
-- **Pronóstico y medición.** Estimación en vivo de tamaño y ahorro con valoración calidad↔ahorro.
-  El botón *Medir con una muestra* codifica tres fragmentos y da la cifra real, calibrando de paso el
-  resto de la lista.
-- **No se atasca.** Si el disco se llena, **pausa** en vez de cancelarse o colgarse, y continúa sola en
-  cuanto liberas espacio, conservando la cola de pendientes.
-- **Idiomas y subtítulos.** Detecta las pistas, pone tu idioma preferido como predeterminado y descarta
-  los que no quieras conservar.
-- **Renombrado de la salida al estilo PowerRename**: buscar/reemplazar con expresiones regulares,
-  contadores, variables de fecha y formato del texto, con vista previa en vivo.
-- **Previsualización de 10 s** con los ajustes actuales, para comprobar antes de lanzar la tanda.
-- **Organizar: identificación y renombrado por catálogo.** Coteja una carpeta de episodios contra un
-  catálogo (JSON) y propone el nombre canónico de cada uno, identificándolos por título aunque el nombre
-  venga con la numeración y la morralla de la descarga. Marca el estado de cada fichero —limpio, con
-  cambio o conflicto— y aplica en bloque los que identifica con confianza; lo dudoso lo deja para que
-  decidas, sin inventar nunca. Ordena las columnas pulsando su cabecera.
-- **Recortes: partir y recortar.** Divide un vídeo en varios tramos o quítale un trozo —para separar
-  capítulos pegados o cortar intros— con previsualización de la línea de tiempo.
-- **Presets y preferencias** por pestañas, y actualizaciones automáticas desde GitHub.
+![The Organise tab: 246 files against the catalogue, 246 correct and no conflicts](docs/img/organizar.png)
 
-## Instalación
+**Trim** splits a video into several or cuts a piece out. Each segment comes out as its own file,
+and the original is only removed if all of them succeed. When the name carries two titles, the
+second segment names itself.
 
-### Windows — app de escritorio
+![The Trim tab with an episode split into its two stories](docs/img/recortes.png)
 
-1. Descarga el instalador de la página de **[Releases](https://github.com/luishidalgoa/ondine/releases/latest)** → `Ondine-Setup-X.Y.Z.exe`.
-2. Ejecútalo. Se instala **solo para tu usuario** (no pide permisos de administrador) y crea acceso
-   directo en el menú Inicio (y opcionalmente en el Escritorio).
-3. Como el instalador no está firmado, Windows SmartScreen puede avisar: pulsa
-   **Más información → Ejecutar de todas formas**.
+## What it can do
 
-> **FFmpeg** (única dependencia): el instalador lo **detecta automáticamente** y, si no lo tienes,
-> ofrece descargarlo e instalarlo junto a la app. No necesitas configurar nada.
+- **Real batches.** Explorer-style selection in the table: band drag, `Ctrl`/`Shift`+click,
+  `Ctrl+A`. Whatever is selected gets processed. `Del` removes from the list without touching the
+  file, and right click opens a menu with more options.
+- **Forecast and measurement.** Live estimate of size and saving with a quality-versus-saving
+  reading. The *Measure with a sample* button encodes three fragments and gives you the real
+  figure, calibrating the rest of the list along the way.
+- **It does not get stuck.** If the disk fills up it **pauses** instead of cancelling or hanging,
+  and carries on by itself as soon as you free space, keeping the queue intact.
+- **Languages and subtitles.** It detects the tracks, sets your preferred language as the default
+  one, and drops the ones you do not want to keep.
+- **PowerRename-style output renaming**: search and replace with regular expressions, counters,
+  date variables and text casing, with a live preview.
+- **Ten-second preview** with the current settings, so you can check before launching the batch.
+- **Organise: catalogue matching and renaming.** It checks a folder of episodes against a
+  catalogue (JSON) and proposes the canonical name for each, identifying them by title even when
+  the filename arrives with numbering and download clutter. It marks the state of every file
+  (clean, changed or conflicting) and applies in bulk the ones it identifies confidently; anything
+  doubtful is left for you to decide, and it never invents. Sort the columns by clicking a header.
+- **Trim: split and cut.** Divide a video into several segments or cut a piece out, to separate
+  episodes stuck together or remove intros, with a timeline preview.
+- **Presets and preferences** per tab, and automatic updates from GitHub.
 
-### Linux y macOS — terminal
+## Installing
 
-La interfaz gráfica usa WPF, que solo existe en Windows. Para el resto de sistemas se publica
-`ondine`, que comparte **exactamente el mismo motor**. Descarga el paquete de tu plataforma en
-[Releases](https://github.com/luishidalgoa/ondine/releases/latest) y descomprímelo:
+### Windows, desktop app
+
+1. Download the installer from the **[Releases](https://github.com/luishidalgoa/ondine/releases/latest)**
+   page: `Ondine-Setup-X.Y.Z.exe`.
+2. Run it. It installs **for your user only** (no administrator prompt) and creates a Start menu
+   shortcut, and optionally one on the Desktop.
+3. The installer is not signed, so Windows SmartScreen may warn you: click
+   **More info → Run anyway**.
+
+> **FFmpeg** is the only dependency, and the installer **detects it automatically**. If you do not
+> have it, it offers to download and install it alongside the app. There is nothing to configure.
+
+### Linux and macOS, terminal
+
+The graphical interface uses WPF, which only exists on Windows. For every other system there is
+`ondine`, which shares **exactly the same engine**. Download the package for your platform from
+[Releases](https://github.com/luishidalgoa/ondine/releases/latest) and unpack it:
 
 ```bash
-tar xzf ondine-linux-x64.tar.gz     # o linux-arm64, macos-arm64, macos-x64
+tar xzf ondine-linux-x64.tar.gz     # or linux-arm64, macos-arm64, macos-x64
 ./ondine --help
 ```
 
-Es un único binario autocontenido: no hace falta instalar .NET. Se entrega en `.tar.gz` porque así
-conserva el permiso de ejecución, que un fichero suelto pierde al descargarse.
+It is a single self-contained binary: you do not need to install .NET. It ships as `.tar.gz`
+because that preserves the execute permission, which a bare file loses when downloaded.
 
-En **Windows**, la herramienta de terminal se descarga directamente como
-`ondine-windows-x64.exe`, sin comprimir. Ojo: eso es el CLI, distinto del instalador
-`Ondine-Setup-X.Y.Z.exe`, que es la app de escritorio.
+On **Windows**, the terminal tool downloads directly as `ondine-windows-x64.exe`, uncompressed.
+Careful: that is the CLI, which is a different thing from the `Ondine-Setup-X.Y.Z.exe` installer,
+which is the desktop app.
 
-Necesita `ffmpeg` y `ffprobe` en el `PATH` (`apt install ffmpeg`, `brew install ffmpeg`).
+It needs `ffmpeg` and `ffprobe` on the `PATH` (`apt install ffmpeg`, `brew install ffmpeg`).
 
-## Uso
+## Using it
 
-### App de escritorio
+### Desktop app
 
-1. **Origen**: elige una carpeta (o archivos sueltos). Con *Subcarpetas* marcado, entra en las temporadas.
-2. **Analizar**: lista los vídeos con tamaño, duración, códec e idiomas de audio y subtítulos detectados.
-3. Ajusta las opciones (todas tienen valor por defecto) o elige un **preset**.
-4. Selecciona los vídeos y pulsa **Comprimir selección**. Verás el progreso en vivo, con **Pausar** y
-   **Detener** disponibles en cualquier momento.
+1. **Source**: pick a folder, or individual files. With *Subfolders* ticked, it walks into the
+   seasons.
+2. **Analyse**: lists the videos with size, duration, codec and the audio and subtitle languages
+   it detected.
+3. Adjust the options (they all have a sensible default) or pick a **preset**.
+4. Select the videos and hit **Compress selection**. You get live progress, with **Pause** and
+   **Stop** available at any moment.
 
-El **idioma principal** (español por defecto) se marca como pista de audio predeterminada; los idiomas
-que no elijas se descartan para ahorrar espacio.
+The **main language** (Spanish by default) is marked as the default audio track; the languages you
+do not pick are dropped to save space.
 
 ### Terminal
 
 ```bash
-# Comprimir una temporada entera a MP4 720p, con el audio a 128 kbps
-ondine comprimir serie/ -r --formato mp4 --alto 720 --audio 128 -o comprimidos/
+# Compress a whole season to 720p MP4 with 128 kbps audio
+ondine comprimir series/ -r --formato mp4 --alto 720 --audio 128 -o compressed/
 
-# Ver qué pistas tiene cada vídeo
-ondine analizar serie/ -r
+# See what tracks each video carries
+ondine analizar series/ -r
 
-# Medir cuánto va a ocupar de verdad, sin comprimirlo entero
-ondine medir capitulo.mkv --alto 720
+# Measure how much it will really take, without compressing the whole thing
+ondine medir episode.mkv --alto 720
 
-# Comprimir renombrando la salida con un contador
-ondine comprimir *.mkv --regex --buscar "^" --reemplazar 'T01E${padding=2;start=1} - ' --enumerar
+# Compress while renaming the output with a counter
+ondine comprimir *.mkv --regex --buscar "^" --reemplazar 'S01E${padding=2;start=1} - ' --enumerar
 ```
 
-`ondine --help` lista todas las opciones.
+`ondine --help` lists every option.
 
-## Actualizaciones automáticas
+> The command names and flags are in Spanish for now. They are part of the same translation pass
+> as the interface.
 
-La app comprueba al arrancar si hay una versión nueva en GitHub. Si la hay, al pulsar **Actualizar ahora**
-descarga el instalador, lo ejecuta y se cierra para completar la actualización, que reemplaza la versión
-anterior in-place. También puedes comprobarlo a mano con **Buscar actualizaciones**.
+## Automatic updates
 
-## Desarrollo
+The app checks GitHub for a newer version on startup. If there is one, hitting **Update now**
+downloads the installer, runs it and closes the app to complete the update, which replaces the
+previous version in place. You can also check by hand with **Check for updates**.
 
-Requisitos: **.NET 9 SDK** e **Inno Setup 6** (`winget install JRSoftware.InnoSetup`).
+## Development
+
+Requirements: **.NET 9 SDK** and **Inno Setup 6** (`winget install JRSoftware.InnoSetup`).
 
 ```powershell
-# Ejecutar la app en desarrollo
+# Run the app in development
 dotnet run --project src/Ondine
 
-# Ejecutar la herramienta de terminal
+# Run the terminal tool
 dotnet run --project src/Ondine.Cli -- --help
 
-# Compilar el instalador completo (icono + .exe self-contained + instalador Inno)
+# Build the whole installer (icon + self-contained .exe + Inno installer)
 pwsh -File build.ps1
 # -> installer/Output/Ondine-Setup-<version>.exe
 ```
 
-### Publicar una versión
+### Publishing a release
 
-Todo se compila en la nube, sin dependencias locales:
+Everything builds in the cloud, with no local dependencies:
 
-1. Añade la sección de la versión en [`CHANGELOG.md`](CHANGELOG.md) (`## [X.Y.Z] - AAAA-MM-DD`).
-2. Sube `<Version>` **en los dos** `.csproj` (`src/Ondine` y `src/Ondine.Cli`).
+1. Add the version section to [`CHANGELOG.md`](CHANGELOG.md) (`## [X.Y.Z] - YYYY-MM-DD`).
+2. Bump `<Version>` in **both** `.csproj` files (`src/Ondine` and `src/Ondine.Cli`).
 3. `git tag vX.Y.Z && git push --follow-tags`.
 
-[GitHub Actions](.github/workflows/build.yml) **verifica primero el contrato del CHANGELOG** —que la
-sección exista, que las versiones cuadren y que las categorías sean válidas— y solo entonces compila el
-instalador de Windows y los binarios de terminal para Linux, macOS y Windows, adjuntándolo todo al
-Release. Si el contrato no se cumple, no se publica nada.
+[GitHub Actions](.github/workflows/build.yml) **checks the CHANGELOG contract first**, that the
+section exists, that the versions match and that the categories are valid, and only then builds the
+Windows installer and the terminal binaries for Linux, macOS and Windows, attaching everything to
+the Release. If the contract is not met, nothing gets published.
 
-### Estructura
+### Layout
 
-| Carpeta | Qué es |
+| Folder | What it is |
 |---|---|
-| `src/Ondine/` | App C#/WPF. `Engine.cs` es el motor (FFmpeg); el resto es interfaz y auto-update. |
-| `src/Ondine.Cli/` | Herramienta de terminal multiplataforma. Enlaza los fuentes del motor, no los copia. |
-| `installer/` | Script de Inno Setup. |
-| `make-icon.ps1` | Genera el icono con GDI+. |
-| `build.ps1` | Compila todo de punta a punta. |
-| `legacy/` | La versión original en PowerShell, con la que nació el proyecto. |
+| `src/Ondine/` | C#/WPF app. `Engine.cs` is the engine (FFmpeg); the rest is interface and auto-update. |
+| `src/Ondine.Cli/` | Cross-platform terminal tool. It links the engine sources, it does not copy them. |
+| `installer/` | Inno Setup script. |
+| `web/` | The site at [ondine.hdglabs.com](https://ondine.hdglabs.com), on Astro. |
+| `spot/` | The forty-four second spot, built as HTML compositions. |
+| `make-icon.ps1` | Generates the icon with GDI+. |
+| `build.ps1` | Builds everything end to end. |
+| `legacy/` | The original PowerShell version the project was born as. |
 
-> **La interfaz gráfica es solo para Windows** porque usa **WPF**, que no tiene runtime en Linux ni macOS.
-> El motor (`Engine`, `Estimator`, `RenameRule`) sí es portable, y es justo lo que reutiliza la
-> herramienta de terminal. Llevar la interfaz completa a Linux/macOS exigiría migrarla a **Avalonia**.
+> **The graphical interface is Windows only** because it uses **WPF**, which has no runtime on
+> Linux or macOS. The engine (`Engine`, `Estimator`, `RenameRule`) is portable, and that is exactly
+> what the terminal tool reuses. Bringing the full interface to Linux and macOS would mean porting
+> it to **Avalonia**.
 
-## Cómo funciona
+## How it works
 
-- Detecta las pistas con `ffprobe` y reordena el audio para poner tu idioma preferido primero y como
-  predeterminado.
-- Elige el codificador por hardware disponible (Intel QSV, NVIDIA NVENC, AMD AMF) o cae a CPU (`libx265`).
-- Salta lo ya comprimido (HEVC/AV1 con bitrate bajo) y los archivos que aún se están descargando.
-- Escribe siempre a un temporal y solo lo mueve al destino cuando termina bien, así una interrupción
-  nunca deja un vídeo a medias haciéndose pasar por bueno.
+- It detects the tracks with `ffprobe` and reorders the audio to put your preferred language first
+  and mark it as default.
+- It picks whichever hardware encoder is available (Intel QSV, NVIDIA NVENC, AMD AMF) or falls back
+  to the CPU (`libx265`).
+- It skips what is already compressed (HEVC/AV1 at a low bitrate) and files that are still
+  downloading.
+- It always writes to a temporary file and only moves it to the destination when it finishes
+  cleanly, so an interruption never leaves a half-written video passing itself off as a good one.
+
+---
+
+<p align="center">
+  <i>It used to be called ShrinkStudio.</i>
+</p>
