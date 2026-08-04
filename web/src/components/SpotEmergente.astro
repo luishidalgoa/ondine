@@ -17,10 +17,18 @@ import Escenario from "./Escenario.astro";
 // El vídeo original pesaba 15,9 MB. Aquí va a 3,1 MB, a 1280 de ancho y con
 // los metadatos al principio del fichero. Lo comprimió Ondine.
 
+// Esta sección va SIN rótulo, y es una decisión, no un olvido.
+//
+// Aquí no hay nada que presentar: el vídeo es el contenido, y sale del agua a
+// pantalla completa. Un titular encima compite con el único momento de la
+// página que se sostiene solo. Y decir cuánto dura es peor todavía: informa
+// del precio de mirarlo, que es justo lo que hace dudar.
+//
+// Si algún día hace falta texto aquí, `titulo` lo acepta. Por defecto no hay.
 interface Props {
   titulo?: string;
 }
-const { titulo = "Cuarenta y cuatro segundos." } = Astro.props;
+const { titulo } = Astro.props;
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -28,7 +36,7 @@ const base = import.meta.env.BASE_URL;
   <div class="lienzo">
     <Escenario />
 
-    <h2 class="acero titulo">{titulo}</h2>
+    {titulo && <h2 class="acero titulo">{titulo}</h2>}
 
     <div class="escena">
       <div class="marco-video" data-marco>
@@ -221,12 +229,15 @@ const base = import.meta.env.BASE_URL;
       0,
     );
 
-    gsap.from(seccion.querySelector(".titulo"), {
-      opacity: 0,
-      y: 22,
-      duration: 0.7,
-      ease: "power2.out",
-      scrollTrigger: { trigger: seccion, start: "top 70%" },
-    });
+    const rotulo = seccion.querySelector(".titulo");
+    if (rotulo) {
+      gsap.from(rotulo, {
+        opacity: 0,
+        y: 22,
+        duration: 0.7,
+        ease: "power2.out",
+        scrollTrigger: { trigger: seccion, start: "top 70%" },
+      });
+    }
   });
 </script>

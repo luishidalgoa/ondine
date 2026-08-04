@@ -37,11 +37,9 @@
     <div class="grano"></div>
   </div>
 
-  <!-- E · Gradiente en movimiento -->
+  <!-- E · Gradiente de malla que fluye -->
   <div class="capa" data-cual="e">
-    <span class="mancha m1"></span>
-    <span class="mancha m2"></span>
-    <span class="mancha m3"></span>
+    <canvas data-lienzo="e"></canvas>
   </div>
 </div>
 
@@ -155,55 +153,21 @@
     87%  { transform: translate3d(-25px, -28px, 0); }
   }
 
-  /* ── E · gradiente en movimiento ───────────────────────────────────────── */
-  /* Tres manchas grandes y muy difuminadas, cada una con su recorrido y su
-     duración. Como las duraciones no son múltiplos entre sí, la combinación
-     tarda muchísimo en repetirse y nunca se ve el bucle.
-     La brida que le mantengo: SOLO colores de la paleta. Un gradiente con
-     tonos inventados es lo que hace que una página se lea como generada; con
-     los morados de la marca, es la marca difuminada. */
-  .mancha {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(90px);
-    will-change: transform;
-  }
-
-  .m1 {
-    width: 62vw; height: 62vw;
-    top: -18%; left: -12%;
-    background: rgb(93 82 148 / 0.5);
-    animation: vagar1 31s ease-in-out infinite alternate;
-  }
-
-  .m2 {
-    width: 54vw; height: 54vw;
-    top: 24%; right: -16%;
-    background: rgb(121 108 191 / 0.34);
-    animation: vagar2 43s ease-in-out infinite alternate;
-  }
-
-  /* La tercera es la más pequeña y la más clara, y va abajo: sin ella el
-     gradiente se queda todo en la mitad de arriba y la página parece que se
-     apaga según bajas. */
-  .m3 {
-    width: 44vw; height: 44vw;
-    bottom: -22%; left: 26%;
-    background: rgb(150 138 224 / 0.22);
-    animation: vagar3 37s ease-in-out infinite alternate;
-  }
-
-  @keyframes vagar1 {
-    from { transform: translate3d(0, 0, 0) scale(1); }
-    to   { transform: translate3d(16vw, 12vh, 0) scale(1.18); }
-  }
-  @keyframes vagar2 {
-    from { transform: translate3d(0, 0, 0) scale(1.1); }
-    to   { transform: translate3d(-14vw, -10vh, 0) scale(0.92); }
-  }
-  @keyframes vagar3 {
-    from { transform: translate3d(0, 0, 0) scale(0.95); }
-    to   { transform: translate3d(-11vw, -14vh, 0) scale(1.22); }
+  /* ── E · gradiente de malla que fluye ──────────────────────────────────── */
+  /* La referencia usa un canvas WebGL a pantalla completa. Aquí no hace falta
+     traer un shader a la página para conseguir ese aspecto.
+     El truco: se pinta el campo de color en un lienzo MINÚSCULO, de unos 120
+     píxeles de ancho, y se estira a pantalla completa. Al ampliar, el
+     navegador interpola y lo que era un mosaico se vuelve un degradado
+     continuo; el desenfoque remata lo que quede. Son unos 7.000 píxeles por
+     fotograma en vez de dos millones, o sea que va suave hasta en un móvil
+     viejo y sin contexto de WebGL. */
+  .capa[data-cual="e"] canvas {
+    width: 100%;
+    height: 100%;
+    filter: blur(46px) saturate(1.15);
+    /* Se pasa del borde para que el desenfoque no deje halo en los cantos. */
+    transform: scale(1.2);
   }
 
   /* Sin movimiento se quedan los cinco, pero quietos: cada uno en un fotograma
@@ -213,8 +177,7 @@
     .barrido,
     .hondura,
     .reticula,
-    .grano,
-    .mancha {
+    .grano {
       animation: none;
     }
   }
@@ -366,5 +329,68 @@
     function suave(x: number) {
       return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     }
+  }
+
+  // ── E · gradiente de malla que fluye ─────────────────────────────────────
+  // Un campo de color continuo que se deforma solo. La referencia lo hace con
+  // un shader; aquí se pinta a mano en un lienzo diminuto y se estira, que da
+  // el mismo aspecto por una fracción del coste.
+  //
+  // El campo sale de sumar varias ondas con periodos que no encajan entre sí.
+  // Es la vieja «plasma»: barata, continua y sin costuras, y desenfocada no se
+  // distingue del ruido de un shader.
+  //
+  // La brida que le mantengo: SOLO colores de la paleta. Un gradiente con
+  // tonos inventados es lo que hace que una página se lea como generada; con
+  // los morados de la marca, es la marca difuminada.
+  const le = document.querySelector<HTMLCanvasElement>("[data-lienzo='e']");
+  if (le) {
+    // Fijo y pequeño a propósito: no depende del tamaño de la pantalla, porque
+    // luego se estira. En un monitor de 4K cuesta exactamente lo mismo.
+    const A = 120, H = 68;
+    le.width = A;
+    le.height = H;
+    const ctx = le.getContext("2d")!;
+    const imagen = ctx.createImageData(A, H);
+    const px = imagen.data;
+
+    // La rampa: del lienzo al morado hondo y de ahí al acento. El punto más
+    // claro apenas asoma, para que el fondo no compita con el texto.
+    const RAMPA: Array<[number, number, number, number]> = [
+      [0.0, 0x16, 0x18, 0x26],
+      [0.42, 0x22, 0x22, 0x3c],
+      [0.72, 0x4a, 0x41, 0x76],
+      [1.0, 0x6d, 0x60, 0xa8],
+    ];
+
+    const color = (t: number) => {
+      let i = 0;
+      while (i < RAMPA.length - 2 && t > RAMPA[i + 1][0]) i++;
+      const [t0, r0, g0, b0] = RAMPA[i];
+      const [t1, r1, g1, b1] = RAMPA[i + 1];
+      const f = (t - t0) / (t1 - t0 || 1);
+      return [r0 + (r1 - r0) * f, g0 + (g1 - g0) * f, b0 + (b1 - b0) * f];
+    };
+
+    bucle("e", (t) => {
+      let n = 0;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < A; x++) {
+          const u = x / A, v = y / H;
+          // Cuatro ondas con periodos que no son múltiplos entre sí: la suma
+          // no vuelve a repetirse en un tiempo que nadie va a estar mirando.
+          const s =
+            Math.sin(u * 4.1 + t * 0.16) +
+            Math.sin(v * 3.3 - t * 0.11) +
+            Math.sin((u + v) * 5.7 + t * 0.09) +
+            Math.sin(Math.hypot(u - 0.5, v - 0.55) * 8.2 - t * 0.13);
+
+          // De -4..4 a 0..1, y elevado para que lo claro ocupe poco sitio.
+          const [r, g, b] = color(Math.pow((s + 4) / 8, 1.7));
+          px[n++] = r; px[n++] = g; px[n++] = b; px[n++] = 255;
+        }
+      }
+      ctx.putImageData(imagen, 0, 0);
+    });
   }
 </script>
