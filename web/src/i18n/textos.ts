@@ -22,6 +22,8 @@ const es = {
     descripcion:
       "Identifica cada episodio contra un catálogo, parte los ficheros que traen dos capítulos pegados y quita las pistas que no usas sin recomprimir. Los nombres quedan escritos como los metadatos esperan encontrarlos.",
     tituloSobreMi: "Sobre mí · Ondine",
+    altVistaPrevia:
+      "La misma biblioteca antes y después de pasarla por Ondine, con el nombre de Ondine encima.",
     descripcionSobreMi: "Quién hay detrás de Ondine y con qué está construido.",
   },
 
@@ -223,6 +225,8 @@ const en: typeof es = {
     descripcion:
       "Matches every episode against a catalogue, splits the files that carry two episodes stuck together, and drops the tracks you never use without re-encoding. Names end up written the way metadata expects to find them.",
     tituloSobreMi: "About · Ondine",
+    altVistaPrevia:
+      "The same library before and after running it through Ondine, with the Ondine name over it.",
     descripcionSobreMi: "Who is behind Ondine, and what it is built with.",
   },
 

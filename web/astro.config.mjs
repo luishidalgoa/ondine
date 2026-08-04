@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
+import sitemap from "@astrojs/sitemap";
 
 // El sitio vive en su propio dominio, así que se sirve desde la raíz y no
 // cuelga de ninguna subcarpeta. Todo lo demás se compone a partir de estas dos
@@ -39,6 +40,20 @@ export default defineConfig({
     "/en/about": `${BASE}/about`,
     "/sobre-mi": `${BASE}/es/sobre-mi`,
   },
+
+  integrations: [
+    sitemap({
+      // La página de comprobación de fotogramas no es contenido del sitio.
+      filter: (pagina) => !pagina.includes("/caps"),
+      // Con esto el sitemap declara que cada página tiene su equivalente en el
+      // otro idioma. Es lo que evita que el buscador elija una y entierre la
+      // otra por parecerle contenido duplicado.
+      i18n: {
+        defaultLocale: "en",
+        locales: { en: "en", es: "es" },
+      },
+    }),
+  ],
 
   vite: {
     plugins: [tailwindcss()],

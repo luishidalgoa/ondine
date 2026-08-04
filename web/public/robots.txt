@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Página de comprobación de fotogramas: es una herramienta de trabajo, no
+# contenido. Lleva `noindex` en su propia cabecera, pero decirlo también aquí
+# evita que se gaste presupuesto de rastreo en llegar hasta ella.
+Disallow: /caps
+
+Sitemap: https://ondine.hdglabs.com/sitemap-index.xml
