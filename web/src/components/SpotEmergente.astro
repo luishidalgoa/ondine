@@ -31,7 +31,17 @@ interface Props {
 }
 const { titulo } = Astro.props;
 import { ruta } from "../lib/rutas";
-const t = textos(Astro.currentLocale);
+import { idiomaDe } from "../i18n/textos";
+
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
+
+// Hay un spot por idioma, no uno subtitulado: el spot no lleva voz, lleva
+// rótulos, y un rótulo traducido tiene que estar EN la imagen. Además la
+// versión inglesa cambia el catálogo de ejemplo y la carátula, porque quien la
+// ve tiene que reconocer una biblioteca suya.
+const VIDEO = idioma === "en" ? "spot-ondine-en.mp4" : "spot-ondine.mp4";
+const PORTADA = idioma === "en" ? "spot-portada-en.jpg" : "spot-portada.jpg";
 ---
 
 <section class="emergente" data-spot>
@@ -44,7 +54,7 @@ const t = textos(Astro.currentLocale);
       <div class="marco-video" data-marco>
         <video
           data-video
-          poster={ruta("spot-portada.jpg")}
+          poster={ruta(PORTADA)}
           preload="metadata"
           muted
           loop
@@ -52,9 +62,9 @@ const t = textos(Astro.currentLocale);
           width="1920"
           height="1080"
         >
-          <source src={ruta("spot-ondine.mp4")} type="video/mp4" />
+          <source src={ruta(VIDEO)} type="video/mp4" />
           {t.spot.sinVideo}
-          <a href={ruta("spot-ondine.mp4")}>{t.spot.descargarSpot}</a>.
+          <a href={ruta(VIDEO)}>{t.spot.descargarSpot}</a>.
         </video>
 
         <button
