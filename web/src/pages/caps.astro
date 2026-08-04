@@ -8,14 +8,13 @@ import { fotograma } from "../data/caps";
 // la que se ha colado en el episodio equivocado o la que se ve mal recortada.
 // En el mural del hero eso no se puede comprobar, porque va en perspectiva y
 // la mitad queda fuera del encuadre a propósito.
-const base = import.meta.env.BASE_URL;
 // Los dos idiomas a la vez: es una página de comprobación y lo que se busca
 // es cazar el fotograma que falta o el que se ha colado en otro episodio.
 const filas = BIBLIOTECA.map((f) => ({
   episodio: f.episodio,
   titulo: f.textos.es.titulo,
   tituloEn: f.textos.en.titulo,
-  src: fotograma(f.episodio, base),
+  src: fotograma(f.episodio),
 }));
 const puestas = filas.filter((f) => f.src).length;
 ---

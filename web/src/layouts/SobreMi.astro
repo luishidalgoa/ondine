@@ -8,18 +8,18 @@ import { siGithub } from "simple-icons";
 // cuenta aquí del proyecto sale de leer el código, no de lo que suena bien:
 // los csproj, el motor y los flujos de CI. Un apartado técnico con datos
 // inventados lo detecta justo el público al que va dirigido.
-const base = import.meta.env.BASE_URL;
+import { ruta } from "../lib/rutas";
 const idioma = idiomaDe(Astro.currentLocale);
 const t = textos(idioma);
 
 const REPO = "https://github.com/luishidalgoa/ondine";
 const PORTFOLIO = "https://portfolio.hdglabs.com";
 
-// El retrato se sirve desde su origen, no copiado al repositorio: así se cambia
-// en un sitio y se actualiza aquí sola. A cambio, la página depende de que ese
-// host responda, y por eso el monograma sigue debajo: si la imagen no llega,
-// `onerror` la retira y queda lo de detrás, no un icono roto.
-const RETRATO = "https://s3.minio.hdglabs.com/portfolio/shared/perfil.png";
+// El retrato va copiado al repositorio y no enlazado a su origen. Enlazarlo
+// ahorraría tener que actualizarlo aquí, pero a cambio la página quedaría
+// colgando de que otro host responda, y por 10 KB no compensa: el original son
+// 192 KB a 460 px, y aquí se ve a 132. El monograma sigue debajo por si acaso.
+const RETRATO = ruta("img/retrato.jpg");
 
 const INICIALES = t.sobreMi.nombre
   .split(" ")
@@ -29,7 +29,7 @@ const INICIALES = t.sobreMi.nombre
 
 <Base titulo={t.meta.tituloSobreMi} descripcion={t.meta.descripcionSobreMi}>
   <div class="pagina">
-    <a class="miga" href={idioma === "es" ? `${base}/` : `${base}/en/`}>
+    <a class="miga" href={idioma === "en" ? ruta() : ruta("es/")}>
       {t.sobreMi.volver}
     </a>
 
