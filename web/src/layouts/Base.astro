@@ -1,0 +1,129 @@
+---
+import "../styles/global.css";
+import Marca from "../components/Marca.astro";
+import FondoGradiente from "../components/FondoGradiente.astro";
+import { siGithub } from "simple-icons";
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+}
+const { titulo, descripcion } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descripcion} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#161826" />
+    <link rel="icon" type="image/png" href={`${base}/icon.png`} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descripcion} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+
+  <body>
+    <FondoGradiente />
+
+    <!-- La barra no lleva menú: la página es una sola y el único destino que
+         importa es la descarga. Cabe de sobra en una línea a cualquier ancho. -->
+    <header
+      class="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/5 bg-lienzo/80 backdrop-blur-md"
+    >
+      <div
+        class="mx-auto flex h-full max-w-[1400px] items-center justify-between px-6 lg:px-10"
+      >
+        <a
+          href="#inicio"
+          class="flex items-center gap-3 text-tinta transition-opacity hover:opacity-80"
+        >
+          <Marca clase="size-6 text-acento" titulo="Ondine" />
+          <span class="text-[17px] font-medium tracking-[0.01em]">Ondine</span>
+        </a>
+
+        <nav class="flex items-center gap-5 sm:gap-6">
+          <a
+            href="https://github.com/luishidalgoa/ondine"
+            class="flex items-center gap-2 text-sm text-tinta-3 transition-colors hover:text-tinta"
+          >
+            <svg
+              class="size-[18px] shrink-0 fill-current"
+              role="img"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d={siGithub.path}></path>
+            </svg>
+            <span class="hidden sm:inline">Código</span>
+          </a>
+          <!-- Abre el mismo modal que el botón de la sección de descarga: una
+               sola intención, un solo texto y un solo sitio donde elegir. -->
+          <button
+            type="button"
+            data-abre
+            class="cursor-pointer rounded-full bg-acento px-4 py-2 text-sm font-medium text-[#12101f] transition-all hover:bg-acento-claro active:translate-y-px"
+          >
+            Descargar
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- El fondo va posicionado y en z-index 0, y un elemento posicionado
+         pinta por encima del contenido sin posicionar aunque vaya antes en el
+         documento. Por eso el contenido tiene que subir explícitamente. -->
+    <main class="relative z-[1]">
+      <slot />
+    </main>
+
+    <footer
+      class="relative z-[1] border-t border-white/5 px-6 py-10 lg:px-10"
+    >
+      <div
+        class="mx-auto flex max-w-[1400px] flex-col gap-6 text-sm text-tinta-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <Marca clase="size-5 text-tinta-5" />
+          <span>Ondine. Licencia MIT.</span>
+        </div>
+        <ul class="flex flex-wrap gap-x-6 gap-y-2">
+          <li>
+            <a
+              class="transition-colors hover:text-tinta-2"
+              href="https://github.com/luishidalgoa/ondine">Repositorio</a
+            >
+          </li>
+          <li>
+            <a
+              class="transition-colors hover:text-tinta-2"
+              href="https://github.com/luishidalgoa/ondine/releases">Versiones</a
+            >
+          </li>
+          <li>
+            <a
+              class="transition-colors hover:text-tinta-2"
+              href="https://github.com/luishidalgoa/ondine/blob/main/CHANGELOG.md"
+              >Cambios</a
+            >
+          </li>
+          <li>
+            <a
+              class="transition-colors hover:text-tinta-2"
+              href="https://github.com/luishidalgoa/ondine/blob/main/ROADMAP.md"
+              >Hoja de ruta</a
+            >
+          </li>
+        </ul>
+      </div>
+    </footer>
+  </body>
+</html>

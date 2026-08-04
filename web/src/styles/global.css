@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* La paleta real de la aplicación y del spot. No se aproxima: se copia.
+   La página no tiene modo claro y no lo va a tener, así que no hay pareja
+   de tokens por tema; hay una sola. */
+@theme {
+  --color-lienzo: #161826;
+  --color-superficie: #232532;
+  --color-hundido: #292b31;
+  --color-honda: #101120;
+
+  --color-tinta: #e9e9ed;
+  --color-tinta-2: #c9ccd6;
+  --color-tinta-3: #8a8fa3;
+  --color-tinta-4: #6c7080;
+  --color-tinta-5: #4a4f63;
+
+  --color-acento: #968ae0;
+  --color-acento-claro: #b5abfc;
+  --color-acento-palido: #d2cefd;
+  --color-acento-hondo: #796cbf;
+  --color-acento-mas-hondo: #5d5294;
+
+  --color-correcto: #5db872;
+  --color-error: #c64545;
+
+  --font-sans: "Inter Variable", Inter, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, Consolas, monospace;
+
+  /* Un solo sistema de esquinas en toda la página, con regla escrita:
+     las superficies llevan 12 px, los campos 8, y lo interactivo va a
+     píldora completa. No hay una cuarta medida. */
+  --radius-superficie: 12px;
+  --radius-campo: 8px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--color-lienzo);
+  }
+
+  /* Quien navega con las animaciones desactivadas tampoco quiere que el
+     scroll se deslice solo. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--color-lienzo);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-acento-mas-hondo);
+    color: var(--color-tinta);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-acento-claro);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* El acero de los rótulos grandes, traído del spot. Los altos de color van
+     a distancias desiguales a propósito: repartidos por igual se ve el
+     barrido, y en cuanto se ve deja de parecer material y parece efecto.
+     Nunca sobre el nombre «Ondine»: ahí la palabra es la marca y va plana. */
+  .acero {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    background-image: linear-gradient(
+      to right,
+      #b9bec9 0%,
+      #e8ebf0 9%,
+      #c6cbd5 17%,
+      #f6f8fb 31%,
+      #d2d7e0 38%,
+      #aeb4bf 52%,
+      #eef1f5 61%,
+      #c1c6d1 73%,
+      #e2e6ec 84%,
+      #b9bec9 100%
+    );
+    background-size: 1600px 100%;
+    background-repeat: repeat;
+  }
+
+  /* Las cifras se comparan en vertical, así que las columnas tienen que
+     cuadrar aunque cambien los dígitos. */
+  .cifras {
+    font-variant-numeric: tabular-nums;
+  }
+}

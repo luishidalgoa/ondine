@@ -1,0 +1,296 @@
+---
+import { SERIE } from "../data/biblioteca";
+
+// La sección más importante: es lo único que hace Ondine y no hace ninguna
+// competidora. Por eso va la tercera y no la quinta, que es donde se abandona.
+//
+// Aquí NO se parte la pantalla en dos. El objeto que se parte es uno solo y
+// está centrado: lo que cambia es él. Si se compusiera a dos columnas se
+// confundiría con la comparativa del final, que sí es un antes contra un
+// después.
+//
+// El corte se ancla al scroll y se recorre: el visitante lo ejecuta con el
+// dedo. Es la única animación de la página que el usuario conduce, y le toca a
+// esta sección precisamente porque es el argumento diferencial.
+
+const ORIGINAL = "los simpson 7x21-22.avi";
+
+const PIEZAS = [
+  {
+    episodio: "E21",
+    nombre: `${SERIE} - S07E21 - 22 historias cortas sobre Springfield.mkv`,
+    tramo: "0:00 - 21:47",
+  },
+  {
+    episodio: "E22",
+    nombre: `${SERIE} - S07E22 - Mucho Apu y pocas nueces.mkv`,
+    tramo: "21:47 - 44:28",
+  },
+];
+---
+
+<section id="partir" class="partir">
+  <div class="lienzo">
+    <div class="marco">
+      <p class="rotulo">
+        <span class="asterisco">✳</span>LO QUE NO HACE NINGUNA OTRA
+      </p>
+      <h2 class="acero titulo">Un fichero. Dos capítulos dentro.</h2>
+      <p class="cuerpo">
+        Ondine entiende que ese vídeo de 44 minutos son en realidad dos
+        episodios pegados, encuentra la junta y lo parte. Cada mitad sale con
+        su nombre.
+      </p>
+
+      <div class="escena">
+        <p class="etiqueta-origen" data-origen>
+          <span class="mono">{ORIGINAL}</span>
+          <span class="meta">44:28 · 1 fichero</span>
+        </p>
+
+        <div class="objeto" data-objeto>
+          {
+            PIEZAS.map((p, i) => (
+              <div class="mitad" data-mitad={i}>
+                <div class="barra">
+                  <span class="pildora">{p.episodio}</span>
+                  <span class="tramo">{p.tramo}</span>
+                </div>
+                <p class="nombre" data-nombre>
+                  {p.nombre}
+                </p>
+              </div>
+            ))
+          }
+          <span class="junta" data-junta aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* El alto extra es el recorrido del scroll que ejecuta el corte. */
+  .partir {
+    position: relative;
+    height: 250vh;
+  }
+
+  .lienzo {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: grid;
+    align-content: center;
+    overflow: hidden;
+  }
+
+  .marco {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    .marco { padding: 0 2.5rem; }
+  }
+
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: #8a8fa3;
+  }
+  .asterisco { color: #968ae0; letter-spacing: 0; }
+
+  .titulo {
+    margin-top: 1.25rem;
+    font-size: clamp(28px, 3.6vw, 44px);
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  .cuerpo {
+    margin-top: 1rem;
+    max-width: 52ch;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #8a8fa3;
+  }
+
+  /* ── la escena ─────────────────────────────────────────────────────────── */
+  .escena {
+    margin-top: clamp(2rem, 5vh, 3.5rem);
+  }
+
+  .etiqueta-origen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .etiqueta-origen .mono {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: #c9ccd6;
+  }
+  .etiqueta-origen .meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #4a4f63;
+  }
+
+  .objeto {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mitad {
+    position: relative;
+    will-change: transform;
+  }
+
+  .barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: clamp(76px, 11vh, 104px);
+    padding: 0 clamp(0.9rem, 2vw, 1.5rem);
+    background: #232532;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+
+  /* Sin partir, las dos barras forman un solo bloque: la de la izquierda
+     redondea solo por fuera y la de la derecha igual. Al separarse, GSAP les
+     devuelve las cuatro esquinas. */
+  .mitad[data-mitad="0"] .barra {
+    border-radius: 12px 0 0 12px;
+  }
+  .mitad[data-mitad="1"] .barra {
+    border-radius: 0 12px 12px 0;
+  }
+
+  .pildora {
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: rgb(150 138 224 / 0.14);
+    box-shadow: inset 0 0 0 1px rgb(150 138 224 / 0.4);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #b5abfc;
+  }
+
+  .tramo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #8a8fa3;
+    white-space: nowrap;
+  }
+
+  .nombre {
+    margin-top: 0.9rem;
+    padding: 0 0.2rem;
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 1.05vw, 13px);
+    line-height: 1.5;
+    color: #8a8fa3;
+    word-break: break-word;
+  }
+
+  /* La junta: la línea por donde va a partirse. */
+  .junta {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: clamp(76px, 11vh, 104px);
+    width: 1px;
+    background: #968ae0;
+    transform: translateX(-0.5px);
+  }
+
+  /* Fotograma quieto: el bloque ya está partido y con los dos nombres puestos.
+     Aguanta solo porque el nombre de origen sigue arriba y se entiende que
+     de ese fichero han salido estos dos. */
+  @media (prefers-reduced-motion: reduce) {
+    .partir { height: auto; padding: 6rem 0; }
+    .lienzo { position: static; height: auto; }
+    .objeto { gap: 1.5rem; }
+    .mitad .barra { border-radius: 12px; }
+    .junta { display: none; }
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!quieto) {
+    // Los nombres arrancan invisibles: no existen hasta que el fichero se
+    // parte, que es literalmente lo que pasa.
+    gsap.set("[data-nombre]", { opacity: 0, y: 8 });
+
+    const linea = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".partir",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.5,
+      },
+    });
+
+    // Primero se marca la junta, después se abre. Sin esa pausa el corte se
+    // lee como que el bloque siempre estuvieron separados.
+    linea.fromTo(
+      "[data-junta]",
+      { scaleY: 0, opacity: 0 },
+      { scaleY: 1, opacity: 1, duration: 0.6, ease: "power2.out" },
+    );
+
+    linea.to("[data-junta]", { opacity: 0, duration: 0.3 }, ">0.35");
+
+    linea.to(
+      '[data-mitad="0"]',
+      { xPercent: -3.5, duration: 1, ease: "power2.inOut" },
+      "<",
+    );
+    linea.to(
+      '[data-mitad="1"]',
+      { xPercent: 3.5, duration: 1, ease: "power2.inOut" },
+      "<",
+    );
+    linea.to(
+      ".mitad .barra",
+      { borderRadius: 12, duration: 1, ease: "power2.inOut" },
+      "<",
+    );
+
+    linea.to(
+      "[data-nombre]",
+      { opacity: 1, y: 0, duration: 0.7, stagger: 0.15, ease: "power2.out" },
+      ">-0.35",
+    );
+
+    gsap.from(
+      "#partir .rotulo, #partir .titulo, #partir .cuerpo, [data-origen]",
+      {
+        opacity: 0,
+        y: 22,
+        duration: 0.7,
+        stagger: 0.09,
+        ease: "power2.out",
+        scrollTrigger: { trigger: ".partir", start: "top 65%" },
+      },
+    );
+  }
+</script>

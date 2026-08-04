@@ -1,0 +1,225 @@
+---
+import type { Ficha } from "../data/biblioteca";
+import { fotograma } from "../data/caps";
+
+// Una ficha de episodio con sus dos estados apilados: el de arriba es cómo
+// llega el fichero (sin fotograma, con el nombre a pelo, que es exactamente lo
+// que enseña un servidor cuando no sabe qué tiene), y el de abajo es cómo
+// queda. La animación funde uno en otro.
+//
+// El formato es 16:9 y no 2:3 a propósito: la carátula vertical es de la SERIE,
+// y lo que se está enseñando aquí son episodios. Un servidor de medios los
+// pinta apaisados, con un fotograma del propio capítulo.
+//
+// El fotograma va encima de un rectángulo del color de la ficha. Si el JPG no
+// está puesto todavía, no sale el icono de imagen rota: sale ese rectángulo
+// con su geometría, que es donde estábamos antes.
+
+interface Props {
+  ficha: Ficha;
+  indice: number;
+  estado?: "ambos" | "crudo" | "resuelto";
+}
+const { ficha, indice, estado = "ambos" } = Astro.props;
+
+// Se busca el fichero de verdad en la carpeta, sin exigir un nombre clavado.
+// Si no hay ninguno, no se pinta la etiqueta <img> siquiera.
+const imagen = fotograma(ficha.episodio, import.meta.env.BASE_URL);
+---
+
+<article
+  class:list={["ficha", `es-${estado}`]}
+  data-ficha={estado === "ambos" ? "" : undefined}
+  data-indice={indice}
+>
+  <!-- Cómo queda -->
+  <div class="cara resuelta">
+    <div class="lienzo" style={`--tinte: ${ficha.tinte}`}>
+      <div class="arte" data-variante={ficha.variante}>
+        {
+          ficha.variante === "onda" && (
+            <svg viewBox="0 0 64 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true">
+              <path d="M8 12 C 16 5 24 19 32 12 C 40 5 48 19 56 12" />
+              <path d="M8 22 C 17 18 25 26 32 22 C 40 18 47 26 56 22" />
+              <path d="M8 32 L 56 32" />
+            </svg>
+          )
+        }
+        {ficha.variante === "arco" && <span class="forma-arco" />}
+        {ficha.variante === "horizonte" && <span class="forma-horizonte" />}
+        {ficha.variante === "columna" && <span class="forma-columna" />}
+      </div>
+      {
+        imagen && (
+          <img
+            src={imagen}
+            alt={`Fotograma de ${ficha.titulo}`}
+            loading="lazy"
+            decoding="async"
+          />
+        )
+      }
+    </div>
+    <div class="pie">
+      <h3 class="titulo">{ficha.titulo}</h3>
+      <p class="episodio">{ficha.episodio}</p>
+    </div>
+  </div>
+
+  <!-- Cómo llega -->
+  <div class="cara cruda" aria-hidden="true">
+    <div class="hueco"></div>
+    <p class="nombre-crudo">{ficha.crudo}</p>
+  </div>
+</article>
+
+<style>
+  .ficha {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    isolation: isolate;
+    background: #232532;
+    will-change: transform;
+  }
+
+  .cara {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* La cara de abajo se saca del flujo para que ambas ocupen el mismo hueco.
+     La de arriba es la que fija el alto de la ficha. */
+  .es-ambos .cruda {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* ── cómo queda ────────────────────────────────────────────────────────── */
+  .lienzo {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: var(--tinte);
+    overflow: hidden;
+  }
+
+  .lienzo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .arte {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: rgb(255 255 255 / 0.22);
+  }
+  .arte svg { width: 34%; }
+
+  .forma-arco,
+  .forma-horizonte,
+  .forma-columna {
+    position: absolute;
+    background: rgb(255 255 255 / 0.09);
+  }
+  .forma-arco {
+    width: 78%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    bottom: -48%;
+    left: 11%;
+  }
+  .forma-horizonte {
+    left: 0;
+    right: 0;
+    top: 36%;
+    height: 26%;
+  }
+  .forma-columna {
+    top: 0;
+    bottom: 0;
+    left: 26%;
+    width: 18%;
+  }
+
+  /* Las dos caras TIENEN que medir exactamente lo mismo. En la comparativa
+     van superpuestas, así que si la resuelta crece porque el título ocupa dos
+     líneas, esa capa desborda al contenedor y lo de abajo se corta. Por eso el
+     pie lleva alto fijo y el texto se recorta dentro, en vez de empujar. */
+  .pie,
+  .nombre-crudo {
+    height: 74px;
+    box-sizing: border-box;
+  }
+
+  .pie {
+    padding: 10px 12px 12px;
+    background: #232532;
+  }
+
+  .titulo {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+    color: #e9e9ed;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .episodio {
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #8a8fa3;
+  }
+
+  /* ── cómo llega ────────────────────────────────────────────────────────── */
+  .cruda {
+    background: #232532;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  }
+
+  /* El servidor no tiene fotograma que poner, así que deja el hueco. Ese hueco
+     es el argumento: no falta diseño, faltan datos. */
+  .hueco {
+    aspect-ratio: 16 / 9;
+    background: repeating-linear-gradient(
+      -45deg,
+      #262837 0 6px,
+      #232532 6px 12px
+    );
+  }
+
+  .nombre-crudo {
+    padding: 10px 12px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.35;
+    color: #8a8fa3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Caras forzadas. */
+  .es-crudo .resuelta,
+  .es-resuelto .cruda {
+    display: none;
+  }
+
+  /* Sin movimiento, la ficha de doble cara se enseña ya resuelta: es el
+     fotograma quieto del hero y tiene que aguantar solo. */
+  @media (prefers-reduced-motion: reduce) {
+    .es-ambos .cruda { display: none; }
+  }
+</style>

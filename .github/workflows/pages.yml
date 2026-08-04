@@ -1,0 +1,61 @@
+name: Pages
+
+# Solo cuando cambia la web. Sin el filtro de rutas, cada commit del programa
+# reharia y redesplegaria el sitio sin que nada del sitio haya cambiado.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si entran dos cambios seguidos, el segundo espera al primero en vez de
+# cancelarlo: cancelar un despliegue a medias deja el sitio en un estado que
+# no es ni el viejo ni el nuevo.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # `npm ci` y no `npm install`: instala exactamente lo del fichero de
+      # bloqueo, asi que lo que se despliega es lo que se probo en local.
+      - name: Instalar
+        working-directory: web
+        run: npm ci
+
+      - name: Construir
+        working-directory: web
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  desplegar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - id: despliegue
+        uses: actions/deploy-pages@v4

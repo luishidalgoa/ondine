@@ -1,0 +1,248 @@
+---
+import { SERIE } from "../data/biblioteca";
+
+// El problema. La sección no explica nada: enseña.
+//
+// Arriba, una tira de nombres de fichero recorriéndose sola. Es el único
+// desfile horizontal de toda la página, así que aquí se gasta ese recurso y no
+// vuelve a aparecer. Y va aquí porque el desorden ES una lista larga: cuanto
+// más pasa por delante, más se reconoce el visitante en ella.
+//
+// Debajo, lo que el servidor hace con eso. Fichas sin portada, sin sinopsis y
+// con la duración como único dato que sabe leer, porque es el único que puede
+// sacar del propio vídeo sin que nadie se lo diga.
+
+const CRUDOS = [
+  "Cap 12 (2).mkv",
+  "episodio final BUENO.mkv",
+  "Temporada2_04-05.mkv",
+  "Sin titulo (copia).mkv",
+  "los simpson 3x07.avi",
+  "capitulo nuevo.mkv",
+  "descarga final.mp4",
+  "video_2019.avi",
+  "sin nombre 3.mkv",
+  "grabacion (copia 2).mkv",
+];
+
+const SIN_DATOS = [
+  { duracion: "22:14" },
+  { duracion: "21:58" },
+  { duracion: "44:31" },
+  { duracion: "22:03" },
+];
+---
+
+<section id="problema" class="problema">
+  <div class="marco">
+    <p class="rotulo"><span class="asterisco">✳</span>EL PROBLEMA</p>
+    <h2 class="acero titulo">
+      El servidor no es tonto. Le has dado datos malos.
+    </h2>
+    <p class="cuerpo">
+      Plex, Jellyfin y Kodi enseñan una biblioteca preciosa, pero solo si los
+      ficheros ya vienen bien nombrados. Cuando no, se rinden.
+    </p>
+  </div>
+
+  <!-- La tira. Va duplicada porque el bucle necesita una segunda copia para
+       empalmar sin salto; la copia se oculta a los lectores de pantalla. -->
+  <div class="tira" data-tira>
+    <div class="cinta" data-cinta>
+      {CRUDOS.map((n) => <span class="crudo">{n}</span>)}
+    </div>
+    <div class="cinta" data-cinta aria-hidden="true">
+      {CRUDOS.map((n) => <span class="crudo">{n}</span>)}
+    </div>
+  </div>
+
+  <div class="marco">
+    <div class="rejilla">
+      {
+        SIN_DATOS.map((f) => (
+          <article class="sin-datos">
+            <div class="hueco" />
+            <p class="desconocido">Desconocido</p>
+            <p class="dato">
+              {SERIE} · {f.duracion}
+            </p>
+          </article>
+        ))
+      }
+    </div>
+    <p class="pie-rejilla">
+      Sin título, sin número, sin sinopsis y sin portada. Lo único que el
+      servidor sabe leer es cuánto dura.
+    </p>
+  </div>
+</section>
+
+<style>
+  .problema {
+    padding: clamp(3.5rem, 7vh, 5.5rem) 0;
+    overflow: hidden;
+  }
+
+  .marco {
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    .marco { padding: 0 2.5rem; }
+  }
+
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: #8a8fa3;
+  }
+  .asterisco { color: #968ae0; letter-spacing: 0; }
+
+  .titulo {
+    margin-top: 1.5rem;
+    max-width: 15em;
+    font-size: clamp(30px, 3.8vw, 46px);
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  .cuerpo {
+    margin-top: 1.25rem;
+    max-width: 46ch;
+    font-size: 17px;
+    line-height: 1.6;
+    color: #8a8fa3;
+  }
+
+  /* ── la tira ───────────────────────────────────────────────────────────── */
+  .tira {
+    display: flex;
+    width: max-content;
+    margin: clamp(2rem, 4.5vh, 3rem) 0;
+    /* Los extremos se desvanecen contra el lienzo para que la tira no acabe
+       en un corte seco contra el borde de la pantalla. */
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 9%,
+      #000 91%,
+      transparent
+    );
+  }
+
+  .cinta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-right: 1rem;
+    will-change: transform;
+  }
+
+  .crudo {
+    padding: 0.7rem 1.2rem;
+    border: 1px solid rgb(255 255 255 / 0.07);
+    border-radius: 999px;
+    background: #232532;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    white-space: nowrap;
+    color: #8a8fa3;
+  }
+
+  /* ── las fichas sin datos ──────────────────────────────────────────────── */
+  .rejilla {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+  @media (min-width: 768px) {
+    .rejilla { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .sin-datos {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #232532;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  }
+
+  .hueco {
+    aspect-ratio: 16 / 9;
+    background: repeating-linear-gradient(
+      -45deg,
+      #262837 0 7px,
+      #232532 7px 14px
+    );
+  }
+
+  .desconocido {
+    padding: 0.9rem 1rem 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: #8a8fa3;
+  }
+
+  .dato {
+    padding: 0.3rem 1rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #4a4f63;
+  }
+
+  .pie-rejilla {
+    margin-top: 1.75rem;
+    max-width: 52ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #8a8fa3;
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!quieto) {
+    // La tira se recorre sola, en bucle infinito y a velocidad de lectura: si
+    // va rápida se lee como decoración y aquí lo que importa es que dé tiempo
+    // a reconocer los nombres.
+    const cintas = gsap.utils.toArray<HTMLElement>("[data-cinta]");
+    if (cintas.length) {
+      const ancho = cintas[0].offsetWidth;
+      gsap.to(cintas, {
+        x: -ancho,
+        duration: 34,
+        ease: "none",
+        repeat: -1,
+      });
+    }
+
+    gsap.from("#problema .rotulo, #problema .titulo, #problema .cuerpo", {
+      opacity: 0,
+      y: 22,
+      duration: 0.7,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: "#problema", start: "top 72%" },
+    });
+
+    gsap.from("#problema .sin-datos", {
+      opacity: 0,
+      y: 26,
+      duration: 0.6,
+      stagger: 0.08,
+      ease: "power2.out",
+      scrollTrigger: { trigger: "#problema .rejilla", start: "top 82%" },
+    });
+  }
+</script>

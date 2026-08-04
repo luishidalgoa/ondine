@@ -1,0 +1,226 @@
+---
+import Ficha from "./Ficha.astro";
+import { BIBLIOTECA, SERIE } from "../data/biblioteca";
+
+// El cierre del argumento, a pantalla entera. Las dos bibliotecas son las
+// MISMAS fichas: la de debajo en crudo y la de encima resuelta, y una cortina
+// atada al scroll destapa la segunda sobre la primera.
+//
+// Esto no es la pantalla partida en dos que se prohíbe en el resto de la
+// página: aquí las dos mitades son el mismo objeto en dos momentos, superpuesto
+// y en el mismo sitio. Por eso funciona aquí y no funcionaría en «Partir».
+const OCHO = BIBLIOTECA.slice(0, 8);
+---
+
+<section id="comparativa" class="comparativa">
+  <div class="lienzo">
+    <div class="cabecera">
+      <h2 class="acero titulo">La misma carpeta, antes y después.</h2>
+      <p class="serie">{SERIE}</p>
+    </div>
+
+    <div class="escenario">
+      <!-- Debajo: cómo estaba -->
+      <div class="capa">
+        <div class="rejilla">
+          {OCHO.map((f, i) => <Ficha ficha={f} indice={i} estado="crudo" />)}
+        </div>
+      </div>
+
+      <!-- Encima: cómo queda, destapándose -->
+      <div class="capa encima" data-encima>
+        <div class="rejilla">
+          {OCHO.map((f, i) => <Ficha ficha={f} indice={i} estado="resuelto" />)}
+        </div>
+      </div>
+
+      <span class="cortina" data-cortina aria-hidden="true"></span>
+    </div>
+
+    <div class="pies">
+      <p class="pie antes">ANTES</p>
+      <p class="pie despues">DESPUÉS</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .comparativa {
+    position: relative;
+    height: 280vh;
+  }
+
+  .lienzo {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(1.25rem, 3vh, 2rem);
+    padding: 5rem 1.5rem 3rem;
+    overflow: hidden;
+  }
+  @media (min-width: 1024px) {
+    .lienzo { padding: 6rem 2.5rem 3.5rem; }
+  }
+
+  .cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .titulo {
+    font-size: clamp(24px, 3.2vw, 40px);
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  .serie {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    color: #4a4f63;
+  }
+
+  /* ── el escenario ──────────────────────────────────────────────────────── */
+  /* El ancho va atado al ALTO de la ventana, no solo al ancho.
+     Con dos filas de fichas 16:9, el alto del escenario lo decide su ancho:
+     cuanto más ancho, más altas las fichas. En una pantalla baja, 1400 px no
+     caben en los 100 vh del bloque pegado y lo de abajo se corta. Así las
+     fichas encogen cuando hace falta y siempre cabe entero.
+     Si se tocan los rellenos de .lienzo o el alto del pie de la ficha, hay que
+     rehacer este cálculo. */
+  .escenario {
+    position: relative;
+    width: 100%;
+    max-width: clamp(560px, calc(330vh - 1500px), 1400px);
+    margin: 0 auto;
+  }
+
+  .capa { width: 100%; }
+
+  .encima {
+    position: absolute;
+    inset: 0;
+    /* Arranca oculta del todo y se destapa de izquierda a derecha. */
+    clip-path: inset(0 100% 0 0);
+    will-change: clip-path;
+  }
+
+  /* Ocho fichas apaisadas en dos filas de cuatro. En una sola fila de ocho
+     quedarían tan estrechas que el fotograma no se vería. */
+  .rejilla {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(0.6rem, 1.4vw, 1.1rem);
+  }
+  @media (min-width: 900px) {
+    .rejilla { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* En móvil solo caben cuatro. Ocho en dos columnas serían cuatro filas y no
+     entran en la pantalla, que es el mismo problema de antes en vertical. Y
+     cuatro bastan: lo que tiene que verse es el cambio, no el inventario. */
+  @media (max-width: 899px) {
+    .rejilla :global(.ficha:nth-child(n + 5)) {
+      display: none;
+    }
+  }
+
+  .cortina {
+    position: absolute;
+    top: -8px;
+    bottom: -8px;
+    left: 0;
+    width: 1px;
+    background: #968ae0;
+    opacity: 0;
+  }
+
+  .pies {
+    display: flex;
+    justify-content: space-between;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+  }
+  .antes { color: #4a4f63; }
+  .despues { color: #b5abfc; }
+
+  /* Fotograma quieto: las dos bibliotecas una encima de otra no se entienden
+     sin la cortina, así que sin movimiento se apilan en vertical y cada una
+     lleva su rótulo. Es más largo pero se lee igual de bien. */
+  @media (prefers-reduced-motion: reduce) {
+    .comparativa { height: auto; padding: 6rem 0; }
+    .lienzo { position: static; min-height: 0; }
+    .encima {
+      position: static;
+      clip-path: none;
+      margin-top: 2.5rem;
+    }
+    .cortina { display: none; }
+    .pies { display: none; }
+    .capa::before {
+      display: block;
+      margin-bottom: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      color: #4a4f63;
+      content: "ANTES";
+    }
+    .encima::before {
+      color: #b5abfc;
+      content: "DESPUÉS";
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!quieto) {
+    const linea = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".comparativa",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.5,
+      },
+    });
+
+    linea.to("[data-cortina]", { opacity: 1, duration: 0.12 });
+    linea.to(
+      "[data-encima]",
+      { clipPath: "inset(0 0% 0 0)", duration: 1, ease: "none" },
+      "<",
+    );
+    linea.to("[data-cortina]", { left: "100%", duration: 1, ease: "none" }, "<");
+    linea.to("[data-cortina]", { opacity: 0, duration: 0.12 });
+
+    gsap.from("#comparativa .titulo, #comparativa .serie", {
+      opacity: 0,
+      y: 20,
+      duration: 0.7,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".comparativa", start: "top 65%" },
+    });
+  }
+</script>

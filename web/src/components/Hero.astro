@@ -1,0 +1,337 @@
+---
+import Ficha from "./Ficha.astro";
+import { BIBLIOTECA } from "../data/biblioteca";
+
+// El hero es la biblioteca resolviéndose. No hay captura de la aplicación
+// porque a tamaño grande una ventana de Windows con tablas se lee como
+// software de contabilidad, pero tampoco hay tipografía sola sobre el fondo,
+// que es un marcador de posición con ínfulas.
+//
+// El mural son doce fichas construidas en HTML, cada una con sus dos estados.
+// Al entrar, pasan de hueco con nombre de fichero a portada con título, en
+// cascada. Al hacer scroll, las columnas se mueven a distinta velocidad: el
+// paralaje sale de que el plano está inclinado en perspectiva, no de un
+// fundido.
+//
+// Cuatro columnas de tres, y las fichas pequeñas.
+//
+// En tres columnas las fichas salían tan grandes que en pantalla solo cabían
+// tres o cuatro: parecía una galería a medio cargar en vez de una biblioteca.
+// Una pared se reconoce por la CANTIDAD, no por el tamaño de cada pieza, y a
+// este tamaño entran casi las doce en el encuadre.
+const COLUMNAS = [
+  BIBLIOTECA.slice(0, 3),
+  BIBLIOTECA.slice(3, 6),
+  BIBLIOTECA.slice(6, 9),
+  BIBLIOTECA.slice(9, 12),
+];
+---
+
+<section id="inicio" class="hero">
+  <div class="mural" aria-hidden="true">
+    <div class="plano" data-plano>
+      {
+        COLUMNAS.map((columna, c) => (
+          <div class="columna" data-columna={c}>
+            {columna.map((ficha, f) => (
+              <Ficha ficha={ficha} indice={c * 3 + f} />
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="velo" aria-hidden="true"></div>
+
+  <div class="contenido">
+    <div class="mx-auto w-full max-w-[1400px] px-6 lg:px-10">
+      <div class="columna-texto">
+        <h1 class="acero titular" data-entra>
+          Ordena bibliotecas de series y películas
+        </h1>
+
+        <!-- La bajada NO nombra a ningún servidor. Nombrarlos aquí hace que
+             Ondine suene a extensión de ellos, y no lo es: es una herramienta
+             aparte cuyo resultado está escrito para que sus catálogos lo
+             entiendan. Quien dice eso es la banda de compatibilidad de
+             debajo, con los logotipos, que es donde no se malinterpreta. -->
+        <p class="bajada" data-entra>
+          Cada capítulo con su título, su número y su temporada. Escrito como
+          los metadatos esperan encontrarlo.
+        </p>
+
+        <div class="botones" data-entra>
+          <a href="#descarga" class="boton-primario">Descargar para Windows</a>
+          <a href="#descarga" class="boton-secundario">Instalar por terminal</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    /* La cabecera va fija y mide 64 px. Sin este hueco, al centrar el
+       contenido en el alto completo la primera línea del titular se mete
+       debajo de ella. */
+    padding-top: 64px;
+  }
+
+  /* ── el mural ──────────────────────────────────────────────────────────── */
+  .mural {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  /* El plano se sale por arriba y por abajo a propósito: el paralaje necesita
+     recorrido, y si cupiese entero se vería el borde al desplazarse. */
+  .plano {
+    position: absolute;
+    top: 50%;
+    left: 36%;
+    width: min(1000px, 108vw);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    /* Menos giro que antes: con fichas pequeñas, 17 grados mandaban la última
+       columna tan al fondo que no se leía. */
+    transform: translateY(-50%) perspective(1600px) rotateY(-13deg) rotateX(6deg)
+      rotate(-2deg);
+    transform-origin: center center;
+  }
+
+  .columna {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    will-change: transform;
+  }
+
+  /* Las columnas arrancan a distinta altura para que el mural no se lea como
+     una retícula, sino como una pared. Los desfases son pequeños: pasados de
+     rosca, las de los extremos se salen del encuadre. */
+  .columna[data-columna="0"] { margin-top: -60px; }
+  .columna[data-columna="1"] { margin-top: 30px; }
+  .columna[data-columna="2"] { margin-top: -45px; }
+  .columna[data-columna="3"] { margin-top: 20px; }
+
+  /* ── el velo ───────────────────────────────────────────────────────────── */
+  /* Sin esto el texto no se lee sobre el mural. Es un degradado del propio
+     lienzo, no una capa negra: el fondo no cambia de color en ningún punto. */
+  /* El velo solo tiene que hacer legible la columna del texto. Pasado ese
+     punto se retira del todo: si vela el mural entero, las fichas quedan en
+     fantasmas y el hero vuelve a ser texto sobre un fondo. */
+  /* Ni un solo alto de color es opaco del todo: por debajo va el gradiente de
+     la página y tiene que asomar también aquí. El 0,94 de la parte más cerrada
+     deja pasar lo justo para que se note el color sin tocar el contraste del
+     texto, que a ese nivel sigue siendo el mismo. */
+  .velo {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        100deg,
+        rgb(22 24 38 / 0.94) 0%,
+        rgb(22 24 38 / 0.92) 26%,
+        rgb(22 24 38 / 0.8) 38%,
+        rgb(22 24 38 / 0.28) 52%,
+        rgb(22 24 38 / 0) 66%
+      ),
+      linear-gradient(to bottom, rgb(22 24 38 / 0.92) 0%, rgb(22 24 38 / 0) 14%),
+      linear-gradient(to top, rgb(22 24 38 / 0.92) 0%, rgb(22 24 38 / 0) 16%);
+  }
+
+  .contenido {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  /* ── el texto ──────────────────────────────────────────────────────────── */
+  .columna-texto {
+    max-width: 620px;
+  }
+
+  /* La medida va en `em`, es decir relativa al cuerpo de letra DEL TITULAR.
+     Puesta en el contenedor no sirve: allí `ch` y `em` se calculan sobre 16 px
+     y la caja sale cuatro veces más estrecha de lo que parece. Y con el acero
+     eso no se nota como un desbordamiento normal: las letras que salen de la
+     caja se quedan sin fondo que las pinte y desaparecen a media palabra.
+     «Ordena bibliotecas de» es la línea larga y mide unos 10,9 em. */
+  .titular {
+    max-width: 11.5em;
+    font-size: clamp(38px, 5.4vw, 60px);
+    line-height: 1.05;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  .bajada {
+    margin-top: 1.6rem;
+    max-width: 21em;
+    font-size: clamp(17px, 1.5vw, 21px);
+    line-height: 1.55;
+    color: #c9ccd6;
+  }
+
+  .botones {
+    margin-top: 2.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .boton-primario,
+  .boton-secundario {
+    border-radius: 999px;
+    padding: 0.9rem 1.75rem;
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s,
+      color 0.2s,
+      transform 0.1s;
+  }
+
+  /* Texto casi negro sobre el morado: el morado es claro y el blanco encima
+     no llega al contraste mínimo. */
+  .boton-primario {
+    background: #968ae0;
+    color: #12101f;
+  }
+  .boton-primario:hover { background: #b5abfc; }
+
+  .boton-secundario {
+    border: 1px solid rgb(255 255 255 / 0.14);
+    color: #c9ccd6;
+  }
+  .boton-secundario:hover {
+    border-color: rgb(255 255 255 / 0.28);
+    color: #e9e9ed;
+  }
+
+  .boton-primario:active,
+  .boton-secundario:active {
+    transform: translateY(1px);
+  }
+
+  /* En pantalla estrecha el mural se va detrás del todo y baja mucho de peso:
+     compite con el texto y el texto manda. */
+  @media (max-width: 900px) {
+    .plano {
+      left: 12%;
+      top: 62%;
+      width: 165vw;
+      transform: translateY(-50%) perspective(1200px) rotateY(-12deg)
+        rotateX(6deg) rotate(-3deg);
+    }
+    /* En vertical el mural pasa por debajo del texto, así que aquí el velo sí
+       tiene que cubrir arriba. Pero solo arriba: la mitad de abajo se deja
+       despejada para que las fichas se vean enteras. */
+    .velo {
+      background:
+        linear-gradient(
+          to bottom,
+          #161826 0%,
+          rgb(22 24 38 / 0.94) 34%,
+          rgb(22 24 38 / 0.5) 56%,
+          rgb(22 24 38 / 0.1) 78%
+        ),
+        linear-gradient(to top, #161826 0%, rgb(22 24 38 / 0) 14%);
+    }
+    .contenido {
+      padding-top: 2rem;
+      padding-bottom: 10rem;
+      align-self: flex-start;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Con las animaciones desactivadas no se monta nada: el CSS ya deja las
+  // fichas resueltas y el texto en su sitio. El fotograma quieto aguanta solo.
+  if (!quieto) {
+    const fichas = gsap.utils.toArray<HTMLElement>("[data-ficha]");
+
+    // La cascada no va por orden de aparición en el DOM sino en diagonal, de
+    // arriba-izquierda a abajo-derecha, que es como se recorre una pared.
+    const orden = (el: HTMLElement) => {
+      const i = Number(el.dataset.indice ?? 0);
+      return (i % 3) + Math.floor(i / 3) * 1.35;
+    };
+    fichas.sort((a, b) => orden(a) - orden(b));
+
+    const entrada = gsap.timeline({
+      defaults: { ease: "power2.out" },
+      delay: 0.15,
+    });
+
+    entrada.from(fichas, {
+      opacity: 0,
+      y: 26,
+      duration: 0.7,
+      stagger: 0.055,
+    });
+
+    // Y aquí la ficha se resuelve: el hueco con el nombre de fichero se va y
+    // deja la portada. Es la promesa del titular, ocurriendo.
+    entrada.to(
+      fichas.map((f) => f.querySelector(".cruda")),
+      { opacity: 0, duration: 0.55, stagger: 0.055, ease: "power1.inOut" },
+      "-=1.1",
+    );
+
+    entrada.from(
+      "[data-entra]",
+      { opacity: 0, y: 18, duration: 0.75, stagger: 0.12 },
+      0.1,
+    );
+
+    // Paralaje. Cada columna se desplaza una cantidad distinta mientras el
+    // hero sale de pantalla, y el plano se aleja un poco: con la perspectiva
+    // puesta, eso se lee como profundidad y no como un simple deslizamiento.
+    const recorridos = [-110, -200, -70, -155];
+    recorridos.forEach((y, c) => {
+      gsap.to(`[data-columna="${c}"]`, {
+        y,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".hero",
+          start: "top top",
+          end: "bottom top",
+          scrub: 0.6,
+          invalidateOnRefresh: true,
+        },
+      });
+    });
+
+    gsap.to("[data-plano]", {
+      scale: 1.08,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".hero",
+        start: "top top",
+        end: "bottom top",
+        scrub: 0.6,
+      },
+    });
+  }
+</script>
