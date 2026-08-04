@@ -147,10 +147,19 @@ const INICIALES = t.sobreMi.nombre
     border-radius: 50%;
     overflow: hidden;
     display: grid;
-    place-items: center;
     background: #292b31;
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
   }
+
+  /* Los dos hijos van a la MISMA celda, uno encima del otro. En celdas
+     distintas se apilaban en vertical y se veían las dos cosas a la vez: el
+     monograma arriba y media foto debajo. El monograma solo tiene que
+     aparecer si la foto falla, y para eso tiene que quedar TAPADO. */
+  .retrato > * {
+    grid-area: 1 / 1;
+    place-self: center;
+  }
+
   .retrato img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   .monograma {
