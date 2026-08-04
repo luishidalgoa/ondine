@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -73,8 +74,8 @@ public partial class ReproductorWindow : Window
 
         huecoCargando.Children.Add(_cargando.Raiz);
         _cargando.Arrancar(_eraMarcador
-            ? "Descargando el vídeo de la nube…"   // puede tardar: baja el fichero entero
-            : "Abriendo el vídeo…");
+            ? Textos.Instancia.ReproductorDescargandoNube   // puede tardar: baja el fichero entero
+            : Textos.Instancia.ReproductorAbriendoVideo);
 
         btnCerrar.Click += (_, _) => Close();
         btnPlay.Click += (_, _) => Alternar();
@@ -155,15 +156,15 @@ public partial class ReproductorWindow : Window
         video.MediaEnded += (_, _) => { _pausado = true; glifoPlay.Data = GlifoPlay; Mostrar(); };
         video.MediaFailed += (_, e) =>
         {
-            lblFallo.Text = "Este vídeo no se puede reproducir aquí (códec no soportado por " +
-                            $"el decodificador del sistema): {e.ErrorException?.Message}";
+            lblFallo.Text = string.Format(Textos.Instancia.ReproductorFalloCodec,
+                                          e.ErrorException?.Message);
             panelFallo.Visibility = Visibility.Visible;
             _cargando.Parar();
         };
         // El péndulo se queda hasta que el vídeo AVANZA de verdad, no cuando dice estar
         // abierto: con un fichero descargándose, MediaOpened llega mucho antes que el primer
         // fotograma, y quitarlo ahí dejaba el rectángulo negro sin explicación.
-        video.BufferingStarted += (_, _) => { Chip("Cargando…"); _cargando.Arrancar(); };
+        video.BufferingStarted += (_, _) => { Chip(Textos.Instancia.ReproductorCargando); _cargando.Arrancar(); };
         video.BufferingEnded += (_, _) => RevisarNube();
 
         _reloj = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
@@ -194,7 +195,7 @@ public partial class ReproductorWindow : Window
             }
             catch (Exception ex)
             {
-                lblFallo.Text = $"No se pudo abrir el vídeo: {ex.Message}";
+                lblFallo.Text = string.Format(Textos.Instancia.ReproductorNoSePudoAbrir, ex.Message);
                 panelFallo.Visibility = Visibility.Visible;
                 _cargando.Parar();
             }
@@ -323,7 +324,7 @@ public partial class ReproductorWindow : Window
     private void RevisarNube()
     {
         {
-            Chip(Reindex.Nube.EsMarcador(_ruta) ? "En la nube · descargando para verlo" : null);
+            Chip(Reindex.Nube.EsMarcador(_ruta) ? Textos.Instancia.ReproductorChipNube : null);
         }
     }
 
@@ -382,7 +383,7 @@ public partial class ReproductorWindow : Window
 
         // Un fichero que aún está solo en la nube no se abre para sacarle un fotograma: eso
         // lo descargaría entero. Cuando termine de bajar, las previas salen solas.
-        if (Reindex.Nube.EsMarcador(_ruta)) { lblPreviaCargando.Text = "en la nube"; return; }
+        if (Reindex.Nube.EsMarcador(_ruta)) { lblPreviaCargando.Text = Textos.Instancia.ReproductorPreviaEnNube; return; }
 
         int hueco = _previaPedida;
         _sacandoPrevia = true;

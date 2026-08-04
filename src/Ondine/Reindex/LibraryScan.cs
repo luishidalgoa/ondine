@@ -1,6 +1,7 @@
 // El SDK de consola trae System.IO en los usings implícitos y el de WPF no, así que este
 // fichero compila en los tests pero no en la app si no se pone a mano.
 using System.IO;
+using Ondine.Localizacion;
 
 namespace Ondine.Reindex;
 
@@ -21,7 +22,11 @@ public static class LibraryScan
     /// <summary>Y los vídeos sueltos de la raíz, los últimos: son la excepción.</summary>
     private const int OrdenRaiz = int.MaxValue;
 
-    public const string EtiquetaRaiz = "Sueltos en la carpeta principal";
+    /// <summary>
+    /// El rótulo de la banda de los vídeos sueltos. Deja de ser <c>const</c> porque
+    /// ahora depende del idioma elegido, que se sabe en ejecución y no al compilar.
+    /// </summary>
+    public static string EtiquetaRaiz => Textos.Instancia.OrganizarSueltosRaiz;
 
     /// <summary>
     /// Los vídeos de <paramref name="raiz"/> y de todo lo que cuelga de ella, ya en el orden

@@ -1,7 +1,8 @@
 <Window x:Class="Ondine.AyudaWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ayuda — Ondine" Width="900" Height="680" MinWidth="720" MinHeight="520"
+        xmlns:i="clr-namespace:Ondine.Localizacion"
+        Title="{i:T AyudaTitulo}" Width="900" Height="680" MinWidth="720" MinHeight="520"
         WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterOwner"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
   <WindowChrome.WindowChrome>
@@ -76,7 +77,7 @@
               <Path Data="M7,47 L57,47"/>
             </Canvas>
           </Viewbox>
-          <TextBlock Text="Ayuda — Ondine" FontSize="13.5" FontWeight="Medium" VerticalAlignment="Center" Margin="9,0,0,0"/>
+          <TextBlock Text="{i:T AyudaTitulo}" FontSize="13.5" FontWeight="Medium" VerticalAlignment="Center" Margin="9,0,0,0"/>
         </StackPanel>
         <Button x:Name="btnCerrar" Style="{StaticResource BtnClose}" HorizontalAlignment="Right"
                 WindowChrome.IsHitTestVisibleInChrome="True">
@@ -91,11 +92,11 @@
         <!-- ═ índice lateral ═ -->
         <Border Grid.Column="0" Background="#151725" BorderBrush="{StaticResource Divider}" BorderThickness="0,0,1,0">
           <StackPanel Margin="10,14">
-            <TextBlock Text="Tutoriales" FontSize="11" Foreground="{StaticResource Neutral600}" Margin="12,0,0,8"/>
-            <RadioButton x:Name="navOrgComo" Style="{StaticResource NavItem}" GroupName="pag" IsChecked="True" Content="Organizar · cómo funciona"/>
-            <RadioButton x:Name="navOrgPasos" Style="{StaticResource NavItem}" GroupName="pag" Content="Organizar · paso a paso"/>
-            <RadioButton x:Name="navComprimir" Style="{StaticResource NavItem}" GroupName="pag" Content="Comprimir · paso a paso"/>
-            <RadioButton x:Name="navRecortes" Style="{StaticResource NavItem}" GroupName="pag" Content="Recortes"/>
+            <TextBlock Text="{i:T AyudaNavCabecera}" FontSize="11" Foreground="{StaticResource Neutral600}" Margin="12,0,0,8"/>
+            <RadioButton x:Name="navOrgComo" Style="{StaticResource NavItem}" GroupName="pag" IsChecked="True" Content="{i:T AyudaNavOrgComo}"/>
+            <RadioButton x:Name="navOrgPasos" Style="{StaticResource NavItem}" GroupName="pag" Content="{i:T AyudaNavOrgPasos}"/>
+            <RadioButton x:Name="navComprimir" Style="{StaticResource NavItem}" GroupName="pag" Content="{i:T AyudaNavComprimir}"/>
+            <RadioButton x:Name="navRecortes" Style="{StaticResource NavItem}" GroupName="pag" Content="{i:T AyudaNavRecortes}"/>
           </StackPanel>
         </Border>
 
@@ -105,113 +106,113 @@
 
             <!-- ── Organizar · cómo funciona ── -->
             <StackPanel x:Name="pagOrgComo">
-              <TextBlock Style="{StaticResource H2}" Text="Cómo identifica Organizar tus ficheros"/>
-              <TextBlock Style="{StaticResource P}" Text="Organizar coteja los vídeos de una carpeta contra un catálogo (un JSON con los episodios de la serie) y propone el nombre canónico de cada uno. Nunca toca los originales hasta que pulsas Aplicar, y nunca se inventa un episodio: lo dudoso lo deja para que decidas tú."/>
+              <TextBlock Style="{StaticResource H2}" Text="{i:T AyudaOrgComoTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgComoIntro}"/>
 
-              <TextBlock Style="{StaticResource H3}" Text="QUÉ LEE DE CADA FICHERO"/>
+              <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaOrgComoLeeTitulo}"/>
               <WrapPanel>
                 <Border Style="{StaticResource Chip}" Margin="0,0,8,8">
-                  <StackPanel><TextBlock Text="Nombre del fichero" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="número · fecha · título" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipNombre}" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="{i:T AyudaOrgComoChipNombreSub}" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
                 </Border>
                 <Border Style="{StaticResource Chip}" Margin="0,0,8,8">
-                  <StackPanel><TextBlock Text="Carpeta" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="la temporada" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipCarpeta}" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="{i:T AyudaOrgComoChipCarpetaSub}" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
                 </Border>
                 <Border Style="{StaticResource Chip}" Margin="0,0,8,8">
-                  <StackPanel><TextBlock Text="Metadato del vídeo" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="título embebido · solo rescate" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipMetadato}" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="{i:T AyudaOrgComoChipMetadatoSub}" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
                 </Border>
                 <Border Style="{StaticResource Chip}" Margin="0,0,8,8" Background="{StaticResource Accent900}" BorderBrush="{StaticResource Accent700}">
-                  <StackPanel><TextBlock Text="Tu catálogo (JSON)" FontSize="13" Foreground="{StaticResource Accent200}"/><TextBlock Text="títulos · número · fecha" FontSize="11" Foreground="{StaticResource Accent300}"/></StackPanel>
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipCatalogo}" FontSize="13" Foreground="{StaticResource Accent200}"/><TextBlock Text="{i:T AyudaOrgComoChipCatalogoSub}" FontSize="11" Foreground="{StaticResource Accent300}"/></StackPanel>
                 </Border>
               </WrapPanel>
               <TextBlock Style="{StaticResource P}" Margin="0,4,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}"
-                         Text="El metadato solo se lee de los ficheros dudosos y que estén en disco: abrir uno que está solo en la nube (OneDrive) lo descargaría entero."/>
+                         Text="{i:T AyudaOrgComoNotaMetadato}"/>
 
-              <TextBlock Style="{StaticResource H3}" Text="CÓMO DECIDE · GANA LA PRIMERA REGLA QUE ENCAJA"/>
+              <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaOrgComoReglasTitulo}"/>
               <StackPanel>
                 <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgOkBg}" BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1">
                   <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="0" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                    <TextBlock Text="siempre manda" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
-                    <TextBlock Text="tu decisión manual" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla0Etiqueta}" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla0}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
                 </Border>
                 <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgOkBg}" BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1">
                   <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="1" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                    <TextBlock Text="seguro" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
-                    <TextBlock Text="número + fecha de emisión que cuadran" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaSeguro}" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla1}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
                 </Border>
                 <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgOkBg}" BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1">
                   <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="2" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                    <TextBlock Text="seguro" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
-                    <TextBlock Text="el título coincide con el catálogo" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaSeguro}" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla2}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
                 </Border>
                 <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgWarnBg}" BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
                   <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="3" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                    <TextBlock Text="a revisar" FontSize="12" Foreground="{StaticResource OrgWarn}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
-                    <TextBlock Text="número + fecha aproximada (±2 días)" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaRevisar}" FontSize="12" Foreground="{StaticResource OrgWarn}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla3}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
                 </Border>
                 <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgWarnBg}" BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
                   <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="4" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                    <TextBlock Text="a revisar" FontSize="12" Foreground="{StaticResource OrgWarn}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
-                    <TextBlock Text="el título se parece, pero poco" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaRevisar}" FontSize="12" Foreground="{StaticResource OrgWarn}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla4}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
                 </Border>
                 <Border CornerRadius="8" Padding="12,9" Background="{StaticResource OrgDangerBg}" BorderBrush="{StaticResource OrgDangerBorder}" BorderThickness="1">
                   <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="◆" FontSize="11" Foreground="{StaticResource OrgDanger}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                    <TextBlock Text="conflicto" FontSize="12" Foreground="{StaticResource OrgDanger}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
-                    <TextBlock Text="dos ficheros al mismo número, o sin pistas" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaConflicto}" FontSize="12" Foreground="{StaticResource OrgDanger}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoConflicto}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
                 </Border>
               </StackPanel>
               <TextBlock Style="{StaticResource P}" Margin="0,10,0,0" FontSize="11.5">
-                <Run Foreground="{StaticResource OrgOk}">●</Run><Run Foreground="{StaticResource Neutral500}"> verde: se aplica solo   </Run>
-                <Run Foreground="{StaticResource OrgWarn}">●</Run><Run Foreground="{StaticResource Neutral500}"> ámbar: lo decides tú   </Run>
-                <Run Foreground="{StaticResource OrgDanger}">●</Run><Run Foreground="{StaticResource Neutral500}"> rojo: conflicto</Run>
+                <Run Foreground="{StaticResource OrgOk}" Text="●"/><Run Foreground="{StaticResource Neutral500}" Text="{i:T AyudaOrgComoLeyendaVerde}"/>
+                <Run Foreground="{StaticResource OrgWarn}" Text="●"/><Run Foreground="{StaticResource Neutral500}" Text="{i:T AyudaOrgComoLeyendaAmbar}"/>
+                <Run Foreground="{StaticResource OrgDanger}" Text="●"/><Run Foreground="{StaticResource Neutral500}" Text="{i:T AyudaOrgComoLeyendaRojo}"/>
               </TextBlock>
 
-              <TextBlock Style="{StaticResource H3}" Text="QUÉ NECESITAN TUS FICHEROS"/>
-              <TextBlock Style="{StaticResource P}" Text="• Al menos una pista fuerte por fichero: un número reconocible (S04E01, 4x01, [438], E72…) o un título parecido al del catálogo."/>
-              <TextBlock Style="{StaticResource P}" Text="• Organizados por carpetas de temporada (o con Sxx en el nombre) para acertar la temporada."/>
-              <TextBlock Style="{StaticResource P}" Text="• El catálogo debe incluir ese episodio. La morralla de la descarga (AMZN, WEB-DL, x265…) la ignora sola, así que no hace falta limpiarla."/>
+              <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaOrgComoRequisitosTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgComoRequisito1}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgComoRequisito2}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgComoRequisito3}"/>
             </StackPanel>
 
             <!-- ── Organizar · paso a paso ── -->
             <StackPanel x:Name="pagOrgPasos" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource H2}" Text="Usar Organizar paso a paso"/>
-              <TextBlock Style="{StaticResource P}" Text="1.  Carga un catálogo con «Catálogos…» (o impórtalo). Es el JSON con los episodios de la serie."/>
-              <TextBlock Style="{StaticResource P}" Text="2.  Elige la carpeta con los vídeos. La plantilla de arriba define cómo se nombrarán (serie, temporada, episodio, título)."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Carpetas vinculadas: el botón de la cadena (junto a elegir carpeta) guarda la carpeta con este catálogo, para que la próxima vez que lo elijas venga sola. Ahí las ves todas, saltas a una o quitas el vínculo. Al analizar se vincula sola, y bajo el campo pone si está vinculada o no."/>
-              <TextBlock Style="{StaticResource P}" Text="3.  Pulsa «Analizar». Cada fichero recibe un estado: verde «Correcto» (ya bien nombrado), ámbar «Con cambios» (se renombrará) o «Revisar/Conflicto» (decides tú)."/>
-              <TextBlock Style="{StaticResource P}" Text="4.  Revisa. Los chips de estado y su color te dicen de qué fiarte; abre una fila para ver contra qué episodio ha casado y elegir otro si hace falta."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Corregir una fila que parece correcta: con el botón derecho sobre cualquier fila tienes «Elegir episodio o historias…», aunque esté en verde. Si el episodio trae varias mini-historias, ahí eliges si el fichero es el episodio entero o solo algunas — marcando la b y la c, por ejemplo, queda como «E1bc» con esos dos títulos, y la fila lo enseña en una píldora."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Ficheros que no están en el catálogo (capítulos especiales que no salen en ningún anexo, cortos, presentaciones): salen en conflicto una y otra vez porque no hay contra qué casarlos. Con el botón derecho, «Dejarlo como está (y no volver a preguntar)» lo apunta EN EL CATÁLOGO: la fila sigue en la lista, pero en verde y sin propuesta. El fichero no se toca. Va en el JSON del catálogo y no en los ajustes para que la decisión viaje con él si te lo llevas a otro equipo; para deshacerlo, quita su línea del «dejar_como_esta»."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Caso raro: un fichero que mezcla historias de episodios DISTINTOS. Con «Añadir historia de otro episodio…» se van sumando, y el nombre queda con el código compuesto («E1b+2b») y todos los títulos. Se escribe así a propósito: la app no sabrá releer ese nombre y al reanalizar saldrá como duda, que es lo correcto para un fichero que no es ningún episodio. «Quitar las historias añadidas» lo deshace."/>
-              <TextBlock Style="{StaticResource P}" Text="5.  Marca los que quieras y pulsa «Aplicar». Solo entonces se renombran los ficheros. Puedes «Deshacer lote» justo después."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="«Qué falta…» compara el catálogo con lo que tienes y lista lo que no está. Cuenta por historias, no por capítulos: si un capítulo trae tres y solo tienes dos, sale como «a medias» — algo que mirando la carpeta parece completo. Puedes mirar una temporada concreta —lo normal cuando estás completando una— y el desplegable dice «Temporada» o «Año» según cómo las numere tu catálogo. Mirándolas todas, solo tiene en cuenta las que has empezado; puedes pedir que incluya las demás. La lista se copia al portapapeles."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Fichero repetido: si dos ficheros son el mismo episodio, al abrir la fila verás las DOS rutas (este y el otro que se conserva) y eliges cuál mandar a la Papelera —nunca se borra nada solo—. Ctrl+Z lo recupera."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="«Partir en segmentos…»: muchas series de dibujos meten 2-3 mini-historias en un mismo capítulo. Si tu catálogo las lista por separado, este botón deja un fichero por historia, numerados 1a, 1b, 1c. Busca el fundido a negro que las separa y corta ahí SIN recodificar (no pierde calidad y tarda un segundo). Los originales van a la Papelera solo si salen todos sus trozos, y lo que no tenga un corte claro se queda intacto para que lo mires en Recortes."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Pulsa la cabecera de una columna para ordenar; un fichero dudoso puedes apartarlo «para revisar luego» con el botón derecho."/>
+              <TextBlock Style="{StaticResource H2}" Text="{i:T AyudaOrgPasosTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgPaso1}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgPaso2}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosVinculadas}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgPaso3}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgPaso4}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosCorregirFila}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosFueraCatalogo}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosHistoriasMezcladas}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaOrgPaso5}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosQueFalta}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosRepetido}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosSegmentos}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosOrdenar}"/>
             </StackPanel>
 
             <!-- ── Comprimir ── -->
             <StackPanel x:Name="pagComprimir" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource H2}" Text="Comprimir vídeos por lotes"/>
-              <TextBlock Style="{StaticResource P}" Text="1.  En «Origen» elige una carpeta (o arrastra vídeos a la lista). Con «Subcarpetas» marcado entra en las temporadas."/>
-              <TextBlock Style="{StaticResource P}" Text="2.  Pulsa «Analizar»: lista cada vídeo con su tamaño, duración, códec e idiomas."/>
-              <TextBlock Style="{StaticResource P}" Text="3.  Ajusta el preset o las opciones (formato, códec, calidad, resolución, audio). El idioma principal se marca como pista por defecto; los que no elijas se descartan para ahorrar espacio."/>
-              <TextBlock Style="{StaticResource P}" Text="4.  Mira el pronóstico de ahorro; si quieres la cifra real, «Medir con una muestra» codifica unos fragmentos cortos."/>
-              <TextBlock Style="{StaticResource P}" Text="5.  Selecciona los vídeos y pulsa «Comprimir selección». Verás el progreso en vivo, con Pausar y Detener. Nunca toca los originales salvo que lo pidas (y entonces van a la Papelera)."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="«Enviar a la Papelera» usa una papelera propia de la app: puedes recuperar lo último con Ctrl+Z al instante. Al acumularse o cerrar la app, esos ficheros pasan a la Papelera de Windows (siguen recuperables ahí)."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Quitar un doblaje o unos subtítulos que no vas a usar NO necesita comprimir de nuevo: con el botón derecho sobre un vídeo, «Quitar pistas de audio o subtítulos…» reempaqueta el fichero copiando los datos tal cual. Tarda un segundo, la imagen queda idéntica bit a bit, y un fichero con varios doblajes puede adelgazar decenas de megas. El original va a la Papelera, así que Ctrl+Z lo recupera."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Si el disco se llena, la tanda se pausa sola y sigue cuando liberas espacio. Puedes seguir el progreso desde cualquier pestaña con la píldora de la cabecera."/>
+              <TextBlock Style="{StaticResource H2}" Text="{i:T AyudaComprimirTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirPaso1}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirPaso2}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirPaso3}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirPaso4}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirPaso5}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirPapelera}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirQuitarPistas}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirDiscoLleno}"/>
             </StackPanel>
 
             <!-- ── Recortes ── -->
             <StackPanel x:Name="pagRecortes" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource H2}" Text="Recortes: partir un vídeo o quitarle un trozo"/>
-              <TextBlock Style="{StaticResource P}" Text="1.  Carga un vídeo (o llega aquí desde Organizar con «Enviar a Recortes…»)."/>
-              <TextBlock Style="{StaticResource P}" Text="2.  Marca los cortes en la línea de tiempo para separar los tramos que quieres conservar (útil para partir un fichero que trae dos capítulos, o quitar una intro)."/>
-              <TextBlock Style="{StaticResource P}" Text="3.  Pulsa «Exportar»: genera un fichero por tramo. El original no se toca."/>
-              <TextBlock Style="{StaticResource P}" Text="4.  «Vaciar» deja la página como recién abierta y libera la memoria del vídeo y las miniaturas, sin cerrar la app."/>
-              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="Con los tramos ya en disco, la app ofrece mandar el original a la Papelera (nunca sin preguntar). Va a la papelera propia: si algo salió mal, Ctrl+Z lo recupera al instante."/>
-              <TextBlock Style="{StaticResource H3}" Text="COMBINAR CON ORGANIZAR"/>
-              <TextBlock Style="{StaticResource P}" Text="Cuando Organizar detecta que un fichero trae DOS episodios, ofrece «Partirlo en dos» → lo abre en Recortes para que separes los dos capítulos. Después, cada trozo se identifica y renombra por separado en Organizar."/>
+              <TextBlock Style="{StaticResource H2}" Text="{i:T AyudaRecortesTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesPaso1}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesPaso2}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesPaso3}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesPaso4}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaRecortesPapelera}"/>
+              <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaRecortesConOrganizarTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesConOrganizar}"/>
             </StackPanel>
 
           </Grid>

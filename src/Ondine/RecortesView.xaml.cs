@@ -11,6 +11,7 @@ using System.Windows.Media.Imaging;
 using Rectangle = System.Windows.Shapes.Rectangle;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using Ondine.Localizacion;
 using Ondine.Reindex;
 
 namespace Ondine;
@@ -132,23 +133,25 @@ public partial class RecortesView : UserControl
             }
         };
 
-        cboFmt.ItemsSource = OpcionesSalida.Formatos;
-        cboCodec.ItemsSource = OpcionesSalida.Codecs;
-        cboQ.ItemsSource = OpcionesSalida.Calidades;
-        cboRes.ItemsSource = OpcionesSalida.Resoluciones;
-        cboAud.ItemsSource = OpcionesSalida.Audios;
+        LlenarDesplegables();
         foreach (var c in new[] { cboFmt, cboCodec, cboQ, cboRes, cboAud })
         {
             c.SelectedIndex = 0;
             c.SelectionChanged += (_, _) => RefrescarEstimacion();
         }
+        // Los rótulos de estos desplegables se ponen desde código, así que no
+        // se enteran solos del cambio de idioma como los del XAML: se vuelven
+        // a llenar aquí. Sin desuscribir a propósito: esta vista es una sola y
+        // vive lo que la ventana.
+        Idioma.Cambio += (_, _) => LlenarDesplegables();
 
         btnElegir.Click += (_, _) => ElegirVideo();
         btnVaciar.Click += (_, _) =>
         {
             if (_exportando) return;
-            if (_tramos.Count > 1 && !DialogWindow.Confirmar(Window.GetWindow(this), "Vaciar Recortes",
-                    $"Tienes {_tramos.Count} tramos preparados. Vaciar los descarta y suelta el vídeo. ¿Seguir?"))
+            if (_tramos.Count > 1 && !DialogWindow.Confirmar(Window.GetWindow(this),
+                    Textos.Instancia.RecortesVaciarTitulo,
+                    string.Format(Textos.Instancia.RecortesVaciarPregunta, _tramos.Count)))
                 return;
             VaciarRecortes();
         };
@@ -196,7 +199,7 @@ public partial class RecortesView : UserControl
         {
             // No se puede previsualizar (pero sí cortar): se dice en la pastilla, sobre el
             // fondo degradado, porque no hay imagen de vídeo que enseñar.
-            lblSinVideo.Text = "Este vídeo no se puede previsualizar aquí, pero sí cortarlo.";
+            lblSinVideo.Text = Textos.Instancia.RecortesSinPrevisualizacion;
             chipSinVideo.Visibility = Visibility.Visible;
         };
 
@@ -266,6 +269,27 @@ public partial class RecortesView : UserControl
         };
         // Al salir de la página no se deja nada en memoria ni en disco temporal.
         Unloaded += (_, _) => LiberarMiniaturas();
+    }
+
+    /// <summary>
+    /// Pone (o repone) los rótulos de los cinco desplegables de salida. Lo que
+    /// el usuario tuviera elegido se respeta: al cambiar de idioma cambia el
+    /// texto, no el ajuste.
+    /// </summary>
+    private void LlenarDesplegables()
+    {
+        Rellenar(cboFmt, OpcionesSalida.Formatos);
+        Rellenar(cboCodec, OpcionesSalida.Codecs);
+        Rellenar(cboQ, OpcionesSalida.Calidades);
+        Rellenar(cboRes, OpcionesSalida.Resoluciones);
+        Rellenar(cboAud, OpcionesSalida.Audios);
+
+        static void Rellenar(ComboBox c, string[] opciones)
+        {
+            int elegido = c.SelectedIndex;
+            c.ItemsSource = opciones;
+            if (elegido >= 0) c.SelectedIndex = Math.Min(elegido, opciones.Length - 1);
+        }
     }
 
     /// <summary>
@@ -366,8 +390,8 @@ public partial class RecortesView : UserControl
     {
         var d = new OpenFileDialog
         {
-            Title = "Elegir el vídeo que quieres recortar",
-            Filter = "Vídeos|*.mkv;*.mp4;*.avi;*.mov;*.m4v;*.webm;*.ts|Todos|*.*",
+            Title = Textos.Instancia.RecortesElegirVideoTitulo,
+            Filter = Textos.Instancia.RecortesFiltroVideos,
         };
         if (d.ShowDialog() == true) Cargar(d.FileName);
     }
@@ -388,16 +412,15 @@ public partial class RecortesView : UserControl
         var dueno = Window.GetWindow(this);
         if (_exportando)
         {
-            DialogWindow.Aviso(dueno, "Recortes",
-                "Se está exportando ahora mismo. Detén la exportación antes de cargar otro vídeo.");
+            DialogWindow.Aviso(dueno, Textos.Instancia.RecortesTitulo,
+                Textos.Instancia.RecortesExportandoAviso);
             return;
         }
         if (_fuente != null && !string.Equals(_fuente.Path, ruta, StringComparison.OrdinalIgnoreCase)
             && _tramos.Count > 1
-            && !DialogWindow.Confirmar(dueno, "Recortes",
-                    $"Tienes {_tramos.Count} tramos preparados sobre " +
-                    $"«{Path.GetFileName(_fuente.Path)}».{Environment.NewLine}{Environment.NewLine}" +
-                    "Cargar otro vídeo los descarta. ¿Seguir?"))
+            && !DialogWindow.Confirmar(dueno, Textos.Instancia.RecortesTitulo,
+                    string.Format(Textos.Instancia.RecortesCargarOtroPregunta,
+                        _tramos.Count, Path.GetFileName(_fuente.Path), Environment.NewLine)))
             return;
         _partirAlSaberDuracion = partirPorLaMitad;
 
@@ -411,38 +434,41 @@ public partial class RecortesView : UserControl
         // estado: cancelar con Esc deja el proyecto anterior como estaba.
         if (NubeLocal.EsMarcador(ruta))
         {
-            Ocupado(true, "Descargando de la nube…");
+            Ocupado(true, Textos.Instancia.RecortesDescargandoNube);
             barCarga.IsIndeterminate = false;
-            lblCargaDet.Text = $"{Humano(fi.Length)} · Esc para cancelar";
+            lblCargaDet.Text = string.Format(Textos.Instancia.RecortesEscCancelar, Humano(fi.Length));
             _cancelaDescarga = new CancellationTokenSource();
             try
             {
                 var avance = new Progress<double>(pr =>
                 {
                     barCarga.Value = pr;
-                    lblCarga.Text = $"Descargando de la nube… {pr * 100:0} %";
+                    lblCarga.Text = string.Format(
+                        Textos.Instancia.RecortesDescargandoNubePorcentaje, pr * 100);
                 });
                 await NubeLocal.DescargarAsync(ruta, avance, _cancelaDescarga.Token);
             }
             catch (OperationCanceledException)
             {
                 Ocupado(false);
-                Log?.Invoke("Recortes: descarga cancelada; el vídeo sigue en la nube.");
+                Log?.Invoke(Textos.Instancia.RecortesLogDescargaCancelada);
                 return;
             }
             catch (Exception ex)
             {
                 Ocupado(false);
-                Log?.Invoke($"Recortes: no se pudo descargar «{fi.Name}»: {ex.Message}");
+                Log?.Invoke(string.Format(
+                    Textos.Instancia.RecortesLogNoSePudoDescargar, fi.Name, ex.Message));
                 return;
             }
             finally { _cancelaDescarga = null; }
             fi.Refresh();
-            Log?.Invoke($"Recortes: «{fi.Name}» descargado ({Humano(fi.Length)}).");
+            Log?.Invoke(string.Format(
+                Textos.Instancia.RecortesLogDescargado, fi.Name, Humano(fi.Length)));
         }
         _fuente = new VideoRow { Path = ruta, Bytes = fi.Length };
         lblVideo.Text = fi.Name;
-        lblVideoDet.Text = "Analizando…";
+        lblVideoDet.Text = Textos.Instancia.Analizando;
         chipSinVideo.Visibility = Visibility.Collapsed;
         _tramos.Clear();
         _duracion = 0;            // la del vídeo anterior no vale, y sin esto no se recalcula
@@ -453,7 +479,7 @@ public partial class RecortesView : UserControl
         video.Pause();          // primer fotograma a la vista, sin arrancar la reproducción
         _pausado = true;
 
-        Ocupado(true, "Analizando el vídeo…");
+        Ocupado(true, Textos.Instancia.RecortesAnalizandoVideo);
         _importando = true;   // el vigía anota a nombre del import cualquier atasco de aquí
         try
         {
@@ -760,15 +786,15 @@ public partial class RecortesView : UserControl
         }
         btnExportar.Content = _tramos.Count switch
         {
-            0 => "Exportar",
-            1 => "Exportar 1 tramo",
-            _ => $"Exportar {_tramos.Count} tramos",
+            0 => Textos.Instancia.RecortesExportar,
+            1 => Textos.Instancia.RecortesExportarUnTramo,
+            _ => string.Format(Textos.Instancia.RecortesExportarVariosTramos, _tramos.Count),
         };
         lblAyudaTramos.Text = _tramos.Count switch
         {
-            0 => "No queda ningún tramo: así no se exportaría nada.",
-            1 => "Un solo tramo: se exportará el vídeo entero. Corta con la ✂ de la pista para partirlo.",
-            _ => $"{_tramos.Count} tramos = {_tramos.Count} ficheros. Arrastra las juntas de la pista para afinar.",
+            0 => Textos.Instancia.RecortesAyudaSinTramos,
+            1 => Textos.Instancia.RecortesAyudaUnTramo,
+            _ => string.Format(Textos.Instancia.RecortesAyudaVariosTramos, _tramos.Count),
         };
         PintarPista();
         RefrescarEstimacion();
@@ -884,7 +910,7 @@ public partial class RecortesView : UserControl
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Top,
                 Visibility = Visibility.Hidden,
-                ToolTip = "Quitar este tramo: no se exportará",
+                ToolTip = Textos.Instancia.RecortesQuitarTramoTip,
             };
             quitar.Click += OnQuitarTramo;
             dentro.Children.Add(quitar);
@@ -935,7 +961,7 @@ public partial class RecortesView : UserControl
             Background = (Brush)FindResource("Accent"),
             Cursor = Cursors.SizeWE,
             Child = rayas,
-            ToolTip = "Arrastra para mover el corte. No puede pasarse de los tramos de al lado.",
+            ToolTip = Textos.Instancia.RecortesTiradorTip,
         };
         // Sujeto a la pista: los de los dos extremos del vídeo caen justo en el borde y, sin
         // esto, se quedan medio recortados y con la mitad de sitio donde agarrarlos.
@@ -1053,8 +1079,18 @@ public partial class RecortesView : UserControl
     {
         if (!_exportando) return;
         _pausadaExp = !_pausadaExp;
-        if (_pausadaExp) { _engine.Pause(); btnPausarExp.Content = "Reanudar"; lblProgreso.Text = "En pausa"; }
-        else { _engine.Resume(); btnPausarExp.Content = "Pausar"; lblProgreso.Text = _tramoActual; }
+        if (_pausadaExp)
+        {
+            _engine.Pause();
+            btnPausarExp.Content = Textos.Instancia.RecortesReanudar;
+            lblProgreso.Text = Textos.Instancia.Pausado;
+        }
+        else
+        {
+            _engine.Resume();
+            btnPausarExp.Content = Textos.Instancia.RecortesPausar;
+            lblProgreso.Text = _tramoActual;
+        }
     }
 
     /// <summary>
@@ -1065,8 +1101,13 @@ public partial class RecortesView : UserControl
     private void DetenerExportacion()
     {
         if (!_exportando) return;
-        if (_pausadaExp) { _engine.Resume(); _pausadaExp = false; btnPausarExp.Content = "Pausar"; }
-        lblProgreso.Text = "Deteniendo…";
+        if (_pausadaExp)
+        {
+            _engine.Resume();
+            _pausadaExp = false;
+            btnPausarExp.Content = Textos.Instancia.RecortesPausar;
+        }
+        lblProgreso.Text = Textos.Instancia.RecortesDeteniendo;
         btnDetenerExp.IsEnabled = false;
         _cancelar?.Cancel();
     }
@@ -1153,8 +1194,7 @@ public partial class RecortesView : UserControl
         if (_tierRegistrado) return;
         _tierRegistrado = true;
         int tier = System.Windows.Media.RenderCapability.Tier >> 16;
-        Log?.Invoke($"Recortes: aceleración gráfica nivel {tier} " +
-                    "(0 = por software/sin GPU, 1 = parcial, 2 = GPU completa).");
+        Log?.Invoke(string.Format(Textos.Instancia.RecortesLogAceleracion, tier));
     }
 
     private DispatcherTimer CrearVigiaContinuo()
@@ -1166,8 +1206,11 @@ public partial class RecortesView : UserControl
             // El export tiene su propio vigía (VigilarBloqueos); aquí no se duplica.
             if (!_exportando && gap > 120)
             {
-                string donde = _importando ? "importando un vídeo" : "en reposo";
-                Log?.Invoke($"Recortes: la interfaz se quedó {gap} ms sin responder ({donde}).");
+                string donde = _importando
+                    ? Textos.Instancia.RecortesLogImportando
+                    : Textos.Instancia.RecortesLogEnReposo;
+                Log?.Invoke(string.Format(
+                    Textos.Instancia.RecortesLogInterfazSinResponder, gap, donde));
             }
             _vigiaSiempreCrono.Restart();
         };
@@ -1183,9 +1226,7 @@ public partial class RecortesView : UserControl
         double pct = 100.0 * lentos / _marcos.Count;
         // Solo se anota si de verdad hubo tela: si fue fluido, no se ensucia el Registro.
         if (pct >= 15 || P(.99) > 80)
-            Log?.Invoke($"Recortes: fluidez durante la exportación — fotograma mediano {P(.5):0} ms, " +
-                        $"p99 {P(.99):0} ms, {pct:0}% por debajo de 30 fps. " +
-                        "Si lo notaste a tirones y este número es bueno, el freno viene de fuera de la app.");
+            Log?.Invoke(string.Format(Textos.Instancia.RecortesLogFluidez, P(.5), P(.99), pct));
     }
 
     private DispatcherTimer CrearVigia()
@@ -1194,7 +1235,8 @@ public partial class RecortesView : UserControl
         t.Tick += (_, _) =>
         {
             var gap = _vigiaCrono.ElapsedMilliseconds;
-            if (gap > 200) Log?.Invoke($"Recortes: la entrada estuvo bloqueada {gap} ms durante la exportación.");
+            if (gap > 200)
+                Log?.Invoke(string.Format(Textos.Instancia.RecortesLogEntradaBloqueada, gap));
             _vigiaCrono.Restart();
         };
         return t;
@@ -1205,7 +1247,7 @@ public partial class RecortesView : UserControl
         capaExportando.Visibility = si ? Visibility.Visible : Visibility.Collapsed;
         btnPausarExp.Visibility = btnDetenerExp.Visibility = si ? Visibility.Visible : Visibility.Collapsed;
         btnPausarExp.IsEnabled = btnDetenerExp.IsEnabled = si;
-        btnPausarExp.Content = "Pausar";
+        btnPausarExp.Content = Textos.Instancia.RecortesPausar;
         VigilarBloqueos(si);
     }
 
@@ -1214,7 +1256,7 @@ public partial class RecortesView : UserControl
         if (_exportando || _atras.Count == 0) return;
         _adelante.Push(_tramos.Select(f => new Tramo(f.Inicio, f.Fin, f.Nombre)).ToList());
         Rehacer(_atras.Pop(), registrar: false);
-        Log?.Invoke("Recortes: deshecho.");
+        Log?.Invoke(Textos.Instancia.RecortesLogDeshecho);
     }
 
     /// <summary>Ctrl+Y (o Ctrl+Mayús+Z): vuelve a aplicar lo deshecho.</summary>
@@ -1223,7 +1265,7 @@ public partial class RecortesView : UserControl
         if (_exportando || _adelante.Count == 0) return;
         _atras.Push(_tramos.Select(f => new Tramo(f.Inicio, f.Fin, f.Nombre)).ToList());
         Rehacer(_adelante.Pop(), registrar: false);
-        Log?.Invoke("Recortes: rehecho.");
+        Log?.Invoke(Textos.Instancia.RecortesLogRehecho);
     }
 
     private void AlDesplazarPista()
@@ -1301,26 +1343,33 @@ public partial class RecortesView : UserControl
         if (_fuente is not { Probed: true } || _duracion <= 0 || _tramos.Count == 0)
         {
             lblEst.Text = "—";
-            lblEstDet.Text = "Elige un vídeo para estimar el tamaño";
+            lblEstDet.Text = Textos.Instancia.RecortesEstimacionSinVideo;
             return;
         }
 
         var est = Estimator.Compute(_fuente, Opciones());
-        if (!est.Valid) { lblEst.Text = "—"; lblEstDet.Text = "No se puede estimar este vídeo"; return; }
+        if (!est.Valid)
+        {
+            lblEst.Text = "—";
+            lblEstDet.Text = Textos.Instancia.RecortesEstimacionImposible;
+            return;
+        }
 
         double parte = _tramos.Sum(t => t.Duracion) / _duracion;
         long bytes = (long)(est.EstBytes * parte);
         lblEst.Text = "≈ " + Humano(bytes);
-        lblEstDet.Text = $"{_tramos.Count} fichero{(_tramos.Count == 1 ? "" : "s")} · " +
-                         $"{TramoFila.Reloj(_tramos.Sum(t => t.Duracion))} de vídeo · " +
-                         "estimación aproximada, el resultado real depende del contenido.";
+        lblEstDet.Text = string.Format(
+            _tramos.Count == 1
+                ? Textos.Instancia.RecortesEstimacionDetalleUno
+                : Textos.Instancia.RecortesEstimacionDetalle,
+            _tramos.Count, TramoFila.Reloj(_tramos.Sum(t => t.Duracion)));
     }
 
     private void ElegirDestino()
     {
         var d = new OpenFolderDialog
         {
-            Title = "Dónde dejar los recortes",
+            Title = Textos.Instancia.RecortesDondeDejarTitulo,
             InitialDirectory = CarpetaDestino(),
         };
         if (d.ShowDialog() == true) { _destino = d.FolderName; MostrarDestino(); }
@@ -1334,7 +1383,8 @@ public partial class RecortesView : UserControl
     {
         var c = CarpetaDestino();
         lblDestino.Text = c.Length == 0 ? ""
-            : $"Se guardará en: {c}{(_destino == null ? "  (junto al original)" : "")}";
+            : string.Format(Textos.Instancia.RecortesSeGuardaraEn, c)
+              + (_destino == null ? Textos.Instancia.RecortesJuntoAlOriginal : "");
     }
 
     /// <summary>
@@ -1345,9 +1395,10 @@ public partial class RecortesView : UserControl
     {
         var nombre = Reindex.PapeleraApp.DeshacerUltimo();
         lblProgreso.Text = nombre != null
-            ? $"Recuperado «{nombre}» · vuelve a abrirlo para editarlo"
-            : "No hay nada que recuperar.";
-        if (nombre != null) Log?.Invoke($"Recortes: «{nombre}» recuperado de la papelera.");
+            ? string.Format(Textos.Instancia.RecortesRecuperado, nombre)
+            : Textos.Instancia.RecortesNadaQueRecuperar;
+        if (nombre != null)
+            Log?.Invoke(string.Format(Textos.Instancia.RecortesLogRecuperado, nombre));
     }
 
     /// <summary>
@@ -1364,27 +1415,24 @@ public partial class RecortesView : UserControl
 
         var fi = new FileInfo(ruta);
         var dueno = Window.GetWindow(this);
-        if (!DialogWindow.Confirmar(dueno, "¿Borrar el original?",
-                $"Los {cuantos} tramos están en:{Environment.NewLine}{destino}" +
-                $"{Environment.NewLine}{Environment.NewLine}" +
-                $"«{fi.Name}» ({Humano(fi.Length)}) ya no hace falta." +
-                $"{Environment.NewLine}{Environment.NewLine}" +
-                "Va a la papelera de reciclaje, así que se puede recuperar.",
-                "Sí, a la papelera", "No, conservarlo"))
+        if (!DialogWindow.Confirmar(dueno, Textos.Instancia.RecortesBorrarOriginalTitulo,
+                string.Format(Textos.Instancia.RecortesBorrarOriginalPregunta,
+                    cuantos, destino, fi.Name, Humano(fi.Length), Environment.NewLine),
+                Textos.Instancia.RecortesSiPapelera, Textos.Instancia.RecortesNoConservar))
             return false;
 
         // Papelera PROPIA de la app (no la de Windows): recuperable con Ctrl+Z de forma fiable;
         // al acumularse o cerrar la app, se finaliza en la Papelera del sistema.
         if (Reindex.PapeleraApp.Enviar(ruta) == null)
         {
-            Log?.Invoke($"Recortes: no se pudo enviar «{fi.Name}» a la papelera; sigue donde estaba.");
-            DialogWindow.Aviso(dueno, "Recortes",
-                $"No se pudo borrar «{fi.Name}». Sigue en su sitio.");
+            Log?.Invoke(string.Format(Textos.Instancia.RecortesLogNoSePudoEnviarPapelera, fi.Name));
+            DialogWindow.Aviso(dueno, Textos.Instancia.RecortesTitulo,
+                string.Format(Textos.Instancia.RecortesNoSePudoBorrar, fi.Name));
             return false;
         }
 
-        Log?.Invoke($"Recortes: «{fi.Name}» a la papelera tras exportar {cuantos} tramos.");
-        lblProgreso.Text = $"Listo · {cuantos} tramos · original a la papelera (Ctrl+Z para recuperar)";
+        Log?.Invoke(string.Format(Textos.Instancia.RecortesLogAPapelera, fi.Name, cuantos));
+        lblProgreso.Text = string.Format(Textos.Instancia.RecortesListoOriginalPapelera, cuantos);
 
         // Sin fichero no hay proyecto: dejar la línea de tiempo con los cortes de un vídeo
         // que ya no existe solo lleva a exportar de nuevo y no entender por qué falla.
@@ -1419,13 +1467,13 @@ public partial class RecortesView : UserControl
         _atras.Clear();
         _adelante.Clear();
 
-        lblVideo.Text = "Ningún vídeo cargado";
-        lblVideoDet.Text = "Arrastra un vídeo aquí, o ábrelo desde Organizar con el botón derecho.";
+        lblVideo.Text = Textos.Instancia.RecortesSinVideo;
+        lblVideoDet.Text = Textos.Instancia.RecortesArrastraVideo;
         lblDuracionTotal.Text = "";
         lblDur.Text = "0:00";
         lblPos.Text = "0:00";
         lblZoom.Text = "";
-        lblSinVideo.Text = "Elige un vídeo para empezar a cortarlo";
+        lblSinVideo.Text = Textos.Instancia.RecortesElegirParaEmpezar;
         chipSinVideo.Visibility = Visibility.Visible;
         cabezal.Visibility = Visibility.Collapsed;
         btnCortar.Visibility = Visibility.Collapsed;
@@ -1467,7 +1515,7 @@ public partial class RecortesView : UserControl
         btnExportar.IsEnabled = false;
         btnCortar.IsEnabled = false;
         PintarExportando(true);
-        EstadoProceso?.Invoke(true, "Exportando…");
+        EstadoProceso?.Invoke(true, Textos.Instancia.RecortesExportandoEstado);
         // Las miniaturas se paran: leerían el mismo fichero que se está codificando, y con
         // uno recién bajado de la nube ese goteo de ffmpegs era parte de la lentitud.
         _esperaPrevia.Stop();
@@ -1486,15 +1534,16 @@ public partial class RecortesView : UserControl
             // Codificar leyendo de la red parece la app colgada.
             if (NubeLocal.EsMarcador(_fuente.Path))
             {
-                var avance = new Progress<double>(pr =>
-                    lblProgreso.Text = $"Descargando de la nube… {pr * 100:0} %");
+                var avance = new Progress<double>(pr => lblProgreso.Text = string.Format(
+                    Textos.Instancia.RecortesDescargandoNubePorcentaje, pr * 100));
                 await NubeLocal.DescargarAsync(_fuente.Path, avance, _cancelar.Token);
             }
 
             foreach (var t in _tramos.ToList())
             {
                 n++;
-                _tramoActual = $"Tramo {n} de {_tramos.Count} · {t.Nombre}";
+                _tramoActual = string.Format(
+                    Textos.Instancia.RecortesTramoEnCurso, n, _tramos.Count, t.Nombre);
                 lblProgreso.Text = _tramoActual;
                 foreach (var f in _tramos) f.EnCurso = ReferenceEquals(f, t);
                 var opt = Opciones();
@@ -1531,18 +1580,22 @@ public partial class RecortesView : UserControl
             salioTodo = fallidos.Count == 0 && hechos.Count == _tramos.Count && hechos.Count > 0;
 
             lblProgreso.Text = fallidos.Count == 0
-                ? $"Listo · {hechos.Count} fichero{(hechos.Count == 1 ? "" : "s")}"
-                : $"{hechos.Count} de {_tramos.Count} · {fallidos.Count} sin salir";
+                ? string.Format(hechos.Count == 1
+                        ? Textos.Instancia.RecortesListoUnFichero
+                        : Textos.Instancia.RecortesListoFicheros,
+                    hechos.Count)
+                : string.Format(Textos.Instancia.RecortesSinSalir,
+                    hechos.Count, _tramos.Count, fallidos.Count);
             Log?.Invoke(fallidos.Count == 0
-                ? $"Recortes: {hechos.Count} ficheros creados en {destino}"
-                : $"Recortes: NO salieron {fallidos.Count} de {_tramos.Count} tramos " +
-                  $"({string.Join(", ", fallidos)}) — el motor dice el porqué en las líneas de arriba.");
+                ? string.Format(Textos.Instancia.RecortesLogFicherosCreados, hechos.Count, destino)
+                : string.Format(Textos.Instancia.RecortesLogNoSalieron,
+                    fallidos.Count, _tramos.Count, string.Join(", ", fallidos)));
         }
-        catch (OperationCanceledException) { lblProgreso.Text = "Cancelado"; }
+        catch (OperationCanceledException) { lblProgreso.Text = Textos.Instancia.RecortesCancelado; }
         catch (Exception ex)
         {
-            lblProgreso.Text = "Error";
-            Log?.Invoke($"Recortes: {ex.Message}");
+            lblProgreso.Text = Textos.Instancia.Error;
+            Log?.Invoke(string.Format(Textos.Instancia.RecortesLogFallo, ex.Message));
         }
         finally
         {
@@ -1607,14 +1660,15 @@ public partial class RecortesView : UserControl
                 () =>
                 {
                     _v.lblProgreso.Text = $"{_v._tramoActual} · {fraccion * 100:0} %";
-                    _v.EstadoProceso?.Invoke(true, $"Exportando · {fraccion * 100:0} %");
+                    _v.EstadoProceso?.Invoke(true, string.Format(
+                        Textos.Instancia.RecortesExportandoPorcentaje, fraccion * 100));
                 });
         public void FileDone(FileResult r) { }
         public void FileSkipped(string ruta, string porque) =>
             _v.Dispatcher.BeginInvoke(() =>
             {
-                _v.lblProgreso.Text = $"{_v._tramoActual} · SALTADO: {porque}";
-                _v.Log?.Invoke($"Recortes: el motor se saltó este tramo — {porque}");
+                _v.lblProgreso.Text = $"{_v._tramoActual} · {Textos.Instancia.RecortesSaltado}: {porque}";
+                _v.Log?.Invoke(string.Format(Textos.Instancia.RecortesLogMotorSalto, porque));
             });
     }
 }

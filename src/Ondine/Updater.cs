@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Windows;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -84,7 +85,7 @@ public static class Updater
             string tag = root.GetProperty("tag_name").GetString() ?? "";
             string clean = tag.TrimStart('v', 'V');
             if (!Version.TryParse(clean, out var latest))
-                return CheckResult.Fail($"la última publicación («{tag}») no tiene un número de versión reconocible");
+                return CheckResult.Fail(string.Format(Textos.Instancia.MotorActualizacionVersionIlegible, tag));
             latest = new Version(latest.Major, latest.Minor, Math.Max(latest.Build, 0));
             if (latest <= Current) return CheckResult.UpToDate();
 
@@ -104,7 +105,7 @@ public static class Updater
                 }
             }
             if (dl == "")
-                return CheckResult.Fail($"la versión {tag} está publicada pero no trae instalador adjunto");
+                return CheckResult.Fail(string.Format(Textos.Instancia.MotorActualizacionSinInstalador, tag));
 
             return CheckResult.Found(new UpdateInfo
             {
@@ -115,8 +116,9 @@ public static class Updater
                 AssetName = asset,
             });
         }
-        catch (TaskCanceledException) { return CheckResult.Fail("se agotó el tiempo de espera"); }
-        catch (HttpRequestException ex) { return CheckResult.Fail("no hay conexión con GitHub (" + ex.Message + ")"); }
+        catch (TaskCanceledException) { return CheckResult.Fail(Textos.Instancia.MotorActualizacionTiempoAgotado); }
+        // El mensaje de la excepción lo escribe .NET y no se traduce: es diagnóstico.
+        catch (HttpRequestException ex) { return CheckResult.Fail(string.Format(Textos.Instancia.MotorActualizacionSinConexion, ex.Message)); }
         catch (Exception ex) { return CheckResult.Fail(ex.Message); }
     }
 

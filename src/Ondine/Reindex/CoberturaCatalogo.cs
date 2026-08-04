@@ -1,3 +1,5 @@
+using Ondine.Localizacion;
+
 namespace Ondine.Reindex;
 
 /// <summary>
@@ -43,8 +45,9 @@ public static class CoberturaCatalogo
 
         /// <summary>«De 636 historias tienes 343; faltan 293».</summary>
         public string Resumen => Completa
-            ? $"No falta nada: están las {SegmentosTotales} historias."
-            : $"De {SegmentosTotales} historias tienes {SegmentosPresentes}; faltan {SegmentosQueFaltan}.";
+            ? string.Format(Textos.Instancia.ReindexCoberturaCompleta, SegmentosTotales)
+            : string.Format(Textos.Instancia.ReindexCoberturaResumen,
+                SegmentosTotales, SegmentosPresentes, SegmentosQueFaltan);
     }
 
     /// <summary>

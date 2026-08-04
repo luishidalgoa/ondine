@@ -7,6 +7,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
+using Ondine.Localizacion;
 using Ondine.Reindex;
 
 namespace Ondine;
@@ -165,7 +166,9 @@ public partial class OrganizarView : UserControl
             miUbicacion.IsEnabled = miReproducir.IsEnabled;
             // El mismo sitio sirve para apartar y para desapartar: el rótulo dice cuál de
             // las dos toca ahora, así no hay que recordar el estado de la fila.
-            miRevisar.Header = r.Apartada ? "Quitar de la cola" : "Añadir a la cola";
+            miRevisar.Header = r.Apartada
+                ? Textos.Instancia.OrganizarQuitarDeLaCola
+                : Textos.Instancia.OrganizarAnadirALaCola;
 
             // Se puede corregir cualquier fila, esté como esté: lo único que hace falta es un
             // catálogo cargado y que no se haya renombrado ya. El rótulo dice si hay historias
@@ -173,14 +176,14 @@ public partial class OrganizarView : UserControl
             int historias = r.Res.Episodio?.TitulosSalida.Count ?? 0;
             miElegirEpisodio.IsEnabled = _catalogoCargado != null && !r.Aplicado;
             miElegirEpisodio.Header = historias > 1
-                ? $"Elegir episodio o historias… ({historias} dentro)"
-                : "Elegir otro episodio…";
+                ? string.Format(Textos.Instancia.OrganizarElegirEpisodioHistoriasN, historias)
+                : Textos.Instancia.OrganizarElegirOtroEpisodio;
             miDejarComoEsta.IsEnabled = !r.Aplicado;
             miAnadirHistoria.IsEnabled = _catalogoCargado != null && !r.Aplicado && r.Res.Episodio != null;
             miQuitarHistorias.IsEnabled = r.Tambien.Count > 0;
             miQuitarHistorias.Header = r.Tambien.Count > 0
-                ? $"Quitar las {r.Tambien.Count} historias añadidas"
-                : "Quitar las historias añadidas";
+                ? string.Format(Textos.Instancia.OrganizarQuitarHistoriasN, r.Tambien.Count)
+                : Textos.Instancia.OrganizarQuitarHistorias;
         };
         miElegirEpisodio.Click += (_, _) => OnElegirAMano(tabla, new RoutedEventArgs());
         miDejarComoEsta.Click += (_, _) => OnDejarComoEsta(tabla, new RoutedEventArgs());
@@ -190,7 +193,7 @@ public partial class OrganizarView : UserControl
             if (tabla.SelectedItem is not OrganizarRow f) return;
             f.QuitarHistorias();
             ActualizarContadores();
-            Escribir($"«{f.Original}» vuelve a ser un episodio normal.");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogEpisodioNormal, f.Original));
         };
         miReproducir.Click += (_, _) => ReproducirFila(tabla.SelectedItem as OrganizarRow);
         miRecortar.Click += (_, _) =>
@@ -222,9 +225,9 @@ public partial class OrganizarView : UserControl
         // Las tres etapas de la identificación, en el panel de ficheros. Son las fases
         // REALES del trabajo, no decorado: cada una se enciende cuando su fase corre.
         _pasos = new PasosVisual(
-            "Leyendo los nombres de los ficheros",
-            "Identificándolos contra el catálogo",
-            "Preparando la revisión");
+            Textos.Instancia.OrganizarPaso1,
+            Textos.Instancia.OrganizarPaso2,
+            Textos.Instancia.OrganizarPaso3);
         panelEtapas.Children.Add(_pasos.Raiz);
 
         Loaded += (_, _) =>
@@ -324,7 +327,7 @@ public partial class OrganizarView : UserControl
         cboModo.SelectedIndex = ReindexStore.CargarModo(_catalogoElegido.Ruta) == "numero" ? 1 : 0;
         _sincronizandoModo = false;
         try { _catalogoCargado = ReindexCatalog.Load(_catalogoElegido.Ruta); }
-        catch (Exception ex) { Aviso($"No se pudo leer el catálogo: {ex.Message}"); }
+        catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSeLeyoCatalogo, ex.Message)); }
     }
 
     private void ElegirCatalogo(CatalogoGuardado? cat)
@@ -363,10 +366,11 @@ public partial class OrganizarView : UserControl
         var vinculadas = ReindexStore.CargarCarpetasDeCatalogo(_catalogoElegido.Ruta);
         bool esta = vinculadas.Any(c => string.Equals(c, carpeta, StringComparison.OrdinalIgnoreCase));
         lblVinculo.Text = esta
-            ? $"🔗 Vinculada a «{_catalogoElegido.Serie}» · vendrá sola la próxima vez"
+            ? string.Format(Textos.Instancia.OrganizarVinculada, _catalogoElegido.Serie)
             : vinculadas.Count > 0
-                ? $"Sin vincular · «{_catalogoElegido.Serie}» tiene {vinculadas.Count} carpeta(s) guardada(s)"
-                : "Sin vincular · se vinculará sola al analizar";
+                ? string.Format(Textos.Instancia.OrganizarSinVincularConOtras,
+                                _catalogoElegido.Serie, vinculadas.Count)
+                : Textos.Instancia.OrganizarSinVincular;
     }
 
     /// <summary>
@@ -377,7 +381,7 @@ public partial class OrganizarView : UserControl
     {
         if (_catalogoElegido == null)
         {
-            Aviso("Elige antes un catálogo: las carpetas se vinculan a uno concreto.");
+            Aviso(Textos.Instancia.OrganizarVinculosSinCatalogo);
             return;
         }
         var actual = txtCarpeta.Text?.Trim() ?? "";
@@ -386,11 +390,12 @@ public partial class OrganizarView : UserControl
 
         menu.Items.Add(new MenuItem
         {
-            Header = $"Carpetas de «{_catalogoElegido.Serie}»",
+            Header = string.Format(Textos.Instancia.OrganizarVinculosCabecera, _catalogoElegido.Serie),
             IsEnabled = false,
         });
         if (vinculadas.Count == 0)
-            menu.Items.Add(new MenuItem { Header = "  (ninguna todavía)", IsEnabled = false });
+            menu.Items.Add(new MenuItem
+            { Header = Textos.Instancia.OrganizarVinculosNinguna, IsEnabled = false });
         foreach (var c in vinculadas)
         {
             var destino = c;
@@ -408,28 +413,30 @@ public partial class OrganizarView : UserControl
         bool yaEsta = vinculadas.Any(c => string.Equals(c, actual, StringComparison.OrdinalIgnoreCase));
         if (actual.Length > 0 && !yaEsta)
         {
-            var add = new MenuItem { Header = "Vincular la carpeta actual a este catálogo" };
+            var add = new MenuItem { Header = Textos.Instancia.OrganizarVincularActual };
             add.Click += (_, _) =>
             {
                 ReindexStore.GuardarCarpetaDeCatalogo(_catalogoElegido.Ruta, actual);
-                Escribir($"Carpeta vinculada a «{_catalogoElegido.Serie}»: {actual}");
+                Escribir(string.Format(Textos.Instancia.OrganizarLogCarpetaVinculada,
+                                       _catalogoElegido.Serie, actual));
                 ActualizarVinculo();
             };
             menu.Items.Add(add);
         }
         if (yaEsta)
         {
-            var quitar = new MenuItem { Header = "Quitar el vínculo de la carpeta actual" };
+            var quitar = new MenuItem { Header = Textos.Instancia.OrganizarQuitarVinculo };
             quitar.Click += (_, _) =>
             {
                 ReindexStore.OlvidarCarpetaDeCatalogo(_catalogoElegido.Ruta, actual);
-                Escribir($"Vínculo quitado: {actual}");
+                Escribir(string.Format(Textos.Instancia.OrganizarLogVinculoQuitado, actual));
                 ActualizarVinculo();
             };
             menu.Items.Add(quitar);
         }
         if (actual.Length == 0)
-            menu.Items.Add(new MenuItem { Header = "Elige una carpeta para poder vincularla", IsEnabled = false });
+            menu.Items.Add(new MenuItem
+            { Header = Textos.Instancia.OrganizarVincularSinCarpeta, IsEnabled = false });
 
         menu.PlacementTarget = btnVinculos;
         menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
@@ -451,7 +458,7 @@ public partial class OrganizarView : UserControl
     private void OnCopiarRutaCatalogo(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.Tag is not string ruta) return;
-        try { Clipboard.SetText(ruta); Escribir("Ruta copiada al portapapeles."); }
+        try { Clipboard.SetText(ruta); Escribir(Textos.Instancia.MainRutaCopiada); }
         catch { /* el portapapeles puede estar cogido por otra app; no es grave */ }
     }
 
@@ -467,32 +474,30 @@ public partial class OrganizarView : UserControl
         var cat = _catalogos.FirstOrDefault(c => c.Ruta == ruta);
         if (cat == null) return;
 
-        var nl = Environment.NewLine;
         // La copia interna SÍ se borra (es de la app); el JSON del usuario, nunca. El aviso
         // dice la verdad de cada caso — antes prometía «NO se borra» y con las copias legadas
         // eso era mentira.
-        var deDonde = cat.EsCopiaInterna
-            ? $"{nl}{nl}Es una copia interna de la app (de una versión anterior):{nl}{cat.Ruta}" +
-              $"{nl}{nl}Se borrará esa copia. Si aún tienes el JSON original, podrás volver a importarlo."
-            : $"{nl}{nl}La app dejará de usarlo. Tu fichero NO se toca:{nl}{cat.Ruta}";
+        var deDonde = string.Format(cat.EsCopiaInterna
+            ? Textos.Instancia.OrganizarQuitarCatalogoInterno
+            : Textos.Instancia.OrganizarQuitarCatalogoExterno, cat.Ruta);
 
-        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Quitar catálogo",
-                $"¿Quitar «{cat.Serie}» de la app?{deDonde}")) return;
+        if (!DialogWindow.Confirmar(Window.GetWindow(this), Textos.Instancia.OrganizarQuitarCatalogoTitulo,
+                string.Format(Textos.Instancia.OrganizarQuitarCatalogoPregunta, cat.Serie, deDonde))) return;
 
         if (ReindexStore.BorrarCatalogo(ruta))
         {
-            Escribir($"Catálogo quitado: «{cat.Serie}».");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogCatalogoQuitado, cat.Serie));
             if (_catalogoElegido?.Ruta == ruta) _catalogoElegido = null;
             Recargar();
         }
-        else Aviso("Ese catálogo ya no estaba.");
+        else Aviso(Textos.Instancia.OrganizarCatalogoYaNoEstaba);
     }
 
     // ─────────────────────────── carpeta ───────────────────────────
 
     private void ElegirCarpeta()
     {
-        var dlg = new OpenFolderDialog { Title = "Carpeta a organizar" };
+        var dlg = new OpenFolderDialog { Title = Textos.Instancia.OrganizarCarpeta };
         if (!string.IsNullOrWhiteSpace(txtCarpeta.Text) && Directory.Exists(txtCarpeta.Text))
             dlg.InitialDirectory = txtCarpeta.Text;
         if (dlg.ShowDialog() == true)
@@ -527,19 +532,20 @@ public partial class OrganizarView : UserControl
         _ficheros = Array.Empty<string>();
 
         try { _ficheros = LibraryScan.Escanear(carpeta, Engine.VideoExtensions); }
-        catch (Exception ex) { Aviso($"No se pudo leer la carpeta: {ex.Message}"); }
+        catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSeLeyoCarpeta, ex.Message)); }
 
         int carpetas = _ficheros.Select(f => LibraryScan.Grupo(carpeta, f)).Distinct().Count();
 
         lblFicheros.Text = _ficheros.Length switch
         {
-            0 when !Directory.Exists(carpeta) => "Elige una carpeta para empezar",
-            0 => "No hay vídeos en esta carpeta ni en sus subcarpetas",
-            1 => $"1 fichero en {carpeta}",
+            0 when !Directory.Exists(carpeta) => Textos.Instancia.OrganizarElegirCarpeta,
+            0 => Textos.Instancia.OrganizarSinVideos,
+            1 => string.Format(Textos.Instancia.OrganizarUnFichero, carpeta),
             // Decir en cuántas carpetas están confirma que el recorrido ha bajado: si sale «1»
             // sobre una serie con temporadas, se sabe al momento que se apuntó demasiado adentro.
-            _ when carpetas > 1 => $"{_ficheros.Length} ficheros en {carpetas} carpetas de {carpeta}",
-            _ => $"{_ficheros.Length} ficheros en {carpeta}",
+            _ when carpetas > 1 => string.Format(Textos.Instancia.OrganizarFicherosEnCarpetas,
+                                                 _ficheros.Length, carpetas, carpeta),
+            _ => string.Format(Textos.Instancia.OrganizarFicherosEn, _ficheros.Length, carpeta),
         };
 
         // Volver a elegir carpeta invalida lo que hubiera en la tabla
@@ -589,29 +595,26 @@ public partial class OrganizarView : UserControl
 
         if (_catalogoCargado == null || ejemplo == null)
         {
-            lblVistaPrevia.Text = "Elige un catálogo para ver un ejemplo";
+            lblVistaPrevia.Text = Textos.Instancia.OrganizarVistaPreviaSinCatalogo;
             return;
         }
 
         var muestra = _filas.FirstOrDefault()?.Res.Archivo ?? SignalExtractor.Extract("ejemplo.mkv", "");
         var nombre = new LibraryTemplate(txtPlantilla.Text).Render(_catalogoCargado, ejemplo, muestra);
         lblVistaPrevia.Text = nombre == null
-            ? "⚠ Esa plantilla no deja nombre: añade alguna marca o texto"
-            : "Quedaría: " + nombre;
+            ? Textos.Instancia.OrganizarVistaPreviaSinNombre
+            : Textos.Instancia.OrganizarVistaPreviaQuedaria + nombre;
 
         // El «Quedaría:» se corta casi siempre —estos títulos son larguísimos— así que el
         // ejemplo entero va también al globo, que es donde cabe entero.
         var globo = nombre == null
-            ? ExplicacionPlantilla
-            : $"{ExplicacionPlantilla}\n\nCon «{_catalogoCargado.Serie}» quedaría:\n{nombre}";
+            ? Textos.Instancia.OrganizarPlantillaAyuda
+            : Textos.Instancia.OrganizarPlantillaAyuda + "\n\n" +
+              string.Format(Textos.Instancia.OrganizarPlantillaGlobo, _catalogoCargado.Serie, nombre);
 
         txtPlantilla.ToolTip = Globo(globo);
         lblVistaPrevia.ToolTip = Globo(globo);
     }
-
-    private const string ExplicacionPlantilla =
-        "Cómo se compone el nombre final. No es el «Renombrado libre» de Herramientas: " +
-        "aquí el nombre se construye desde el catálogo.";
 
     /// <summary>
     /// Un globo con el texto ajustado. Cada llamada crea el suyo: un mismo elemento visual no
@@ -631,7 +634,7 @@ public partial class OrganizarView : UserControl
     {
         if (_catalogoCargado == null)
         {
-            Aviso("Primero elige o importa un catálogo.");
+            Aviso(Textos.Instancia.OrganizarElegirCatalogoPrimero);
             return;
         }
         new CatalogoWindow(_catalogoCargado) { Owner = Window.GetWindow(this) }.Show();
@@ -641,8 +644,8 @@ public partial class OrganizarView : UserControl
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Importar catálogo de referencia",
-            Filter = "Catálogo de reindexado (*.json)|*.json|Todos los archivos|*.*",
+            Title = Textos.Instancia.OrganizarImportarTitulo,
+            Filter = Textos.Instancia.OrganizarFiltroAbrir,
         };
         if (dlg.ShowDialog() != true) return;
 
@@ -654,11 +657,12 @@ public partial class OrganizarView : UserControl
             // la preferencia vacía y el siguiente arranque caía al primero por alfabeto.
             ReindexStore.GuardarUltimoCatalogo(guardado.Ruta);
             CargarCatalogos();
-            Escribir($"Catálogo importado: {guardado.Serie} ({guardado.Episodios} episodios).");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogCatalogoImportado,
+                                   guardado.Serie, guardado.Episodios));
             ActualizarEstado();
         }
         catch (ReindexCatalogException ex) { Aviso(ex.Message); }
-        catch (Exception ex) { Aviso($"No se pudo importar: {ex.Message}"); }
+        catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSePudoImportar, ex.Message)); }
     }
 
     /// <summary>
@@ -675,7 +679,10 @@ public partial class OrganizarView : UserControl
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(UrlEspecificacion)
             { UseShellExecute = true });
         }
-        catch (Exception ex) { Aviso($"No se pudo abrir la documentación: {ex.Message}\n\n{UrlEspecificacion}"); }
+        catch (Exception ex)
+        {
+            Aviso(string.Format(Textos.Instancia.OrganizarNoSeAbrioDoc, ex.Message, UrlEspecificacion));
+        }
     }
 
     /// <summary>
@@ -698,8 +705,8 @@ public partial class OrganizarView : UserControl
     {
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar catálogo de ejemplo",
-            Filter = "Catálogo de reindexado (*.json)|*.json",
+            Title = Textos.Instancia.OrganizarGuardarEjemploTitulo,
+            Filter = Textos.Instancia.OrganizarFiltroGuardar,
             FileName = "mi-serie.reindex.json",
         };
         if (dlg.ShowDialog() != true) return;
@@ -707,14 +714,13 @@ public partial class OrganizarView : UserControl
         try
         {
             File.WriteAllText(dlg.FileName, ReindexCatalog.Ejemplo, new System.Text.UTF8Encoding(false));
-            Escribir($"Catálogo de ejemplo guardado en {dlg.FileName}.");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogEjemploGuardado, dlg.FileName));
 
-            var r = DialogWindow.Confirmar(Window.GetWindow(this), "Organizar", "Ejemplo guardado.\n\nEdítalo con tus episodios y luego impórtalo. " +
-                "Si algo no encaja, al importar se te dirá exactamente qué corregir.\n\n" +
-                "¿Quieres abrir la especificación del formato?");
+            var r = DialogWindow.Confirmar(Window.GetWindow(this), Textos.Instancia.OrganizarTitulo,
+                Textos.Instancia.OrganizarEjemploGuardado);
             if (r) AbrirEspecificacion();
         }
-        catch (Exception ex) { Aviso($"No se pudo guardar el ejemplo: {ex.Message}"); }
+        catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSeGuardoEjemplo, ex.Message)); }
     }
 
     // ─────────────────────────── simulación ───────────────────────────
@@ -739,7 +745,7 @@ public partial class OrganizarView : UserControl
             ? 0
             : _ficheros.Count(_catalogoCargado.SeDejaComoEsta);
         if (dejadosComoEstan > 0)
-            Escribir($"{dejadosComoEstan} fichero(s) se dejan como están: ya lo decidiste y quedó apuntado en el catálogo.");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogDejadosComoEstan, dejadosComoEstan));
 
         // Se recuerda esta carpeta para este catálogo: la próxima vez que lo elijas se pre-rellena
         // sola y no tienes que volver a emparejar carpeta y catálogo.
@@ -754,7 +760,7 @@ public partial class OrganizarView : UserControl
         bool animar = vistaInicio.Visibility == Visibility.Visible;
 
         btnSimular.IsEnabled = btnSimularGrande.IsEnabled = btnCarpeta.IsEnabled = false;
-        lblEstadoOrg.Text = "Identificando…";
+        lblEstadoOrg.Text = Textos.Instancia.OrganizarIdentificando;
 
         if (animar)
         {
@@ -780,7 +786,10 @@ public partial class OrganizarView : UserControl
                 ficheros
                     .Select(f => SignalExtractor.Extract(f, new DirectoryInfo(Path.GetDirectoryName(f)!).Name))
                     .ToList()), animar);
-            if (animar) _pasos.Hecha(0, señales.Count == 1 ? "1 nombre leído" : $"{señales.Count} nombres leídos");
+            if (animar)
+                _pasos.Hecha(0, señales.Count == 1
+                    ? Textos.Instancia.OrganizarPasoUnNombre
+                    : string.Format(Textos.Instancia.OrganizarPasoNombres, señales.Count));
 
             // ── Etapa 2: el motor, fuera del hilo de interfaz ──
             if (animar) _pasos.EnCurso(1);
@@ -801,7 +810,7 @@ public partial class OrganizarView : UserControl
                 .ToList();
             if (dudosos.Count > 0)
             {
-                Escribir($"Buscando el título de {dudosos.Count} dudosos…");
+                Escribir(string.Format(Textos.Instancia.OrganizarLogBuscandoTitulos, dudosos.Count));
                 var metadatos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 int enNube = 0;
                 await Task.Run(async () =>
@@ -840,7 +849,7 @@ public partial class OrganizarView : UserControl
 
                 _dudososEnNube = enNube;
                 if (enNube > 0)
-                    Escribir($"{enNube} están solo en la nube: no se abren para no descargarlos enteros.");
+                    Escribir(string.Format(Textos.Instancia.OrganizarLogSoloEnLaNube, enNube));
 
                 if (metadatos.Count > 0)
                 {
@@ -850,11 +859,11 @@ public partial class OrganizarView : UserControl
                         if (metadatos.TryGetValue(señales[i].Path, out var titulo))
                             señales[i] = SignalExtractor.Extract(señales[i].Path, señales[i].Carpeta, titulo);
                     resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
-                    Escribir($"{metadatos.Count} títulos encontrados en los metadatos.");
+                    Escribir(string.Format(Textos.Instancia.OrganizarLogTitulosMetadatos, metadatos.Count));
                 }
             }
 
-            if (animar) _pasos.Hecha(1, $"contra «{catalogo.Serie}»");
+            if (animar) _pasos.Hecha(1, string.Format(Textos.Instancia.OrganizarPasoContra, catalogo.Serie));
 
             // ── Etapa 3: montar la tabla ──
             // El respiro de antes deja al arco pintarse: montar filas bloquea el hilo de
@@ -883,17 +892,21 @@ public partial class OrganizarView : UserControl
                 _pasos.Hecha(2);
                 // La fusión final: los tres pasos se funden en un solo check con destello.
                 // Merece verse entera antes de saltar a la tabla — es la recompensa.
-                _pasos.Terminado("Identificación lista",
-                    listos == 1 ? "1 listo para aplicar" : $"{listos} listos para aplicar");
+                _pasos.Terminado(Textos.Instancia.OrganizarPasoListo,
+                    listos == 1
+                        ? Textos.Instancia.OrganizarPasoUnListo
+                        : string.Format(Textos.Instancia.OrganizarPasoListos, listos));
                 await Task.Delay(1100);
             }
 
             MostrarRevision();
             ActualizarContadores();
-            Escribir($"Análisis: {_filas.Count} ficheros contra «{catalogo.Serie}»" +
-                     (temporadas > 0 ? $", repartidos en {temporadas} temporadas." : "."));
+            Escribir(string.Format(Textos.Instancia.OrganizarLogAnalisis, _filas.Count, catalogo.Serie) +
+                     (temporadas > 0
+                         ? string.Format(Textos.Instancia.OrganizarLogAnalisisTemporadas, temporadas)
+                         : "."));
         }
-        catch (Exception ex) { Aviso($"El análisis falló: {ex.Message}"); }
+        catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarAnalisisFallo, ex.Message)); }
         finally
         {
             if (animar)
@@ -983,11 +996,11 @@ public partial class OrganizarView : UserControl
         int conflictos = _filas.Count(f => f.EstadoVisible == ReindexEstado.Conflicto);
         int errores = _filas.Count(f => f.EstadoVisible == ReindexEstado.Error);
 
-        runLimpios.Text = $" {limpios} correctos";
-        runCorregidos.Text = $" {corregidos} con cambios";
-        runEspeciales.Text = $" {especiales} especiales";
-        runConflictos.Text = $" {conflictos} conflictos";
-        runErrores.Text = $" {errores} errores";
+        runLimpios.Text = string.Format(Textos.Instancia.OrganizarChipCorrectos, limpios);
+        runCorregidos.Text = string.Format(Textos.Instancia.OrganizarChipConCambios, corregidos);
+        runEspeciales.Text = string.Format(Textos.Instancia.OrganizarChipEspeciales, especiales);
+        runConflictos.Text = string.Format(Textos.Instancia.OrganizarChipConflictos, conflictos);
+        runErrores.Text = string.Format(Textos.Instancia.OrganizarChipErrores, errores);
 
         ActualizarBotonCola();
 
@@ -1002,12 +1015,11 @@ public partial class OrganizarView : UserControl
 
         // El botón dice EXACTAMENTE cuántos va a tocar. Si hay listos sin marcar, se nota
         // en el propio texto («12 de 400»): aplicar nunca lleva sorpresa dentro.
-        lblAplicar.Text = marcados == 0 ? "Aplicar"
-            : marcados == listos ? $"Aplicar {marcados} marcados"
-            : $"Aplicar {marcados} de {listos}";
+        lblAplicar.Text = marcados == 0 ? Textos.Instancia.Aplicar
+            : marcados == listos ? string.Format(Textos.Instancia.OrganizarAplicarMarcados, marcados)
+            : string.Format(Textos.Instancia.OrganizarAplicarDe, marcados, listos);
         btnAplicar.IsEnabled = marcados > 0;
-        btnAplicar.ToolTip = "Renombra SOLO los ficheros en verde que estén marcados. " +
-                             "Los conflictos y las dudas nunca se tocan, estén como estén.";
+        btnAplicar.ToolTip = Textos.Instancia.OrganizarAplicarAyudaDetalle;
         btnAceptarVerdes.IsEnabled = listos > 0;
 
         // Partir solo tiene sentido sobre lo YA identificado y con más de una historia dentro.
@@ -1016,20 +1028,24 @@ public partial class OrganizarView : UserControl
 
         int partibles = FilasPartibles().Count;
         btnPartirSegmentos.IsEnabled = partibles > 0;
-        btnPartirSegmentos.Content = partibles > 0 ? $"Partir {partibles} en segmentos…" : "Partir en segmentos…";
+        btnPartirSegmentos.Content = partibles > 0
+            ? string.Format(Textos.Instancia.OrganizarPartirSegmentosN, partibles)
+            : Textos.Instancia.OrganizarPartirSegmentos;
 
         // Los que ya estaban bien se dicen aparte: si no, «383 listos · 165 por despachar» sobre
         // 548 deja 0 sin explicar y parece que se han perdido por el camino.
         int hechos = _filas.Count(f => f.SinCambios);
-        lblEstadoOrg.Text = $"{_filas.Count} ficheros · {listos} listos para aplicar · {dudas} por despachar"
-                            + (hechos > 0 ? $" · {hechos} ya estaban bien" : "")
-                            + (_dudososEnNube > 0 ? $" · {_dudososEnNube} solo en la nube (no se abren)" : "");
+        lblEstadoOrg.Text = string.Format(Textos.Instancia.OrganizarResumen, _filas.Count, listos, dudas)
+                            + (hechos > 0
+                                ? string.Format(Textos.Instancia.OrganizarResumenYaBien, hechos) : "")
+                            + (_dudososEnNube > 0
+                                ? string.Format(Textos.Instancia.OrganizarResumenNube, _dudososEnNube) : "");
 
         // Si la mayoría son dudas, se dice de frente en vez de dejar que lo descubra fila a fila
         if (_filas.Count > 0 && dudas > _filas.Count / 2)
         {
-            lblBannerAviso.Text = $"{dudas} de {_filas.Count} ficheros necesitan que decidas tú. " +
-                                  ExplicarPorQueTantasDudas();
+            lblBannerAviso.Text = string.Format(Textos.Instancia.OrganizarBannerDudas, dudas, _filas.Count)
+                                  + ExplicarPorQueTantasDudas();
             bannerAviso.Visibility = Visibility.Visible;
         }
         else bannerAviso.Visibility = Visibility.Collapsed;
@@ -1038,9 +1054,12 @@ public partial class OrganizarView : UserControl
     private string ExplicarPorQueTantasDudas()
     {
         var avisos = _catalogoCargado?.Advertencias ?? Array.Empty<string>();
-        var sinFechas = avisos.FirstOrDefault(a => a.Contains("Sin fechas"));
-        if (sinFechas != null) return "Este catálogo no trae fechas de emisión, así que solo se puede tirar del título.";
-        return "Revisa los conflictos y los especiales antes de aplicar.";
+        // Se compara con el aviso ENTERO, no con un trozo suelto de su texto: los avisos
+        // del catálogo ya vienen traducidos, y un «Contains("Sin fechas")» solo acertaba
+        // con la app en castellano — en inglés esta explicación no salía nunca.
+        if (avisos.Contains(Textos.Instancia.ReindexAvisoSinNingunaFecha))
+            return Textos.Instancia.OrganizarDudasSinFechas;
+        return Textos.Instancia.OrganizarDudasRevisa;
     }
 
     /// <summary>
@@ -1192,7 +1211,9 @@ public partial class OrganizarView : UserControl
             while (j < visibles.Count && visibles[j].Grupo == visibles[i].Grupo) j++;
 
             visibles[i].PrimeraDeGrupo = true;
-            visibles[i].GrupoConteo = j - i == 1 ? "· 1 fichero" : $"· {j - i} ficheros";
+            visibles[i].GrupoConteo = j - i == 1
+                ? Textos.Instancia.OrganizarGrupoUnFichero
+                : string.Format(Textos.Instancia.OrganizarGrupoFicheros, j - i);
             bandas++;
             i = j;
         }
@@ -1265,13 +1286,13 @@ public partial class OrganizarView : UserControl
         {
             _revision.Sacar(f.RutaActual);
             f.Apartada = false;
-            Escribir($"«{f.Original}» sale de la cola.");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogSaleDeLaCola, f.Original));
         }
         else
         {
             _revision.Meter(f.RutaActual);
             f.Apartada = true;
-            Escribir($"«{f.Original}» a la cola.");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogALaCola, f.Original));
         }
 
         GuardarRevision();
@@ -1282,14 +1303,17 @@ public partial class OrganizarView : UserControl
     private void GuardarRevision()
     {
         try { ReindexStore.GuardarRevision(_revision); }
-        catch (Exception ex) { Escribir($"No se pudo guardar la cola: {ex.Message}"); }
+        catch (Exception ex)
+        { Escribir(string.Format(Textos.Instancia.OrganizarLogNoSeGuardoCola, ex.Message)); }
     }
 
     /// <summary>El botón lleva el número puesto: sin abrirlo ya sabes si hay algo dentro.</summary>
     private void ActualizarBotonCola()
     {
         int n = _revision.Cuantos;
-        runCola.Text = n == 0 ? " Cola" : $" Cola · {n}";
+        runCola.Text = n == 0
+            ? Textos.Instancia.OrganizarCola
+            : string.Format(Textos.Instancia.OrganizarColaN, n);
         btnCola.IsEnabled = true;   // se puede abrir vacía: dice cómo se llena
     }
 
@@ -1313,8 +1337,8 @@ public partial class OrganizarView : UserControl
                 Detalle = fila != null
                     ? $"{fila.EstadoTexto} · {Path.GetFileName(Path.GetDirectoryName(a.Ruta)) ?? ""}"
                     : (File.Exists(a.Ruta)
-                        ? "no está en este análisis — pulsa para abrir su carpeta"
-                        : "ya no está en el disco"),
+                        ? Textos.Instancia.OrganizarColaNoEnAnalisis
+                        : Textos.Instancia.OrganizarColaNoEstaEnDisco),
             };
         }).ToList();
 
@@ -1340,7 +1364,7 @@ public partial class OrganizarView : UserControl
         {
             btnCola.IsChecked = false;
             if (File.Exists(ruta)) AbrirCarpetaDe(ruta);
-            else Aviso($"«{Path.GetFileName(ruta)}» ya no está en el disco. Sácalo de la cola.");
+            else Aviso(string.Format(Textos.Instancia.OrganizarColaYaNoEsta, Path.GetFileName(ruta)));
             return;
         }
 
@@ -1371,10 +1395,8 @@ public partial class OrganizarView : UserControl
     private void VaciarCola()
     {
         if (_revision.Cuantos == 0) return;
-        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Vaciar la cola",
-                $"Se van a quitar los {_revision.Cuantos} ficheros de la cola." +
-                $"{Environment.NewLine}{Environment.NewLine}" +
-                "No se toca ningún fichero: solo se olvida la lista."))
+        if (!DialogWindow.Confirmar(Window.GetWindow(this), Textos.Instancia.OrganizarVaciarCola,
+                string.Format(Textos.Instancia.OrganizarVaciarColaMensaje, _revision.Cuantos)))
             return;
 
         foreach (var a in _revision.Todos.ToList()) _revision.Sacar(a.Ruta);
@@ -1382,7 +1404,7 @@ public partial class OrganizarView : UserControl
         GuardarRevision();
         ActualizarBotonCola();
         PintarCola();
-        Escribir("Cola vaciada.");
+        Escribir(Textos.Instancia.OrganizarLogColaVaciada);
     }
 
     /// <summary>Mete rutas en la cola y abre el desplegable. Solo para las pruebas.</summary>
@@ -1414,7 +1436,7 @@ public partial class OrganizarView : UserControl
     private void AceptarVerdes()
     {
         int n = _filas.Count(f => f.ListoParaAplicar);
-        Escribir($"{n} filas verdes aceptadas; listas para aplicar.");
+        Escribir(string.Format(Textos.Instancia.OrganizarLogVerdesAceptadas, n));
         chipDudas.IsChecked = true;   // lo interesante ya es solo lo que falta por decidir
     }
 
@@ -1428,7 +1450,7 @@ public partial class OrganizarView : UserControl
         fila.ElegirEpisodio(ep);
         RecordarDecision(fila, ep);
         ActualizarContadores();
-        Escribir($"«{fila.Original}» → episodio {ep.Num} (elegido a mano).");
+        Escribir(string.Format(Textos.Instancia.OrganizarLogElegidoAMano, fila.Original, ep.Num));
     }
 
     /// <summary>
@@ -1448,8 +1470,9 @@ public partial class OrganizarView : UserControl
         RecordarDecision(fila, ep, win.SegElegido);
         ActualizarContadores();
         Escribir(win.SegElegido == null
-            ? $"«{fila.Original}» → episodio {ep.Num} (elegido en el explorador)."
-            : $"«{fila.Original}» → historia «{win.SegElegido}» del episodio {ep.Num}.");
+            ? string.Format(Textos.Instancia.OrganizarLogElegidoExplorador, fila.Original, ep.Num)
+            : string.Format(Textos.Instancia.OrganizarLogElegidaHistoria,
+                            fila.Original, win.SegElegido, ep.Num));
     }
 
     // ───────────────── Partir un episodio en sus mini-historias ─────────────────
@@ -1479,13 +1502,9 @@ public partial class OrganizarView : UserControl
         if (candidatas.Count == 0 || _catalogoCargado == null) return;
 
         int trozos = candidatas.Sum(f => f.Res.Episodio!.TitulosSalida.Count);
-        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Partir en segmentos",
-                $"{candidatas.Count} episodios traen varias mini-historias dentro.\n\n" +
-                $"Se van a dejar {trozos} ficheros, uno por historia, numerados 1a, 1b, 1c…\n" +
-                "El corte NO recodifica: no se pierde calidad.\n\n" +
-                "Los originales van a la Papelera (recuperables con Ctrl+Z) solo si salen todos " +
-                "sus trozos. Los que no tengan un corte claro se dejan intactos.",
-                "Partir", "Cancelar"))
+        if (!DialogWindow.Confirmar(Window.GetWindow(this), Textos.Instancia.OrganizarPartirTitulo,
+                string.Format(Textos.Instancia.OrganizarPartirMensaje, candidatas.Count, trozos),
+                Textos.Instancia.OrganizarPartirBoton, Textos.Instancia.Cancelar))
             return;
 
         btnPartirSegmentos.IsEnabled = false;
@@ -1498,7 +1517,7 @@ public partial class OrganizarView : UserControl
             var ruta = fila.RutaActual;
             var ep = fila.Res.Episodio!;
             int n = ep.TitulosSalida.Count;
-            Escribir($"Partiendo «{Path.GetFileName(ruta)}» en {n}…");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogPartiendo, Path.GetFileName(ruta), n));
             try
             {
                 var duracion = await SegmentSplitRunner.DuracionAsync(ruta);
@@ -1507,7 +1526,7 @@ public partial class OrganizarView : UserControl
                 if (!plan.Fiable)
                 {
                     sinCorte.Add(Path.GetFileName(ruta));
-                    Escribir($"  sin corte claro: {plan.Motivo}");
+                    Escribir(string.Format(Textos.Instancia.OrganizarLogSinCorteClaro, plan.Motivo));
                     continue;
                 }
 
@@ -1549,15 +1568,18 @@ public partial class OrganizarView : UserControl
             catch (Exception ex)
             {
                 sinCorte.Add(Path.GetFileName(ruta));
-                Escribir($"  no se pudo partir: {ex.Message}");
+                Escribir(string.Format(Textos.Instancia.OrganizarLogNoSePudoPartir, ex.Message));
             }
         }
 
         ActualizarContadores();
+        // La lista de los que se quedaron sin cortar se monta aparte —cinco nombres y unos
+        // puntos suspensivos si hay más— para que la frase entera quepa en una sola clave.
+        var lista = string.Join(", ", sinCorte.Take(5)) + (sinCorte.Count > 5 ? "…" : "");
         Escribir(sinCorte.Count == 0
-            ? $"Partidos {hechos} episodios. Vuelve a analizar para verlos numerados por segmento."
-            : $"Partidos {hechos}. Sin corte claro ({sinCorte.Count}): {string.Join(", ", sinCorte.Take(5))}" +
-              (sinCorte.Count > 5 ? "…" : "") + " — ábrelos en Recortes y marca el corte a mano.");
+            ? string.Format(Textos.Instancia.OrganizarLogPartidosOk, hechos)
+            : string.Format(Textos.Instancia.OrganizarLogPartidosConFallos,
+                            hechos, sinCorte.Count, lista));
         btnPartirSegmentos.IsEnabled = FilasPartibles().Count > 0;
     }
 
@@ -1608,17 +1630,18 @@ public partial class OrganizarView : UserControl
     private void EnviarRepetidoAPapelera(OrganizarRow fila, string ruta, bool esOtro)
     {
         var nombre = System.IO.Path.GetFileName(ruta);
-        var quien = esOtro ? "el otro fichero (el que la app conserva)" : "esta copia repetida";
-        if (!DialogWindow.Confirmar(Window.GetWindow(this), "Enviar a la Papelera",
-                $"¿Enviar {quien} a la Papelera?\n\n{nombre}\n\n" +
-                "Podrás recuperarlo con Ctrl+Z o desde la Papelera.",
-                "Enviar a la Papelera", "Cancelar"))
+        var quien = esOtro
+            ? Textos.Instancia.OrganizarPapeleraOtro
+            : Textos.Instancia.OrganizarPapeleraEste;
+        if (!DialogWindow.Confirmar(Window.GetWindow(this), Textos.Instancia.OrganizarPapeleraTitulo,
+                string.Format(Textos.Instancia.OrganizarPapeleraPregunta, quien, nombre),
+                Textos.Instancia.OrganizarPapeleraTitulo, Textos.Instancia.Cancelar))
             return;
 
         if (PapeleraApp.Enviar(ruta) == null)
         {
-            DialogWindow.Aviso(Window.GetWindow(this), "No se pudo",
-                "No se ha podido enviar el fichero a la papelera. ¿Sigue abierto en otro programa?");
+            DialogWindow.Aviso(Window.GetWindow(this), Textos.Instancia.OrganizarPapeleraFalloTitulo,
+                Textos.Instancia.OrganizarPapeleraFallo);
             return;
         }
 
@@ -1629,12 +1652,12 @@ public partial class OrganizarView : UserControl
                 string.Equals(f.RutaActual, ruta, StringComparison.OrdinalIgnoreCase));
             if (otra != null) _filas.Remove(otra);
             fila.MarcarRecuperadaDeDuplicado();
-            Escribir($"A la papelera: {nombre}. «{fila.Original}» pasa a ser la copia buena · Ctrl+Z para deshacer.");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogOtroALaPapelera, nombre, fila.Original));
         }
         else
         {
             _filas.Remove(fila);
-            Escribir($"Copia repetida enviada a la papelera: {nombre}  ·  pulsa Ctrl+Z para deshacer.");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogRepetidaALaPapelera, nombre));
         }
         ActualizarContadores();
     }
@@ -1645,8 +1668,8 @@ public partial class OrganizarView : UserControl
         if (!PapeleraApp.PuedeDeshacer) return;
         var nombre = PapeleraApp.DeshacerUltimo();
         Escribir(nombre != null
-            ? $"Restaurado de la papelera: {nombre}. Vuelve a analizar para verlo en la lista."
-            : "No se pudo restaurar: su sitio ya está ocupado por otro fichero.");
+            ? string.Format(Textos.Instancia.OrganizarLogRestaurado, nombre)
+            : Textos.Instancia.OrganizarLogNoSeRestauro);
     }
 
     /// <summary>
@@ -1659,7 +1682,7 @@ public partial class OrganizarView : UserControl
         if (tabla.SelectedItem is not OrganizarRow fila || _catalogoCargado == null) return;
         if (fila.Res.Episodio == null)
         {
-            Aviso("Primero elige el episodio principal de este fichero; después ya puedes añadirle historias de otros.");
+            Aviso(Textos.Instancia.OrganizarElegirEpisodioPrincipal);
             return;
         }
 
@@ -1669,8 +1692,8 @@ public partial class OrganizarView : UserControl
 
         fila.AnadirHistoria(ep, win.SegElegido);
         ActualizarContadores();
-        Escribir($"«{fila.Original}» → se le añade el episodio {ep.Num}{win.SegElegido}. " +
-                 "Queda con nombre compuesto; al reanalizar saldrá como duda (es un fichero que no es un episodio).");
+        Escribir(string.Format(Textos.Instancia.OrganizarLogHistoriaAnadida,
+                               fila.Original, $"{ep.Num}{win.SegElegido}"));
     }
 
     /// <summary>
@@ -1688,7 +1711,7 @@ public partial class OrganizarView : UserControl
         fila.Res.Estado = ReindexEstado.Limpio;
         fila.Res.Confianza = ReindexConfianza.Alta;
         fila.Res.Episodio = null;
-        fila.Res.Motivo = "Lo dejaste como estaba";
+        fila.Res.Motivo = Textos.Instancia.OrganizarMotivoDejadoComoEstaba;
         fila.Res.Alternativas = Array.Empty<ReindexCandidato>();
         fila.Recalcular();
         ActualizarContadores();
@@ -1703,12 +1726,13 @@ public partial class OrganizarView : UserControl
             {
                 // El catálogo en memoria es otro objeto: se recarga para que valga ya.
                 CargarCatalogoElegido();
-                Escribir($"«{nombre}» queda como está. Apuntado en el catálogo: no volverá a salir como duda.");
+                Escribir(string.Format(Textos.Instancia.OrganizarLogQuedaComoEsta, nombre));
             }
         }
         catch (Exception ex)
         {
-            Escribir($"«{nombre}» queda como está, pero no se pudo apuntar en el catálogo: {ex.Message}");
+            Escribir(string.Format(Textos.Instancia.OrganizarLogQuedaComoEstaSinApuntar,
+                                   nombre, ex.Message));
         }
     }
 
@@ -1725,7 +1749,8 @@ public partial class OrganizarView : UserControl
             NombreOriginal = fila.Original,
         };
         try { ReindexStore.GuardarDecisiones(_decisiones); }
-        catch (Exception ex) { Escribir($"No se pudo guardar la decisión: {ex.Message}"); }
+        catch (Exception ex)
+        { Escribir(string.Format(Textos.Instancia.OrganizarLogNoSeGuardoDecision, ex.Message)); }
     }
 
     /// <summary>Triaje por teclado: Enter abre el resolutor, 1/2 eligen candidato.</summary>
@@ -1777,17 +1802,24 @@ public partial class OrganizarView : UserControl
         int desmarcados = _filas.Count(f => f.ListoParaAplicar && !f.Marcado);
 
         lblConfSeRenombra.Text = listos.Count == 1
-            ? "Se renombra 1 fichero identificado con confianza."
-            : $"Se renombran {listos.Count} ficheros identificados con confianza.";
+            ? Textos.Instancia.OrganizarConfirmarUno
+            : string.Format(Textos.Instancia.OrganizarConfirmarVarios, listos.Count);
 
         if (dudas > 0 || desmarcados > 0)
         {
             // Contar tambien lo desmarcado a proposito: el miedo de «aplicar» es no saber
             // qué toca, y este cuadro existe para que no quede nada sin contar.
             var trozos = new List<string>();
-            if (dudas > 0) trozos.Add(dudas == 1 ? "1 fichero con dudas" : $"{dudas} ficheros con dudas");
-            if (desmarcados > 0) trozos.Add(desmarcados == 1 ? "1 que has desmarcado" : $"{desmarcados} que has desmarcado");
-            lblConfNoSeToca.Text = $"Se quedan exactamente como están: {string.Join(" y ", trozos)}.";
+            if (dudas > 0)
+                trozos.Add(dudas == 1
+                    ? Textos.Instancia.OrganizarConfirmarUnaDuda
+                    : string.Format(Textos.Instancia.OrganizarConfirmarDudas, dudas));
+            if (desmarcados > 0)
+                trozos.Add(desmarcados == 1
+                    ? Textos.Instancia.OrganizarConfirmarUnDesmarcado
+                    : string.Format(Textos.Instancia.OrganizarConfirmarDesmarcados, desmarcados));
+            lblConfNoSeToca.Text = string.Format(Textos.Instancia.OrganizarConfirmarNoSeToca,
+                string.Join(Textos.Instancia.OrganizarConfirmarY, trozos));
             filaNoSeToca.Visibility = Visibility.Visible;
         }
         else filaNoSeToca.Visibility = Visibility.Collapsed;
@@ -1822,7 +1854,7 @@ public partial class OrganizarView : UserControl
             if (string.Equals(destino, f.Res.Archivo.Path, StringComparison.OrdinalIgnoreCase)) continue;
             if (ocupados.Contains(destino) || File.Exists(destino))
             {
-                Escribir($"Se omite «{f.Original}»: «{f.NombreNuevo}» ya existe.");
+                Escribir(string.Format(Textos.Instancia.OrganizarLogSeOmite, f.Original, f.NombreNuevo));
                 continue;
             }
             ocupados.Add(destino);
@@ -1846,17 +1878,21 @@ public partial class OrganizarView : UserControl
             catch { /* una carpeta ilegible no impide renombrar el vídeo */ }
         }
 
-        if (planeados.Count == 0) { Aviso("No quedó nada que renombrar."); return; }
+        if (planeados.Count == 0) { Aviso(Textos.Instancia.OrganizarNadaQueRenombrar); return; }
 
         // El diario va a disco ANTES del primer renombrado: si esto se corta a la mitad,
         // el «deshacer» sigue existiendo.
         try { ReindexStore.EscribirJournal(lote); }
-        catch (Exception ex) { Aviso($"No se pudo guardar el registro del lote, no se renombra nada: {ex.Message}"); return; }
+        catch (Exception ex)
+        {
+            Aviso(string.Format(Textos.Instancia.OrganizarNoSeGuardoRegistro, ex.Message));
+            return;
+        }
 
         // Los movimientos van FUERA del hilo de interfaz: 462 renombrados en OneDrive
         // tardan, y con la ventana congelada parecía que aplicar no hacía nada.
         btnAplicar.IsEnabled = btnSimular.IsEnabled = false;
-        lblEstadoOrg.Text = $"Renombrando {planeados.Count} ficheros…";
+        lblEstadoOrg.Text = string.Format(Textos.Instancia.OrganizarRenombrando, planeados.Count);
 
         var companerosMovidos = 0;
         var resultados = await Task.Run(() =>
@@ -1883,7 +1919,11 @@ public partial class OrganizarView : UserControl
                 // lo que estabas arreglando, que es lo contrario de lo que la cola sirve.
                 if (fila.Apartada) _revision.Renombrado(fila.Res.Archivo.Path, fila.RutaActual);
             }
-            else { fallos++; Escribir($"No se pudo renombrar «{fila.Original}»: {error}"); }
+            else
+            {
+                fallos++;
+                Escribir(string.Format(Textos.Instancia.OrganizarLogNoSeRenombro, fila.Original, error));
+            }
         }
         btnAplicar.IsEnabled = btnSimular.IsEnabled = true;
 
@@ -1897,10 +1937,10 @@ public partial class OrganizarView : UserControl
         AplicarFiltro();
 
         var extra = companerosMovidos > 0
-            ? $" (+{companerosMovidos} compañeros .nfo/.srt)" : "";
+            ? string.Format(Textos.Instancia.OrganizarAplicadoCompaneros, companerosMovidos) : "";
         lblBannerAplicado.Text = fallos == 0
-            ? $"{hechos} ficheros renombrados{extra}."
-            : $"{hechos} ficheros renombrados{extra} · {fallos} no se pudieron.";
+            ? string.Format(Textos.Instancia.OrganizarAplicadoOk, hechos, extra)
+            : string.Format(Textos.Instancia.OrganizarAplicadoConFallos, hechos, extra, fallos);
         bannerAplicado.Visibility = Visibility.Visible;
         Escribir(lblBannerAplicado.Text);
     }
@@ -1911,7 +1951,7 @@ public partial class OrganizarView : UserControl
         btnDeshacer.IsEnabled = _ultimoLote is { Movimientos.Count: > 0 };
         lblDeshacer.Text = _ultimoLote is { Movimientos.Count: > 0 }
             ? _ultimoLote.Etiqueta
-            : "Deshacer último lote";
+            : Textos.Instancia.OrganizarDeshacerLote;
     }
 
     private void DeshacerUltimoLote()
@@ -1920,8 +1960,8 @@ public partial class OrganizarView : UserControl
 
         var (devueltos, fallidos) = ReindexStore.Deshacer(_ultimoLote);
         Escribir(fallidos == 0
-            ? $"Lote deshecho: {devueltos} ficheros devueltos a su nombre anterior."
-            : $"Lote deshecho: {devueltos} devueltos · {fallidos} no se pudieron.");
+            ? string.Format(Textos.Instancia.OrganizarLogLoteDeshecho, devueltos)
+            : string.Format(Textos.Instancia.OrganizarLogLoteDeshechoConFallos, devueltos, fallidos));
 
         var lote = _ultimoLote;
 
@@ -1994,7 +2034,8 @@ public partial class OrganizarView : UserControl
                         { UseShellExecute = true });
             }
         }
-        catch (Exception ex) { Escribir($"No se pudo abrir la ubicación: {ex.Message}"); }
+        catch (Exception ex)
+        { Escribir(string.Format(Textos.Instancia.OrganizarLogNoSeAbrioUbicacion, ex.Message)); }
     }
 
     /// <summary>
@@ -2010,14 +2051,15 @@ public partial class OrganizarView : UserControl
 
     private void AbrirMemoria()
     {
-        if (_decisiones.Count == 0) { Aviso("Todavía no has tomado ninguna decisión que recordar."); return; }
+        if (_decisiones.Count == 0) { Aviso(Textos.Instancia.OrganizarSinDecisiones); return; }
 
-        var r = DialogWindow.Confirmar(Window.GetWindow(this), "Memoria de decisiones", $"Tienes {_decisiones.Count} decisiones recordadas.\n\n¿Quieres olvidarlas todas?");
+        var r = DialogWindow.Confirmar(Window.GetWindow(this), Textos.Instancia.OrganizarMemoriaTitulo,
+            string.Format(Textos.Instancia.OrganizarMemoriaPregunta, _decisiones.Count));
         if (!r) return;
 
         _decisiones.Clear();
         ReindexStore.OlvidarDecisiones();
-        Escribir("Memoria de decisiones vaciada.");
+        Escribir(Textos.Instancia.OrganizarLogMemoriaVaciada);
     }
 
     // ─────────────────────────── varios ───────────────────────────
@@ -2031,9 +2073,9 @@ public partial class OrganizarView : UserControl
 
         lblEstadoOrg.Text = (_catalogoCargado, _ficheros.Length) switch
         {
-            (null, _) => "Importa un catálogo para empezar",
-            (_, 0) => "Elige una carpeta con vídeos",
-            var (c, n) => $"Catálogo {c!.Serie} · {n} ficheros listos para analizar",
+            (null, _) => Textos.Instancia.OrganizarImportaCatalogo,
+            (_, 0) => Textos.Instancia.OrganizarElegirCarpetaVideos,
+            var (c, n) => string.Format(Textos.Instancia.OrganizarCatalogoListo, c!.Serie, n),
         };
     }
 
@@ -2049,6 +2091,6 @@ public partial class OrganizarView : UserControl
     private void Aviso(string mensaje)
     {
         Escribir(mensaje);
-        DialogWindow.Aviso(Window.GetWindow(this), "Organizar", mensaje);
+        DialogWindow.Aviso(Window.GetWindow(this), Textos.Instancia.OrganizarTitulo, mensaje);
     }
 }

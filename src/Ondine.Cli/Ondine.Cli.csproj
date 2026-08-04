@@ -37,6 +37,11 @@
     <Compile Include="..\Ondine\RenameRule.cs"    Link="RenameRule.cs" />
     <Compile Include="..\Ondine\VideoRow.cs"      Link="VideoRow.cs" />
     <Compile Include="..\Ondine\Native.cs"        Link="Native.cs" />
+    <!-- El motor escribe en el registro textos de interfaz, así que ya no compila sin el
+         catálogo. Se enlazan `Idioma.cs` y los `Textos.*.cs`, NO la carpeta entera: `T.cs`
+         es la extensión de marcado de XAML y depende de WPF. Mismo patrón que el arnés. -->
+    <Compile Include="..\Ondine\Localizacion\Idioma.cs" LinkBase="Localizacion" />
+    <Compile Include="..\Ondine\Localizacion\Textos.*.cs" LinkBase="Localizacion" />
     <!-- Las carpetas ENTERAS, no los ficheros que hoy hacen falta: el motor ya tira de
          Reindex.LibraryTemplate y Reindex.Tramos, y una lista a mano vuelve a romper la
          CLI la próxima vez que alguien use otro. Es código multiplataforma a propósito —

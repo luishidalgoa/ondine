@@ -1,14 +1,59 @@
+using System.Globalization;
+using Ondine.Localizacion;
+
 namespace Ondine.Reindex;
 
-/// <summary>Un idioma de la lista: el código que va en el JSON y cómo se llama en español.</summary>
-public sealed record IsoLanguage(string Codigo, string Nombre);
+/// <summary>
+/// Un idioma de la lista: el código que va en el JSON y cómo se llama en el idioma de la
+/// interfaz.
+///
+/// <para>
+/// Dos nombres y no uno. En el desplegable hay que poder distinguir el español de España
+/// del de Hispanoamérica, así que ahí el nombre lleva la variante entre paréntesis; pero
+/// una pista de vídeo etiquetada «spa» no dice de qué lado del charco viene el doblaje, y
+/// escribir «(España)» ahí sería afirmar algo que el fichero no dice. Por eso
+/// <see cref="Nombre"/> y <see cref="NombreLlano"/>.
+/// </para>
+/// </summary>
+/// <param name="Ingles">Nombre a secas en inglés, tal cual lo da .NET.</param>
+/// <param name="Castellano">Nombre a secas en castellano, de la tabla de aquí abajo.</param>
+public sealed record IsoLanguage(string Codigo, string Ingles, string Castellano)
+{
+    /// <summary>El nombre a secas: «Spanish» · «Español».</summary>
+    public string NombreLlano => Idioma.Elegir(Ingles, Castellano);
+
+    /// <summary>
+    /// El nombre con su variante cuando la tiene: «Spanish (Spain)» frente a «Spanish
+    /// (Latin America)». Son los dos únicos casos, porque son los dos únicos idiomas de la
+    /// lista que conviven partidos por región.
+    /// </summary>
+    public string Nombre => Codigo switch
+    {
+        "es" => Textos.Instancia.IdiomaEspanolDeEspana,
+        "es-419" => Textos.Instancia.IdiomaEspanolDeHispanoamerica,
+        _ => NombreLlano,
+    };
+}
 
 /// <summary>
-/// La norma ISO 639-1 entera, con los nombres en español.
+/// La norma ISO 639-1 entera, con los nombres en los dos idiomas de la interfaz.
 ///
+/// <para>
 /// Antes había siete idiomas fijos elegidos a ojo, y dos de ellos ni siquiera eran ISO:
 /// «jp» (el código de Japón, no del japonés — el idioma es «ja») y «lat». Un catálogo que
 /// los use sigue leyéndose: <see cref="Normalizar"/> los traduce en vez de dejarlos tirados.
+/// </para>
+/// <para>
+/// El castellano se escribe aquí; el inglés lo pone <c>CultureInfo.EnglishName</c>, que
+/// cubre los 183 códigos sin depender de la cultura del sistema. Escribir 183 nombres a
+/// mano por idioma sería, además de un día de trabajo, una lista que se queda coja en
+/// cuanto alguien añade un código y solo rellena la mitad.
+/// </para>
+/// <para>
+/// Y es la ÚNICA lista de nombres de idioma del programa: el selector de pistas también
+/// lee de aquí (<see cref="Ondine.Idiomas"/>). Antes había dos, y dos listas se
+/// desincronizan; dos listas por dos idiomas serían cuatro.
+/// </para>
 /// </summary>
 public static class IsoLanguages
 {
@@ -20,7 +65,8 @@ public static class IsoLanguages
         { "es", "es-419", "en", "ja", "ca", "gl", "eu", "fr", "it", "de", "pt", "ko", "zh" };
 
     /// <summary>
-    /// Códigos que la app usó antes de pasarse a ISO, y los que la gente escribe de memoria.
+    /// Códigos que la app usó antes de pasarse a ISO, los que la gente escribe de memoria y
+    /// los de tres letras (ISO 639-2) con los que vienen etiquetadas las pistas de vídeo.
     /// Sin esto, un catálogo con «jp» dejaría de reconocer sus propios títulos.
     /// </summary>
     private static readonly Dictionary<string, string> Alias = new(StringComparer.OrdinalIgnoreCase)
@@ -48,13 +94,38 @@ public static class IsoLanguages
         ["zho"] = "zh",
         ["rus"] = "ru",
         ["ara"] = "ar",
+        // Los que traen las pistas de los ficheros y no estaban aquí. Vinieron del selector
+        // de pistas, que tenía su propia tabla: ahora hay una sola.
+        ["dut"] = "nl",
+        ["nld"] = "nl",
+        ["pol"] = "pl",
+        ["swe"] = "sv",
+        ["dan"] = "da",
+        ["nor"] = "no",
+        ["fin"] = "fi",
+        ["tur"] = "tr",
+        ["cze"] = "cs",
+        ["ces"] = "cs",
+        ["gre"] = "el",
+        ["ell"] = "el",
+        ["heb"] = "he",
+        ["hin"] = "hi",
+        ["tha"] = "th",
+        ["hun"] = "hu",
+        ["rum"] = "ro",
+        ["ron"] = "ro",
+        ["ukr"] = "uk",
     };
 
-    /// <summary>ISO 639-1 completa, más el hispanoamericano, que no está en la norma pero sí en las bibliotecas.</summary>
-    public static readonly IsoLanguage[] Todos =
+    /// <summary>
+    /// ISO 639-1 completa en castellano, más el hispanoamericano, que no está en la norma
+    /// pero sí en las bibliotecas. Los nombres van A SECAS, sin región: la variante de los
+    /// dos españoles se pone aparte, en <see cref="IsoLanguage.Nombre"/>.
+    /// </summary>
+    private static readonly (string Codigo, string Castellano)[] EnCastellano =
     {
-        new("es",     "Español (España)"),
-        new("es-419", "Español (Hispanoamérica)"),
+        new("es",     "Español"),
+        new("es-419", "Español"),
         new("en",     "Inglés"),
         new("ja",     "Japonés"),
         new("ca",     "Catalán"),
@@ -238,6 +309,42 @@ public static class IsoLanguages
         new("zu",     "Zulú"),
     };
 
+    /// <summary>
+    /// Lo poco que .NET no puede dar bien. «es-419» no está en la norma y su nombre inglés
+    /// viene ya con la variante dentro («Spanish (Latin America)»), y aquí los nombres van a
+    /// secas para poder enseñarlos también en una pista, donde la variante no se sabe.
+    /// </summary>
+    private static readonly Dictionary<string, string> InglesAMano = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["es-419"] = "Spanish",
+    };
+
+    /// <summary>
+    /// El nombre en inglés, de <c>CultureInfo</c>. <paramref name="respaldo"/> es el nombre
+    /// en castellano: si el sistema no conoce el código —o corre sin datos de idiomas, que
+    /// es lo que pasa en un contenedor con globalización invariante— vale más enseñar el
+    /// nombre en el otro idioma que dejar el hueco o soltar «Invariant Language».
+    /// </summary>
+    private static string EnIngles(string codigo, string respaldo)
+    {
+        if (InglesAMano.TryGetValue(codigo, out var aMano)) return aMano;
+        try
+        {
+            var n = CultureInfo.GetCultureInfo(codigo).EnglishName;
+            if (n.Length > 0 &&
+                !n.Contains("Invariant", StringComparison.OrdinalIgnoreCase) &&
+                !n.Contains("Unknown", StringComparison.OrdinalIgnoreCase))
+                return n;
+        }
+        catch (CultureNotFoundException) { }
+        return respaldo;
+    }
+
+    /// <summary>La lista tal y como se usa: cada código con sus dos nombres.</summary>
+    public static readonly IsoLanguage[] Todos =
+        EnCastellano.Select(x => new IsoLanguage(x.Codigo, EnIngles(x.Codigo, x.Castellano), x.Castellano))
+                    .ToArray();
+
     private static readonly Dictionary<string, IsoLanguage> PorCodigo =
         Todos.ToDictionary(i => i.Codigo, StringComparer.OrdinalIgnoreCase);
 
@@ -254,7 +361,10 @@ public static class IsoLanguages
         return PorCodigo.TryGetValue(c, out var l) ? l.Codigo : c;
     }
 
-    /// <summary>Cómo se llama ese idioma. De uno desconocido, su propio código.</summary>
+    /// <summary>
+    /// Cómo se llama ese idioma, con su variante si la tiene. De uno desconocido, su propio
+    /// código.
+    /// </summary>
     public static string Nombre(string? codigo)
     {
         var c = Normalizar(codigo);
@@ -262,13 +372,33 @@ public static class IsoLanguages
     }
 
     /// <summary>
+    /// El nombre a secas, sin región. Es el que va donde el código no dice de qué variante
+    /// se trata, como en la etiqueta de una pista de vídeo.
+    /// </summary>
+    public static string NombreLlano(string? codigo)
+    {
+        var c = Normalizar(codigo);
+        return PorCodigo.TryGetValue(c, out var l) ? l.NombreLlano : c;
+    }
+
+    /// <summary>
     /// Busca por código o por nombre, tolerando lo que se escribe de verdad: sin tildes, a
     /// medias y en cualquier caja. Se apoya en la misma normalización que compara títulos,
     /// así que «japones» encuentra «Japonés» igual que allí.
     ///
+    /// <para>
+    /// Se busca por el nombre en LOS DOS idiomas, no solo en el de la interfaz. Quien tiene
+    /// la app en inglés y escribe «japones» está buscando el japonés igual, y no encontrarlo
+    /// por eso sería una tontería; al revés, con «japanese» en la app en castellano, lo
+    /// mismo.
+    /// </para>
+    /// <para>
     /// El orden importa más que el filtro: primero el código exacto, luego lo que empieza
     /// por lo escrito y por último lo que lo contiene. Sin eso, escribir «de» sepultaría el
-    /// alemán bajo cada nombre que lleve «de» dentro.
+    /// alemán bajo cada nombre que lleve «de» dentro. A igualdad, mandan los de andar por
+    /// casa: escribir «españ» tiene que sacar primero el de España, y no el que quede antes
+    /// por orden alfabético, que además cambia según el idioma.
+    /// </para>
     /// </summary>
     public static IReadOnlyList<IsoLanguage> Buscar(string? consulta, int cuantos = 0)
     {
@@ -285,28 +415,45 @@ public static class IsoLanguages
         var qNorm = TitleMatch.Norm(q);
         var qCod = Normalizar(q).ToLowerInvariant();
 
+        int PorNombre(string nombre)
+        {
+            var nom = TitleMatch.Norm(nombre);
+            return nom.StartsWith(qNorm, StringComparison.Ordinal) ? 2
+                : qNorm.Length > 0 && nom.Contains(qNorm, StringComparison.Ordinal) ? 3
+                : -1;
+        }
+
         var puntuados = new List<(int Nivel, IsoLanguage Idioma)>();
         foreach (var i in Todos)
         {
             var cod = i.Codigo.ToLowerInvariant();
-            var nom = TitleMatch.Norm(i.Nombre);
 
             int nivel =
                 cod == qCod || cod == q.ToLowerInvariant() ? 0
                 : cod.StartsWith(qCod, StringComparison.Ordinal) ? 1
-                : nom.StartsWith(qNorm, StringComparison.Ordinal) ? 2
-                : qNorm.Length > 0 && nom.Contains(qNorm, StringComparison.Ordinal) ? 3
-                : -1;
+                : Mejor(PorNombre(i.Castellano), PorNombre(i.Ingles));
 
             if (nivel >= 0) puntuados.Add((nivel, i));
         }
 
         var orden = puntuados
             .OrderBy(x => x.Nivel)
+            .ThenBy(x => Prioridad(x.Idioma.Codigo))
             .ThenBy(x => x.Idioma.Nombre, StringComparer.CurrentCulture)
             .Select(x => x.Idioma)
             .ToList();
 
         return cuantos > 0 ? orden.Take(cuantos).ToList() : orden;
+    }
+
+    /// <summary>El mejor de dos niveles, contando que -1 es «no encaja».</summary>
+    private static int Mejor(int a, int b) =>
+        a < 0 ? b : b < 0 ? a : Math.Min(a, b);
+
+    /// <summary>Su sitio entre los frecuentes; el último de todos si no está.</summary>
+    private static int Prioridad(string codigo)
+    {
+        var i = Array.IndexOf(Frecuentes, codigo);
+        return i >= 0 ? i : int.MaxValue;
     }
 }

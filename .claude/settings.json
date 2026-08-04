@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File .claude/comprobar-traduccion.ps1 -Ruta \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -355,8 +356,8 @@ public sealed class Engine
     public async Task<(bool Ok, string Mensaje, long BytesAntes, long BytesDespues)> QuitarPistasAsync(
         string path, SelectorDePistas.Plan plan, CancellationToken ct = default)
     {
-        if (!plan.HayCambios) return (false, "No hay pistas marcadas.", 0, 0);
-        if (!File.Exists(path)) return (false, "El fichero ya no está.", 0, 0);
+        if (!plan.HayCambios) return (false, Textos.Instancia.MotorPistasSinMarcar, 0, 0);
+        if (!File.Exists(path)) return (false, Textos.Instancia.MotorPistasFicheroDesaparecido, 0, 0);
 
         long antes = new FileInfo(path).Length;
         var tmp = Path.Combine(Path.GetDirectoryName(path)!,
@@ -368,7 +369,7 @@ public sealed class Engine
             {
                 try { File.Delete(tmp); } catch { }
                 var razon = err.Split('\n').LastOrDefault(l => l.Trim().Length > 0)?.Trim();
-                return (false, string.IsNullOrEmpty(razon) ? "ffmpeg no pudo reempaquetarlo." : razon, antes, 0);
+                return (false, string.IsNullOrEmpty(razon) ? Textos.Instancia.MotorPistasRemuxFallido : razon, antes, 0);
             }
 
             long despues = new FileInfo(tmp).Length;
@@ -481,12 +482,14 @@ public sealed class Engine
         var encoder = await SelectEncoderAsync(vcodec);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
         var encArgs = EncoderArgs(encoder, quality);
-        if (opt.AudioOnly) rep.Log($"Modo solo audio → {opt.AudioFormat.ToUpperInvariant()}");
+        var t = Textos.Instancia;
+        if (opt.AudioOnly) rep.Log(string.Format(t.MotorSoloAudioModo, opt.AudioFormat.ToUpperInvariant()));
         else
         {
-            rep.Log($"Codificador: {encoder} [{(IsHardware(encoder) ? "hardware" : "software (CPU, lento)")}] · calidad {quality}");
+            rep.Log(string.Format(t.MotorCodificador, encoder,
+                IsHardware(encoder) ? t.MotorCodificadorHardware : t.MotorCodificadorSoftware, quality));
             if (encoder is "libaom-av1")
-                rep.Log("  AVISO: AV1 por software es MUY lento (puede tardar horas). Para ir rápido usa H.265, que aprovecha tu GPU.");
+                rep.Log(t.MotorAvisoAv1Lento);
         }
 
         var keepLangs = opt.KeepLangs.Count > 0 ? opt.KeepLangs : new List<string> { opt.Lang, "eng" };
@@ -522,21 +525,21 @@ public sealed class Engine
             }
             string outPath = UniqueOutput(Path.Combine(outDir, outName), usedOutputs);
 
-            if (File.Exists(outPath) && !opt.Force) { rep.Log($"[{n}/{total}] {name} → ya hecho, salto"); rep.FileSkipped(f, "Ya hecho"); continue; }
-            if (StillDownloading(f)) { rep.Log($"[{n}/{total}] {name} → descargando aún, salto"); rep.FileSkipped(f, "Descargando"); continue; }
+            if (File.Exists(outPath) && !opt.Force) { rep.Log(string.Format(t.MotorSaltoYaHecho, n, total, name)); rep.FileSkipped(f, t.MotorMotivoYaHecho); continue; }
+            if (StillDownloading(f)) { rep.Log(string.Format(t.MotorSaltoDescargando, n, total, name)); rep.FileSkipped(f, t.MotorMotivoDescargando); continue; }
 
             var pr = await ProbeFullAsync(f);
-            if (pr == null) { rep.Log($"[{n}/{total}] {name} → no se puede leer, salto"); rep.FileSkipped(f, "No se puede leer"); continue; }
+            if (pr == null) { rep.Log(string.Format(t.MotorSaltoIlegible, n, total, name)); rep.FileSkipped(f, t.MotorMotivoIlegible); continue; }
 
             var video = pr.Streams.FirstOrDefault(s => s.CodecType == "video" && !CoverCodecs.Contains(s.CodecName));
-            if (video == null) { rep.Log($"[{n}/{total}] {name} → sin pista de vídeo, salto"); rep.FileSkipped(f, "Sin vídeo"); continue; }
+            if (video == null) { rep.Log(string.Format(t.MotorSaltoSinVideo, n, total, name)); rep.FileSkipped(f, t.MotorMotivoSinVideo); continue; }
 
             int kbps = int.TryParse(pr.Format?.BitRate, out var br) ? br / 1000 : 0;
             if (!opt.AudioOnly && !opt.Force && (video.CodecName is "hevc" or "av1") && kbps > 0 && kbps < 2500)
-            { rep.Log($"[{n}/{total}] {name} → ya comprimido ({video.CodecName}, {kbps} kbps), salto"); rep.FileSkipped(f, $"Ya en {video.CodecName!.ToUpperInvariant()}"); continue; }
+            { rep.Log(string.Format(t.MotorSaltoYaComprimido, n, total, name, video.CodecName, kbps)); rep.FileSkipped(f, string.Format(t.MotorMotivoYaEn, video.CodecName!.ToUpperInvariant())); continue; }
 
             var allAudio = pr.Streams.Where(s => s.CodecType == "audio").ToList();
-            if (allAudio.Count == 0) { rep.Log($"[{n}/{total}] {name} → sin audio, salto"); rep.FileSkipped(f, "Sin audio"); continue; }
+            if (allAudio.Count == 0) { rep.Log(string.Format(t.MotorSaltoSinAudio, n, total, name)); rep.FileSkipped(f, t.MotorMotivoSinAudio); continue; }
             var pref = allAudio.Where(s => s.Lang == opt.Lang).ToList();
             var other = allAudio.Where(s => s.Lang != opt.Lang && (keepAll || keepLangs.Contains(s.Lang))).ToList();
             var audio = pref.Concat(other).ToList();
@@ -566,10 +569,10 @@ public sealed class Engine
             // ---- modo solo audio: extraer sin vídeo ----
             if (opt.AudioOnly)
             {
-                if (opt.DryRun) { rep.Log($"[{n}/{total}] {name} → solo audio → {opt.AudioFormat}"); continue; }
+                if (opt.DryRun) { rep.Log(string.Format(t.MotorSecoSoloAudio, n, total, name, opt.AudioFormat)); continue; }
                 rep.Log($"[{n}/{total}] {name}");
-                rep.Log($"    extrayendo audio ({audio.Count} pista/s) → {opt.AudioFormat}");
-                if (renamedTo != null) rep.Log($"    renombrado → {Path.GetFileName(outPath)}");
+                rep.Log(string.Format(t.MotorExtrayendoAudio, audio.Count, opt.AudioFormat));
+                if (renamedTo != null) rep.Log(string.Format(t.MotorRenombrado, Path.GetFileName(outPath)));
                 rep.FileStart(n, total, name, durSec);
                 Directory.CreateDirectory(outDir);
                 string atmp = outPath + ".tmp" + ext;
@@ -586,13 +589,13 @@ public sealed class Engine
                         try { if (File.Exists(outPath)) File.Delete(outPath); } catch { }
                         File.Move(atmp, outPath);
                         long ob = new FileInfo(outPath).Length;
-                        rep.Log($"    OK  audio → {ob / 1048576.0:n1} MB");
-                        var ar = new FileResult { Name = name, InBytes = fi.Length, OutBytes = ob, Status = "audio", SourcePath = f, OutputPath = outPath };
+                        rep.Log(string.Format(t.MotorAudioListo, $"{ob / 1048576.0:n1}"));
+                        var ar = new FileResult { Name = name, InBytes = fi.Length, OutBytes = ob, Status = t.MotorEstadoSoloAudio, SourcePath = f, OutputPath = outPath };
                         results.Add(ar); rep.FileDone(ar);
                     }
-                    else { try { if (File.Exists(atmp)) File.Delete(atmp); } catch { } rep.Log($"    ERROR al extraer audio (código {acode})"); }
+                    else { try { if (File.Exists(atmp)) File.Delete(atmp); } catch { } rep.Log(string.Format(t.MotorErrorExtraerAudio, acode)); }
                 }
-                catch (OperationCanceledException) { try { if (File.Exists(atmp)) File.Delete(atmp); } catch { } rep.Log("    detenido."); throw; }
+                catch (OperationCanceledException) { try { if (File.Exists(atmp)) File.Delete(atmp); } catch { } rep.Log(t.MotorDetenido); throw; }
                 continue;
             }
 
@@ -640,22 +643,22 @@ public sealed class Engine
 
             string langs = string.Join("+", audio.Select(x => string.IsNullOrEmpty(x.Lang) ? "?" : x.Lang));
             int dropped = allAudio.Count - audio.Count;
-            string infoLine = $"audio: {langs}"
-                + (dropped > 0 ? $" (descarto {dropped})" : "")
-                + (keptSubs.Count > 0 ? $", {keptSubs.Count} sub" : "")
-                + (opt.MaxHeight > 0 && (video.Height ?? 0) > opt.MaxHeight ? $", reescalo a {opt.MaxHeight}p" : "");
+            string infoLine = string.Format(t.MotorInfoAudio, langs)
+                + (dropped > 0 ? string.Format(t.MotorInfoDescartadas, dropped) : "")
+                + (keptSubs.Count > 0 ? string.Format(t.MotorInfoSubtitulos, keptSubs.Count) : "")
+                + (opt.MaxHeight > 0 && (video.Height ?? 0) > opt.MaxHeight ? string.Format(t.MotorInfoReescalado, opt.MaxHeight) : "");
 
             // Aviso de subtítulos que este contenedor no puede llevar. No basta con el
             // registro: el usuario los marcó en la UI y da por hecho que van dentro.
             var lostSoFar = new List<FfStream>(lostSubs);
             if (lostSubs.Count > 0)
-                rep.Log($"    AVISO: {SubtitleLossMessage(lostSubs, opt.Container)}");
+                rep.Log(string.Format(t.MotorAvisoPrefijo, SubtitleLossMessage(lostSubs, opt.Container)));
 
             if (opt.DryRun) { rep.Log($"[{n}/{total}] {name} → {infoLine}"); continue; }
 
             rep.Log($"[{n}/{total}] {name}");
             rep.Log($"    {infoLine}");
-            if (renamedTo != null) rep.Log($"    renombrado → {Path.GetFileName(outPath)}");
+            if (renamedTo != null) rep.Log(string.Format(t.MotorRenombrado, Path.GetFileName(outPath)));
             rep.FileStart(n, total, name, durSec);
 
             Directory.CreateDirectory(outDir);
@@ -677,7 +680,7 @@ public sealed class Engine
                     // no supimos clasificar), sacar el vídeo sin subtítulos antes que nada.
                     if (code != 0 && !IsDiskFull(err) && keptSubs.Count > 0 && !ct.IsCancellationRequested)
                     {
-                        rep.Log("    reintentando sin subtítulos…");
+                        rep.Log(t.MotorReintentoSinSubtitulos);
                         try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
                         (code, err) = await RunFfmpegAsync(BuildArgs(false).Append(tmp).ToList(), durSec, rep, ct);
                         if (code == 0) lostSoFar.AddRange(keptSubs);
@@ -698,7 +701,7 @@ public sealed class Engine
                     File.Move(tmp, outPath);
                     long inB = fi.Length, outB = new FileInfo(outPath).Length;
                     int pct = (int)Math.Round(100 - (outB / (double)Math.Max(inB, 1) * 100));
-                    rep.Log($"    OK  {inB / 1048576} MB → {outB / 1048576} MB  (-{pct}%)");
+                    rep.Log(string.Format(t.MotorVideoListo, inB / 1048576, outB / 1048576, pct));
                     var r = new FileResult
                     {
                         Name = name, InBytes = inB, OutBytes = outB, Status = $"-{pct}%",
@@ -710,15 +713,15 @@ public sealed class Engine
                 else
                 {
                     try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
-                    rep.Log($"    ERROR al codificar (código {code})");
-                    var r = new FileResult { Name = name, InBytes = fi.Length, OutBytes = null, Status = "ERROR", SourcePath = f, OutputPath = outPath };
+                    rep.Log(string.Format(t.MotorErrorCodificar, code));
+                    var r = new FileResult { Name = name, InBytes = fi.Length, OutBytes = null, Status = t.Error, SourcePath = f, OutputPath = outPath };
                     results.Add(r); rep.FileDone(r);
                 }
             }
             catch (OperationCanceledException)
             {
                 try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }   // al detener no dejamos el temporal a medias
-                rep.Log("    detenido; temporal eliminado.");
+                rep.Log(t.MotorDetenidoConTemporal);
                 throw;
             }
         }
@@ -809,17 +812,25 @@ public sealed class Engine
     internal static string SubtitleLossMessage(IReadOnlyList<(string codec, string lang)> lost, string container)
     {
         if (lost.Count == 0) return "";
+        var t = Textos.Instancia;
         string cont = container.ToUpperInvariant();
         string langs = string.Join(", ", lost.Select(x => x.lang).Distinct());
         bool allImage = lost.All(x => !IsTextSubtitle(x.codec));
         bool una = lost.Count == 1;
-        string qué = una ? "1 pista de subtítulos" : $"{lost.Count} pistas de subtítulos";
-        string quedó = una ? "se ha quedado fuera" : "se han quedado fuera";
-        string porqué = allImage
-            ? $"{(una ? "es" : "son")} de imagen (tipo {string.Join("/", lost.Select(x => FriendlyCodec(x.codec)).Distinct())})"
-              + $" y {cont} no admite ese formato"
-            : $"{cont} no ha podido incluirla{(una ? "" : "s")}";
-        return $"{qué} ({langs}) {quedó}: {porqué}. Comprime a MKV si {(una ? "la necesitas" : "las necesitas")}.";
+
+        // Cuatro frases enteras, no trozos concatenados: el castellano concuerda
+        // género y número («incluirla», «las necesitas») y montar la frase por
+        // partes deja al traductor sin manera de reordenarla.
+        if (allImage)
+        {
+            string tipos = string.Join("/", lost.Select(x => FriendlyCodec(x.codec)).Distinct());
+            return una
+                ? string.Format(t.MotorSubsFueraImagenUna, langs, tipos, cont)
+                : string.Format(t.MotorSubsFueraImagenVarias, lost.Count, langs, tipos, cont);
+        }
+        return una
+            ? string.Format(t.MotorSubsFueraUna, langs, cont)
+            : string.Format(t.MotorSubsFueraVarias, lost.Count, langs, cont);
     }
 
     private static string FriendlyCodec(string codec) => codec.ToLowerInvariant() switch
@@ -897,10 +908,10 @@ public sealed class Engine
         while (FreeSpace(dir) < need)
         {
             ct.ThrowIfCancellationRequested();
-            if (!notified) { rep.DiskFull(true); rep.Log("    Disco lleno — pausado. Libera espacio y continuará automáticamente."); notified = true; }
+            if (!notified) { rep.DiskFull(true); rep.Log(Textos.Instancia.MotorDiscoLleno); notified = true; }
             await Task.Delay(2500, ct);
         }
-        if (notified) { rep.DiskFull(false); rep.Log("    Espacio disponible — continuando…"); }
+        if (notified) { rep.DiskFull(false); rep.Log(Textos.Instancia.MotorDiscoConEspacio); }
     }
 
     /// <summary>

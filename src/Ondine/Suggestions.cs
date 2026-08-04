@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -14,77 +15,100 @@ public sealed class SuggestionItem
     public string? Enables { get; init; }
 }
 
-/// <summary>Catálogos de sugerencias para los campos Buscar y Reemplazar por.</summary>
+/// <summary>
+/// Catálogos de sugerencias para los campos Buscar y Reemplazar por.
+///
+/// <para>
+/// Son propiedades y no campos <c>static readonly</c>: una lista construida una
+/// sola vez se quedaría con las descripciones del idioma que hubiera al arrancar,
+/// y al cambiar de idioma el desplegable seguiría en el anterior. Se rehacen en
+/// cada acceso, que ocurre al abrir la ventana de renombrado y no en bucle.
+/// </para>
+/// </summary>
 public static class Suggestions
 {
     /// <summary>Patrones frecuentes para el campo «Buscar» (todos son regex).</summary>
-    public static readonly IReadOnlyList<SuggestionItem> Search = new List<SuggestionItem>
+    public static IReadOnlyList<SuggestionItem> Search
     {
-        new() { Text = "^",                          Desc = "principio del nombre (para anteponer texto)", Enables = "regex" },
-        new() { Text = "$",                          Desc = "final del nombre (para añadir texto al final)", Enables = "regex" },
-        new() { Text = ".*",                         Desc = "todo el texto del nombre", Enables = "regex" },
-        new() { Text = "(.*)",                       Desc = "captura el nombre entero como grupo $1", Enables = "regex" },
-        new() { Text = "^.*$",                       Desc = "el nombre completo (para sustituirlo del todo)", Enables = "regex" },
-        new() { Text = @"\d+",                       Desc = "uno o más dígitos", Enables = "regex" },
-        new() { Text = @"\s+",                       Desc = "uno o más espacios", Enables = "regex" },
-        new() { Text = "[._-]+",                     Desc = "separadores: punto, guion bajo o guion", Enables = "regex" },
-        new() { Text = @"\[.*?\]",                   Desc = "texto entre corchetes, p. ej. [1080p]", Enables = "regex" },
-        new() { Text = @"\(.*?\)",                   Desc = "texto entre paréntesis, p. ej. (2019)", Enables = "regex" },
-        new() { Text = "^.{3}",                      Desc = "los 3 primeros caracteres (para recortarlos)", Enables = "regex" },
-        new() { Text = ".{3}$",                      Desc = "los 3 últimos caracteres (para recortarlos)", Enables = "regex" },
-        new() { Text = "^foo",                       Desc = "lo que empieza por «foo»", Enables = "regex" },
-        new() { Text = "bar$",                       Desc = "lo que termina en «bar»", Enables = "regex" },
-        new() { Text = "^foo.*bar$",                 Desc = "empieza por «foo» y acaba en «bar»", Enables = "regex" },
-        new() { Text = ".+?(?=bar)",                 Desc = "todo lo anterior a «bar»", Enables = "regex" },
-        new() { Text = @"foo[\s\S]*bar",             Desc = "todo entre «foo» y «bar», incluidos", Enables = "regex" },
-        new() { Text = @"(\d{2})-(\d{2})-(\d{4})",   Desc = "fecha dd-mm-aaaa en 3 grupos ($1 $2 $3)", Enables = "regex" },
-        new() { Text = @"[Ss](\d{1,2})[Ee](\d{1,2})", Desc = "temporada y episodio: S01E02 → $1 y $2", Enables = "regex" },
-        new() { Text = "1080p|720p|480p|2160p|4K",   Desc = "marcas de resolución en el nombre", Enables = "regex" },
-        new() { Text = "x264|x265|HEVC|WEB-DL|BluRay", Desc = "marcas de codec/fuente en el nombre", Enables = "regex" },
-    };
+        get
+        {
+            var t = Textos.Instancia;
+            return new List<SuggestionItem>
+            {
+                new() { Text = "^",                          Desc = t.SugerenciaInicioNombre, Enables = "regex" },
+                new() { Text = "$",                          Desc = t.SugerenciaFinNombre, Enables = "regex" },
+                new() { Text = ".*",                         Desc = t.SugerenciaTodoElTexto, Enables = "regex" },
+                new() { Text = "(.*)",                       Desc = t.SugerenciaCapturaNombre, Enables = "regex" },
+                new() { Text = "^.*$",                       Desc = t.SugerenciaNombreCompleto, Enables = "regex" },
+                new() { Text = @"\d+",                       Desc = t.SugerenciaDigitos, Enables = "regex" },
+                new() { Text = @"\s+",                       Desc = t.SugerenciaEspacios, Enables = "regex" },
+                new() { Text = "[._-]+",                     Desc = t.SugerenciaSeparadores, Enables = "regex" },
+                new() { Text = @"\[.*?\]",                   Desc = t.SugerenciaCorchetes, Enables = "regex" },
+                new() { Text = @"\(.*?\)",                   Desc = t.SugerenciaParentesis, Enables = "regex" },
+                new() { Text = "^.{3}",                      Desc = t.SugerenciaTresPrimeros, Enables = "regex" },
+                new() { Text = ".{3}$",                      Desc = t.SugerenciaTresUltimos, Enables = "regex" },
+                new() { Text = "^foo",                       Desc = t.SugerenciaEmpiezaPor, Enables = "regex" },
+                new() { Text = "bar$",                       Desc = t.SugerenciaTerminaEn, Enables = "regex" },
+                new() { Text = "^foo.*bar$",                 Desc = t.SugerenciaEmpiezaYAcaba, Enables = "regex" },
+                new() { Text = ".+?(?=bar)",                 Desc = t.SugerenciaAnteriorA, Enables = "regex" },
+                new() { Text = @"foo[\s\S]*bar",             Desc = t.SugerenciaEntreDos, Enables = "regex" },
+                new() { Text = @"(\d{2})-(\d{2})-(\d{4})",   Desc = t.SugerenciaFecha, Enables = "regex" },
+                new() { Text = @"[Ss](\d{1,2})[Ee](\d{1,2})", Desc = t.SugerenciaTemporadaEpisodio, Enables = "regex" },
+                new() { Text = "1080p|720p|480p|2160p|4K",   Desc = t.SugerenciaResolucion, Enables = "regex" },
+                new() { Text = "x264|x265|HEVC|WEB-DL|BluRay", Desc = t.SugerenciaCodecFuente, Enables = "regex" },
+            };
+        }
+    }
 
     /// <summary>Variables disponibles para el campo «Reemplazar por».</summary>
-    public static readonly IReadOnlyList<SuggestionItem> Replace = new List<SuggestionItem>
+    public static IReadOnlyList<SuggestionItem> Replace
     {
-        // grupos de captura
-        new() { Text = "$1", Desc = "primer grupo de captura de la búsqueda", Enables = "regex" },
-        new() { Text = "$2", Desc = "segundo grupo de captura", Enables = "regex" },
-        new() { Text = "$3", Desc = "tercer grupo de captura", Enables = "regex" },
-        new() { Text = "$$", Desc = "un símbolo $ literal" },
-        // contadores
-        new() { Text = "${}",                                  Desc = "contador simple: 0, 1, 2…", Enables = "enum" },
-        new() { Text = "${start=1}",                           Desc = "contador que empieza en 1", Enables = "enum" },
-        new() { Text = "${padding=2;start=1}",                 Desc = "contador 01, 02, 03…", Enables = "enum" },
-        new() { Text = "${padding=3;start=1}",                 Desc = "contador 001, 002, 003…", Enables = "enum" },
-        new() { Text = "${increment=2}",                       Desc = "contador de 2 en 2", Enables = "enum" },
-        new() { Text = "${padding=4;increment=2;start=10}",    Desc = "combinado: 0010, 0012, 0014…", Enables = "enum" },
-        // fecha del archivo original
-        new() { Text = "$YYYY", Desc = "año con 4 dígitos (2026)" },
-        new() { Text = "$YY",   Desc = "año con 2 dígitos (26)" },
-        new() { Text = "$Y",    Desc = "último dígito del año" },
-        new() { Text = "$MMMM", Desc = "nombre del mes (julio)" },
-        new() { Text = "$MMM",  Desc = "mes abreviado (jul)" },
-        new() { Text = "$MM",   Desc = "mes con cero delante (07)" },
-        new() { Text = "$M",    Desc = "mes sin cero (7)" },
-        new() { Text = "$DDDD", Desc = "día de la semana (martes)" },
-        new() { Text = "$DDD",  Desc = "día de la semana abreviado (mar)" },
-        new() { Text = "$DD",   Desc = "día con cero delante (05)" },
-        new() { Text = "$D",    Desc = "día sin cero (5)" },
-        new() { Text = "$hh",   Desc = "hora con cero delante" },
-        new() { Text = "$h",    Desc = "hora sin cero" },
-        new() { Text = "$mm",   Desc = "minutos con cero delante" },
-        new() { Text = "$m",    Desc = "minutos sin cero" },
-        new() { Text = "$ss",   Desc = "segundos con cero delante" },
-        new() { Text = "$s",    Desc = "segundos sin cero" },
-        new() { Text = "$fff",  Desc = "milisegundos (3 dígitos)" },
-        new() { Text = "$ff",   Desc = "milisegundos (2 dígitos)" },
-        new() { Text = "$f",    Desc = "milisegundos (1 dígito)" },
-        // aleatorios
-        new() { Text = "${rstringalnum=8}", Desc = "8 caracteres aleatorios (letras y dígitos)", Enables = "rand" },
-        new() { Text = "${rstringalpha=8}", Desc = "8 letras aleatorias", Enables = "rand" },
-        new() { Text = "${rstringdigit=6}", Desc = "6 dígitos aleatorios", Enables = "rand" },
-        new() { Text = "${ruuidv4}",        Desc = "identificador único (UUID v4)", Enables = "rand" },
-    };
+        get
+        {
+            var t = Textos.Instancia;
+            return new List<SuggestionItem>
+            {
+                // grupos de captura
+                new() { Text = "$1", Desc = t.SugerenciaGrupo1, Enables = "regex" },
+                new() { Text = "$2", Desc = t.SugerenciaGrupo2, Enables = "regex" },
+                new() { Text = "$3", Desc = t.SugerenciaGrupo3, Enables = "regex" },
+                new() { Text = "$$", Desc = t.SugerenciaDolarLiteral },
+                // contadores
+                new() { Text = "${}",                                  Desc = t.SugerenciaContadorSimple, Enables = "enum" },
+                new() { Text = "${start=1}",                           Desc = t.SugerenciaContadorDesdeUno, Enables = "enum" },
+                new() { Text = "${padding=2;start=1}",                 Desc = t.SugerenciaContadorDosCifras, Enables = "enum" },
+                new() { Text = "${padding=3;start=1}",                 Desc = t.SugerenciaContadorTresCifras, Enables = "enum" },
+                new() { Text = "${increment=2}",                       Desc = t.SugerenciaContadorDeDosEnDos, Enables = "enum" },
+                new() { Text = "${padding=4;increment=2;start=10}",    Desc = t.SugerenciaContadorCombinado, Enables = "enum" },
+                // fecha del archivo original
+                new() { Text = "$YYYY", Desc = t.SugerenciaAnio4 },
+                new() { Text = "$YY",   Desc = t.SugerenciaAnio2 },
+                new() { Text = "$Y",    Desc = t.SugerenciaAnio1 },
+                new() { Text = "$MMMM", Desc = t.SugerenciaMesNombre },
+                new() { Text = "$MMM",  Desc = t.SugerenciaMesAbreviado },
+                new() { Text = "$MM",   Desc = t.SugerenciaMesCero },
+                new() { Text = "$M",    Desc = t.SugerenciaMesSinCero },
+                new() { Text = "$DDDD", Desc = t.SugerenciaDiaSemana },
+                new() { Text = "$DDD",  Desc = t.SugerenciaDiaSemanaAbreviado },
+                new() { Text = "$DD",   Desc = t.SugerenciaDiaCero },
+                new() { Text = "$D",    Desc = t.SugerenciaDiaSinCero },
+                new() { Text = "$hh",   Desc = t.SugerenciaHoraCero },
+                new() { Text = "$h",    Desc = t.SugerenciaHoraSinCero },
+                new() { Text = "$mm",   Desc = t.SugerenciaMinutosCero },
+                new() { Text = "$m",    Desc = t.SugerenciaMinutosSinCero },
+                new() { Text = "$ss",   Desc = t.SugerenciaSegundosCero },
+                new() { Text = "$s",    Desc = t.SugerenciaSegundosSinCero },
+                new() { Text = "$fff",  Desc = t.SugerenciaMilisegundos3 },
+                new() { Text = "$ff",   Desc = t.SugerenciaMilisegundos2 },
+                new() { Text = "$f",    Desc = t.SugerenciaMilisegundos1 },
+                // aleatorios
+                new() { Text = "${rstringalnum=8}", Desc = t.SugerenciaAleatorioAlfanumerico, Enables = "rand" },
+                new() { Text = "${rstringalpha=8}", Desc = t.SugerenciaAleatorioLetras, Enables = "rand" },
+                new() { Text = "${rstringdigit=6}", Desc = t.SugerenciaAleatorioDigitos, Enables = "rand" },
+                new() { Text = "${ruuidv4}",        Desc = t.SugerenciaUuid, Enables = "rand" },
+            };
+        }
+    }
 }
 
 /// <summary>
@@ -193,7 +217,7 @@ internal sealed class SuggestionBox
     {
         bool isVar = token.StartsWith('$');
         var hist = history.Where(h => !string.IsNullOrWhiteSpace(h))
-            .Select(h => new SuggestionItem { Text = h, Desc = "usado recientemente" });
+            .Select(h => new SuggestionItem { Text = h, Desc = Textos.Instancia.SugerenciaUsadoRecientemente });
 
         var all = hist.Concat(catalog);
         var filtered = token.Length == 0

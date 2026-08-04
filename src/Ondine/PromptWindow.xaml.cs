@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using Ondine.Localizacion;
 using Ondine.Reindex;
 
 namespace Ondine;
@@ -107,9 +108,10 @@ public partial class PromptWindow : Window
         lblAviso.Text = IdiomasMarcados.Count switch
         {
             // Quitarlos todos no rompe nada —el de salida siempre entra— pero conviene decirlo
-            0 => $"Sin ninguno marcado solo se compara contra {IsoLanguages.Nombre(IdiomaSalida)}, el de salida.",
-            1 => "Con un solo idioma, solo reconocerá los ficheros titulados en ese idioma.",
-            _ => $"{IdiomasMarcados.Count} idiomas para reconocer · el nombre se escribirá en {IsoLanguages.Nombre(IdiomaSalida)}",
+            0 => string.Format(Textos.Instancia.PromptAvisoSinIdiomas, IsoLanguages.Nombre(IdiomaSalida)),
+            1 => Textos.Instancia.PromptAvisoUnIdioma,
+            _ => string.Format(Textos.Instancia.PromptAvisoVariosIdiomas,
+                               IdiomasMarcados.Count, IsoLanguages.Nombre(IdiomaSalida)),
         };
     }
 
@@ -118,13 +120,13 @@ public partial class PromptWindow : Window
         try
         {
             Clipboard.SetText(txtPrompt.Text);
-            lblAviso.Text = "Copiado. Pégaselo a la IA junto con la dirección del anexo.";
+            lblAviso.Text = Textos.Instancia.PromptCopiado;
         }
         catch (Exception ex)
         {
             // El portapapeles lo puede tener bloqueado otro proceso: se dice y ya está,
             // el texto sigue en pantalla para copiarlo a mano.
-            lblAviso.Text = "No se pudo copiar: " + ex.Message;
+            lblAviso.Text = Textos.Instancia.PromptNoSePudoCopiar + ex.Message;
         }
     }
 
@@ -133,13 +135,13 @@ public partial class PromptWindow : Window
         var url = txtFuente.Text?.Trim() ?? "";
         if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
         {
-            lblAviso.Text = "Escribe primero la dirección del anexo.";
+            lblAviso.Text = Textos.Instancia.PromptFuenteVacia;
             return;
         }
         try
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
         }
-        catch (Exception ex) { lblAviso.Text = "No se pudo abrir: " + ex.Message; }
+        catch (Exception ex) { lblAviso.Text = Textos.Instancia.PromptNoSePudoAbrir + ex.Message; }
     }
 }

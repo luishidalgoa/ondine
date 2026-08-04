@@ -1,3 +1,5 @@
+using Ondine.Localizacion;
+
 namespace Ondine;
 
 public enum TipoPista { Video, Audio, Subtitulo, Otro }
@@ -34,26 +36,29 @@ public sealed record Pista(
     {
         get
         {
+            var t = Textos.Instancia;
             var partes = new List<string>
             {
                 Tipo switch
                 {
-                    TipoPista.Video => "Vídeo",
-                    TipoPista.Audio => "Audio",
-                    TipoPista.Subtitulo => "Subtítulo",
-                    _ => "Otra",
+                    TipoPista.Video => t.PistasTipoVideo,
+                    TipoPista.Audio => t.PistasTipoAudio,
+                    TipoPista.Subtitulo => t.PistasTipoSubtitulo,
+                    _ => t.PistasTipoOtra,
                 },
             };
+            // El nombre del idioma sale de `Idiomas`, que lee de la misma lista que el
+            // selector de la interfaz: así se traduce con ella y no hay dos que discrepen.
             var idioma = Idiomas.Nombre(Idioma);
             if (idioma.Length > 0) partes.Add(idioma);
-            if (Titulo.Length > 0) partes.Add($"«{Titulo}»");
-            if (EsForzada) partes.Add("forzados");
-            if (Canales is > 0) partes.Add($"{Canales} canales");
+            if (Titulo.Length > 0) partes.Add(string.Format(t.PistasTituloEntrecomillado, Titulo));
+            if (EsForzada) partes.Add(t.PistasForzados);
+            if (Canales is > 0) partes.Add(string.Format(t.PistasCanales, Canales));
             // A partir de 1 kbps: un subtítulo de texto declara ~76 bps y sacar «0 kbps» es tan
             // confuso como sacar el cero a secas.
-            if (BitsPorSegundo is >= 1000) partes.Add($"{BitsPorSegundo / 1000} kbps");
+            if (BitsPorSegundo is >= 1000) partes.Add($"{BitsPorSegundo / 1000} {t.PistasKbps}");
             if (Codec.Length > 0) partes.Add(Codec);
-            if (EsPredeterminada) partes.Add("predeterminada");
+            if (EsPredeterminada) partes.Add(t.PistasPredeterminada);
             return string.Join(" · ", partes);
         }
     }

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Ondine.Localizacion;
 using Ondine.Reindex;
 
 namespace Ondine;
@@ -27,7 +28,7 @@ public sealed class EpisodioVista
         {
             var t = Ep.TitulosSalida;
             if (t.Count == 0)
-                return new[] { new SegmentoVista(Codigo, "(sin título en español: se identifica por número o fecha)") };
+                return new[] { new SegmentoVista(Codigo, Textos.Instancia.CatalogoSinTitulo) };
             if (t.Count == 1)
                 return new[] { new SegmentoVista(Codigo, t[0]) };
             return t.Select((x, i) => new SegmentoVista($"{Codigo}{SegmentSplitter.Letra(i)}", x)).ToList();
@@ -35,7 +36,9 @@ public sealed class EpisodioVista
     }
 
     /// <summary>«3 historias», o vacío si solo trae una: sin nada que contar, no se dice.</summary>
-    public string Cuantas => Ep.TitulosSalida.Count > 1 ? $"{Ep.TitulosSalida.Count} historias" : "";
+    public string Cuantas => Ep.TitulosSalida.Count > 1
+        ? string.Format(Textos.Instancia.CatalogoCuantasHistorias, Ep.TitulosSalida.Count)
+        : "";
 
     /// <summary>«2009 · 03/07/2009» — lo que confirma o desmiente una sospecha.</summary>
     public string Detalle
@@ -76,12 +79,11 @@ public partial class CatalogoWindow : Window
 
         if (modoElegir)
         {
-            lblPie.Text = "Doble clic para elegir el episodio de este fichero. Si el episodio " +
-                          "tiene varias historias, podrás decir si el fichero es solo una de ellas.";
+            lblPie.Text = Textos.Instancia.CatalogoPieElegir;
             lista.MouseDoubleClick += (_, _) => ElegirSeleccionado();
         }
 
-        lblTitulo.Text = $"Explorar el catálogo — {cat.Serie}";
+        lblTitulo.Text = string.Format(Textos.Instancia.CatalogoTituloSerie, cat.Serie);
         txtBuscar.TextChanged += (_, _) => Refrescar();
         btnCerrar.Click += (_, _) => Close();
 
@@ -94,7 +96,7 @@ public partial class CatalogoWindow : Window
         lista.SelectionChanged += (_, _) => MostrarJson();
         btnCopiarJson.Click += (_, _) =>
         {
-            try { Clipboard.SetText(_jsonActual); lblJsonTitulo.Text += "  · copiado"; }
+            try { Clipboard.SetText(_jsonActual); lblJsonTitulo.Text += Textos.Instancia.CatalogoJsonCopiado; }
             catch { /* portapapeles ocupado por otro proceso: se reintenta a mano */ }
         };
         // Cerrar también deselecciona: si la fila siguiera elegida, volver a pincharla no
@@ -129,7 +131,7 @@ public partial class CatalogoWindow : Window
 
         colJson.Width = new GridLength(300);
         bordeJson.Visibility = Visibility.Visible;
-        lblJsonTitulo.Text = $"E{v.Ep.Num} · JSON del catálogo";
+        lblJsonTitulo.Text = string.Format(Textos.Instancia.CatalogoJsonTitulo, v.Ep.Num);
         _jsonActual = System.Text.Json.JsonSerializer.Serialize(v.Ep, OpcionesJson);
 
         // Se VACÍA y RELLENA el documento existente en vez de asignar uno nuevo: reemplazar
@@ -225,7 +227,7 @@ public partial class CatalogoWindow : Window
         if (v.Ep.TitulosSalida.Count <= 1) { Terminar(v.Ep, null); return; }
 
         int n = v.Ep.TitulosSalida.Count;
-        lblHistoriaTitulo.Text = $"El episodio {v.Ep.Num} tiene {n} historias. ¿Cuáles trae este fichero?";
+        lblHistoriaTitulo.Text = string.Format(Textos.Instancia.CatalogoHistoriaPregunta, v.Ep.Num, n);
         panelHistorias.Children.Clear();
 
         Button Boton(string texto, Action accion)
@@ -245,13 +247,13 @@ public partial class CatalogoWindow : Window
         }
 
         // El caso más común, destacado: el episodio entero.
-        panelHistorias.Children.Add(Boton("El episodio completo", () => Terminar(v.Ep, null)));
+        panelHistorias.Children.Add(Boton(Textos.Instancia.CatalogoHistoriaCompleto, () => Terminar(v.Ep, null)));
 
         // O SOLO ALGUNAS: un checkbox por historia. Se pueden marcar varias (p. ej. la a y la c
         // de tres), no solo una. Las letras de las marcadas van pegadas al número (E413ac).
         panelHistorias.Children.Add(new TextBlock
         {
-            Text = "O marca solo las historias que trae:",
+            Text = Textos.Instancia.CatalogoHistoriaMarcar,
             FontSize = 11.5, Foreground = (Brush)FindResource("Neutral500"),
             Margin = new Thickness(2, 6, 0, 6),
         });
@@ -262,7 +264,8 @@ public partial class CatalogoWindow : Window
             char letra = (char)('a' + i);
             var chk = new CheckBox
             {
-                Content = $"«{v.Ep.TitulosSalida[i]}»  →  E{v.Ep.Num}{letra}",
+                Content = string.Format(Textos.Instancia.CatalogoHistoriaOpcion,
+                                        v.Ep.TitulosSalida[i], $"E{v.Ep.Num}{letra}"),
                 Foreground = (Brush)FindResource("Text"),
                 FontSize = 12.5,
                 Margin = new Thickness(2, 0, 0, 7),
@@ -271,7 +274,7 @@ public partial class CatalogoWindow : Window
             panelHistorias.Children.Add(chk);
         }
 
-        var aceptar = Boton("Usar las historias marcadas", () =>
+        var aceptar = Boton(Textos.Instancia.CatalogoHistoriaUsar, () =>
         {
             var letras = new string(Enumerable.Range(0, casillas.Count)
                 .Where(i => casillas[i].IsChecked == true)
@@ -283,7 +286,7 @@ public partial class CatalogoWindow : Window
         aceptar.Style = (Style)FindResource("BtnPrimary");
         panelHistorias.Children.Add(aceptar);
 
-        var cancelar = Boton("Cancelar", () => overlayHistoria.Visibility = Visibility.Collapsed);
+        var cancelar = Boton(Textos.Instancia.Cancelar, () => overlayHistoria.Visibility = Visibility.Collapsed);
         cancelar.Style = (Style)FindResource("BtnGhostMuted");
         panelHistorias.Children.Add(cancelar);
 
@@ -302,7 +305,11 @@ public partial class CatalogoWindow : Window
         var encontrados = CatalogSearch.Filtrar(_cat, txtBuscar.Text);
         lista.ItemsSource = encontrados.Select(e => new EpisodioVista { Ep = e }).ToList();
         lblCuenta.Text = encontrados.Count == _cat.Episodios.Count
-            ? $"{encontrados.Count} episodios"
-            : $"{encontrados.Count} de {_cat.Episodios.Count}";
+            ? string.Format(encontrados.Count == 1
+                                ? Textos.Instancia.CatalogoCuentaEpisodioUno
+                                : Textos.Instancia.CatalogoCuentaEpisodios,
+                            encontrados.Count)
+            : string.Format(Textos.Instancia.CatalogoCuentaFiltrada,
+                            encontrados.Count, _cat.Episodios.Count);
     }
 }

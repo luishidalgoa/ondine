@@ -57,6 +57,11 @@ public static class Program
         FicherosIgnorados();
         MudanzaDeDatosDeUsuario();
 
+        // La traducción no es del motor, pero se comprueba aquí porque es lo
+        // único que corre en cada cambio. Una prueba que vive fuera del CI no
+        // es un arnés, es una intención.
+        TraduccionTests.Todas();
+
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
     }
@@ -241,7 +246,7 @@ public static class Program
               { "num": 7, "titulos": { "es": ["Uno"] } },
               { "num": 7, "titulos": { "es": ["Otro"] } } ] }
             """), "rechaza dos episodios con el mismo número");
-        Assert(repetido?.Message.Contains("posición 1") == true, "y dice con cuál choca");
+        Assert(repetido?.Message.Contains("position 1") == true, "y dice con cuál choca");
 
         Lanza<ReindexCatalogException>(() => ReindexCatalog.Parse("""
             { "esquema": "reindex/1.0", "serie": "P", "episodios": [
@@ -266,7 +271,7 @@ public static class Program
               { "num": 1 },
               { "num": -5 } ] }
             """), "rechaza un catálogo con varios problemas");
-        Assert(varios?.Message.Contains("3 problemas") == true,
+        Assert(varios?.Message.Contains("3 problems") == true,
             "y los cuenta todos de una vez en vez de parar en el primero");
 
         // Una fecha válida sí pasa, y se entiende
@@ -366,7 +371,9 @@ public static class Program
         var r = Uno(cat, F("[11] El interruptor del despotismo.mkv"));
         Eq(ReindexConfianza.Revisar, r.Confianza, "anti-remake: dos episodios empatan → a revisar");
         Assert(r.Alternativas.Count > 0, "anti-remake enseña el otro candidato");
-        Assert(r.Motivo.Contains("título"), "el motivo explica el empate");
+        // El arnés corre en el idioma por defecto (inglés), así que los motivos que escribe
+        // el motor se comprueban por su palabra inglesa.
+        Assert(r.Motivo.Contains("title"), "el motivo explica el empate");
 
         // El mismo empate, pero con una fecha que desempata: vuelve a ser automático
         r = Uno(cat, F("2005-01-10 [10] El interruptor del despotismo.mkv"));
@@ -449,10 +456,10 @@ public static class Program
                 "la copia de la biblioteca (más superficial) se queda limpia, sea cual sea el orden de escaneo");
             Eq(ReindexEstado.Conflicto, enStaging.Estado,
                 "la copia en la subcarpeta de trabajo es la que cae en conflicto");
-            Assert(enStaging.Motivo.Contains("repetido"),
+            Assert(enStaging.Motivo.Contains("Duplicate"),
                 "misma obra en dos sitios → el motivo dice «fichero repetido», no un conflicto genérico");
             Assert(enStaging.Motivo.Contains(enBib.Archivo.NombreArchivo) ||
-                   enStaging.Motivo.Contains("otro"),
+                   enStaging.Motivo.Contains("another"),
                 "y señala al otro fichero para poder decidir cuál borrar");
             // #128: la resolución lleva la RUTA de la pareja (el ganador), para enseñar las dos
             // rutas y dejar elegir cuál va a la Papelera. El ganador no tiene pareja.
@@ -670,6 +677,12 @@ public static class Program
     {
         Seccion("Generador del encargo para la IA");
 
+        // El encargo entero es texto traducido, así que las comprobaciones de redacción se
+        // hacen en un idioma FIJO. Se elige el castellano y no el de por defecto para que
+        // sigan diciendo lo mismo el día que cambie cuál es el idioma de arranque.
+        var idiomaAntes = Ondine.Localizacion.Idioma.Actual;
+        Ondine.Localizacion.Idioma.Actual = "es";
+
         var p = CatalogPrompt.Build("Bob Esponja",
             "https://bobesponja.fandom.com/wiki/Lista_de_episodios", "es", new[] { "en" });
 
@@ -714,6 +727,21 @@ public static class Program
         Assert(vacio.Contains("escribe aquí el nombre de la serie"), "sin serie, deja el hueco señalado");
         Assert(vacio.Contains("pega aquí la dirección"), "sin fuente, deja el hueco señalado");
         Assert(vacio.Contains("\"salida\": \"es\""), "sin idioma, cae al español");
+
+        // — el mismo encargo, en el otro idioma —
+        // Es lo que se olvida al traducir: la ventana queda en inglés y dentro del cuadro
+        // sigue habiendo un muro de castellano. Solo se ve abriendo la aplicación en inglés.
+        Ondine.Localizacion.Idioma.Actual = "en";
+        var en = CatalogPrompt.Build("SpongeBob", "http://x", "es", new[] { "en" });
+        Assert(en.Contains("unique across the whole catalogue"), "el encargo también se traduce");
+        Assert(en.Contains("YYYY-MM-DD"), "con el formato de fecha escrito a la inglesa");
+        Assert(en.Contains("Answer ONLY with the JSON"), "y el cierre pidiendo solo el JSON");
+        Assert(!en.Contains("Necesito que conviertas"), "sin castellano suelto por dentro");
+        // Los nombres de campo son claves del formato: se quedan como están en los dos idiomas.
+        foreach (var campo in new[] { "esquema", "episodios", "titulos", "temporada", "especial" })
+            Assert(en.Contains($"`{campo}`"), $"el campo «{campo}» no se traduce");
+
+        Ondine.Localizacion.Idioma.Actual = idiomaAntes;
     }
 
     private static int CuentaSubcadena(string texto, string aguja)
@@ -1010,7 +1038,8 @@ public static class Program
 
             var recuperado = ReindexStore.UltimoLote();
             Assert(recuperado != null, "recupera el último lote del disco");
-            Eq("Deshacer lote 14:32 (1)", recuperado!.Etiqueta, "la etiqueta del botón persistente");
+            // La etiqueta ya está traducida y la prueba corre en el idioma por defecto (en).
+            Eq("Undo batch 14:32 (1)", recuperado!.Etiqueta, "la etiqueta del botón persistente");
 
             var (devueltos, fallidos) = ReindexStore.Deshacer(recuperado);
             Eq(1, devueltos, "deshacer devuelve el fichero");
@@ -1116,7 +1145,7 @@ public static class Program
             Assert(cat.Episodios.Count - sinTitulo > cat.Episodios.Count / 2,
                 $"{serie}: la mayoría ({cat.Episodios.Count - sinTitulo}/{cat.Episodios.Count}) sí es comparable");
             if (sinTitulo > 0)
-                Assert(cat.Advertencias.Any(a => a.Contains("japonés")),
+                Assert(cat.Advertencias.Any(a => a.Contains("Japanese")),
                     $"{serie}: avisa de los {sinTitulo} episodios que solo existen en japonés");
         }
 
@@ -1125,7 +1154,7 @@ public static class Program
         if (File.Exists(shin))
         {
             var cat = ReindexCatalog.Load(shin);
-            Assert(cat.Advertencias.Any(a => a.Contains("fecha", StringComparison.OrdinalIgnoreCase)),
+            Assert(cat.Advertencias.Any(a => a.Contains("date", StringComparison.OrdinalIgnoreCase)),
                 "Shin-chan avisa de que no hay fechas");
             var r = Uno(cat, F("[1] Shin-chan se va de compras.mkv"));
             Eq(1, r.Episodio?.Num, "identifica el episodio 1 de Shin-chan por título");
@@ -1162,7 +1191,7 @@ public static class Program
         var r = Uno(cat, F("Doraemon (2005) S2018E01.mkv", "Season 2018"));
         Eq(640, r.Episodio?.Num, "el 1 de la carpeta 2018 es el primero DE 2018, no el estreno de 2005");
         Eq(ReindexConfianza.Revisar, r.Confianza, "sin título ni fecha que lo confirme, se revisa");
-        Assert(r.Motivo.Contains("temporada"), "el motivo explica la relectura");
+        Assert(r.Motivo.Contains("season"), "el motivo explica la relectura");
         Assert(r.Alternativas.Any(a => a.Episodio.Num == 1),
             "la lectura global (el estreno de 2005) se ofrece como alternativa");
 
@@ -1804,8 +1833,30 @@ public static class Program
         Eq("es", IsoLanguages.Normalizar("ES"), "las mayúsculas no crean un idioma nuevo");
         Eq("qqq", IsoLanguages.Normalizar("qqq"), "un código desconocido se deja tal cual");
 
-        Eq("Japonés", IsoLanguages.Nombre("ja"), "nombre en español");
+        // ── el nombre sigue al idioma de la interfaz, y hay que verlo en los DOS ──
+        // El castellano se escribe a mano en la tabla; el inglés lo pone CultureInfo, que
+        // conoce los 183. Comprobar solo uno dejaría el otro sin vigilar, que es justo por
+        // donde se cuela una traducción a medias.
+        var idiomaAntesIso = Ondine.Localizacion.Idioma.Actual;
+
+        Ondine.Localizacion.Idioma.Actual = "es";
+        Eq("Japonés", IsoLanguages.Nombre("ja"), "nombre en castellano");
         Eq("Japonés", IsoLanguages.Nombre("jp"), "y el código viejo llega al mismo sitio");
+        Eq("Español (España)", IsoLanguages.Nombre("es"), "los dos españoles se distinguen");
+        Eq("Español (Hispanoamérica)", IsoLanguages.Nombre("es-419"), "cada uno con su variante");
+
+        Ondine.Localizacion.Idioma.Actual = "en";
+        Eq("Japanese", IsoLanguages.Nombre("ja"), "en inglés el nombre lo pone .NET, no una tabla a mano");
+        Eq("Spanish (Spain)", IsoLanguages.Nombre("es"), "y la variante se distingue igual");
+        Eq("Spanish (Latin America)", IsoLanguages.Nombre("es-419"), "también la de Hispanoamérica");
+        // En una pista, el código no dice de qué lado del charco viene el doblaje: sin región.
+        Eq("Spanish", IsoLanguages.NombreLlano("es"), "el nombre a secas no se inventa una región");
+        Eq("ja", Primero("japanese"), "se busca por el nombre inglés");
+        Eq("ja", Primero("japones"), "y con la app en inglés, «japones» sigue encontrando el japonés");
+        Eq("es", Primero("españ"), "los de andar por casa siguen primero, mande el alfabeto lo que mande");
+
+        Ondine.Localizacion.Idioma.Actual = idiomaAntesIso;
+
         Eq("qqq", IsoLanguages.Nombre("qqq"), "de un código que no conocemos se enseña el código");
 
         // El hispanoamericano no está en ISO 639-1 pero sí en la biblioteca del usuario
@@ -2153,9 +2204,11 @@ public static class Program
     }
     """;
 
-    private static void Seccion(string titulo) => Console.WriteLine($"\n▸ {titulo}");
+    // Abiertos al fichero de pruebas de la traducción, que vive aparte porque
+    // no es del motor. Siguen sin salir del ensamblado.
+    internal static void Seccion(string titulo) => Console.WriteLine($"\n▸ {titulo}");
 
-    private static void Assert(bool condicion, string descripcion)
+    internal static void Assert(bool condicion, string descripcion)
     {
         if (condicion) { _ok++; Console.WriteLine($"  ✓ {descripcion}"); }
         else { _fallos++; Console.WriteLine($"  ✗ {descripcion}"); }
@@ -2310,7 +2363,7 @@ public static class Program
         Eq(ReindexEstado.Limpio, r.Estado, "un fichero que se deja como está NO es conflicto");
         Eq(ReindexConfianza.Alta, r.Confianza, "y no es una duda que despachar");
         Assert(r.Episodio == null, "no se le asigna episodio: no está en el catálogo");
-        Assert(r.Motivo.Contains("dejar"), $"y el motivo lo explica (salió «{r.Motivo}»)");
+        Assert(r.Motivo.Contains("leave"), $"y el motivo lo explica (salió «{r.Motivo}»)");
 
         // — apuntarlo en el JSON del usuario —
         // Es SU fichero: se edita el JSON conservando lo que haya, no se vuelve a serializar
@@ -2467,6 +2520,12 @@ public static class Program
     {
         Seccion("Quitar pistas sin recomprimir");
 
+        // El resumen de una pista ya es texto traducido, así que las comprobaciones de texto se
+        // hacen en un idioma FIJO. Se elige el castellano y no el de por defecto para que sigan
+        // diciendo lo mismo el día que cambie cuál es el idioma de arranque.
+        var idiomaAntes = Ondine.Localizacion.Idioma.Actual;
+        Ondine.Localizacion.Idioma.Actual = "es";
+
         // Las pistas de un fichero real del usuario: video HEVC + 2 audios + 2 subtitulos.
         var pistas = new List<Pista>
         {
@@ -2533,6 +2592,12 @@ public static class Program
         Eq("Japonés", Ondine.Idiomas.Nombre("jpn"), "jpn");
         Eq("", Ondine.Idiomas.Nombre("und"), "«und» no es un idioma que enseñar");
         Eq("zzz", Ondine.Idiomas.Nombre("zzz"), "un código que no conocemos se deja tal cual");
+        // «spa» no dice de qué lado del charco viene el doblaje: el nombre va a secas, sin
+        // la región que sí lleva en el selector de la interfaz.
+        Eq("Español", Ondine.Idiomas.Nombre("es"), "sin región: el fichero no la declara");
+        // Y «lat» aquí es el código ISO 639-2 del LATÍN, no el «español latino» que escribía
+        // la app vieja en sus catálogos. La misma cadena significa dos cosas según dónde salga.
+        Eq("Latín", Ondine.Idiomas.Nombre("lat"), "lat");
 
         // — el título de la pista y las marcas son lo que de verdad distingue —
         // Muchos ficheros traen un título puesto a mano («Castellano AMZN», «Forzados») y es la
@@ -2550,6 +2615,24 @@ public static class Program
         var mudo = SelectorDePistas.Planificar(pistas, new[] { 1, 2 });
         Assert(mudo.QuedaSinAudio, "avisa de que el resultado se queda sin audio");
         Assert(!plan.QuedaSinAudio, "y no avisa cuando queda alguno");
+
+        // — el mismo resumen, en el otro idioma —
+        // Es lo que se olvida al traducir: la cadena pasa por el catálogo pero se queda a medias
+        // en una de las ramas, y eso solo se ve abriendo la aplicación en ese idioma.
+        Ondine.Localizacion.Idioma.Actual = "en";
+        Eq("Subtitle · mov_text",
+            new Pista(9, TipoPista.Subtitulo, "mov_text", "und", null, null).Resumen,
+            "y el resumen también se traduce");
+        Eq("Audio · 2 channels · 128 kbps · aac",
+            new Pista(1, TipoPista.Audio, "aac", "und", 2, 128_000).Resumen,
+            "canales y caudal incluidos");
+        // El NOMBRE del idioma también: sale de la misma lista que el selector de la interfaz,
+        // así que se traduce con ella y no hay dos sitios que se contradigan.
+        Eq("Audio · Spanish · aac",
+            new Pista(1, TipoPista.Audio, "aac", "spa", null, null).Resumen,
+            "el idioma de la pista se nombra en el idioma de la interfaz");
+
+        Ondine.Localizacion.Idioma.Actual = idiomaAntes;
     }
 
     // ───────────────── Qué falta en la biblioteca ─────────────────

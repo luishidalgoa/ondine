@@ -1,5 +1,6 @@
 using System.IO;
 using Microsoft.Win32;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -17,7 +18,12 @@ namespace Ondine;
 internal static class ShellIntegration
 {
     private const string VerbName = "Ondine.Comprimir";
-    private const string VerbLabel = "Comprimir con Ondine";
+
+    // El rótulo se ESCRIBE en el registro al activar la integración, así que se
+    // queda con el idioma que hubiera en ese momento: cambiar de idioma no
+    // reescribe el menú de Windows. Para verlo traducido hay que desmarcar y
+    // volver a marcar la casilla de Preferencias.
+    private static string VerbLabel => Textos.Instancia.MenuExploradorComprimir;
 
     // Lo que se registraba cuando la app se llamaba ShrinkStudio. Viven en NombresHistoricos,
     // que es el único sitio donde se guardan los literales que NO deben seguir al nombre de la
@@ -107,7 +113,7 @@ internal static class ShellIntegration
             dynamic sc = shell.CreateShortcut(SendToLink);
             sc.TargetPath = ExePath;
             sc.IconLocation = ExePath + ",0";
-            sc.Description = "Añadir estos vídeos a la lista de Ondine";
+            sc.Description = Textos.Instancia.MenuExploradorEnviarA;
             sc.WorkingDirectory = Path.GetDirectoryName(ExePath);
             sc.Save();
             return File.Exists(SendToLink);
@@ -166,11 +172,11 @@ internal static class ShellIntegration
         {
             using (var prog = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{ProgId}"))
             {
-                prog.SetValue(null, "Vídeo (Ondine)");
+                prog.SetValue(null, Textos.Instancia.MenuExploradorTipoVideo);
                 using var icon = prog.CreateSubKey("DefaultIcon");
                 icon.SetValue(null, $"\"{ExePath}\",0");
                 using var open = prog.CreateSubKey(@"shell\open");
-                open.SetValue(null, "Comprimir con Ondine");
+                open.SetValue(null, VerbLabel);
                 using var cmd = open.CreateSubKey("command");
                 cmd.SetValue(null, $"\"{ExePath}\" \"%1\"");
             }

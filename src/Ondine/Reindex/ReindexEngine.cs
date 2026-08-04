@@ -1,3 +1,5 @@
+using Ondine.Localizacion;
+
 namespace Ondine.Reindex;
 
 /// <summary>Estado final de un fichero. Cada uno cae en exactamente uno.</summary>
@@ -222,13 +224,13 @@ public static class ReindexEngine
         {
             r.Estado = ReindexEstado.Limpio;
             r.Confianza = ReindexConfianza.Alta;
-            r.Motivo = "Dijiste que lo dejara como está";
+            r.Motivo = Textos.Instancia.ReindexMotivoDejarComoEsta;
             r.Alternativas = Array.Empty<ReindexCandidato>();
             return r;
         }
 
         if (!f.TieneSeñales)
-            return Fallo(r, ReindexEstado.Error, "El nombre no da ninguna pista (ni número, ni fecha, ni título).");
+            return Fallo(r, ReindexEstado.Error, Textos.Instancia.ReindexMotivoSinPistas);
 
         // ── P0: el usuario ya decidió esto ──
         if (overrides.TryGetValue(f.Fingerprint, out var ov))
@@ -249,7 +251,7 @@ public static class ReindexEngine
                 r.Confianza = ReindexConfianza.Alta;
                 r.Estado = epOv.Especial ? ReindexEstado.Especial
                          : (f.Indice == epOv.Num ? ReindexEstado.Limpio : ReindexEstado.Corregido);
-                r.Motivo = "Lo decidiste tú antes";
+                r.Motivo = Textos.Instancia.ReindexMotivoDecidisteTu;
                 return r;
             }
         }
@@ -272,7 +274,7 @@ public static class ReindexEngine
                 r.Score = 1.0;
                 r.Confianza = ReindexConfianza.Alta;
                 r.Estado = f.Indice == porPos.Num ? ReindexEstado.Limpio : ReindexEstado.Corregido;
-                r.Motivo = $"El episodio {idx} de la temporada {temp} (modo «el número manda»)";
+                r.Motivo = string.Format(Textos.Instancia.ReindexMotivoNumeroManda, idx, temp);
                 return r;
             }
         }
@@ -299,7 +301,7 @@ public static class ReindexEngine
             r.Estado = ReindexEstado.Conflicto;
             r.Confianza = ReindexConfianza.Ninguna;
             r.Episodio = null;
-            r.Motivo = "El título del fichero y el del metadato apuntan a episodios distintos";
+            r.Motivo = Textos.Instancia.ReindexMotivoChoqueMetaNombre;
             r.Alternativas = choque;
             return r;
         }
@@ -310,7 +312,7 @@ public static class ReindexEngine
         if (epPorIndice != null && f.Fecha.HasValue && epPorIndice.FechaParsed == f.Fecha)
             return PorNumero(r, f, epPorIndice, ReindexHint.IndiceFecha, indice, titulosArchivo,
                 mejorTituloEp, mejorTituloScore,
-                "El número y la fecha de emisión cuadran exactos");
+                Textos.Instancia.ReindexMotivoNumeroYFecha);
 
         // ── P2: título por encima del umbral ──
         if (mejorTituloEp != null && mejorTituloScore >= TitleMatch.UmbralTitulo)
@@ -320,7 +322,7 @@ public static class ReindexEngine
             r.Hint = ReindexHint.Titulo;
             r.Confianza = ReindexConfianza.Alta;
             r.Estado = f.Indice == mejorTituloEp.Num ? ReindexEstado.Limpio : ReindexEstado.Corregido;
-            r.Motivo = $"El título coincide al {Pct(mejorTituloScore)}";
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoTituloCoincide, Pct(mejorTituloScore));
             r.Alternativas = OtrosCandidatos(puntuados, mejorTituloEp, mejorTituloScore);
 
             // Otra cara del remake: DOS episodios distintos encajan igual de bien y ganó el
@@ -335,8 +337,8 @@ public static class ReindexEngine
                 indice.Puntuar(titulosArchivo, rival.Episodio, f.Temporada).IndistinguibleDe(in mejorTituloP))
             {
                 r.Confianza = ReindexConfianza.Revisar;
-                r.Motivo = $"El título encaja igual de bien con el episodio {mejorTituloEp.Num} " +
-                           $"y con el {rival.Episodio.Num} — elige tú";
+                r.Motivo = string.Format(Textos.Instancia.ReindexMotivoEmpateTitulo,
+                    mejorTituloEp.Num, rival.Episodio.Num);
             }
             return r;
         }
@@ -349,7 +351,9 @@ public static class ReindexEngine
             {
                 var res = PorNumero(r, f, epPorIndice, ReindexHint.IndiceFechaAprox, indice, titulosArchivo,
                     mejorTituloEp, mejorTituloScore,
-                    $"El número cuadra y la fecha baila {dias} día{(dias == 1 ? "" : "s")}");
+                    string.Format(dias == 1
+                        ? Textos.Instancia.ReindexMotivoFechaBailaUnDia
+                        : Textos.Instancia.ReindexMotivoFechaBailaDias, dias));
                 // P3 nunca es verde por sí sola: la fecha no encaja del todo
                 if (res.Confianza == ReindexConfianza.Alta) res.Confianza = ReindexConfianza.Revisar;
                 return res;
@@ -386,10 +390,10 @@ public static class ReindexEngine
                 r.Confianza = ReindexConfianza.Revisar;   // sin título ni fecha que lo confirme
                 r.Estado = ReindexEstado.Corregido;
                 r.Motivo = epPorIndice != null
-                    ? $"El {f.Indice}.º de la temporada {f.Temporada} — el episodio {f.Indice} " +
-                      $"del catálogo es de {epPorIndice.Temporada} y no cuadra con la carpeta"
-                    : $"El {f.Indice}.º de la temporada {f.Temporada} — el episodio {f.Indice} " +
-                      "no existe en la numeración global";
+                    ? string.Format(Textos.Instancia.ReindexMotivoOrdinalContradice,
+                        f.Indice, f.Temporada, epPorIndice.Temporada)
+                    : string.Format(Textos.Instancia.ReindexMotivoOrdinalNoExiste,
+                        f.Indice, f.Temporada);
                 r.Alternativas = epPorIndice == null
                     ? Array.Empty<ReindexCandidato>()
                     : new[]
@@ -399,8 +403,9 @@ public static class ReindexEngine
                             Episodio = epPorIndice, Score = 0.5, Hint = ReindexHint.IndiceFechaAprox,
                             Evidencia = new[]
                             {
-                                $"＋ el fichero dice literalmente {f.Indice}",
-                                $"－ pero ese episodio es de {epPorIndice.Temporada} y la carpeta dice {f.Temporada}",
+                                string.Format(Textos.Instancia.ReindexEvidenciaFicheroDice, f.Indice),
+                                string.Format(Textos.Instancia.ReindexEvidenciaOtraTemporada,
+                                    epPorIndice.Temporada, f.Temporada),
                             },
                         },
                     };
@@ -413,7 +418,7 @@ public static class ReindexEngine
         {
             var res = PorNumero(r, f, epPorIndice, ReindexHint.IndiceFechaAprox, indice, titulosArchivo,
                     mejorTituloEp, mejorTituloScore,
-                "El número existe en la serie, pero no hay fecha que lo confirme");
+                Textos.Instancia.ReindexMotivoNumeroSinFecha);
             if (res.Confianza == ReindexConfianza.Alta) res.Confianza = ReindexConfianza.Revisar;
             return res;
         }
@@ -426,7 +431,7 @@ public static class ReindexEngine
             r.Hint = ReindexHint.TituloDebil;
             r.Confianza = ReindexConfianza.Revisar;
             r.Estado = ReindexEstado.Corregido;
-            r.Motivo = $"Se parece al {Pct(mejorTituloScore)}, por debajo de lo fiable";
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoTituloDebil, Pct(mejorTituloScore));
             r.Alternativas = OtrosCandidatos(puntuados, mejorTituloEp, mejorTituloScore);
             return r;
         }
@@ -434,7 +439,7 @@ public static class ReindexEngine
         // ── nada ──
         r.Estado = ReindexEstado.Conflicto;
         r.Confianza = ReindexConfianza.Ninguna;
-        r.Motivo = "No se ha podido identificar con ninguna pista";
+        r.Motivo = Textos.Instancia.ReindexMotivoNada;
         return r;
     }
 
@@ -465,7 +470,8 @@ public static class ReindexEngine
             && otroScore >= TitleMatch.UmbralTitulo && otroScore > scoreAsignado)
         {
             r.Confianza = ReindexConfianza.Revisar;
-            r.Motivo = $"{motivo}, pero el título encaja al {Pct(otroScore)} con el episodio {otroEp.Num}";
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoPeroElTitulo,
+                motivo, Pct(otroScore), otroEp.Num);
             r.Alternativas = new[]
             {
                 new ReindexCandidato
@@ -473,8 +479,8 @@ public static class ReindexEngine
                     Episodio = otroEp, Score = otroScore, Hint = ReindexHint.Titulo,
                     Evidencia = new[]
                     {
-                        $"＋ el título coincide al {Pct(otroScore)}",
-                        "－ el número del fichero apunta a otro episodio",
+                        string.Format(Textos.Instancia.ReindexEvidenciaTituloCoincide, Pct(otroScore)),
+                        Textos.Instancia.ReindexEvidenciaNumeroApuntaAOtro,
                     },
                 },
             };
@@ -493,7 +499,7 @@ public static class ReindexEngine
         {
             r.Estado = ReindexEstado.Conflicto;
             r.Confianza = ReindexConfianza.Ninguna;
-            r.Motivo = "Viene marcado como especial, pero el catálogo no tiene especiales";
+            r.Motivo = Textos.Instancia.ReindexMotivoEspecialSinEspeciales;
             return r;
         }
 
@@ -505,18 +511,18 @@ public static class ReindexEngine
             r.Episodio = ep;
             r.Score = score;
             r.Hint = score >= TitleMatch.UmbralTitulo ? ReindexHint.Titulo : ReindexHint.TituloDebil;
-            r.Motivo = $"Especial: el título encaja al {Pct(score)} — confírmalo";
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoEspecialTitulo, Pct(score));
             r.Alternativas = OtrosCandidatos(indice.Puntuados(titulos, cat.Especiales, null), ep, score);
         }
         else if (f.IndiceEspecial.HasValue)
         {
             r.Episodio = cat.Especiales.FirstOrDefault(e => e.Num == f.IndiceEspecial.Value);
             r.Hint = ReindexHint.IndiceFechaAprox;
-            r.Motivo = $"Especial nº {f.IndiceEspecial} — confírmalo";
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoEspecialNumero, f.IndiceEspecial);
         }
         else
         {
-            r.Motivo = "Especial sin título reconocible — elige a cuál corresponde";
+            r.Motivo = Textos.Instancia.ReindexMotivoEspecialSinTitulo;
         }
         return r;
     }
@@ -540,14 +546,20 @@ public static class ReindexEngine
             new ReindexCandidato
             {
                 Episodio = porNombre.ep, Score = porNombre.score, Hint = ReindexHint.Titulo,
-                Evidencia = new[] { $"＋ el nombre del fichero coincide al {Pct(porNombre.score)}",
-                                    "－ el metadato del vídeo dice otra cosa" },
+                Evidencia = new[]
+                {
+                    string.Format(Textos.Instancia.ReindexEvidenciaNombreCoincide, Pct(porNombre.score)),
+                    Textos.Instancia.ReindexEvidenciaMetadatoDiscrepa,
+                },
             },
             new ReindexCandidato
             {
                 Episodio = porMeta.ep, Score = porMeta.score, Hint = ReindexHint.Titulo,
-                Evidencia = new[] { $"＋ el título interno del vídeo coincide al {Pct(porMeta.score)}",
-                                    "－ el nombre del fichero dice otra cosa" },
+                Evidencia = new[]
+                {
+                    string.Format(Textos.Instancia.ReindexEvidenciaMetadatoCoincide, Pct(porMeta.score)),
+                    Textos.Instancia.ReindexEvidenciaNombreDiscrepa,
+                },
             },
         };
     }
@@ -602,8 +614,8 @@ public static class ReindexEngine
 
                 r.Confianza = ReindexConfianza.Revisar;
                 r.TraeDosEpisodios = true;
-                r.Motivo = $"Este fichero trae dos episodios del catálogo: el {r.Episodio.Num} y el " +
-                           $"{otro.Num} («{trozo}»). Ponerle el número de uno perdería el otro";
+                r.Motivo = string.Format(Textos.Instancia.ReindexMotivoDosEpisodios,
+                    r.Episodio.Num, otro.Num, trozo);
                 break;
             }
         }
@@ -673,18 +685,17 @@ public static class ReindexEngine
                     TitleMatch.Norm(r.Archivo.TituloNombre) == TitleMatch.Norm(ganador.Archivo.TituloNombre)
                     && r.Archivo.SubSegmento == ganador.Archivo.SubSegmento;
                 r.Motivo = mismaObra
-                    ? $"Fichero repetido: otro fichero cubre el mismo episodio {grupo.Key.Num} " +
-                      $"«{comoSeLlama}» — «{ganador.Archivo.NombreArchivo}». Decide cuál conservar y " +
-                      $"envía el sobrante a la Papelera."
-                    : $"Conflicto: este y «{ganador.Archivo.NombreArchivo}» reclaman el episodio " +
-                      $"{grupo.Key.Num} «{comoSeLlama}». Decide cuál es el correcto.";
+                    ? string.Format(Textos.Instancia.ReindexMotivoRepetido,
+                        grupo.Key.Num, comoSeLlama, ganador.Archivo.NombreArchivo)
+                    : string.Format(Textos.Instancia.ReindexMotivoConflicto,
+                        ganador.Archivo.NombreArchivo, grupo.Key.Num, comoSeLlama);
             }
 
             // El ganador tampoco se aplica a ciegas: hubo pelea, que se vea.
             if (peleaDeVerdad && ganador.Confianza == ReindexConfianza.Alta)
             {
                 ganador.Confianza = ReindexConfianza.Revisar;
-                ganador.Motivo += $" · otro fichero reclamaba este mismo episodio";
+                ganador.Motivo += Textos.Instancia.ReindexMotivoTambienReclamado;
             }
         }
     }
@@ -747,7 +758,10 @@ public static class ReindexEngine
                 Episodio = x.ep,
                 Score = x.score,
                 Hint = x.score >= TitleMatch.UmbralTitulo ? ReindexHint.Titulo : ReindexHint.TituloDebil,
-                Evidencia = new[] { $"＋ el título coincide al {Pct(x.score)}" },
+                Evidencia = new[]
+                {
+                    string.Format(Textos.Instancia.ReindexEvidenciaTituloCoincide, Pct(x.score)),
+                },
             })
             .ToList();
     }
@@ -760,8 +774,11 @@ public static class ReindexEngine
         return r;
     }
 
+    // El número va siempre en cultura invariante (nadie escribe «87,0 %» aquí);
+    // lo que cambia con el idioma es el espacio antes del signo.
     internal static string Pct(double score) =>
-        (score * 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture) + " %";
+        string.Format(Textos.Instancia.ReindexPorcentaje,
+            (score * 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture));
 }
 
 /// <summary>

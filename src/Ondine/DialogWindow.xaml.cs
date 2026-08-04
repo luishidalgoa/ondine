@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -54,16 +55,21 @@ public partial class DialogWindow : Window
         return v.ShowDialog() == true;
     }
 
+    // Los rótulos por defecto llegan como `null` y se resuelven aquí dentro: un valor
+    // por defecto de parámetro tiene que ser constante en tiempo de compilación, y un
+    // texto traducido no lo es —depende del idioma en curso, que cambia en caliente.
+
     /// <summary>Informa de algo. Un solo botón.</summary>
-    public static void Aviso(Window? dueno, string titulo, string mensaje, string aceptar = "Entendido") =>
-        Mostrar(dueno, titulo, mensaje, aceptar, null);
+    public static void Aviso(Window? dueno, string titulo, string mensaje, string? aceptar = null) =>
+        Mostrar(dueno, titulo, mensaje, aceptar ?? Textos.Instancia.DialogoEntendido, null);
 
     /// <summary>
     /// Pide una confirmación. Devuelve true solo si se acepta: cerrar con Esc o con la X
     /// cuenta como «no», que es lo prudente cuando la acción toca ficheros.
     /// </summary>
     public static bool Confirmar(Window? dueno, string titulo, string mensaje,
-                                 string aceptar = "Sí", string cancelar = "No") =>
-        Mostrar(dueno, titulo, mensaje, aceptar, cancelar);
+                                 string? aceptar = null, string? cancelar = null) =>
+        Mostrar(dueno, titulo, mensaje,
+                aceptar ?? Textos.Instancia.Si, cancelar ?? Textos.Instancia.No);
 
 }

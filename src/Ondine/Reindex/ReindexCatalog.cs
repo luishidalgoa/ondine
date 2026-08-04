@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Ondine.Localizacion;
 
 namespace Ondine.Reindex;
 
@@ -72,8 +73,16 @@ public sealed class CatalogEpisode
         TitulosNorm = comparables.Select(TitleMatch.Norm).Where(s => s.Length > 0).Distinct().ToList();
     }
 
-    /// <summary>Título preferente para el nombre final.</summary>
-    public string TituloPrincipal => TitulosSalida.Count > 0 ? TitulosSalida[0] : $"Episodio {Num}";
+    /// <summary>
+    /// Título preferente para el nombre final. El apaño de «Episodio 437» sigue
+    /// al idioma de la app: un episodio sin ningún título se renombra en el idioma
+    /// en que estés organizando, así que la misma biblioteca ordenada en inglés y en
+    /// castellano no produce el mismo nombre en esos casos. Es el mal menor: dejarlo
+    /// fijo en castellano sale por la pantalla de un usuario que no lo lee.
+    /// </summary>
+    public string TituloPrincipal => TitulosSalida.Count > 0
+        ? TitulosSalida[0]
+        : string.Format(Textos.Instancia.ReindexEpisodioSinTitulo, Num);
 
     /// <summary>Todos los segmentos unidos, para mostrar en la propuesta.</summary>
     public string TituloCompleto => TitulosSalida.Count > 1
@@ -176,7 +185,7 @@ public sealed class ReindexCatalog
 
         var raiz = System.Text.Json.Nodes.JsonNode.Parse(System.IO.File.ReadAllText(rutaCatalogo))
                    as System.Text.Json.Nodes.JsonObject
-                   ?? throw new ReindexCatalogException("El catálogo no es un objeto JSON.");
+                   ?? throw new ReindexCatalogException(Textos.Instancia.ReindexCatalogoNoEsObjeto);
 
         var lista = raiz["dejar_como_esta"] as System.Text.Json.Nodes.JsonArray;
         var actuales = lista?.Select(n => n?.GetValue<string>() ?? "").ToList() ?? new List<string>();
@@ -272,27 +281,30 @@ public sealed class ReindexCatalog
         }
         catch (JsonException ex)
         {
-            throw new ReindexCatalogException("El archivo no es un JSON válido: " + ex.Message);
+            throw new ReindexCatalogException(
+                string.Format(Textos.Instancia.ReindexCatalogoJsonInvalido, ex.Message));
         }
-        if (cat == null) throw new ReindexCatalogException("El archivo está vacío.");
+        if (cat == null) throw new ReindexCatalogException(Textos.Instancia.ReindexCatalogoVacio);
 
         // «reindex/1.0» → mayor = 1. Una mayor superior traería reglas que no conocemos.
         var esquema = cat.Esquema ?? "";
         if (!esquema.StartsWith("reindex/", StringComparison.OrdinalIgnoreCase))
-            throw new ReindexCatalogException($"No parece un catálogo de reindexado (esquema «{esquema}»).");
+            throw new ReindexCatalogException(
+                string.Format(Textos.Instancia.ReindexCatalogoNoEsCatalogo, esquema));
         var version = esquema["reindex/".Length..];
         int mayor = int.TryParse(version.Split('.')[0], out var m) ? m : -1;
-        if (mayor < 0) throw new ReindexCatalogException($"Versión de esquema irreconocible: «{esquema}».");
+        if (mayor < 0)
+            throw new ReindexCatalogException(
+                string.Format(Textos.Instancia.ReindexCatalogoEsquemaIrreconocible, esquema));
         if (mayor > EsquemaMayorSoportado)
             throw new ReindexCatalogException(
-                $"El catálogo usa el esquema {esquema} y esta versión de Ondine solo entiende " +
-                $"hasta reindex/{EsquemaMayorSoportado}.x. Actualiza la app.");
+                string.Format(Textos.Instancia.ReindexCatalogoEsquemaMuyNuevo, esquema, EsquemaMayorSoportado));
 
         if (string.IsNullOrWhiteSpace(cat.Serie))
-            throw new ReindexCatalogException(
-                "Falta el campo «serie». Es el nombre que se escribirá en los ficheros, así que no puede ir vacío.");
+            throw new ReindexCatalogException(Textos.Instancia.ReindexCatalogoFaltaSerie);
 
-        if (cat.Episodios.Count == 0) throw new ReindexCatalogException("El catálogo no tiene episodios.");
+        if (cat.Episodios.Count == 0)
+            throw new ReindexCatalogException(Textos.Instancia.ReindexCatalogoSinEpisodios);
 
         cat.Validar();
         cat.Index();
@@ -312,40 +324,43 @@ public sealed class ReindexCatalog
         for (int i = 0; i < Episodios.Count; i++)
         {
             var e = Episodios[i];
-            string donde = $"episodio en la posición {i + 1}";
+            string donde = string.Format(Textos.Instancia.ReindexCatalogoDonde, i + 1);
 
             if (e.Num < 0)
             {
-                fallos.Add($"{donde}: «num» es {e.Num}; tiene que ser un entero mayor o igual que 0.");
+                fallos.Add(string.Format(Textos.Instancia.ReindexCatalogoNumInvalido, donde, e.Num));
             }
             else if (numerosVistos.TryGetValue(e.Num, out var primera))
             {
                 // El índice se construye con «por número», así que un repetido borraría al
                 // anterior sin decir nada y perderías un episodio entero.
-                fallos.Add($"{donde}: el número {e.Num} ya lo usa el de la posición {primera}. " +
-                           "Cada «num» debe ser único: si se repite, un episodio pisa al otro.");
+                fallos.Add(string.Format(Textos.Instancia.ReindexCatalogoNumRepetido, donde, e.Num, primera));
             }
             else numerosVistos[e.Num] = i + 1;
 
+            // El formato que se PARSEA es siempre yyyy-MM-dd; lo que se traduce es
+            // cómo se le explica al usuario (AAAA-MM-DD / YYYY-MM-DD).
             if (e.Fecha != null && !DateOnly.TryParseExact(e.Fecha, "yyyy-MM-dd",
                     System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None, out _))
-                fallos.Add($"{donde} (nº {e.Num}): la fecha «{e.Fecha}» no vale; " +
-                           "tiene que ser una fecha real en formato AAAA-MM-DD.");
+                fallos.Add(string.Format(Textos.Instancia.ReindexCatalogoFechaInvalida, donde, e.Num, e.Fecha));
 
             if (e.Temporada is < 0)
-                fallos.Add($"{donde} (nº {e.Num}): «temporada» es {e.Temporada}; no puede ser negativa.");
+                fallos.Add(string.Format(Textos.Instancia.ReindexCatalogoTemporadaNegativa,
+                    donde, e.Num, e.Temporada));
 
             if (fallos.Count >= 20)
             {
-                fallos.Add("…y puede que haya más: se ha parado de comprobar en el fallo 20.");
+                fallos.Add(Textos.Instancia.ReindexCatalogoDemasiadosFallos);
                 break;
             }
         }
 
         if (fallos.Count > 0)
             throw new ReindexCatalogException(
-                (fallos.Count == 1 ? "El catálogo tiene un problema:" : $"El catálogo tiene {fallos.Count} problemas:")
+                (fallos.Count == 1
+                    ? Textos.Instancia.ReindexCatalogoUnProblema
+                    : string.Format(Textos.Instancia.ReindexCatalogoVariosProblemas, fallos.Count))
                 + "\n\n• " + string.Join("\n• ", fallos));
     }
 
@@ -372,32 +387,39 @@ public sealed class ReindexCatalog
 
         var huecos = HuecosDeNumeracion(8);
         if (huecos.Count > 0)
-            avisos.Add($"La numeración salta el {string.Join(", ", huecos)} — los números vecinos no son consecutivos.");
+            avisos.Add(string.Format(Textos.Instancia.ReindexAvisoHuecos, string.Join(", ", huecos)));
 
         int sinFecha = Episodios.Count(e => e.FechaParsed == null);
         if (sinFecha == Episodios.Count)
-            avisos.Add("Sin fechas de emisión: la identificación dependerá solo del título — espera más dudas.");
+            avisos.Add(Textos.Instancia.ReindexAvisoSinNingunaFecha);
         else if (sinFecha > 0)
-            avisos.Add($"{sinFecha} episodios no tienen fecha: se identificarán solo por título.");
+            avisos.Add(string.Format(sinFecha == 1
+                ? Textos.Instancia.ReindexAvisoSinFechaUno
+                : Textos.Instancia.ReindexAvisoSinFecha, sinFecha));
 
         int sinTemporada = Episodios.Count(e => e.Temporada == null);
         if (sinTemporada > 0)
-            avisos.Add($"{sinTemporada} episodios no tienen temporada asignada.");
+            avisos.Add(string.Format(sinTemporada == 1
+                ? Textos.Instancia.ReindexAvisoSinTemporadaUno
+                : Textos.Instancia.ReindexAvisoSinTemporada, sinTemporada));
 
         // Episodios que solo existen en japonés (nunca doblados): el emparejamiento por
         // título no puede alcanzarlos, así que si el fichero tampoco trae número o fecha
         // no hay por dónde cogerlo. Conviene saberlo ANTES, no descubrirlo fila a fila.
         int sinTitulo = Episodios.Count(e => e.TitulosNorm.Count == 0);
         if (sinTitulo > 0)
-            avisos.Add($"{sinTitulo} episodios solo tienen título en japonés: a esos no se llega " +
-                       "por título, solo por número o fecha.");
+            avisos.Add(string.Format(sinTitulo == 1
+                ? Textos.Instancia.ReindexAvisoSoloJaponesUno
+                : Textos.Instancia.ReindexAvisoSoloJapones, sinTitulo));
 
         // Remakes: mismo título normalizado en episodios distintos y lejanos en numeración
         if (TieneRemakes())
-            avisos.Add("Hay remakes: episodios distintos con el mismo título años después.");
+            avisos.Add(Textos.Instancia.ReindexAvisoRemakes);
 
         if (Especiales.Count > 0)
-            avisos.Add($"{Especiales.Count} especiales: se numeran aparte y necesitan confirmación manual.");
+            avisos.Add(string.Format(Especiales.Count == 1
+                ? Textos.Instancia.ReindexAvisoEspecialesUno
+                : Textos.Instancia.ReindexAvisoEspeciales, Especiales.Count));
 
         return avisos;
     }

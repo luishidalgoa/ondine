@@ -1,6 +1,7 @@
 <UserControl x:Class="Ondine.RecortesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:i="clr-namespace:Ondine.Localizacion"
              FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}">
   <UserControl.Resources>
     <BooleanToVisibilityConverter x:Key="B2V"/>
@@ -76,12 +77,12 @@
           <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Button x:Name="btnElegir" Grid.Column="0" Style="{StaticResource BtnPrimary}"
-                Content="Elegir vídeo…" Padding="14,6"/>
+                Content="{i:T RecortesElegirVideo}" Padding="14,6"/>
         <StackPanel Grid.Column="1" Margin="14,0,10,0" VerticalAlignment="Center">
-          <TextBlock x:Name="lblVideo" Text="Ningún vídeo cargado" FontSize="12.5" FontWeight="Medium"
+          <TextBlock x:Name="lblVideo" Text="{i:T RecortesSinVideo}" FontSize="12.5" FontWeight="Medium"
                      TextTrimming="CharacterEllipsis"/>
           <TextBlock x:Name="lblVideoDet" FontSize="11" Foreground="{StaticResource Neutral500}"
-                     Text="Arrastra un vídeo aquí, o ábrelo desde Organizar con el botón derecho."/>
+                     Text="{i:T RecortesArrastraVideo}"/>
         </StackPanel>
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
           <TextBlock x:Name="lblDuracionTotal" VerticalAlignment="Center"
@@ -89,8 +90,8 @@
                      Foreground="{StaticResource Neutral400}" Text=""/>
           <!-- Vacía Recortes y libera la memoria del vídeo. Solo aparece con algo cargado. -->
           <Button x:Name="btnVaciar" Style="{StaticResource BtnGhostMuted}" Margin="12,0,0,0"
-                  Padding="10,5" FontSize="12" Visibility="Collapsed" Content="Vaciar"
-                  ToolTip="Descarta el vídeo y los cortes y libera la memoria — deja Recortes como recién abierto"/>
+                  Padding="10,5" FontSize="12" Visibility="Collapsed" Content="{i:T RecortesVaciar}"
+                  ToolTip="{i:T RecortesVaciarTip}"/>
         </StackPanel>
       </Grid>
     </Border>
@@ -127,7 +128,7 @@
                  bien sobre el fondo que sobre el vídeo. -->
             <Border x:Name="chipSinVideo" HorizontalAlignment="Center" VerticalAlignment="Center"
                     Background="#66101018" CornerRadius="8" Padding="14,7">
-              <TextBlock x:Name="lblSinVideo" Text="Elige un vídeo para empezar a cortarlo"
+              <TextBlock x:Name="lblSinVideo" Text="{i:T RecortesElegirParaEmpezar}"
                          FontSize="12.5" Foreground="{StaticResource Neutral300}"/>
             </Border>
 
@@ -136,7 +137,7 @@
                  raros. Aquí se dice qué está pasando y cuánto queda. -->
             <Border x:Name="capaCarga" Visibility="Collapsed" Background="#CC08090F">
               <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="300">
-                <TextBlock x:Name="lblCarga" Text="Preparando el vídeo…" FontSize="12.5"
+                <TextBlock x:Name="lblCarga" Text="{i:T RecortesPreparandoVideo}" FontSize="12.5"
                            HorizontalAlignment="Center" Foreground="{StaticResource Neutral300}"/>
                 <ProgressBar x:Name="barCarga" Height="4" Margin="0,10,0,0" Minimum="0" Maximum="1"/>
                 <TextBlock x:Name="lblCargaDet" Margin="0,7,0,0" FontSize="11" HorizontalAlignment="Center"
@@ -169,10 +170,10 @@
                         StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                   <TextBlock Margin="0,12,0,0" FontSize="13" FontWeight="Medium" Foreground="White"
                              TextAlignment="Center" TextWrapping="Wrap"
-                             Text="El reproductor está en pausa mientras se exporta"/>
+                             Text="{i:T RecortesReproductorEnPausa}"/>
                   <TextBlock Margin="0,5,0,0" FontSize="11.5" Foreground="#CBD0E2"
                              TextAlignment="Center" TextWrapping="Wrap"
-                             Text="El vídeo tiene que estar libre para poder cortarlo. Vuelve solo al terminar."/>
+                             Text="{i:T RecortesReproductorEnPausaDetalle}"/>
                 </StackPanel>
               </Grid>
             </Border>
@@ -207,7 +208,7 @@
               <Canvas x:Name="capaAcciones" Grid.Row="0" Grid.Column="1">
                 <Button x:Name="btnCortar" Style="{StaticResource AccionPista}" IsEnabled="False"
                         Visibility="Collapsed"
-                        ToolTip="Cortar aquí: parte en dos el tramo por donde va el cabezal  (C)">
+                        ToolTip="{i:T RecortesCortarAquiTip}">
                   <TextBlock Text="✂" FontSize="12" Foreground="White" Margin="0,1,0,0"/>
                 </Button>
               </Canvas>
@@ -226,7 +227,7 @@
                             PanningMode="HorizontalOnly">
                 <Grid x:Name="pista" Height="54" ClipToBounds="True"
                       Background="Transparent" Cursor="Hand"
-                      ToolTip="Pincha para moverte por el vídeo. Arrastra los tiradores de las juntas para afinar dónde corta.&#10;Ctrl + rueda (o Ctrl + y Ctrl −) para ampliar la línea de tiempo.">
+                      ToolTip="{i:T RecortesPistaTip}">
                 <Border Background="#0E1018" BorderBrush="{StaticResource Divider}" BorderThickness="1"/>
                 <Canvas x:Name="capaFotogramas" IsHitTestVisible="False"/>
                 <Canvas x:Name="capaBloques"/>
@@ -267,7 +268,7 @@
                 <!-- Solo aparece si hay aumento: a 1× no hay nada que decir. -->
                 <TextBlock x:Name="lblZoom" Margin="8,0,0,0" FontFamily="{StaticResource FontMono}"
                            FontSize="11" Foreground="{StaticResource Accent400}" Text=""
-                           ToolTip="Aumento de la línea de tiempo · Ctrl+0 para verla entera"/>
+                           ToolTip="{i:T RecortesZoomTip}"/>
               </StackPanel>
             </Grid>
 
@@ -278,17 +279,17 @@
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
               <Button x:Name="btnAtras" Style="{StaticResource BtnIcono}" Margin="0,0,10,0"
-                      ToolTip="Atrás 10 s  (flecha izquierda)">
+                      ToolTip="{i:T RecortesAtrasTip}">
                 <Path Data="M10,5 L4.5,10 L10,15 M16,5 L10.5,10 L16,15" Stretch="None" Width="20" Height="20"
                       Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                       StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
               </Button>
-              <Button x:Name="btnPlay" Style="{StaticResource BtnPlay}" ToolTip="Reproducir / pausar  (espacio)">
+              <Button x:Name="btnPlay" Style="{StaticResource BtnPlay}" ToolTip="{i:T RecortesPlayTip}">
                 <Path x:Name="glifoPlay" Stretch="None" Data="M6.5,3.5 L17,10 L6.5,16.5 Z" Fill="White"
                       Stroke="White" StrokeThickness="2.2" StrokeLineJoin="Round" Width="19" Height="20"/>
               </Button>
               <Button x:Name="btnAdelante" Style="{StaticResource BtnIcono}" Margin="10,0,0,0"
-                      ToolTip="Adelante 10 s  (flecha derecha)">
+                      ToolTip="{i:T RecortesAdelanteTip}">
                 <Path Data="M10,5 L15.5,10 L10,15 M4,5 L9.5,10 L4,15" Stretch="None" Width="20" Height="20"
                       Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                       StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
@@ -306,10 +307,10 @@
             <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
           </Grid.RowDefinitions>
           <StackPanel Grid.Row="0" Margin="12,10,12,6">
-            <TextBlock Text="TRAMOS" FontSize="10.5" FontWeight="SemiBold" Opacity="0.65"/>
+            <TextBlock Text="{i:T RecortesTramosCabecera}" FontSize="10.5" FontWeight="SemiBold" Opacity="0.65"/>
             <TextBlock x:Name="lblAyudaTramos" FontSize="11" Foreground="{StaticResource Neutral500}"
                        TextWrapping="Wrap" Margin="0,3,0,0"
-                       Text="Cada tramo será un fichero. Corta por donde quieras y ponles nombre."/>
+                       Text="{i:T RecortesAyudaTramos}"/>
           </StackPanel>
           <ItemsControl x:Name="listaTramos" Grid.Row="1" Margin="8,0,8,8">
             <ItemsControl.Template>
@@ -348,18 +349,18 @@
                                  Foreground="{StaticResource Neutral400}" Text="{Binding Rango}"/>
                       <TextBlock Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"
                                  Margin="0,0,4,0" FontSize="10" FontWeight="SemiBold"
-                                 Foreground="{StaticResource Accent200}" Text="EXPORTANDO"
+                                 Foreground="{StaticResource Accent200}" Text="{i:T RecortesInsigniaExportando}"
                                  Visibility="{Binding EnCurso, Converter={StaticResource B2V}}"/>
                       <Button Grid.Column="2" Tag="{Binding}" Click="OnQuitarTramo"
                               Style="{StaticResource BtnIcono}" Width="24" Height="24"
-                              ToolTip="Quitar este tramo (no se exportará)">
+                              ToolTip="{i:T RecortesQuitarTramoTip}">
                         <Path Data="M3,3 L11,11 M11,3 L3,11" Stretch="None" Width="14" Height="14"
                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                               StrokeThickness="1.3" StrokeStartLineCap="Round"/>
                       </Button>
                     </Grid>
                     <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Margin="0,6,0,0"
-                             FontSize="11.5" ToolTip="Nombre del fichero que se creará (sin extensión)"/>
+                             FontSize="11.5" ToolTip="{i:T RecortesNombreFicheroTip}"/>
                   </StackPanel>
                 </Border>
               </DataTemplate>
@@ -382,23 +383,23 @@
             <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
           <StackPanel Grid.Column="0" Margin="0,0,10,0">
-            <TextBlock Text="Formato" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T RecortesFormato}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
             <ComboBox x:Name="cboFmt" SelectedIndex="0"/>
           </StackPanel>
           <StackPanel Grid.Column="1" Margin="0,0,10,0">
-            <TextBlock Text="Códec" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T RecortesCodec}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
             <ComboBox x:Name="cboCodec" SelectedIndex="0"/>
           </StackPanel>
           <StackPanel Grid.Column="2" Margin="0,0,10,0">
-            <TextBlock Text="Calidad" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T RecortesCalidad}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
             <ComboBox x:Name="cboQ" SelectedIndex="0"/>
           </StackPanel>
           <StackPanel Grid.Column="3" Margin="0,0,10,0">
-            <TextBlock Text="Resolución máx." FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T RecortesResolucionMax}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
             <ComboBox x:Name="cboRes" SelectedIndex="0"/>
           </StackPanel>
           <StackPanel Grid.Column="4">
-            <TextBlock Text="Audio" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T RecortesAudio}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
             <ComboBox x:Name="cboAud" SelectedIndex="0"/>
           </StackPanel>
         </Grid>
@@ -408,7 +409,7 @@
             <TextBlock x:Name="lblEst" FontSize="15" FontWeight="Medium"
                        Foreground="{StaticResource Accent200}" Text="—" VerticalAlignment="Center"/>
             <TextBlock x:Name="lblEstDet" FontSize="11" Foreground="{StaticResource Neutral500}"
-                       Margin="10,0,0,0" VerticalAlignment="Center" Text="Elige un vídeo para estimar el tamaño"/>
+                       Margin="10,0,0,0" VerticalAlignment="Center" Text="{i:T RecortesEstimacionSinVideo}"/>
           </StackPanel>
           <TextBlock x:Name="lblDestino" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                      Margin="0,26,0,0" FontSize="10.5" Foreground="{StaticResource Neutral600}"
@@ -417,16 +418,16 @@
             <TextBlock x:Name="lblProgreso" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="11.5"
                        Foreground="{StaticResource Neutral400}" Text=""/>
             <Button x:Name="btnDestino" Style="{StaticResource BtnSecondary}" Padding="10,6" Margin="0,0,8,0"
-                    Content="Guardar en…" ToolTip="Por defecto, junto al vídeo original"/>
+                    Content="{i:T RecortesGuardarEn}" ToolTip="{i:T RecortesGuardarEnTip}"/>
             <!-- Solo salen mientras se exporta: un «Detener» apagado permanente es ruido. -->
             <Button x:Name="btnPausarExp" Style="{StaticResource BtnSecondary}" Padding="10,6"
-                    Margin="0,0,8,0" Content="Pausar" Visibility="Collapsed"
-                    ToolTip="Suspende ffmpeg donde va. Reanudar sigue desde ahí, no desde el principio."/>
+                    Margin="0,0,8,0" Content="{i:T RecortesPausar}" Visibility="Collapsed"
+                    ToolTip="{i:T RecortesPausarTip}"/>
             <Button x:Name="btnDetenerExp" Style="{StaticResource BtnSecondary}" Padding="10,6"
-                    Margin="0,0,8,0" Content="Detener" Visibility="Collapsed"
-                    ToolTip="Corta la exportación y mata el proceso de ffmpeg, no lo deja de fondo."/>
+                    Margin="0,0,8,0" Content="{i:T RecortesDetener}" Visibility="Collapsed"
+                    ToolTip="{i:T RecortesDetenerTip}"/>
             <Button x:Name="btnExportar" Style="{StaticResource BtnPrimary}" Padding="16,7"
-                    Content="Exportar" IsEnabled="False"/>
+                    Content="{i:T RecortesExportar}" IsEnabled="False"/>
           </StackPanel>
         </Grid>
       </Grid>
