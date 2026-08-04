@@ -12,6 +12,11 @@ interface Props {
   descripcion: string;
 }
 const { titulo, descripcion } = Astro.props;
+
+// La dirección exacta de ESTA página. Hace falta para dos cosas: la canónica,
+// que le dice al buscador cuál es la buena si llega por una con parámetros
+// pegados detrás; y `og:url`, que es la que se comparte al reenviar el enlace.
+const AQUI = new URL(Astro.url.pathname, Astro.site).href;
 const idioma = idiomaDe(Astro.currentLocale);
 const t = textos(idioma);
 
@@ -42,14 +47,59 @@ const ALTERNAS = [
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#161826" />
     <link rel="icon" type="image/png" href={ruta("icon.png")} />
+    <link rel="canonical" href={AQUI} />
 
     {ALTERNAS.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
 
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Ondine" />
     <meta property="og:title" content={titulo} />
     <meta property="og:description" content={descripcion} />
+    <meta property="og:url" content={AQUI} />
     <meta property="og:locale" content={idioma === "es" ? "es_ES" : "en_GB"} />
+
+    <!-- La imagen de vista previa: 1200x630, que es lo que piden WhatsApp,
+         Telegram, Slack, X y LinkedIn. Sin `og:image` el enlace se comparte
+         como una línea de texto sin nada, que es la diferencia entre que
+         alguien lo pulse y que no.
+         La ruta va ABSOLUTA porque quien la lee no es el navegador desde la
+         página: es un servidor ajeno que solo tiene la URL. -->
+    <meta
+      property="og:image"
+      content={rutaAbsoluta(idioma === "en" ? "og-en.jpg" : "og-es.jpg", Astro.site)}
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={t.meta.altVistaPrevia} />
+
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={titulo} />
+    <meta name="twitter:description" content={descripcion} />
+    <meta
+      name="twitter:image"
+      content={rutaAbsoluta(idioma === "en" ? "og-en.jpg" : "og-es.jpg", Astro.site)}
+    />
+
+    <!-- Datos estructurados. Le dicen al buscador que esto es una aplicación
+         descargable y gratuita, no un artículo: es lo que permite que aparezca
+         con su ficha en vez de como un resultado de texto más. -->
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "Ondine",
+        description: descripcion,
+        applicationCategory: "MultimediaApplication",
+        operatingSystem: "Windows, macOS, Linux",
+        url: new URL("/", Astro.site).href,
+        downloadUrl: `${REPO}/releases/latest`,
+        license: "https://opensource.org/licenses/MIT",
+        inLanguage: idioma,
+        author: { "@type": "Person", name: "Luis Hidalgo", url: "https://portfolio.hdglabs.com" },
+        offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+      })}
+    />
   </head>
 
   <body>
