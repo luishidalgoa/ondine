@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-08-04
+
 ### Añadido
 
 - **Ondine habla inglés.** Toda la interfaz está en inglés y en castellano, y se cambia de idioma

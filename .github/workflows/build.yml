@@ -26,6 +26,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Hace falta para la comprobación de traducción de más abajo. La versión
+      # que trae el runner de serie no está garantizada, y este trabajo es la
+      # puerta que decide si se publica: no puede depender de la suerte.
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+
       - name: Comprobar el contrato del CHANGELOG
         shell: bash
         run: |

@@ -13,7 +13,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Versión: única fuente para el ejecutable, el instalador y el auto-update -->
-    <Version>1.5.0</Version>
+    <Version>1.6.0</Version>
     <Product>Ondine</Product>
     <!-- FileDescription del exe: es el nombre que muestra el submenú «Abrir con» -->
     <AssemblyTitle>Ondine</AssemblyTitle>
