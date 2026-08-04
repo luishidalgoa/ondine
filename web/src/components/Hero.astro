@@ -128,20 +128,24 @@ const COLUMNAS = [
   /* El velo solo tiene que hacer legible la columna del texto. Pasado ese
      punto se retira del todo: si vela el mural entero, las fichas quedan en
      fantasmas y el hero vuelve a ser texto sobre un fondo. */
+  /* Ni un solo alto de color es opaco del todo: por debajo va el gradiente de
+     la página y tiene que asomar también aquí. El 0,94 de la parte más cerrada
+     deja pasar lo justo para que se note el color sin tocar el contraste del
+     texto, que a ese nivel sigue siendo el mismo. */
   .velo {
     position: absolute;
     inset: 0;
     background:
       linear-gradient(
         100deg,
-        #161826 0%,
-        #161826 26%,
-        rgb(22 24 38 / 0.82) 38%,
+        rgb(22 24 38 / 0.94) 0%,
+        rgb(22 24 38 / 0.92) 26%,
+        rgb(22 24 38 / 0.8) 38%,
         rgb(22 24 38 / 0.28) 52%,
         rgb(22 24 38 / 0) 66%
       ),
-      linear-gradient(to bottom, #161826 0%, rgb(22 24 38 / 0) 14%),
-      linear-gradient(to top, #161826 0%, rgb(22 24 38 / 0) 16%);
+      linear-gradient(to bottom, rgb(22 24 38 / 0.92) 0%, rgb(22 24 38 / 0) 14%),
+      linear-gradient(to top, rgb(22 24 38 / 0.92) 0%, rgb(22 24 38 / 0) 16%);
   }
 
   .contenido {

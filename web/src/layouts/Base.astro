@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Marca from "../components/Marca.astro";
+import FondoGradiente from "../components/FondoGradiente.astro";
 import { siGithub } from "simple-icons";
 
 interface Props {
@@ -29,6 +30,8 @@ const base = import.meta.env.BASE_URL;
   </head>
 
   <body>
+    <FondoGradiente />
+
     <!-- La barra no lleva menú: la página es una sola y el único destino que
          importa es la descarga. Cabe de sobra en una línea a cualquier ancho. -->
     <header
@@ -75,11 +78,16 @@ const base = import.meta.env.BASE_URL;
       </div>
     </header>
 
-    <main>
+    <!-- El fondo va posicionado y en z-index 0, y un elemento posicionado
+         pinta por encima del contenido sin posicionar aunque vaya antes en el
+         documento. Por eso el contenido tiene que subir explícitamente. -->
+    <main class="relative z-[1]">
       <slot />
     </main>
 
-    <footer class="border-t border-white/5 px-6 py-10 lg:px-10">
+    <footer
+      class="relative z-[1] border-t border-white/5 px-6 py-10 lg:px-10"
+    >
       <div
         class="mx-auto flex max-w-[1400px] flex-col gap-6 text-sm text-tinta-4 sm:flex-row sm:items-center sm:justify-between"
       >
