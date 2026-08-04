@@ -19,7 +19,7 @@
     <AssemblyTitle>Ondine</AssemblyTitle>
     <Company>luishidalgoa</Company>
     <Authors>luishidalgoa</Authors>
-    <Description>Ondine — compresor de vídeo por lotes: reduce a HEVC/H.264/AV1 en MKV/MP4/WebM con aceleración por hardware, conservando los idiomas de audio elegidos y sin tocar los originales.</Description>
+    <Description>Ondine: batch video compressor. Shrinks to HEVC/H.264/AV1 in MKV/MP4/WebM with hardware acceleration, keeps the audio languages you choose, and never touches the originals.</Description>
     <Copyright>© luishidalgoa</Copyright>
 
     <!-- Repo de GitHub del que la app descarga sus actualizaciones -->

@@ -1,0 +1,910 @@
+<template>
+  <div data-composition-id="07b-comparativa" data-width="1920" data-height="1080" data-start="0" data-duration="12.903">
+
+    <!-- ── Plano 7 · variante comparativa ────────────────────────────────────────
+         Cinco compases en vez de cuatro. Arranca igual que la versión corta —la
+         pantalla desenfocada y con huecos, resolviéndose entera de una vez— y en el
+         compás 2 el «después» se retira hacia la derecha y deja ver debajo el
+         «antes», que nunca se fue: son dos bibliotecas apiladas, no dos capturas.
+
+         Las dos mitades comparten el MISMO desplazamiento, así que las filas siempre
+         están alineadas. Sin eso la comparación no vale nada: se leería como dos
+         pantallas distintas en vez de como la misma antes y después. -->
+    <div id="alt-ground" class="clip" data-start="0" data-duration="12.903" data-track-index="0"></div>
+
+    <div id="alt-capa" class="clip" data-start="0" data-duration="12.903" data-track-index="1">
+      <div id="alt-biblios">
+        <div id="alt-win-antes" class="alt-win">
+          <div id="alt-antes" class="alt-biblio" data-layout-allow-occlusion></div>
+        </div>
+        <div id="alt-win-despues" class="alt-win">
+          <div id="alt-despues" class="alt-biblio" data-layout-allow-occlusion></div>
+        </div>
+      </div>
+
+      <div id="alt-divisor"></div>
+      <div id="alt-pie-scrim"></div>
+
+      <div id="alt-pies" data-layout-allow-overlap data-layout-allow-occlusion>
+        <span class="alt-pie" id="alt-pie-antes">ANTES</span>
+        <span class="alt-pie" id="alt-pie-despues">DESPUÉS</span>
+      </div>
+    </div>
+
+    <div id="alt-velo" class="clip" data-layout-allow-occlusion data-start="0" data-duration="12.903" data-track-index="2"></div>
+
+    <div id="alt-overlay" class="clip" data-layout-allow-overlap data-layout-allow-occlusion
+         data-start="0" data-duration="12.903" data-track-index="3">
+      <span id="alt-optimiza"><span class="alt-linea">Optimiza tus bibliotecas</span><span class="alt-linea">para tus plataformas favoritas</span></span>
+
+      <div id="alt-cierre">
+        <div id="alt-marca">
+          <svg viewBox="0 0 64 64" width="88" height="88" fill="none" stroke="#B5ABFC" stroke-width="6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path>
+            <path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path>
+            <path d="M7 49 L 57 49"></path>
+          </svg>
+          <span id="alt-marca-txt">Ondine</span>
+        </div>
+
+        <span id="alt-frase">Organización en un solo click</span>
+
+        <div id="alt-compat">
+          <span class="alt-compat-it" id="alt-compat-0">funciona con</span>
+          <div class="alt-compat-it alt-compat-marca" id="alt-compat-1">
+            <img src="assets/jellyfin.png" alt="Jellyfin" width="40" height="40" id="alt-jellyfin" />
+            <span>Jellyfin</span>
+          </div>
+          <span class="alt-compat-it alt-compat-sep" id="alt-compat-2"></span>
+          <div class="alt-compat-it alt-compat-marca" id="alt-compat-3">
+            <!-- Sin el logotipo de Plex: marca registrada de un tercero. -->
+            <div id="alt-plex-caja">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E5A00D" stroke-width="2.6"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4l7 8-7 8"></path></svg>
+            </div>
+            <span>Plex</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #alt-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #alt-capa,
+    #alt-velo,
+    #alt-overlay {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    /* El desenfoque solo envuelve a las dos bibliotecas: el divisor y los pies entran
+       después y nítidos. */
+    #alt-biblios {
+      position: absolute;
+      inset: 0;
+      opacity: 0.55;
+      filter: blur(18px);
+      will-change: filter, opacity;
+    }
+
+    /* Cada biblioteca vive en su propia ventana. Recortar UNA maqueta por la mitad
+       no comparaba nada —cada lado enseñaba media pantalla— así que lo que se parte
+       no es la imagen: son dos pantallas enteras que se encogen y se separan. */
+    .alt-win {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      clip-path: inset(0 0 0 0);
+      will-change: clip-path;
+    }
+
+    /* 1687 px de alto: a escala 0,64 —la de la comparación— son exactamente los 1080
+       del lienzo. Durante el primer compás se ve a tamaño real y la ventana recorta
+       lo que sobra por abajo, así que encoger es además un plano que se abre. */
+    .alt-biblio {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1687px;
+      background: #101418;
+      overflow: hidden;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    #alt-win-despues {
+      opacity: 0;
+      will-change: opacity, clip-path;
+    }
+
+    /* ── el telón ───────────────────────────────────────────────────────────── */
+    .alt-telon {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 560px;
+      overflow: hidden;
+    }
+
+    .alt-telon-fondo {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(122deg, #1d2a3a 0%, #2c2a4a 46%, #141726 100%);
+    }
+
+    .alt-telon-arte {
+      position: absolute;
+      inset: -80px;
+      background: url("assets/anhqv-portada.jpg") center 22% / cover no-repeat;
+      filter: blur(46px) saturate(0.55) brightness(0.5);
+      opacity: 0.42;
+    }
+
+    .alt-telon-luz {
+      position: absolute;
+      left: 14%;
+      top: -40px;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 42% 38%, rgba(181, 171, 252, 0.18), transparent 66%);
+    }
+
+    .alt-telon-monte {
+      position: absolute;
+      left: 58%;
+      bottom: 0;
+      width: 520px;
+      height: 280px;
+      background: #171a2a;
+      clip-path: polygon(0 100%, 26% 26%, 62% 44%, 100% 100%);
+    }
+
+    .alt-telon-fade {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      background: linear-gradient(to top, #101418 0%, rgba(16, 20, 24, 0.62) 46%,
+                  rgba(16, 20, 24, 0.78) 100%);
+    }
+
+    .alt-barra {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 0 44px;
+      background: rgba(10, 13, 16, 0.72);
+      z-index: 2;
+    }
+
+    .alt-espacio { flex: 1; }
+
+    .alt-visor {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 74px;
+      bottom: 0;
+      overflow: hidden;
+    }
+
+    .alt-scroll {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      will-change: transform;
+    }
+
+    /* ── cabecera de la serie ───────────────────────────────────────────────── */
+    .alt-cabecera {
+      position: relative;
+      height: 486px;
+      display: flex;
+      align-items: flex-end;
+      gap: 44px;
+      padding: 0 60px 34px;
+    }
+
+    .alt-portada {
+      flex: none;
+      width: 320px;
+      height: 466px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #181d23;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .alt-portada-arte {
+      position: absolute;
+      inset: 0;
+      background: url("assets/anhqv-portada.jpg") center / cover no-repeat;
+    }
+
+    .alt-portada-hueco {
+      position: absolute;
+      left: 26px;
+      right: 26px;
+      bottom: 26px;
+    }
+
+    .alt-serie {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-bottom: 16px;
+      min-width: 0;
+    }
+
+    .alt-serie-tit {
+      font-size: 52px;
+      font-weight: 500;
+      color: #e9e9ed;
+      letter-spacing: -0.015em;
+    }
+
+    .alt-serie-meta {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 22px;
+      color: #8a8fa3;
+    }
+
+    .alt-botonera {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-top: 8px;
+    }
+
+    .alt-play {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #e9e9ed;
+      display: grid;
+      place-items: center;
+    }
+
+    /* ── capítulos ──────────────────────────────────────────────────────────── */
+    .alt-capitulos {
+      display: flex;
+      flex-direction: column;
+      padding: 0 60px;
+    }
+
+    .alt-cap {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 22px 0;
+      border-bottom: 1px solid #1a1f26;
+    }
+
+    .alt-cap-mini {
+      flex: none;
+      width: 300px;
+      height: 170px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #181d23;
+    }
+
+    .alt-cap-arte { position: absolute; inset: 0; }
+
+    .alt-cap-mini-fade {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 44%;
+      background: linear-gradient(to top, rgba(16, 20, 24, 0.85), transparent);
+    }
+
+    .alt-cap-mini-play {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 52px;
+      height: 52px;
+      margin: -26px 0 0 -26px;
+      border-radius: 50%;
+      background: rgba(233, 233, 237, 0.16);
+      display: grid;
+      place-items: center;
+    }
+
+    .alt-cap-dur {
+      position: absolute;
+      right: 14px;
+      bottom: 12px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      color: #c9ccd6;
+    }
+
+    .alt-cap-mini-hueco {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 20px;
+    }
+
+    .alt-cap-txt {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .alt-cap-tit {
+      font-size: 30px;
+      font-weight: 500;
+      color: #c9ccd6;
+    }
+
+    .alt-cap-meta {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #8a8fa3;
+    }
+
+    .alt-cap-sin {
+      font-size: 21px;
+      line-height: 1.45;
+      color: #6c7080;
+      max-width: 1100px;
+    }
+
+    /* ── el lado «antes» ────────────────────────────────────────────────────
+       Un servidor de medios mal alimentado no pone «Desconocido»: enseña el nombre
+       del fichero tal cual está en el disco, sin sinopsis, sin numeración y con una
+       carátula de relleno. Eso es lo que hay que ver aquí. */
+    .alt-crudo {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      color: #c9ccd6;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .alt-crudo-meta {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #6c7080;
+    }
+
+    .alt-vacia {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .alt-portada-nombre {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 22px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 18px;
+      line-height: 1.35;
+      color: #6c7080;
+      overflow-wrap: break-word;
+    }
+
+    .alt-serie-crudo {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 40px;
+      color: #c9ccd6;
+      overflow-wrap: break-word;
+    }
+
+    /* ── el divisor y los pies ──────────────────────────────────────────────── */
+    #alt-divisor {
+      position: absolute;
+      left: 959px;
+      top: 0;
+      width: 2px;
+      height: 1080px;
+      background: linear-gradient(to bottom, transparent,
+                  rgba(233, 233, 237, 0.42) 10%, rgba(233, 233, 237, 0.42) 90%, transparent);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* Un velo corto al pie para que los rótulos no caigan sobre una sinopsis. */
+    #alt-pie-scrim {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 220px;
+      background: linear-gradient(to top, rgba(10, 12, 18, 0.94), transparent);
+      opacity: 0;
+    }
+
+    #alt-pies {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 64px;
+      display: flex;
+    }
+
+    .alt-pie {
+      flex: 1;
+      text-align: center;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 28px;
+      letter-spacing: 0.28em;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* El antes es gris de estado; el después lleva el único acento del plano. */
+    #alt-pie-antes { color: #6c7080; }
+    #alt-pie-despues { color: #b5abfc; }
+
+    /* ── el velo ────────────────────────────────────────────────────────────── */
+    #alt-velo {
+      --centro: 0;
+      --borde: 0.28;
+      background: radial-gradient(ellipse 66% 56% at 50% 52%,
+                  rgba(16, 17, 32, var(--centro)) 0%, rgba(16, 17, 32, var(--borde)) 100%);
+    }
+
+    /* ── el overlay de cierre ───────────────────────────────────────────────── */
+    #alt-overlay {
+      display: grid;
+      place-items: center;
+    }
+
+    #alt-optimiza {
+      --barrido: 0px;
+      grid-area: 1/1;
+      font-size: 80px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.18;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 1440px;
+      will-change: transform, filter, opacity;
+    }
+
+    #alt-optimiza .w { display: inline-block; opacity: 0; }
+    .alt-linea { display: block; }
+
+    #alt-cierre {
+      grid-area: 1/1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    #alt-marca {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    #alt-marca-txt {
+      font-size: 96px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: #e9e9ed;
+    }
+
+    #alt-frase {
+      --barrido: 0px;
+      font-size: 76px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 1400px;
+    }
+
+    #alt-frase .w { display: inline-block; opacity: 0; }
+    #alt-frase .ch { display: inline-block; will-change: transform; }
+
+    #alt-compat {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .alt-compat-it {
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #alt-compat-0 {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 24px;
+      color: #6c7080;
+    }
+
+    .alt-compat-marca {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      font-size: 30px;
+      font-weight: 500;
+      color: #c9ccd6;
+    }
+
+    #alt-jellyfin {
+      display: block;
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .alt-compat-sep {
+      width: 1px;
+      height: 30px;
+      background: #2e3042;
+    }
+
+    #alt-plex-caja {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #2a2c33;
+      display: grid;
+      place-items: center;
+    }
+
+    /* ── Acero ──────────────────────────────────────────────────────────────── */
+    .metal {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(to right,
+        #b9bec9 0%, #e8ebf0 9%, #c6cbd5 17%, #f6f8fb 31%, #d2d7e0 38%,
+        #aeb4bf 52%, #eef1f5 61%, #c1c6d1 73%, #e2e6ec 84%, #b9bec9 100%);
+      background-size: 1600px 100%;
+      background-repeat: repeat;
+    }
+  </style>
+
+  <script>
+    (() => {
+      // Un compás más que la versión corta: los 2,58 s extra son los que se lleva la
+      // comparación. Todo lo que va después del compás 2 está desplazado ese compás.
+      const C = 2.5806;
+
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const EASE_IN = cb(0.7, 0, 0.84, 0);
+      const EASE_IN_OUT = cb(0.65, 0, 0.35, 1);
+      const SPRING_DUR = 0.6;
+      const SPRING = (p) => {
+        if (p >= 1) return 1;
+        const t = p * SPRING_DUR;
+        return 1 - Math.exp(-11 * t) * (Math.cos(9.43 * t) + (11 / 9.43) * Math.sin(9.43 * t));
+      };
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+
+      const TEJA = 1600;
+      const metalizar = (caja, piezas) => {
+        const x0 = caja.getBoundingClientRect().left;
+        piezas.forEach((p) => {
+          p.classList.add("metal");
+          const dx = Math.round(p.getBoundingClientRect().left - x0);
+          p.style.backgroundPositionX = "calc(var(--barrido) - " + dx + "px)";
+        });
+      };
+      const barrer = (caja, desde) => {
+        tl.fromTo(caja, { "--barrido": "0px" },
+          { "--barrido": TEJA + "px", duration: 7, ease: "none", immediateRender: false }, desde);
+      };
+
+      // ── Contenido ──────────────────────────────────────────────────────────
+      const ARTES_CAP = [
+        "linear-gradient(150deg,#2C2A4A,#141726)", "linear-gradient(200deg,#1D2A3A,#101418)",
+        "linear-gradient(140deg,#302C52,#1A1C2E)", "linear-gradient(170deg,#232838,#101120)",
+        "linear-gradient(190deg,#2A2C46,#171A2A)", "linear-gradient(155deg,#1E2236,#101120)",
+      ];
+      const ANCHOS = ["38%", "46%", "34%", "50%", "42%", "36%", "48%", "40%",
+                      "44%", "52%", "36%", "46%"];
+      const CAPS = [
+        ["4", "Érase una okupa", "34 min · S02E04", "Una desconocida se instala en el 3ºA y el vecindario descubre que nadie sabe de quién es el piso."],
+        ["5", "Érase un ascensor", "34 min · S02E05", "El ascensor se avería con media escalera dentro y la reunión de vecinos acaba en el hueco."],
+        ["6", "Érase un vecino nuevo", "33 min · S02E06", "Llega un inquilino con demasiadas cajas y muy pocas explicaciones."],
+        ["7", "Érase una mudanza", "35 min · S02E07", "Dos familias se cambian de piso el mismo día y ninguna avisó al portero."],
+        ["8", "Érase un cumpleaños", "34 min · S02E08", "La fiesta sorpresa se organiza en el rellano porque nadie cabe en el salón."],
+        ["9", "Érase una portera", "33 min · S02E09", "La portería cambia de manos y con ella todas las llaves del edificio."],
+        ["10", "Érase una obra", "34 min · S02E10", "El tercero derriba un tabique y el edificio entero descubre que era de carga."],
+        ["11", "Érase un apagón", "33 min · S02E11", "Se va la luz en toda la finca y la escalera se llena de linternas y de reproches."],
+        ["12", "Érase una boda", "35 min · S02E12", "Media comunidad está invitada y la otra media se entera por el felpudo."],
+        ["13", "Érase un veraneo", "34 min · S02E13", "Todos se van el mismo fin de semana y alguien tiene que regar las plantas."],
+        ["14", "Érase una junta", "33 min · S02E14", "La reunión empieza a las ocho y no termina en toda la noche."],
+        ["15", "Érase una despedida", "36 min · S02E15", "El primero A se muda y el portal se queda sin quien lo aguante."],
+      ];
+
+      const ICONO = (d, relleno) =>
+        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="' + relleno +
+        '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        d + "</svg>";
+      const BARRA =
+        '<div class="alt-barra">' +
+        ICONO('<path d="M19 12H5M11 6l-6 6 6 6"></path>', "#C9CCD6") +
+        ICONO('<path d="M3 11l9-7 9 7v9H3z"></path>', "#C9CCD6") +
+        ICONO('<path d="M4 7h16M4 12h16M4 17h16"></path>', "#C9CCD6") +
+        '<span class="alt-espacio"></span>' +
+        ICONO('<circle cx="11" cy="11" r="7"></circle><path d="M16 16l5 5"></path>', "#8A8FA3") +
+        ICONO('<circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.8-4 4.7-6 8-6s6.2 2 8 6"></path>', "#8A8FA3") +
+        "</div>";
+      const PLAY_MINI =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="#E9E9ED" aria-hidden="true">' +
+        '<path d="M7 4l13 8-13 8z"></path></svg>';
+
+      // El icono de carátula que falta, el que pone cualquier servidor cuando no ha
+      // encontrado nada que colgar ahí.
+      const FILM = (px) =>
+        '<svg width="' + px + '" height="' + px + '" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="#39414D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ' +
+        'aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2"></rect>' +
+        '<path d="M7 4.5v15M17 4.5v15M2.5 9.5h4.5M2.5 14.5h4.5M17 9.5h4.5M17 14.5h4.5"></path></svg>';
+
+      // La carpeta y los ficheros tal y como salieron de la descarga: nombres puestos
+      // a mano y mal. Nada de nombres de grupo ni etiquetas de release — el desorden
+      // de una casa son ficheros escritos por una persona, no descargas de scene.
+      const CARPETA = "aqui no hay quien viva temp2";
+      const CRUDOS = [
+        "Cap 12 (2).mkv", "episodio final BUENO.mkv", "Temporada2_04-05.mkv",
+        "Sin titulo (copia).mkv", "aqui no hay quien viva 3x07.avi", "cap14.mkv",
+        "nuevo_cap (1).mkv", "video_2004.mkv", "descarga final.mkv",
+        "capitulo sin nombre.mkv", "T2 - 09.mkv", "grabacion 3.mkv",
+      ];
+
+      // Una sola función construye las dos bibliotecas: misma maqueta, mismo alto de
+      // fila, mismo desplazamiento. Lo único que cambia es si sabe o no lo que tiene.
+      const biblioteca = (id, real) => {
+        const capitulos = CAPS.map((c, i) => {
+          const mini = real
+            ? '<div class="alt-cap-arte" style="background:' + ARTES_CAP[i % ARTES_CAP.length] + '"></div>' +
+              '<div class="alt-cap-mini-fade"></div>' +
+              '<div class="alt-cap-mini-play">' + PLAY_MINI + "</div>" +
+              '<span class="alt-cap-dur">' + c[2].split(" · ")[0] + "</span>"
+            : '<div class="alt-vacia">' + FILM(46) + "</div>" +
+              '<span class="alt-cap-dur">' + c[2].split(" · ")[0] + "</span>";
+          // Sin sinopsis y sin numerar: el servidor sabe cuánto dura porque lo lee del
+          // fichero, y no sabe nada más.
+          const texto = real
+            ? '<span class="alt-cap-tit" id="' + id + '-cap-tit-' + i + '">' + c[0] + ". " + c[1] + "</span>" +
+              '<span class="alt-cap-meta">' + c[2] + "</span>" +
+              '<span class="alt-cap-sin">' + c[3] + "</span>"
+            : '<span class="alt-crudo">' + CRUDOS[i] + "</span>" +
+              '<span class="alt-crudo-meta">' + c[2].split(" · ")[0] + "</span>";
+          return '<div class="alt-cap"><div class="alt-cap-mini">' + mini + "</div>" +
+                 '<div class="alt-cap-txt">' + texto + "</div></div>";
+        }).join("");
+
+        const serie = real
+          ? '<span class="alt-serie-tit">Aquí no hay quien viva</span>' +
+            '<div class="alt-serie-meta"><span>Temporada 2</span><span>·</span>' +
+            "<span>13 episodios</span><span>·</span><span>2004</span></div>" +
+            '<div class="alt-botonera"><div class="alt-play">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="#101418" aria-hidden="true">' +
+            '<path d="M7 4l13 8-13 8z"></path></svg></div>' +
+            ICONO('<path d="M4 13l5 5L20 6"></path>', "#8A8FA3") +
+            ICONO('<path d="M12 20s-7-4.6-7-9.4A4 4 0 0112 8a4 4 0 017 2.6c0 4.8-7 9.4-7 9.4z"></path>', "#8A8FA3") +
+            "</div>"
+          : '<span class="alt-serie-crudo">' + CARPETA + "</span>" +
+            '<div class="alt-serie-meta"><span>12 vídeos</span></div>' +
+            '<div class="alt-botonera"><div class="alt-play">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="#101418" aria-hidden="true">' +
+            '<path d="M7 4l13 8-13 8z"></path></svg></div>' +
+            ICONO('<path d="M4 13l5 5L20 6"></path>', "#8A8FA3") +
+            ICONO('<path d="M12 20s-7-4.6-7-9.4A4 4 0 0112 8a4 4 0 017 2.6c0 4.8-7 9.4-7 9.4z"></path>', "#8A8FA3") +
+            "</div>";
+
+        return '<div class="alt-telon"><div class="alt-telon-fondo"></div>' +
+          (real ? '<div class="alt-telon-arte" data-layout-allow-overflow></div>' : "") +
+          '<div class="alt-telon-luz" data-layout-allow-overflow></div>' +
+          '<div class="alt-telon-monte"></div><div class="alt-telon-fade"></div></div>' +
+          BARRA +
+          '<div class="alt-visor"><div class="alt-scroll" id="' + id + '-scroll">' +
+          '<div class="alt-cabecera"><div class="alt-portada">' +
+          (real ? '<div class="alt-portada-arte"></div>'
+                : '<div class="alt-vacia">' + FILM(76) + "</div>" +
+                  '<span class="alt-portada-nombre">' + CARPETA + "</span>") +
+          "</div>" +
+          '<div class="alt-serie">' + serie + "</div></div>" +
+          '<div class="alt-capitulos">' + capitulos + "</div>" +
+          "</div></div>";
+      };
+
+      document.getElementById("alt-antes").innerHTML = biblioteca("alt-antes", false);
+      document.getElementById("alt-despues").innerHTML = biblioteca("alt-despues", true);
+
+      // ── La línea de tiempo ─────────────────────────────────────────────────
+      const tl = gsap.timeline({ paused: true });
+
+      // ── Compás 1 · la pantalla se resuelve entera (0,02 → 2,40) ────────────
+      tl.to("#alt-biblios",
+        { filter: "blur(0px)", opacity: 1, duration: 2.38, ease: EASE_OUT }, 0.02);
+      tl.to("#alt-win-despues", { opacity: 1, duration: 1.8, ease: EASE_OUT }, 0.5);
+
+      // ── Compás 2 · la comparación (2,58 → 5,16) ────────────────────────────
+      // Las dos pantallas encogen a la vez y el «después» se va a la derecha. Todo
+      // comparte duración y curva: si se separan, la línea deja de coincidir con el
+      // borde y la costura canta.
+      const ESC = 0.64;
+      const SPLIT = 0.86;
+      tl.fromTo("#alt-win-antes", { clipPath: "inset(0 0 0 0)" },
+        { clipPath: "inset(0 50% 0 0)", duration: SPLIT, ease: EASE_IN_OUT,
+          immediateRender: false }, 2.58);
+      tl.fromTo("#alt-win-despues", { clipPath: "inset(0 0 0 0)" },
+        { clipPath: "inset(0 0 0 50%)", duration: SPLIT, ease: EASE_IN_OUT,
+          immediateRender: false }, 2.58);
+      tl.fromTo("#alt-antes", { scale: 1, x: 0 },
+        { scale: ESC, x: 0, duration: SPLIT, ease: EASE_IN_OUT, immediateRender: false }, 2.58);
+      tl.fromTo("#alt-despues", { scale: 1, x: 0 },
+        { scale: ESC, x: 960, duration: SPLIT, ease: EASE_IN_OUT, immediateRender: false }, 2.58);
+      tl.fromTo("#alt-divisor", { opacity: 0 },
+        { opacity: 1, duration: 0.4, ease: EASE_OUT, immediateRender: false }, 2.9);
+
+      // 3,40 · los pies. Escalonados, el «antes» primero: se lee en orden.
+      tl.to("#alt-pie-scrim", { opacity: 1, duration: 0.4, ease: EASE_OUT }, 3.3);
+      tl.fromTo("#alt-pie-antes", { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.22, ease: EASE_OUT, immediateRender: false }, 3.4);
+      tl.fromTo("#alt-pie-despues", { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.22, ease: EASE_OUT, immediateRender: false }, 3.48);
+
+      // Las dos mitades se desplazan A LA VEZ, con el mismo valor: es lo único que
+      // hace que la comparación sea una comparación y no dos pantallas sueltas.
+      tl.fromTo(["#alt-antes-scroll", "#alt-despues-scroll"], { y: 0 },
+        { y: -1240, duration: 10.3, ease: "none", immediateRender: false }, 2.6);
+
+      // Acento de lectura en el lado resuelto, mientras la comparación respira.
+      [4.05, 4.53, 5.02].forEach((t, i) => {
+        tl.to("#alt-despues-cap-tit-" + i, { color: "#e9e9ed", duration: 0.2, ease: EASE_OUT }, t);
+        tl.to("#alt-despues-cap-tit-" + i, { color: "#c9ccd6", duration: 0.2, ease: EASE_OUT }, t + 0.2);
+      });
+
+      // ── Compás 3 · lectura ─────────────────────────────────────────────────
+      // 5,16 → 7,63 · la comparación se queda sola en pantalla un compás entero.
+
+      // ── Compás 4 · «Optimiza tus bibliotecas…» ─────────────────────────────
+      tl.to("#alt-velo",
+        { "--centro": 0.68, "--borde": 0.78, duration: 0.7, ease: EASE_IN_OUT }, 5.05 + C);
+      const wOpt = [];
+      document.querySelectorAll("#alt-optimiza .alt-linea")
+        .forEach((l) => palabras(l).forEach((w) => wOpt.push(w)));
+      tl.to(wOpt, { opacity: 1, duration: 0.26, ease: EASE_OUT, stagger: 0.06 }, 5.2 + C);
+      metalizar(document.getElementById("alt-optimiza"), wOpt);
+      barrer(document.getElementById("alt-optimiza"), 5.2 + C);
+
+      // Los pies se retiran con el fondo: a partir de aquí manda el cierre.
+      tl.to([".alt-pie", "#alt-divisor", "#alt-pie-scrim"],
+        { opacity: 0, duration: 0.4, ease: EASE_IN }, 5.05 + C);
+
+      tl.to("#alt-optimiza",
+        { y: -28, filter: "blur(10px)", opacity: 0, duration: 0.32, ease: EASE_IN }, 7.1 + C);
+
+      // ── Compás 5 · cierre y bucle ──────────────────────────────────────────
+      tl.fromTo("#alt-marca", { scale: 0.96 },
+        { scale: 1, duration: SPRING_DUR, ease: SPRING, immediateRender: false }, 7.74 + C);
+      tl.fromTo("#alt-marca", { opacity: 0 },
+        { opacity: 1, duration: 0.26, ease: EASE_OUT, immediateRender: false }, 7.74 + C);
+      tl.to("#alt-velo",
+        { "--centro": 0.84, "--borde": 0.88, duration: 0.66, ease: EASE_IN_OUT }, 7.74 + C);
+
+      // kinetic-center-build. El +0,05 em de partida va en `x` por carácter, no en
+      // `letter-spacing`: esa propiedad reflowa el texto y el motor de captura lo
+      // acusa como tirones.
+      const wFrase = palabras(document.getElementById("alt-frase"));
+      const SEP = 76 * 0.05;
+      const letras = [];
+      wFrase.forEach((w) => {
+        const chars = [...w.textContent].map((c) => {
+          const sp = document.createElement("span");
+          sp.className = "ch";
+          sp.textContent = c;
+          return sp;
+        });
+        w.textContent = "";
+        chars.forEach((c) => { w.appendChild(c); letras.push({ el: c, palabra: w }); });
+      });
+
+      metalizar(document.getElementById("alt-frase"), letras.map((l) => l.el));
+      barrer(document.getElementById("alt-frase"), 8.8 + C);
+
+      const medio = (letras.length - 1) / 2;
+      const centro = (wFrase.length - 1) / 2;
+      wFrase.forEach((w, i) => {
+        const anillo = Math.round(Math.abs(i - centro));
+        const at = 8.8 + C + anillo * 0.07;
+        tl.fromTo(w, { opacity: 0, scale: 1.05 },
+          { opacity: 1, scale: 1, duration: 0.32, ease: EASE_OUT, immediateRender: false }, at);
+        letras.forEach((l, k) => {
+          if (l.palabra !== w) return;
+          tl.fromTo(l.el, { x: (k - medio) * SEP },
+            { x: 0, duration: 0.32, ease: EASE_OUT, immediateRender: false }, at);
+        });
+      });
+
+      [0, 1, 2, 3].forEach((i) => {
+        tl.fromTo("#alt-compat-" + i, { y: -16, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.22, ease: EASE_OUT, immediateRender: false },
+          9.6 + C + i * 0.07);
+      });
+      tl.to("#alt-velo",
+        { "--centro": 0.88, "--borde": 0.92, duration: 0.42, ease: EASE_IN_OUT }, 9.6 + C);
+
+      tl.to("#alt-velo",
+        { "--centro": 1, "--borde": 1, duration: 0.3, ease: EASE_IN_OUT }, 10.02 + C);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["07b-comparativa"] = tl;
+    })();
+  </script>
+</template>

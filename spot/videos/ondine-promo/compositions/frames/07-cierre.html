@@ -1,0 +1,842 @@
+<template>
+  <div data-composition-id="07-cierre" data-width="1920" data-height="1080" data-start="0" data-duration="10.322">
+
+    <!-- El suelo va SIEMPRE en su propia capa .clip: un `background` en la raíz lo pierde el
+         compositor al recortar el frame a su ventana y el fotograma sale negro. -->
+    <div id="cie-ground" class="clip" data-start="0" data-duration="10.322" data-track-index="0"></div>
+
+    <!-- ── La biblioteca ────────────────────────────────────────────────────────
+         Maqueta genérica de servidor de medios: estructura funcional, no la interfaz
+         de nadie. Miniaturas y carátulas de relleno son formas planas de la paleta con
+         títulos inventados; la única imagen real es la portada de la serie.
+
+         La pantalla es LA MISMA durante los 10,32 s. En el compás 1 está desenfocada y
+         con huecos —placas grises donde debería haber carátula y título— y se resuelve
+         ENTERA de una vez. No hay corte a mitad de plano: el salto de «lo que ve el
+         servidor» a «lo que ves tú» ocurre dentro de la misma pantalla. -->
+    <div id="cie-capa-biblio" class="clip" data-start="0" data-duration="10.322" data-track-index="1">
+      <div id="cie-biblio">
+        <div id="cie-telon">
+          <div id="cie-telon-fondo"></div>
+          <div id="cie-telon-arte" data-layout-allow-overflow></div>
+          <div id="cie-telon-luz" data-layout-allow-overflow></div>
+          <div id="cie-telon-monte"></div>
+          <div id="cie-telon-fade"></div>
+        </div>
+
+        <div id="cie-barra">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9CCD6" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9CCD6" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"></path></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9CCD6" stroke-width="2"
+               stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+          <span class="cie-espacio"></span>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2"
+               stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M16 16l5 5"></path></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.8-4 4.7-6 8-6s6.2 2 8 6"></path></svg>
+        </div>
+
+        <div id="cie-visor">
+          <div id="cie-scroll">
+            <div id="cie-cabecera">
+              <div id="cie-portada">
+                <div id="cie-portada-arte"></div>
+                <div id="cie-portada-hueco"><div class="cie-placa" style="width: 62%"></div></div>
+              </div>
+
+              <div id="cie-serie">
+                <div id="cie-serie-real">
+                  <span id="cie-serie-tit">Aquí no hay quien viva</span>
+                  <div id="cie-serie-meta">
+                    <span>Temporada 2</span><span>·</span><span>13 episodios</span><span>·</span><span>2004</span>
+                  </div>
+                  <div id="cie-botonera">
+                    <div id="cie-play">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#101418" aria-hidden="true"><path d="M7 4l13 8-13 8z"></path></svg>
+                    </div>
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l5 5L20 6"></path></svg>
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8A8FA3" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.6-7-9.4A4 4 0 0112 8a4 4 0 017 2.6c0 4.8-7 9.4-7 9.4z"></path></svg>
+                  </div>
+                </div>
+
+                <div id="cie-serie-hueco">
+                  <span class="cie-desconocido">Desconocido</span>
+                  <div class="cie-placa" style="width: 34%"></div>
+                  <div class="cie-placa cie-placa-baja" style="width: 20%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="cie-capitulos"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- El velo de viñeta: una sola pieza cuyos dos parámetros (centro y borde) se
+         animan como variables CSS. En los últimos 300 ms el centro llega a negro y
+         encadena con el arranque en negro del plano 1: la pieza va en bucle. -->
+    <div id="cie-velo" class="clip" data-start="0" data-duration="10.322" data-track-index="2"></div>
+
+    <div id="cie-overlay" class="clip" data-layout-allow-overlap data-layout-allow-occlusion
+         data-start="0" data-duration="10.322" data-track-index="3">
+      <span id="cie-optimiza"><span class="cie-linea">Optimiza tus bibliotecas</span><span class="cie-linea">para tus plataformas favoritas</span></span>
+
+      <div id="cie-cierre">
+        <div id="cie-marca">
+          <svg viewBox="0 0 64 64" width="88" height="88" fill="none" stroke="#B5ABFC" stroke-width="6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path>
+            <path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path>
+            <path d="M7 49 L 57 49"></path>
+          </svg>
+          <span id="cie-marca-txt">Ondine</span>
+        </div>
+
+        <span id="cie-frase">Organización en un solo click</span>
+
+        <div id="cie-compat">
+          <span class="cie-compat-it" id="cie-compat-0">funciona con</span>
+          <div class="cie-compat-it cie-compat-marca" id="cie-compat-1">
+            <img src="assets/jellyfin.png" alt="Jellyfin" width="40" height="40" id="cie-jellyfin" />
+            <span>Jellyfin</span>
+          </div>
+          <span class="cie-compat-it cie-compat-sep" id="cie-compat-2"></span>
+          <div class="cie-compat-it cie-compat-marca" id="cie-compat-3">
+            <!-- Sin el logotipo de Plex: es marca registrada de un tercero y en una pieza
+                 promocional podría leerse como respaldo. Chevrón ámbar neutro + el nombre. -->
+            <div id="cie-plex-caja">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E5A00D" stroke-width="2.6"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4l7 8-7 8"></path></svg>
+            </div>
+            <span>Plex</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #cie-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #cie-capa-biblio,
+    #cie-velo,
+    #cie-overlay {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    .cie-espacio { flex: 1; }
+
+    /* Las placas del hueco: lo que el servidor enseña cuando no sabe qué tiene. */
+    .cie-placa {
+      height: 20px;
+      border-radius: 10px;
+      background: #262c35;
+    }
+
+    .cie-placa-baja { height: 16px; }
+
+    .cie-desconocido {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 24px;
+      letter-spacing: 0.06em;
+      color: #4d5560;
+    }
+
+    /* ── la biblioteca ──────────────────────────────────────────────────────── */
+    /* Fondo un pelo más frío que el lienzo de Ondine: se lee como «otro programa». */
+    #cie-biblio {
+      position: absolute;
+      inset: 0;
+      background: #101418;
+      overflow: hidden;
+      opacity: 0.55;
+      filter: blur(18px);
+      will-change: filter, opacity;
+    }
+
+    #cie-telon {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 560px;
+      overflow: hidden;
+    }
+
+    #cie-telon-fondo {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(122deg, #1d2a3a 0%, #2c2a4a 46%, #141726 100%);
+    }
+
+    /* La portada real, ampliada y fundida: el telón de un servidor de medios. */
+    #cie-telon-arte {
+      position: absolute;
+      inset: -80px;
+      background: url("assets/anhqv-portada.jpg") center 22% / cover no-repeat;
+      filter: blur(46px) saturate(0.55) brightness(0.5);
+      opacity: 0;
+    }
+
+    #cie-telon-luz {
+      position: absolute;
+      left: 14%;
+      top: -40px;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 42% 38%, rgba(181, 171, 252, 0.18), transparent 66%);
+    }
+
+    #cie-telon-monte {
+      position: absolute;
+      left: 58%;
+      bottom: 0;
+      width: 520px;
+      height: 280px;
+      background: #171a2a;
+      clip-path: polygon(0 100%, 26% 26%, 62% 44%, 100% 100%);
+    }
+
+    /* Cubre el telón entero: con el cartel real por detrás, un fundido parcial deja
+       una costura visible justo donde acaba. */
+    #cie-telon-fade {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      background: linear-gradient(to top, #101418 0%, rgba(16, 20, 24, 0.62) 46%,
+                  rgba(16, 20, 24, 0.78) 100%);
+    }
+
+    #cie-barra {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 0 44px;
+      background: rgba(10, 13, 16, 0.72);
+      z-index: 2;
+    }
+
+    #cie-visor {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 74px;
+      bottom: 0;
+      overflow: hidden;
+    }
+
+    #cie-scroll {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      will-change: transform;
+    }
+
+    #cie-cabecera {
+      position: relative;
+      height: 486px;
+      display: flex;
+      align-items: flex-end;
+      gap: 44px;
+      padding: 0 60px 34px;
+    }
+
+    #cie-portada {
+      flex: none;
+      width: 320px;
+      height: 466px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #181d23;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    #cie-portada-arte {
+      position: absolute;
+      inset: 0;
+      background: url("assets/anhqv-portada.jpg") center / cover no-repeat;
+      opacity: 0;
+    }
+
+    #cie-portada-hueco {
+      position: absolute;
+      left: 26px;
+      right: 26px;
+      bottom: 26px;
+    }
+
+    #cie-serie {
+      flex: 1;
+      display: grid;
+      padding-bottom: 16px;
+      min-width: 0;
+    }
+
+    #cie-serie-real,
+    #cie-serie-hueco {
+      grid-area: 1/1;
+      align-self: end;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    #cie-serie-real { opacity: 0; }
+
+    #cie-serie-tit {
+      font-size: 52px;
+      font-weight: 500;
+      color: #e9e9ed;
+      letter-spacing: -0.015em;
+    }
+
+    #cie-serie-meta {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 22px;
+      color: #8a8fa3;
+    }
+
+    #cie-botonera {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-top: 8px;
+    }
+
+    #cie-play {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #e9e9ed;
+      display: grid;
+      place-items: center;
+    }
+
+    #cie-capitulos {
+      display: flex;
+      flex-direction: column;
+      padding: 0 60px;
+    }
+
+    .cie-cap {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 22px 0;
+      border-bottom: 1px solid #1a1f26;
+    }
+
+    .cie-cap-mini {
+      flex: none;
+      width: 300px;
+      height: 170px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #181d23;
+    }
+
+    .cie-cap-arte {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    .cie-cap-mini-fade {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 44%;
+      background: linear-gradient(to top, rgba(16, 20, 24, 0.85), transparent);
+      opacity: 0;
+    }
+
+    .cie-cap-mini-play {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 52px;
+      height: 52px;
+      margin: -26px 0 0 -26px;
+      border-radius: 50%;
+      background: rgba(233, 233, 237, 0.16);
+      display: grid;
+      place-items: center;
+      opacity: 0;
+    }
+
+    .cie-cap-dur {
+      position: absolute;
+      right: 14px;
+      bottom: 12px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      color: #c9ccd6;
+      opacity: 0;
+    }
+
+    .cie-cap-mini-hueco {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 20px;
+    }
+
+    .cie-cap-txt {
+      flex: 1;
+      display: grid;
+      min-width: 0;
+    }
+
+    .cie-cap-real,
+    .cie-cap-hueco {
+      grid-area: 1/1;
+      align-self: center;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .cie-cap-real { opacity: 0; }
+
+    .cie-cap-tit {
+      font-size: 30px;
+      font-weight: 500;
+      color: #c9ccd6;
+    }
+
+    .cie-cap-meta {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 19px;
+      color: #8a8fa3;
+    }
+
+    .cie-cap-sin {
+      font-size: 21px;
+      line-height: 1.45;
+      color: #6c7080;
+      max-width: 1100px;
+    }
+
+    /* ── el velo ────────────────────────────────────────────────────────────── */
+    #cie-velo {
+      --centro: 0;
+      --borde: 0.28;
+      background: radial-gradient(ellipse 66% 56% at 50% 52%,
+                  rgba(16, 17, 32, var(--centro)) 0%, rgba(16, 17, 32, var(--borde)) 100%);
+    }
+
+    /* ── el overlay de cierre ───────────────────────────────────────────────── */
+    #cie-overlay {
+      display: grid;
+      place-items: center;
+    }
+
+    #cie-optimiza {
+      --barrido: 0px;
+      grid-area: 1/1;
+      font-size: 80px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.18;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 1440px;
+      will-change: transform, filter, opacity;
+    }
+
+    #cie-optimiza .w { display: inline-block; opacity: 0; }
+    .cie-linea { display: block; }
+
+    #cie-cierre {
+      grid-area: 1/1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    #cie-marca {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    #cie-marca-txt {
+      font-size: 96px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: #e9e9ed;
+    }
+
+    #cie-frase {
+      --barrido: 0px;
+      font-size: 76px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 1400px;
+    }
+
+    #cie-frase .w { display: inline-block; opacity: 0; }
+    #cie-frase .ch { display: inline-block; will-change: transform; }
+
+    #cie-compat {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .cie-compat-it {
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #cie-compat-0 {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 24px;
+      color: #6c7080;
+    }
+
+    .cie-compat-marca {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      font-size: 30px;
+      font-weight: 500;
+      color: #c9ccd6;
+    }
+
+    /* Bitmap: solo opacidad y desplazamiento. Escalarlo lo pixela. */
+    #cie-jellyfin {
+      display: block;
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .cie-compat-sep {
+      width: 1px;
+      height: 30px;
+      background: #2e3042;
+    }
+
+    #cie-plex-caja {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #2a2c33;
+      display: grid;
+      place-items: center;
+    }
+
+    /* ── Acero ──────────────────────────────────────────────────────────
+       El degradado es una BALDOSA que se repite: ninguna letra se queda jamás sin
+       fondo, y una letra con `color: transparent` y sin fondo sencillamente no se
+       pinta. El primer alto de color y el último son el mismo, así que la baldosa
+       casa consigo misma y no hay costura al dar la vuelta.
+       Horizontal, no inclinado: con un ángulo la baldosa no casa con la siguiente
+       y aparece una costura diagonal en cada vuelta. */
+    .metal {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      /* Acero, no acero teñido: el acento no se gasta aquí.
+         Los altos de color van a distancias DESIGUALES —9, 8, 14, 7, 14, 9, 12, 11,
+         16 %— así que las luces llegan a destiempo en vez de a compás, y el ojo deja
+         de leerlo como un barrido. El recorrido de valor es corto (#AEB4BF a #F6F8FB)
+         para que sea materia y no destello. */
+      background-image: linear-gradient(to right,
+        #b9bec9 0%, #e8ebf0 9%, #c6cbd5 17%, #f6f8fb 31%, #d2d7e0 38%,
+        #aeb4bf 52%, #eef1f5 61%, #c1c6d1 73%, #e2e6ec 84%, #b9bec9 100%);
+      background-size: 1600px 100%;
+      background-repeat: repeat;
+    }
+  </style>
+
+  <script>
+    (() => {
+      // ── Curvas y presets de la guía (§0 y §1) ──────────────────────────────
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const EASE_IN = cb(0.7, 0, 0.84, 0);
+      const EASE_IN_OUT = cb(0.65, 0, 0.35, 1);
+      const SPRING_DUR = 0.6;
+      const SPRING = (p) => {
+        if (p >= 1) return 1;
+        const t = p * SPRING_DUR;
+        return 1 - Math.exp(-11 * t) * (Math.cos(9.43 * t) + (11 / 9.43) * Math.sin(9.43 * t));
+      };
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+
+      // ── Contenido · los capítulos ──────────────────────────────────────────
+      // ── Acero · el barrido ──────────────────────────────────────────
+      // Va pieza a pieza (palabra o carácter), no en el contenedor, porque cada pieza
+      // lleva su propia opacidad de entrada: si el degradado estuviera arriba,
+      // `background-clip: text` lo pintaría a plena intensidad aunque la pieza
+      // estuviese todavía a opacidad 0. Cada pieza se desplaza su propio hueco dentro
+      // de la baldosa, así que las letras forman UN degradado continuo, no uno por letra.
+      const TEJA = 1600;
+      const metalizar = (caja, piezas) => {
+        const x0 = caja.getBoundingClientRect().left;
+        piezas.forEach((p) => {
+          p.classList.add("metal");
+          const dx = Math.round(p.getBoundingClientRect().left - x0);
+          p.style.backgroundPositionX = "calc(var(--barrido) - " + dx + "px)";
+        });
+      };
+      // Baldosa ancha y ciclo largo: dentro de la ventana en la que el rótulo está en
+      // pantalla no se llega a ver la vuelta, así que no hay bucle que reconocer.
+      const barrer = (caja, desde) => {
+        tl.fromTo(caja, { "--barrido": "0px" },
+          { "--barrido": TEJA + "px", duration: 7, ease: "none",
+            immediateRender: false }, desde);
+      };
+
+      // Doce, no seis: el desplazamiento recorre 1240 px y con seis se vería el fondo.
+      const ARTES_CAP = [
+        "linear-gradient(150deg,#2C2A4A,#141726)", "linear-gradient(200deg,#1D2A3A,#101418)",
+        "linear-gradient(140deg,#302C52,#1A1C2E)", "linear-gradient(170deg,#232838,#101120)",
+        "linear-gradient(190deg,#2A2C46,#171A2A)", "linear-gradient(155deg,#1E2236,#101120)",
+      ];
+      const ANCHOS = ["38%", "46%", "34%", "50%", "42%", "36%", "48%", "40%",
+                      "44%", "52%", "36%", "46%"];
+      const CAPS = [
+        ["4", "Érase una okupa", "34 min · S02E04", "Una desconocida se instala en el 3ºA y el vecindario descubre que nadie sabe de quién es el piso."],
+        ["5", "Érase un ascensor", "34 min · S02E05", "El ascensor se avería con media escalera dentro y la reunión de vecinos acaba en el hueco."],
+        ["6", "Érase un vecino nuevo", "33 min · S02E06", "Llega un inquilino con demasiadas cajas y muy pocas explicaciones."],
+        ["7", "Érase una mudanza", "35 min · S02E07", "Dos familias se cambian de piso el mismo día y ninguna avisó al portero."],
+        ["8", "Érase un cumpleaños", "34 min · S02E08", "La fiesta sorpresa se organiza en el rellano porque nadie cabe en el salón."],
+        ["9", "Érase una portera", "33 min · S02E09", "La portería cambia de manos y con ella todas las llaves del edificio."],
+        ["10", "Érase una obra", "34 min · S02E10", "El tercero derriba un tabique y el edificio entero descubre que era de carga."],
+        ["11", "Érase un apagón", "33 min · S02E11", "Se va la luz en toda la finca y la escalera se llena de linternas y de reproches."],
+        ["12", "Érase una boda", "35 min · S02E12", "Media comunidad está invitada y la otra media se entera por el felpudo."],
+        ["13", "Érase un veraneo", "34 min · S02E13", "Todos se van el mismo fin de semana y alguien tiene que regar las plantas."],
+        ["14", "Érase una junta", "33 min · S02E14", "La reunión empieza a las ocho y no termina en toda la noche."],
+        ["15", "Érase una despedida", "36 min · S02E15", "El primero A se muda y el portal se queda sin quien lo aguante."],
+      ];
+      const PLAY_MINI =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="#E9E9ED" aria-hidden="true">' +
+        '<path d="M7 4l13 8-13 8z"></path></svg>';
+
+      document.getElementById("cie-capitulos").innerHTML = CAPS.map((c, i) =>
+        '<div class="cie-cap">' +
+        '<div class="cie-cap-mini">' +
+        '<div class="cie-cap-arte" id="cie-cap-arte-' + i + '" style="background:' + ARTES_CAP[i % ARTES_CAP.length] + '"></div>' +
+        '<div class="cie-cap-mini-fade" id="cie-cap-fade-' + i + '"></div>' +
+        '<div class="cie-cap-mini-play" id="cie-cap-play-' + i + '">' + PLAY_MINI + "</div>" +
+        '<span class="cie-cap-dur" id="cie-cap-dur-' + i + '">' + c[2].split(" · ")[0] + "</span>" +
+        '<div class="cie-cap-mini-hueco" id="cie-cap-mh-' + i + '"><div class="cie-placa cie-placa-baja" style="width:' + ANCHOS[i] + '"></div></div>' +
+        "</div>" +
+        '<div class="cie-cap-txt">' +
+        '<div class="cie-cap-real" id="cie-cap-real-' + i + '">' +
+        '<span class="cie-cap-tit" id="cie-cap-tit-' + i + '">' + c[0] + ". " + c[1] + "</span>" +
+        '<span class="cie-cap-meta">' + c[2] + "</span>" +
+        '<span class="cie-cap-sin">' + c[3] + "</span>" +
+        "</div>" +
+        '<div class="cie-cap-hueco" id="cie-cap-hueco-' + i + '">' +
+        '<span class="cie-desconocido">Desconocido</span>' +
+        '<div class="cie-placa" style="width:' + ANCHOS[i] + '"></div>' +
+        '<div class="cie-placa cie-placa-baja" style="width:' + ANCHOS[(i + 5) % ANCHOS.length] + '"></div>' +
+        "</div></div></div>").join("");
+
+      // ── La línea de tiempo ─────────────────────────────────────────────────
+      const tl = gsap.timeline({ paused: true });
+
+      // ── Compás 1 · la pantalla se resuelve (0,02 → 1,90) ───────────────────
+      // Un solo parámetro conduce el compás: el desenfoque. Ahora tarda 2,38 s en
+      // resolver en vez de 1,13: la materialización tiene que dar tiempo a mirarla,
+      // y con eso ocupa el compás entero — resuelve justo antes de que arranque el
+      // desplazamiento en el 2,60.
+      tl.to("#cie-biblio",
+        { filter: "blur(0px)", opacity: 1, duration: 2.38, ease: EASE_OUT }, 0.02);
+
+      // ── Todo a la vez, no por oleadas ──────────────────────────────────────
+      // Por oleadas —primero la portada, después los capítulos— la pantalla parecía
+      // una web cargando en diferido, y eso cuenta otra historia: la de un servidor
+      // lento. Lo que pasa aquí es que el servidor DEJA de no saber qué tiene, y eso
+      // le ocurre a la biblioteca entera en el mismo instante. Las placas se van
+      // juntas y el contenido real llega junto; los dos tramos se solapan para que
+      // sea un fundido y no un relevo.
+      const sel = (pref) => CAPS.map((c, i) => pref + i);
+      const HUECOS = ["#cie-portada-hueco", "#cie-serie-hueco"]
+        .concat(sel("#cie-cap-hueco-"), sel("#cie-cap-mh-"));
+      const REALES = ["#cie-portada-arte", "#cie-serie-real"]
+        .concat(sel("#cie-cap-real-"), sel("#cie-cap-arte-"),
+                sel("#cie-cap-fade-"), sel("#cie-cap-play-"), sel("#cie-cap-dur-"));
+
+      tl.to(HUECOS, { opacity: 0, duration: 1.5, ease: EASE_OUT }, 0.3);
+      tl.to(REALES, { opacity: 1, duration: 1.8, ease: EASE_OUT }, 0.5);
+
+      // El telón es la misma portada ampliada, así que entra con ella — pero se queda
+      // al 42 %, que es lo que lo mantiene como fondo y no como imagen.
+      tl.to("#cie-telon-arte", { opacity: 0.42, duration: 1.8, ease: EASE_OUT }, 0.5);
+
+      // ── Compás 2 · la biblioteca se desplaza ───────────────────────────────
+      // El desplazamiento nunca se detiene, ni bajo el overlay: es lo que impide que
+      // el cierre se sienta congelado.
+      tl.fromTo("#cie-scroll", { y: 0 },
+        { y: -1240, duration: 7.72, ease: "none", immediateRender: false }, 2.6);
+
+      // Acento de lectura: el capítulo que el scroll trae al centro óptico sube de
+      // tono y vuelve. Nada más — el desplazamiento ya es el movimiento.
+      [3.09, 3.56, 4.05].forEach((t, i) => {
+        tl.to("#cie-cap-tit-" + i, { color: "#e9e9ed", duration: 0.2, ease: EASE_OUT }, t);
+        tl.to("#cie-cap-tit-" + i, { color: "#c9ccd6", duration: 0.2, ease: EASE_OUT }, t + 0.2);
+      });
+
+      // ── Compás 3 · «Optimiza tus bibliotecas…» ─────────────────────────────
+      // La guía cierra el velo de 5,20 a 5,90, pero con EASE_IN_OUT el grueso llega
+      // tarde y la frase entra sobre capítulos todavía legibles. Arranca 150 ms antes
+      // y cierra un punto más: el texto aterriza sobre un campo ya hundido.
+      tl.to("#cie-velo",
+        { "--centro": 0.68, "--borde": 0.78, duration: 0.7, ease: EASE_IN_OUT }, 5.05);
+
+      // per-word-crossfade. Sin desplazamiento: el fondo ya se mueve, el texto tiene
+      // que estar clavado. Siete palabras a 60 ms = 620 ms; la cuarta cae en el 5,67.
+      const wOpt = [];
+      document.querySelectorAll("#cie-optimiza .cie-linea")
+        .forEach((l) => palabras(l).forEach((w) => wOpt.push(w)));
+      tl.to(wOpt, { opacity: 1, duration: 0.26, ease: EASE_OUT, stagger: 0.06 }, 5.2);
+      metalizar(document.getElementById("cie-optimiza"), wOpt);
+      barrer(document.getElementById("cie-optimiza"), 5.2);
+
+      // 6,45 → 7,10 · lectura. El texto se queda quieto un compás entero.
+
+      // 7,10 · blur-out-up, y el relevo con la marca es un único gesto: la marca
+      // arranca 80 ms antes de que el texto acabe de salir (shared-axis-y).
+      tl.to("#cie-optimiza",
+        { y: -28, filter: "blur(10px)", opacity: 0, duration: 0.32, ease: EASE_IN }, 7.1);
+
+      // ── Compás 4 · cierre y bucle ──────────────────────────────────────────
+      // 7,74 · la marca. Trazo y palabra entran juntos, como un solo objeto.
+      tl.fromTo("#cie-marca", { scale: 0.96 },
+        { scale: 1, duration: SPRING_DUR, ease: SPRING, immediateRender: false }, 7.74);
+      tl.fromTo("#cie-marca", { opacity: 0 },
+        { opacity: 1, duration: 0.26, ease: EASE_OUT, immediateRender: false }, 7.74);
+      tl.to("#cie-velo",
+        { "--centro": 0.84, "--borde": 0.88, duration: 0.66, ease: EASE_IN_OUT }, 7.74);
+
+      // 8,80 · kinetic-center-build. El momento tipográfico del cierre: cuatro
+      // anillos desde el centro hacia fuera, 70 ms por anillo.
+      //
+      // El +0,05 em de partida NO se hace con `letter-spacing`: esa propiedad reflowa
+      // el texto y clava los glifos en píxeles enteros, y el motor de captura lo nota
+      // como tirones. Se hace con un `x` por carácter, simétrico respecto al centro de
+      // la línea: el mismo efecto de tracking, pero en transform y sin tocar el layout.
+      const wFrase = palabras(document.getElementById("cie-frase"));
+      const SEP = 76 * 0.05; // 0,05 em a 76 px de cuerpo
+      const letras = [];
+      wFrase.forEach((w) => {
+        const chars = [...w.textContent].map((c) => {
+          const sp = document.createElement("span");
+          sp.className = "ch";
+          sp.textContent = c;
+          return sp;
+        });
+        w.textContent = "";
+        chars.forEach((c) => { w.appendChild(c); letras.push({ el: c, palabra: w }); });
+      });
+
+      metalizar(document.getElementById("cie-frase"), letras.map((l) => l.el));
+      barrer(document.getElementById("cie-frase"), 8.8);
+
+      const medio = (letras.length - 1) / 2;
+      const centro = (wFrase.length - 1) / 2;
+      wFrase.forEach((w, i) => {
+        const anillo = Math.round(Math.abs(i - centro));
+        const at = 8.8 + anillo * 0.07;
+        tl.fromTo(w, { opacity: 0, scale: 1.05 },
+          { opacity: 1, scale: 1, duration: 0.32, ease: EASE_OUT, immediateRender: false }, at);
+        letras.forEach((l, k) => {
+          if (l.palabra !== w) return;
+          tl.fromTo(l.el, { x: (k - medio) * SEP },
+            { x: 0, duration: 0.32, ease: EASE_OUT, immediateRender: false }, at);
+        });
+      });
+
+      // 9,60 · la compatibilidad, escalonada. Nunca escala: el icono es bitmap.
+      [0, 1, 2, 3].forEach((i) => {
+        tl.fromTo("#cie-compat-" + i, { y: -16, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.22, ease: EASE_OUT, immediateRender: false },
+          9.6 + i * 0.07);
+      });
+      tl.to("#cie-velo",
+        { "--centro": 0.88, "--borde": 0.92, duration: 0.42, ease: EASE_IN_OUT }, 9.6);
+
+      // 10,02 → 10,32 · el centro cierra a negro para encadenar con el arranque en
+      // negro del plano 1. El scroll sigue corriendo por debajo hasta el último
+      // fotograma; el overlay va por encima del velo y no se apaga.
+      tl.to("#cie-velo",
+        { "--centro": 1, "--borde": 1, duration: 0.3, ease: EASE_IN_OUT }, 10.02);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["07-cierre"] = tl;
+    })();
+  </script>
+</template>

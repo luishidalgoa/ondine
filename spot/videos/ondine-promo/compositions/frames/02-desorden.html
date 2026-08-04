@@ -1,0 +1,287 @@
+<template>
+  <div data-composition-id="02-desorden" data-width="1920" data-height="1080" data-start="0" data-duration="5.661">
+
+    <!-- El suelo va SIEMPRE en su propia capa .clip: un `background` en la raíz lo pierde el
+         compositor al recortar el frame a su ventana y el fotograma sale negro. -->
+    <div id="des-ground" class="clip" data-start="0" data-duration="5.661" data-track-index="0"></div>
+
+    <!-- Lo que ve el servidor: una parrilla de fichas con placas grises, muy desenfocada.
+         No se lee, y ese es justo el punto. El plano 7 la recoge en este mismo estado
+         (blur 18 px, opacidad 0,55) para enfocarla. -->
+    <div id="des-back" class="clip" data-start="0" data-duration="5.661" data-track-index="1">
+      <div id="des-parrilla-cam">
+        <div id="des-parrilla" data-layout-allow-overflow></div>
+      </div>
+    </div>
+
+    <div id="des-fore" class="clip" data-start="0" data-duration="5.661" data-track-index="2">
+
+      <div id="des-kicker">
+        <span id="des-spike">✳</span><span id="des-kicker-txt">BIBLIOTECA SIN ORDENAR</span>
+      </div>
+
+      <div id="des-columna">
+        <div class="des-fila" id="des-fila-0">
+          <div class="des-marca-hueco">
+            <div class="des-aro" id="des-aro-0"></div>
+            <div class="des-equis" id="des-equis-0"></div>
+          </div>
+          <span class="des-nombre" id="des-nombre-0">Cap 12 (2).mkv</span>
+        </div>
+        <div class="des-fila" id="des-fila-1">
+          <div class="des-marca-hueco">
+            <div class="des-aro" id="des-aro-1"></div>
+            <div class="des-equis" id="des-equis-1"></div>
+          </div>
+          <span class="des-nombre" id="des-nombre-1">episodio final BUENO.mkv</span>
+        </div>
+        <div class="des-fila" id="des-fila-2">
+          <div class="des-marca-hueco">
+            <div class="des-aro" id="des-aro-2"></div>
+            <div class="des-equis" id="des-equis-2"></div>
+          </div>
+          <span class="des-nombre" id="des-nombre-2">Temporada2_04-05.mkv</span>
+        </div>
+        <div class="des-fila" id="des-fila-3">
+          <div class="des-marca-hueco">
+            <div class="des-aro" id="des-aro-3"></div>
+            <div class="des-equis" id="des-equis-3"></div>
+          </div>
+          <span class="des-nombre" id="des-nombre-3">Sin titulo (copia).mkv</span>
+        </div>
+        <div class="des-fila" id="des-fila-4">
+          <div class="des-marca-hueco">
+            <div class="des-aro" id="des-aro-4"></div>
+            <div class="des-equis" id="des-equis-4"></div>
+          </div>
+          <span class="des-nombre" id="des-nombre-4">aqui no hay quien viva 3x07.avi</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #des-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #des-back,
+    #des-fore {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    #des-parrilla-cam {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+
+    /* Desbordada por los cuatro lados: al desenfocar 18 px el borde del bloque no debe verse. */
+    #des-parrilla {
+      position: absolute;
+      inset: -40px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 34px;
+      padding: 40px;
+      opacity: 0.55;
+      filter: blur(18px);
+    }
+
+    .des-ficha {
+      border-radius: 10px;
+      background: #1b1e2e;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 22px;
+    }
+
+    .des-placa {
+      height: 16px;
+      border-radius: 8px;
+      background: #2a2e42;
+    }
+
+    #des-kicker {
+      position: absolute;
+      left: 136px;
+      top: 150px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+    }
+
+    /* El único momento de acento del plano. Las ✕ son color de estado, no de marca. */
+    #des-spike {
+      color: #968ae0;
+      letter-spacing: 0;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #des-kicker-txt {
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #des-columna {
+      position: absolute;
+      left: 216px;
+      top: 290px;
+      right: 136px;
+      display: flex;
+      flex-direction: column;
+      gap: 34px;
+    }
+
+    .des-fila {
+      height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      opacity: 0;
+      will-change: transform, filter;
+    }
+
+    /* La columna de marcas va FUERA del bloque de texto: el ojo lee nombres primero
+       y marcas después. */
+    .des-marca-hueco {
+      width: 56px;
+      height: 56px;
+      flex: none;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .des-aro {
+      position: absolute;
+      width: 172px;
+      height: 172px;
+      border-radius: 50%;
+      border: 2px solid #c64545;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .des-equis {
+      position: absolute;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform;
+      display: grid;
+      place-items: center;
+    }
+
+    .des-nombre {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 58px;
+      letter-spacing: -0.01em;
+      color: #e9e9ed;
+      white-space: nowrap;
+    }
+  </style>
+
+  <script>
+    (() => {
+      // ── Curvas de la guía (§0) ─────────────────────────────────────────────
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const SNAP = cb(0.34, 1.2, 0.64, 1);
+
+      // ── La parrilla del servidor ───────────────────────────────────────────
+      // Anchos fijos, escritos a mano: nada de aleatorio, que rompería el render.
+      const ANCHOS = ["58%", "42%", "66%", "38%", "52%", "46%", "62%", "40%", "56%",
+                      "48%", "64%", "44%", "54%", "60%", "40%", "50%", "66%", "46%"];
+      document.getElementById("des-parrilla").innerHTML = ANCHOS.map((w) =>
+        '<div class="des-ficha"><div class="des-placa" style="width:' + w + '"></div></div>').join("");
+
+      // ── Las ✕ ──────────────────────────────────────────────────────────────
+      // La del golpe fuerte (4,05) lleva el glifo un 20 % mayor que las otras dos.
+      const equis = (px) =>
+        '<svg viewBox="0 0 24 24" width="' + px + '" height="' + px + '" fill="none" ' +
+        'stroke="#C64545" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">' +
+        '<path d="M5 5l14 14M19 5L5 19"></path></svg>';
+      [0, 2, 4].forEach((i) => {
+        document.getElementById("des-equis-" + i).innerHTML = equis(i === 2 ? 62 : 52);
+      });
+
+      // ── La línea de tiempo ─────────────────────────────────────────────────
+      const tl = gsap.timeline({ paused: true });
+
+      // 0,00 · el rótulo · short-slide-right. El asterisco entra 40 ms antes que el texto.
+      tl.fromTo("#des-spike", { x: -18, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.22, ease: EASE_OUT }, 0);
+      tl.fromTo("#des-kicker-txt", { x: -18, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.22, ease: EASE_OUT }, 0.04);
+
+      // ── Un nombre por golpe · short-slide-down + desenfoque 6 → 0 ──────────
+      const GOLPES = [0.18, 0.83, 1.19, 1.79, 2.59];
+      GOLPES.forEach((t, i) => {
+        tl.fromTo("#des-fila-" + i,
+          { y: -16, opacity: 0, filter: "blur(6px)" },
+          { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.22, ease: EASE_OUT }, t);
+      });
+
+      // 2,59 → 3,05 · quietud. Es el hueco que hace que las ✕ suenen.
+
+      // ── Las marcas ─────────────────────────────────────────────────────────
+      // Sin fundido: escala 1,4 → 1 en 90 ms, seco. El nombre marcado baja a #6C7080.
+      const MARCAS = [
+        { i: 0, t: 3.05, s: 1.4 },
+        { i: 4, t: 3.57, s: 1.4 },
+        { i: 2, t: 4.05, s: 1.6 },
+      ];
+      MARCAS.forEach((m) => {
+        tl.set("#des-equis-" + m.i, { opacity: 1 }, m.t);
+        tl.fromTo("#des-equis-" + m.i, { scale: m.s },
+          { scale: 1, duration: 0.09, ease: SNAP }, m.t);
+        tl.to("#des-nombre-" + m.i, { color: "#6c7080", duration: 0.18, ease: EASE_OUT }, m.t);
+      });
+
+      // 4,05 · el golpe más fuerte del spot: el aro se expande sobre la tercera ✕…
+      // `immediateRender: false` o el aro se pinta desde el fotograma 1: un `fromTo`
+      // aplica su estado inicial al construirse, aunque la línea esté pausada en 0.
+      tl.fromTo("#des-aro-2", { scale: 0.6, opacity: 0.45 },
+        { scale: 1.15, opacity: 0, duration: 0.5, ease: EASE_OUT, immediateRender: false }, 4.05);
+
+      // …y la parrilla lo acompaña con un 1,2 % de escala: imperceptible, pero sostiene.
+      tl.fromTo("#des-parrilla-cam", { scale: 1 },
+        { scale: 1.012, duration: 0.4, ease: EASE_OUT }, 4.05);
+
+      // 4,53 · 5,02 · los dos últimos golpes quedan vacíos a propósito.
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["02-desorden"] = tl;
+    })();
+  </script>
+</template>

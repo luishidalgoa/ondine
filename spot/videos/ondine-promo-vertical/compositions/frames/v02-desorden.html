@@ -1,0 +1,265 @@
+<template>
+  <div data-composition-id="v02-desorden" data-width="1080" data-height="1920" data-start="0" data-duration="5.661">
+
+    <div id="ds-ground" class="clip" data-start="0" data-duration="5.661" data-track-index="0"></div>
+
+    <!-- Lo que ve el servidor: una parrilla de fichas con placas grises, muy
+         desenfocada. No se lee, y ese es justo el punto. En vertical la retícula pasa
+         de 6x3 a 3x6 para que las fichas conserven su proporción de cartel. -->
+    <div id="ds-back" class="clip" data-start="0" data-duration="5.661" data-track-index="1">
+      <div id="ds-parrilla-cam">
+        <div id="ds-parrilla" data-layout-allow-overflow></div>
+      </div>
+    </div>
+
+    <div id="ds-fore" class="clip" data-start="0" data-duration="5.661" data-track-index="2">
+
+      <div id="ds-kicker">
+        <span id="ds-spike">✳</span><span id="ds-kicker-txt">BIBLIOTECA SIN ORDENAR</span>
+      </div>
+
+      <div id="ds-columna">
+        <div class="ds-fila" id="ds-fila-0">
+          <div class="ds-marca-hueco">
+            <div class="ds-aro" id="ds-aro-0"></div>
+            <div class="ds-equis" id="ds-equis-0"></div>
+          </div>
+          <span class="ds-nombre" id="ds-nombre-0">Cap 12 (2).mkv</span>
+        </div>
+        <div class="ds-fila" id="ds-fila-1">
+          <div class="ds-marca-hueco">
+            <div class="ds-aro" id="ds-aro-1"></div>
+            <div class="ds-equis" id="ds-equis-1"></div>
+          </div>
+          <span class="ds-nombre" id="ds-nombre-1">episodio final BUENO.mkv</span>
+        </div>
+        <div class="ds-fila" id="ds-fila-2">
+          <div class="ds-marca-hueco">
+            <div class="ds-aro" id="ds-aro-2"></div>
+            <div class="ds-equis" id="ds-equis-2"></div>
+          </div>
+          <span class="ds-nombre" id="ds-nombre-2">Temporada2_04-05.mkv</span>
+        </div>
+        <div class="ds-fila" id="ds-fila-3">
+          <div class="ds-marca-hueco">
+            <div class="ds-aro" id="ds-aro-3"></div>
+            <div class="ds-equis" id="ds-equis-3"></div>
+          </div>
+          <span class="ds-nombre" id="ds-nombre-3">Sin titulo (copia).mkv</span>
+        </div>
+        <div class="ds-fila" id="ds-fila-4">
+          <div class="ds-marca-hueco">
+            <div class="ds-aro" id="ds-aro-4"></div>
+            <div class="ds-equis" id="ds-equis-4"></div>
+          </div>
+          <span class="ds-nombre" id="ds-nombre-4">aqui no hay quien viva 3x07.avi</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #ds-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #ds-back,
+    #ds-fore {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    #ds-parrilla-cam {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+
+    /* Desbordada por los cuatro lados: al desenfocar 18 px el borde del bloque no debe verse. */
+    #ds-parrilla {
+      position: absolute;
+      inset: -40px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 30px;
+      padding: 40px;
+      opacity: 0.55;
+      filter: blur(18px);
+    }
+
+    .ds-ficha {
+      border-radius: 10px;
+      background: #1b1e2e;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+    }
+
+    .ds-placa {
+      height: 16px;
+      border-radius: 8px;
+      background: #2a2e42;
+    }
+
+    #ds-kicker {
+      position: absolute;
+      left: 90px;
+      top: 400px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+    }
+
+    #ds-spike {
+      color: #968ae0;
+      letter-spacing: 0;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #ds-kicker-txt {
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #ds-columna {
+      position: absolute;
+      left: 90px;
+      top: 760px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 34px;
+    }
+
+    .ds-fila {
+      height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      opacity: 0;
+      will-change: transform, filter;
+    }
+
+    .ds-marca-hueco {
+      width: 56px;
+      height: 56px;
+      flex: none;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .ds-aro {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      border: 2px solid #c64545;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .ds-equis {
+      position: absolute;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform;
+      display: grid;
+      place-items: center;
+    }
+
+    /* 44 px: el nombre más largo son 31 caracteres y a este cuerpo mide 819 px, que con
+       el hueco de la marca deja 90 px de aire a la derecha. A 46 se salía. */
+    .ds-nombre {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 44px;
+      letter-spacing: -0.01em;
+      color: #e9e9ed;
+      white-space: nowrap;
+    }
+  </style>
+
+  <script>
+    (() => {
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const SNAP = cb(0.34, 1.2, 0.64, 1);
+
+      const ANCHOS = ["58%", "42%", "66%", "38%", "52%", "46%", "62%", "40%", "56%",
+                      "48%", "64%", "44%", "54%", "60%", "40%", "50%", "66%", "46%"];
+      document.getElementById("ds-parrilla").innerHTML = ANCHOS.map((w) =>
+        '<div class="ds-ficha"><div class="ds-placa" style="width:' + w + '"></div></div>').join("");
+
+      const equis = (px) =>
+        '<svg viewBox="0 0 24 24" width="' + px + '" height="' + px + '" fill="none" ' +
+        'stroke="#C64545" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">' +
+        '<path d="M5 5l14 14M19 5L5 19"></path></svg>';
+      [0, 2, 4].forEach((i) => {
+        document.getElementById("ds-equis-" + i).innerHTML = equis(i === 2 ? 58 : 48);
+      });
+
+      const tl = gsap.timeline({ paused: true });
+
+      // 0,00 · el rótulo. El asterisco entra 40 ms antes que el texto.
+      tl.fromTo("#ds-spike", { x: -18, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.22, ease: EASE_OUT }, 0);
+      tl.fromTo("#ds-kicker-txt", { x: -18, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.22, ease: EASE_OUT }, 0.04);
+
+      // Un nombre por golpe.
+      [0.18, 0.83, 1.19, 1.79, 2.59].forEach((t, i) => {
+        tl.fromTo("#ds-fila-" + i,
+          { y: -16, opacity: 0, filter: "blur(6px)" },
+          { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.22, ease: EASE_OUT }, t);
+      });
+
+      // 2,59 → 3,05 · quietud. Es el hueco que hace que las ✕ suenen.
+      [{ i: 0, t: 3.05, s: 1.4 }, { i: 4, t: 3.57, s: 1.4 }, { i: 2, t: 4.05, s: 1.6 }]
+        .forEach((m) => {
+          tl.set("#ds-equis-" + m.i, { opacity: 1 }, m.t);
+          tl.fromTo("#ds-equis-" + m.i, { scale: m.s },
+            { scale: 1, duration: 0.09, ease: SNAP }, m.t);
+          tl.to("#ds-nombre-" + m.i, { color: "#6c7080", duration: 0.18, ease: EASE_OUT }, m.t);
+        });
+
+      // 4,05 · el golpe más fuerte del spot. `immediateRender: false` o el aro se pinta
+      // desde el fotograma 1: un `fromTo` aplica su estado inicial al construirse.
+      tl.fromTo("#ds-aro-2", { scale: 0.6, opacity: 0.45 },
+        { scale: 1.15, opacity: 0, duration: 0.5, ease: EASE_OUT, immediateRender: false }, 4.05);
+      tl.fromTo("#ds-parrilla-cam", { scale: 1 },
+        { scale: 1.012, duration: 0.4, ease: EASE_OUT }, 4.05);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["v02-desorden"] = tl;
+    })();
+  </script>
+</template>

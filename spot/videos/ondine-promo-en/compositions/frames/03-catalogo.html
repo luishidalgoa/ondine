@@ -1,0 +1,920 @@
+<template>
+  <div data-composition-id="03-catalogo" data-width="1920" data-height="1080" data-start="0" data-duration="7.742">
+
+    <!-- El suelo va SIEMPRE en su propia capa .clip: un `background` en la raíz lo pierde el
+         compositor al recortar el frame a su ventana y el fotograma sale negro. -->
+    <div id="cat-ground" class="clip" data-start="0" data-duration="7.742" data-track-index="0"></div>
+
+    <div id="cat-escena" class="clip" data-start="0" data-duration="7.742" data-track-index="1">
+
+      <!-- ── La página clara ─────────────────────────────────────────────────────
+           El único plano claro de la pieza. Fuera de paleta a propósito (papel #FBFBFD,
+           serifa Georgia): es un mundo ajeno, y ese salto es lo que hace legible que el
+           dato viene de fuera. Lleva su barra de direcciones porque lo que se copia es
+           la URL, no la tabla.
+           NOTA: el globo de Wikipedia es marca registrada de la Wikimedia Foundation.
+           Va aquí por decisión expresa del autor de la pieza. -->
+      <div id="cat-pagina" data-layout-allow-occlusion>
+        <div id="cat-nav">
+          <span class="cat-dot"></span>
+          <span class="cat-dot"></span>
+          <span class="cat-dot"></span>
+          <div id="cat-url-caja">
+            <div id="cat-seleccion"></div>
+            <span id="cat-url">en.wikipedia.org/wiki/The_Simpsons_season_7</span>
+          </div>
+        </div>
+
+        <div id="cat-pag-marca">
+          <div id="cat-pag-globo"></div>
+          <div id="cat-pag-marca-txt">
+            <span id="cat-pag-wordmark">WIKIPEDIA</span>
+            <span id="cat-pag-tagline">La enciclopedia libre</span>
+          </div>
+        </div>
+
+        <div id="cat-pag-titulos">
+          <span id="cat-pag-h1">The Simpsons</span>
+          <div id="cat-pag-regla"></div>
+          <span id="cat-pag-h2">List of episodes · Season 7</span>
+        </div>
+
+        <div id="cat-pag-cuerpo">
+          <div id="cat-pag-lateral">
+            <span id="cat-pag-lateral-tit">Temporadas</span>
+            <span class="cat-temp">Temporada 1</span>
+            <span class="cat-temp cat-temp-on">Temporada 2</span>
+            <span class="cat-temp">Temporada 3</span>
+            <span class="cat-temp">Temporada 4</span>
+            <span class="cat-temp">Temporada 5</span>
+          </div>
+
+          <div id="cat-pag-tabla">
+            <div id="cat-tabla-cab">
+              <span class="cat-col-n">No.</span><span class="cat-col-t">Title</span><span class="cat-col-f">Air date</span>
+            </div>
+            <div id="cat-tabla-filas"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── El panel de la app ──────────────────────────────────────────────────
+           Ancho fijo: la maqueta lo estrecha entre fotogramas, pero animar `width` está
+           prohibido, así que la caja mide siempre 1648 y el reencuadre se hace con
+           escala uniforme. -->
+      <div id="cat-panel" data-layout-allow-occlusion>
+        <div id="cat-panel-cab">
+          <svg viewBox="0 0 64 64" width="24" height="24" fill="none" stroke="#B5ABFC"
+               stroke-width="6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 15 C 15.5 -5 26.5 35 35 15 C 43.5 -5 48.5 35 57 15"></path>
+            <path d="M7 32 C 16 21.6 26 42.4 35 32 C 44 21.6 48 42.4 57 32"></path>
+            <path d="M7 49 L 57 49"></path>
+          </svg>
+          <span id="cat-panel-marca">Ondine</span>
+          <span class="cat-espacio"></span>
+          <span id="cat-panel-serie">The Simpsons</span>
+        </div>
+
+        <div id="cat-panel-cuerpo">
+          <div id="cat-panel-izq">
+            <span id="cat-fuente-rot">FUENTE</span>
+            <span id="cat-ayuda">Paste an episode list from any site.</span>
+            <div id="cat-campo"><span id="cat-campo-txt">en.wikipedia.org/…/The_Simpsons_season_7</span></div>
+            <div id="cat-boton-caja">
+              <div id="cat-boton">Generar con IA…</div>
+              <div id="cat-halo"></div>
+            </div>
+
+            <div id="cat-contador">
+              <span id="cat-contador-rot">FOUND</span>
+              <div id="cat-contador-linea">
+                <span id="cat-contador-n">0</span>
+                <span id="cat-contador-u">episodes</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="cat-panel-der">
+            <div id="cat-codigo">
+              <div id="cat-codigo-cab">
+                <span>catalogue.json</span><span class="cat-espacio"></span><span id="cat-codigo-ver">reindex/1.0</span>
+              </div>
+              <div id="cat-codigo-cuerpo"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- El cursor viaja de la barra de direcciones al botón. Va por encima de todo. -->
+      <div id="cat-cursor">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="#E9E9ED" stroke="#161826"
+             stroke-width="1.2" aria-hidden="true">
+          <path d="M5 2l14 12h-7l3.5 7-3 1.4L9 15.6 5 19z"></path>
+        </svg>
+      </div>
+
+      <div id="cat-kicker"><span id="cat-spike">✳</span><span id="cat-kicker-txt">THE CATALOGUE</span></div>
+    </div>
+
+    <!-- ── El compás de entrada (0 → 1,29) ──────────────────────────────────────
+         El compás que se le quita al plano 5. La misma página, desenfocada, y encima
+         la frase. Cuando la frase sale, el desenfoque resuelve y el clip arranca. -->
+    <div id="cat-intro" class="clip" data-layout-allow-overlap data-layout-allow-occlusion
+         data-start="0" data-duration="7.742" data-track-index="2">
+      <div id="cat-intro-velo"></div>
+      <span id="cat-intro-txt"><span class="cat-linea">Builds the catalogue</span><span class="cat-linea">from any episode list</span></span>
+    </div>
+  </div>
+
+  <style>
+    #cat-ground {
+      position: absolute;
+      inset: 0;
+      background: #161826;
+    }
+
+    #cat-escena,
+    #cat-intro {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+
+    .cat-espacio { flex: 1; }
+
+    /* ── página clara ──────────────────────────────────────────────────────── */
+    #cat-pagina {
+      position: absolute;
+      left: 136px;
+      top: 140px;
+      width: 1040px;
+      height: 800px;
+      background: #fbfbfd;
+      border-radius: 6px;
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      filter: blur(16px);
+      will-change: transform, filter;
+    }
+
+    /* La barra de direcciones: lo que se copia es esto, no la tabla. */
+    #cat-nav {
+      flex: none;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px;
+      background: #ececee;
+      border-bottom: 1px solid #dcdce4;
+    }
+
+    .cat-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #c2c2cc;
+      flex: none;
+    }
+
+    #cat-url-caja {
+      position: relative;
+      flex: 1;
+      height: 34px;
+      margin-left: 12px;
+      border-radius: 17px;
+      background: #fbfbfd;
+      border: 1px solid #dcdce4;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* Crece por scaleX desde el borde izquierdo del texto: el barrido del copiado.
+       Va antes que la URL en el DOM para quedar por debajo de ella. */
+    #cat-seleccion {
+      position: absolute;
+      left: 12px;
+      top: 5px;
+      height: 23px;
+      width: 10px;
+      background: rgba(150, 138, 224, 0.34);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transform-origin: 0% 50%;
+    }
+
+    #cat-url {
+      position: relative;
+      font-size: 16px;
+      color: #3a3a44;
+      white-space: nowrap;
+    }
+
+    #cat-pag-marca {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 40px 0;
+    }
+
+    /* Solo el globo: la imagen trae el logotipo completo y el recorte se queda con
+       su parte superior. El nombre va al lado como texto, que es como se compone en
+       la cabecera real. */
+    #cat-pag-globo {
+      width: 70px;
+      height: 52px;
+      flex: none;
+      background: url("assets/wikipedia.png") center top / 70px auto no-repeat;
+    }
+
+    #cat-pag-marca-txt {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #cat-pag-wordmark {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 27px;
+      letter-spacing: 0.02em;
+      color: #17171f;
+    }
+
+    #cat-pag-tagline {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      color: #54545c;
+    }
+
+    #cat-pag-titulos {
+      flex: none;
+      padding: 18px 40px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #cat-pag-h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 48px;
+      color: #17171f;
+    }
+
+    #cat-pag-regla {
+      height: 1px;
+      background: #d8d8e0;
+      margin: 14px 0 0;
+    }
+
+    #cat-pag-h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 24px;
+      color: #4a4a55;
+      padding-top: 9px;
+    }
+
+    #cat-pag-cuerpo {
+      flex: 1;
+      display: flex;
+      gap: 34px;
+      padding: 20px 40px 34px;
+      min-height: 0;
+    }
+
+    #cat-pag-lateral {
+      flex: none;
+      width: 210px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 26px;
+      border-right: 1px solid #e2e2e9;
+    }
+
+    #cat-pag-lateral-tit {
+      font-family: Georgia, serif;
+      font-size: 17px;
+      color: #6e6e7a;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .cat-temp {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      color: #6e6e7a;
+    }
+
+    .cat-temp-on { color: #17171f; }
+
+    #cat-pag-tabla {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    #cat-tabla-cab {
+      display: flex;
+      padding: 12px 16px;
+      background: #efeff4;
+      font-size: 16px;
+      font-weight: 500;
+      color: #4a4a55;
+      letter-spacing: 0.04em;
+    }
+
+    .cat-fila {
+      display: flex;
+      padding: 12px 16px;
+      font-family: Georgia, serif;
+      font-size: 21px;
+      color: #22222b;
+    }
+
+    .cat-col-n { width: 72px; }
+    .cat-col-t { flex: 1; }
+    .cat-col-f { width: 150px; }
+    .cat-fila .cat-col-n { color: #6b6b78; }
+    .cat-fila .cat-col-f { color: #6b6b78; font-size: 18px; }
+
+    /* ── panel de la app ───────────────────────────────────────────────────── */
+    #cat-panel {
+      position: absolute;
+      left: 136px;
+      top: 150px;
+      width: 1648px;
+      height: 780px;
+      background: #232532;
+      border-radius: 14px;
+      border: 1px solid #2e3042;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0.28;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    #cat-panel-cab {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 28px;
+      border-bottom: 1px solid #2e3042;
+    }
+
+    #cat-panel-marca {
+      font-size: 20px;
+      font-weight: 500;
+      color: #e9e9ed;
+      letter-spacing: 0.01em;
+    }
+
+    #cat-panel-serie {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 16px;
+      color: #8a8fa3;
+    }
+
+    #cat-panel-cuerpo {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    #cat-panel-izq {
+      flex: none;
+      width: 420px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-right: 1px solid #2e3042;
+    }
+
+    #cat-fuente-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      letter-spacing: 0.2em;
+      color: #8a8fa3;
+    }
+
+    #cat-ayuda {
+      font-size: 20px;
+      line-height: 1.45;
+      color: #c9ccd6;
+    }
+
+    #cat-campo {
+      height: 64px;
+      flex: none;
+      border-radius: 8px;
+      background: #292b31;
+      border: 1px solid #33364a;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    #cat-campo-txt {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 16px;
+      color: #5a5f72;
+      opacity: 0;
+    }
+
+    #cat-boton-caja {
+      position: relative;
+      height: 70px;
+      flex: none;
+    }
+
+    #cat-boton {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0);
+      border: 1px solid #5d5294;
+      display: grid;
+      place-items: center;
+      font-size: 23px;
+      color: #8a8fa3;
+      will-change: transform;
+    }
+
+    /* El halo es su propia capa: así el destello no arrastra al botón en la escala. */
+    #cat-halo {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      box-shadow: 0 0 0 6px rgba(150, 138, 224, 0.18);
+      opacity: 0;
+    }
+
+    #cat-contador {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #cat-contador-rot {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 16px;
+      letter-spacing: 0.2em;
+      color: #8a8fa3;
+    }
+
+    #cat-contador-linea {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    #cat-contador-n {
+      font-size: 84px;
+      font-weight: 500;
+      color: #e9e9ed;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #cat-contador-u {
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 22px;
+      color: #8a8fa3;
+    }
+
+    #cat-panel-der {
+      flex: 1;
+      padding: 20px;
+      min-width: 0;
+      display: flex;
+    }
+
+    #cat-codigo {
+      flex: 1;
+      background: #101120;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #cat-codigo-cab {
+      flex: none;
+      display: flex;
+      align-items: center;
+      padding: 14px 22px;
+      border-bottom: 1px solid #1c1d2e;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 16px;
+      color: #8a8fa3;
+    }
+
+    #cat-codigo-ver { color: #5a5f72; }
+
+    #cat-codigo-cuerpo {
+      flex: 1;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 17px;
+      align-items: flex-start;
+    }
+
+    .cat-linea-cod {
+      display: flex;
+      gap: 20px;
+      opacity: 0;
+      white-space: nowrap;
+      will-change: transform;
+    }
+
+    .cat-linea-n {
+      color: #4a4f63;
+      width: 26px;
+      text-align: right;
+      flex: none;
+    }
+
+    /* El texto se revela recortando por la derecha con `steps`: en monoespaciada cada
+       paso cae justo en el borde de un carácter, así que no hay medios glifos. */
+    .cat-linea-cuerpo {
+      position: relative;
+      flex: none;
+    }
+
+    .cat-linea-txt {
+      display: inline-block;
+      color: #c9ccd6;
+      clip-path: inset(0 100% 0 0);
+    }
+
+    .cat-linea-caret {
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #968ae0;
+      opacity: 0;
+    }
+
+    /* ── cursor y rótulo ───────────────────────────────────────────────────── */
+    #cat-cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 30px;
+      height: 30px;
+      opacity: 0;
+      transform-origin: 20% 15%;
+      will-change: transform;
+    }
+
+    #cat-kicker {
+      position: absolute;
+      left: 136px;
+      top: 60px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", Consolas, monospace;
+      font-size: 26px;
+      letter-spacing: 0.22em;
+      color: #c9ccd6;
+      white-space: nowrap;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #cat-spike { color: #968ae0; letter-spacing: 0; }
+
+    /* ── el compás de entrada ──────────────────────────────────────────────── */
+    #cat-intro {
+      display: grid;
+      place-items: center;
+    }
+
+    #cat-intro-velo {
+      position: absolute;
+      inset: 0;
+      background: rgba(22, 24, 38, 0.74);
+    }
+
+    #cat-intro-txt {
+      --barrido: 0px;
+      position: relative;
+      font-size: 80px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.18;
+      color: #e9e9ed;
+      text-align: center;
+      max-width: 1440px;
+      will-change: transform, filter, opacity;
+    }
+
+    .cat-linea { display: block; }
+    #cat-intro-txt .w { display: inline-block; opacity: 0; }
+
+    /* ── Acero ──────────────────────────────────────────────────────────
+       El degradado es una BALDOSA que se repite: ninguna letra se queda jamás sin
+       fondo, y una letra con `color: transparent` y sin fondo sencillamente no se
+       pinta. El primer alto de color y el último son el mismo, así que la baldosa
+       casa consigo misma y no hay costura al dar la vuelta.
+       Horizontal, no inclinado: con un ángulo la baldosa no casa con la siguiente
+       y aparece una costura diagonal en cada vuelta. */
+    .metal {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      /* Acero, no acero teñido: el acento no se gasta aquí.
+         Los altos de color van a distancias DESIGUALES —9, 8, 14, 7, 14, 9, 12, 11,
+         16 %— así que las luces llegan a destiempo en vez de a compás, y el ojo deja
+         de leerlo como un barrido. El recorrido de valor es corto (#AEB4BF a #F6F8FB)
+         para que sea materia y no destello. */
+      background-image: linear-gradient(to right,
+        #b9bec9 0%, #e8ebf0 9%, #c6cbd5 17%, #f6f8fb 31%, #d2d7e0 38%,
+        #aeb4bf 52%, #eef1f5 61%, #c1c6d1 73%, #e2e6ec 84%, #b9bec9 100%);
+      background-size: 1600px 100%;
+      background-repeat: repeat;
+    }
+  </style>
+
+  <script>
+    (() => {
+      const DUR = 7.742;
+      // ── Acero · el barrido ──────────────────────────────────────────
+      // Va pieza a pieza (palabra o carácter), no en el contenedor, porque cada pieza
+      // lleva su propia opacidad de entrada: si el degradado estuviera arriba,
+      // `background-clip: text` lo pintaría a plena intensidad aunque la pieza
+      // estuviese todavía a opacidad 0. Cada pieza se desplaza su propio hueco dentro
+      // de la baldosa, así que las letras forman UN degradado continuo, no uno por letra.
+      const TEJA = 1600;
+      const metalizar = (caja, piezas) => {
+        const x0 = caja.getBoundingClientRect().left;
+        piezas.forEach((p) => {
+          p.classList.add("metal");
+          const dx = Math.round(p.getBoundingClientRect().left - x0);
+          p.style.backgroundPositionX = "calc(var(--barrido) - " + dx + "px)";
+        });
+      };
+      // Baldosa ancha y ciclo largo: dentro de la ventana en la que el rótulo está en
+      // pantalla no se llega a ver la vuelta, así que no hay bucle que reconocer.
+      const barrer = (caja, desde) => {
+        tl.fromTo(caja, { "--barrido": "0px" },
+          { "--barrido": TEJA + "px", duration: 7, ease: "none",
+            immediateRender: false }, desde);
+      };
+
+      // El clip original empieza un compás más tarde: los 1,29 s de entrada son el
+      // compás que se le quita al plano 5. Todos los tiempos de la guía van +T0.
+      const T0 = 1.29;
+
+      // ── Curvas y presets de la guía (§0 y §1) ──────────────────────────────
+      const cb = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = ((ax * t + bx) * t + cx) * t - p;
+            if (Math.abs(e) < 1e-6) break;
+            const d = (3 * ax * t + 2 * bx) * t + cx;
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const EASE_OUT = cb(0.16, 1, 0.3, 1);
+      const EASE_IN = cb(0.7, 0, 0.84, 0);
+      const EASE_IN_OUT = cb(0.65, 0, 0.35, 1);
+      const SNAP = cb(0.34, 1.2, 0.64, 1);
+      const SPRING_DUR = 0.6;
+      const SPRING = (p) => {
+        if (p >= 1) return 1;
+        const t = p * SPRING_DUR;
+        return 1 - Math.exp(-11 * t) * (Math.cos(9.43 * t) + (11 / 9.43) * Math.sin(9.43 * t));
+      };
+
+      const palabras = (el) => {
+        const txt = el.textContent;
+        el.textContent = "";
+        const out = [];
+        txt.split(/(\s+)/).forEach((tk) => {
+          if (!tk) return;
+          if (/^\s+$/.test(tk)) { el.appendChild(document.createTextNode(tk)); return; }
+          const sp = document.createElement("span");
+          sp.className = "w";
+          sp.textContent = tk;
+          el.appendChild(sp);
+          out.push(sp);
+        });
+        return out;
+      };
+
+      // `immediateRender: false` en todo `fromTo` cuyo estado inicial se vea: un
+      // `fromTo` aplica su «from» al construirse, aunque la línea esté pausada en 0.
+      const shortSlideRight = (tl, sel, at, op) =>
+        tl.fromTo(sel, { x: -18, opacity: 0 },
+          { x: 0, opacity: op === undefined ? 1 : op, duration: 0.22, ease: EASE_OUT,
+            immediateRender: false }, at);
+
+      const shortSlideDown = (tl, sel, at) =>
+        tl.fromTo(sel, { y: -16, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.22, ease: EASE_OUT, immediateRender: false }, at);
+
+      // ── Contenido generado ─────────────────────────────────────────────────
+      const EPISODIOS = [
+        ["4", "Bart Sells His Soul", "8 Oct 1995"],
+        ["5", "Lisa the Vegetarian", "15 Oct 1995"],
+        ["6", "Treehouse of Horror VI", "29 Oct 1995"],
+        ["7", "King-Size Homer", "5 Nov 1995"],
+        ["8", "Mother Simpson", "19 Nov 1995"],
+        ["9", "Sideshow Bob's Last Gleaming", "26 Nov 1995"],
+        ["10", "The 138th Episode Spectacular", "3 Dec 1995"],
+      ];
+      document.getElementById("cat-tabla-filas").innerHTML = EPISODIOS.map((e, i) =>
+        '<div class="cat-fila" style="background:' + (i % 2 ? "#f6f6fa" : "#fbfbfd") + '">' +
+        '<span class="cat-col-n">' + e[0] + "</span>" +
+        '<span class="cat-col-t">' + e[1] + "</span>" +
+        '<span class="cat-col-f">' + e[2] + "</span></div>").join("");
+
+      const CODIGO = [
+        '{ "formato": "reindex/1.0", "serie": "The Simpsons" }',
+        '{ "num": 4, "temp": 7, "titulo": "Bart Sells His Soul" }',
+        '{ "num": 5, "temp": 7, "titulo": "Lisa the Vegetarian" }',
+        '{ "num": 6, "temp": 7, "titulo": "Treehouse of Horror VI" }',
+      ];
+      document.getElementById("cat-codigo-cuerpo").innerHTML = CODIGO.map((txt, i) =>
+        '<div class="cat-linea-cod" id="cat-linea-' + i + '">' +
+        '<span class="cat-linea-n">' + String(i + 1).padStart(2, "0") + "</span>" +
+        '<span class="cat-linea-cuerpo">' +
+        '<span class="cat-linea-txt" id="cat-txt-' + i + '">' + txt + "</span>" +
+        '<span class="cat-linea-caret" data-layout-allow-overlap id="cat-caret-' + i + '">▌</span>' +
+        "</span></div>").join("");
+
+      // La banda de selección mide exactamente lo que mide la URL.
+      document.getElementById("cat-seleccion").style.width =
+        (document.getElementById("cat-url").offsetWidth + 6) + "px";
+
+      // ── La línea de tiempo ─────────────────────────────────────────────────
+      const tl = gsap.timeline({ paused: true });
+
+      // ── Compás de entrada · la página desenfocada y la frase ───────────────
+      const wIntro = [];
+      document.querySelectorAll("#cat-intro-txt .cat-linea")
+        .forEach((l) => palabras(l).forEach((w) => wIntro.push(w)));
+      tl.to(wIntro, { opacity: 1, duration: 0.26, ease: EASE_OUT, stagger: 0.06 }, 0.06);
+      metalizar(document.getElementById("cat-intro-txt"), wIntro);
+      barrer(document.getElementById("cat-intro-txt"), 0.06);
+
+      // 0,90 · la frase sale hacia arriba y el velo se va con ella; el desenfoque de
+      // la página resuelve justo al cerrar el compás.
+      tl.to("#cat-intro-txt",
+        { y: -28, filter: "blur(10px)", opacity: 0, duration: 0.32, ease: EASE_IN }, 0.9);
+      tl.to("#cat-intro-velo", { opacity: 0, duration: 0.39, ease: EASE_IN_OUT }, 0.9);
+      tl.to("#cat-pagina", { filter: "blur(0px)", duration: 0.42, ease: EASE_OUT }, 0.9);
+
+      // ── El clip ────────────────────────────────────────────────────────────
+      // El rótulo entra a medio gas y sube a pleno cuando se pulsa el botón.
+      shortSlideRight(tl, "#cat-kicker", T0, 0.55);
+      tl.to("#cat-kicker", { opacity: 1, duration: 0.24, ease: EASE_OUT }, T0 + 2.76);
+
+      // El panel espera al fondo, desplazado por la derecha y al 28 % de opacidad.
+      // Está centrado en el lienzo (960, 540), así que la traslación se calcula desde
+      // ahí: x = centro_deseado − 960.
+      const ESC = 1300 / 1648;      // 0,789 · el encuadre de la maqueta
+      const X_FUERA = 930;          // izquierda 1240 px
+      const X_MEDIO = 170;          // izquierda 480 px
+      tl.set("#cat-panel", { x: X_FUERA, scale: ESC }, 0);
+      tl.set("#cat-cursor", { x: 1180, y: 880 }, 0);
+      tl.to("#cat-cursor", { opacity: 1, duration: 0.18, ease: EASE_OUT }, T0);
+
+      // 0,50 · el cursor llega a la barra de direcciones.
+      tl.to("#cat-cursor", { x: 520, y: 168, duration: 0.42, ease: EASE_IN_OUT }, T0 + 0.5);
+
+      // 1,13 · clic.
+      tl.to("#cat-cursor", { scale: 0.88, duration: 0.06, ease: SNAP }, T0 + 1.13);
+      tl.to("#cat-cursor", { scale: 1, duration: 0.06, ease: SNAP }, T0 + 1.19);
+
+      // 1,52 · la URL se selecciona de un barrido. Es lo que se copia: la dirección,
+      // no la tabla.
+      tl.fromTo("#cat-seleccion", { scaleX: 0 },
+        { scaleX: 1, duration: 0.24, ease: EASE_OUT, immediateRender: false }, T0 + 1.52);
+
+      // 2,11 · relevo cruzado: la página se va por la izquierda, el panel sube.
+      tl.to("#cat-pagina",
+        { x: -276, filter: "blur(8px)", opacity: 0.4, duration: 0.49, ease: EASE_IN }, T0 + 2.11);
+      tl.to("#cat-panel", { x: X_MEDIO, opacity: 1, duration: 0.49, ease: EASE_OUT }, T0 + 2.11);
+
+      // 2,11 · la URL aterriza en el campo y el borde se enciende.
+      shortSlideRight(tl, "#cat-campo-txt", T0 + 2.11);
+      tl.to("#cat-campo-txt", { color: "#e9e9ed", duration: 0.2, ease: EASE_OUT }, T0 + 2.11);
+      tl.to("#cat-campo", { borderColor: "#968ae0", duration: 0.2, ease: EASE_OUT }, T0 + 2.11);
+
+      // El cursor cruza al botón para que el golpe del 2,76 tenga autor. Con el panel
+      // a escala 0,789 el botón cae en (646, 462) del lienzo.
+      tl.to("#cat-cursor", { x: 646, y: 462, duration: 0.42, ease: EASE_IN_OUT }, T0 + 2.3);
+
+      // 2,76 · el golpe: se pulsa «Generar con IA…». Único voltaje del plano.
+      tl.to("#cat-boton", { scale: 0.97, duration: 0.06, ease: SNAP }, T0 + 2.76);
+      tl.to("#cat-boton", { scale: 1, duration: 0.06, ease: SNAP }, T0 + 2.82);
+      tl.to("#cat-boton",
+        { backgroundColor: "#968ae0", borderColor: "#968ae0", color: "#161826", duration: 0.09, ease: EASE_OUT },
+        T0 + 2.76);
+      tl.to("#cat-cursor", { scale: 0.88, duration: 0.06, ease: SNAP }, T0 + 2.76);
+      tl.to("#cat-cursor", { scale: 1, duration: 0.06, ease: SNAP }, T0 + 2.82);
+      tl.fromTo("#cat-halo", { opacity: 0.18 },
+        { opacity: 0, duration: 0.3, ease: EASE_OUT, immediateRender: false }, T0 + 2.76);
+
+      // 2,76 · remate de la salida de la página clara: ya no vuelve.
+      tl.to("#cat-pagina",
+        { x: -1336, opacity: 0, filter: "blur(14px)", duration: 0.4, ease: EASE_IN }, T0 + 2.76);
+
+      // 3,00 · el único movimiento de «cámara» del spot: el panel al borde del lienzo.
+      tl.to("#cat-panel", { x: 0, scale: 1, duration: 0.52, ease: EASE_IN_OUT }, T0 + 3.0);
+      tl.to("#cat-cursor", { opacity: 0, duration: 0.3, ease: EASE_IN }, T0 + 3.0);
+
+      // Con el catálogo ya generado el botón vuelve a reposo: el voltaje era el instante.
+      tl.to("#cat-boton",
+        { backgroundColor: "rgba(0,0,0,0)", borderColor: "#5d5294", color: "#8a8fa3", duration: 0.3, ease: EASE_OUT },
+        T0 + 3.4);
+      tl.to("#cat-campo", { borderColor: "#33364a", duration: 0.3, ease: EASE_OUT }, T0 + 3.4);
+      tl.to("#cat-campo-txt", { color: "#8a8fa3", duration: 0.3, ease: EASE_OUT }, T0 + 3.4);
+
+      // ── El catálogo se escribe solo · una línea por golpe ──────────────────
+      // La guía pide 22 ms/carácter, pero la primera línea son 62 caracteres y se
+      // comería el golpe siguiente. Se recorta a la ventana disponible: manda «una
+      // línea por golpe», que es lo que el oído nota.
+      const GOLPES = [T0 + 3.4, T0 + 4.05, T0 + 4.52, T0 + 5.0];
+      const FIN = T0 + 5.9;
+
+      CODIGO.forEach((txt, i) => {
+        const at = GOLPES[i];
+        const hueco = (i + 1 < GOLPES.length ? GOLPES[i + 1] : FIN) - at;
+        const dur = Math.min(txt.length * 0.022, hueco - 0.08);
+        const pasos = txt.length;
+
+        shortSlideDown(tl, "#cat-linea-" + i, at);
+
+        tl.fromTo("#cat-txt-" + i,
+          { clipPath: "inset(0 100% 0 0)" },
+          { clipPath: "inset(0 0% 0 0)", duration: dur, ease: "steps(" + pasos + ")",
+            immediateRender: false },
+          at);
+
+        // El caret acompaña al borde del recorte con la misma cadencia y se queda
+        // parpadeando a 2 Hz hasta que la línea siguiente se lo lleva. Repeticiones
+        // contadas, no `repeat: -1`: la composición tiene una ventana finita.
+        const ancho = document.getElementById("cat-txt-" + i).offsetWidth;
+        tl.set("#cat-caret-" + i, { opacity: 1 }, at);
+        tl.fromTo("#cat-caret-" + i, { x: 0 },
+          { x: ancho, duration: dur, ease: "steps(" + pasos + ")", immediateRender: false }, at);
+        const hasta = i + 1 < GOLPES.length ? GOLPES[i + 1] : DUR;
+        const ciclos = Math.max(1, Math.ceil((hasta - at - dur) / 0.5));
+        tl.to("#cat-caret-" + i,
+          { opacity: 0, duration: 0.25, repeat: ciclos * 2, yoyo: true, ease: "none" }, at + dur);
+        tl.set("#cat-caret-" + i, { opacity: 0 },
+          i + 1 < GOLPES.length ? GOLPES[i + 1] : DUR - 0.001);
+      });
+
+      // 5,30 · la cifra aterriza y cuenta hasta 24 en lineal.
+      tl.fromTo("#cat-contador", { scale: 0.94 },
+        { scale: 1, duration: SPRING_DUR, ease: SPRING, immediateRender: false }, T0 + 5.3);
+      tl.fromTo("#cat-contador", { opacity: 0 },
+        { opacity: 1, duration: 0.26, ease: EASE_OUT, immediateRender: false }, T0 + 5.3);
+      const cifra = { v: 0 };
+      tl.to(cifra, {
+        v: 24, duration: 0.6, ease: "none",
+        onUpdate: () => {
+          document.getElementById("cat-contador-n").textContent = String(Math.round(cifra.v));
+        },
+      }, T0 + 5.3);
+
+      // 5,90 → 6,45 · quietud.
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["03-catalogo"] = tl;
+    })();
+  </script>
+</template>

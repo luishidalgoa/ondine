@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #161826;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 93 BPM · compás de 2,5806 s · 17 compases = 43,870 s, la duración exacta de la
+         pista. Cada plano dura un número redondo de compases. El compás 17 es el que
+         se le añadió a la música para que cupiera la comparativa del plano 7: sale del
+         mismo tramo del original, empalmado en el 39,5 s con cruce de 60 ms. La versión
+         de 16 compases queda en assets/musica-16compases.m4a. -->
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="43.870"
+      data-width="1920"
+      data-height="1080"
+      data-fps="60"
+    >
+      <div
+        id="el-01-hook"
+        class="scene"
+        data-composition-id="01-hook"
+        data-composition-src="compositions/frames/01-hook.html"
+        data-start="0"
+        data-duration="5.161"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-02-desorden"
+        class="scene"
+        data-composition-id="02-desorden"
+        data-composition-src="compositions/frames/02-desorden.html"
+        data-start="5.161"
+        data-duration="5.661"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-03-catalogo"
+        class="scene"
+        data-composition-id="03-catalogo"
+        data-composition-src="compositions/frames/03-catalogo.html"
+        data-start="10.322"
+        data-duration="7.742"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-04-organizar"
+        class="scene"
+        data-composition-id="04-organizar"
+        data-composition-src="compositions/frames/04-organizar.html"
+        data-start="18.064"
+        data-duration="5.661"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-05-adelgaza"
+        class="scene"
+        data-composition-id="05-adelgaza"
+        data-composition-src="compositions/frames/05-adelgaza.html"
+        data-start="23.225"
+        data-duration="2.581"
+        data-track-index="0"
+      ></div>
+
+      <div
+        id="el-06-corte"
+        class="scene"
+        data-composition-id="06-corte"
+        data-composition-src="compositions/frames/06-corte.html"
+        data-start="25.806"
+        data-duration="5.661"
+        data-track-index="1"
+      ></div>
+
+      <div
+        id="el-07-cierre"
+        class="scene"
+        data-composition-id="07b-comparativa"
+        data-composition-src="compositions/frames/07b-comparativa.html"
+        data-start="30.967"
+        data-duration="12.903"
+        data-track-index="0"
+      ></div>
+
+      <!-- BGM -->
+      <audio
+        id="el-bgm"
+        src="assets/musica.m4a"
+        data-start="0"
+        data-duration="43.870"
+        data-track-index="11"
+        data-volume="0.5"
+      ></audio>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      // ── frame transitions (injected by transitions.mjs) ──
+      (function () { var tl = window.__timelines["main"];
+        tl.to("#el-02-desorden", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 10.322);
+        tl.fromTo("#el-03-catalogo", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 10.322);
+        tl.to("#el-04-organizar", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 23.225);
+        tl.fromTo("#el-05-adelgaza", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 23.225);
+        tl.to("#el-06-corte", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 30.967);
+        tl.fromTo("#el-07-cierre", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 30.967);
+        tl.to({}, { duration: 43.870 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
+      })();
+    </script>
+  </body>
+</html>

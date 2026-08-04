@@ -1,0 +1,14 @@
+# Los renders NO se versionan: son 67 MB de vídeo que sale de estas mismas
+# fuentes con un comando. Lo que hay que conservar es la receta, no el plato.
+#
+#   npx hyperframes render -o renders/<nombre>.mp4 -q high
+#
+# Lo que SÍ va en git son los assets, y en particular la música: ese corte no
+# se regenera con nada. Son 17 compases empalmados a mano sobre el original,
+# con cruce de 60 ms en el segundo 39,5. Si se pierde, se pierde.
+renders/
+snapshots/
+
+# Caché de la herramienta.
+.hyperframes/
+node_modules/
