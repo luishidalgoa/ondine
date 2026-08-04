@@ -2,16 +2,18 @@
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
 
-// El sitio se publica en GitHub Pages desde el mismo repo, así que cuelga de
-// /ondine.
+// El sitio vive en su propio dominio, así que se sirve desde la raíz y no
+// cuelga de ninguna subcarpeta. Todo lo demás se compone a partir de estas dos
+// constantes; si algún día cambia el dominio, se tocan aquí y ya está.
 //
-// Cuando `ondine.hdglabs.com` esté apuntando aquí, esto pasa a "" y ya está:
-// con dominio propio, Pages sirve desde la raíz. Es la ÚNICA línea que hay que
-// tocar, porque todo lo demás lo compone a partir de ella.
-const BASE = "/ondine";
+// El dominio también está en `public/CNAME`, que es de donde lo lee GitHub
+// Pages en cada despliegue. Si se quita ese fichero, Pages vuelve solo a
+// luishidalgoa.github.io y el sitio se cae, porque la base ya no coincide.
+const BASE = "";
+const SITIO = "https://ondine.hdglabs.com";
 
 export default defineConfig({
-  site: "https://luishidalgoa.github.io",
+  site: SITIO,
   base: BASE,
 
   // El inglés es el idioma por defecto y va sin prefijo. Ondine se distribuye

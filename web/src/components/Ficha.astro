@@ -25,7 +25,7 @@ const { ficha, indice, estado = "ambos" } = Astro.props;
 
 // Se busca el fichero de verdad en la carpeta, sin exigir un nombre clavado.
 // Si no hay ninguno, no se pinta la etiqueta <img> siquiera.
-const imagen = fotograma(ficha.episodio, import.meta.env.BASE_URL);
+const imagen = fotograma(ficha.episodio);
 
 const idioma = idiomaDe(Astro.currentLocale);
 const t = textos(idioma);

@@ -30,7 +30,7 @@ interface Props {
   titulo?: string;
 }
 const { titulo } = Astro.props;
-const base = import.meta.env.BASE_URL;
+import { ruta } from "../lib/rutas";
 const t = textos(Astro.currentLocale);
 ---
 
@@ -44,7 +44,7 @@ const t = textos(Astro.currentLocale);
       <div class="marco-video" data-marco>
         <video
           data-video
-          poster={`${base}/spot-portada.jpg`}
+          poster={ruta("spot-portada.jpg")}
           preload="metadata"
           muted
           loop
@@ -52,9 +52,9 @@ const t = textos(Astro.currentLocale);
           width="1920"
           height="1080"
         >
-          <source src={`${base}/spot-ondine.mp4`} type="video/mp4" />
+          <source src={ruta("spot-ondine.mp4")} type="video/mp4" />
           {t.spot.sinVideo}
-          <a href={`${base}/spot-ondine.mp4`}>{t.spot.descargarSpot}</a>.
+          <a href={ruta("spot-ondine.mp4")}>{t.spot.descargarSpot}</a>.
         </video>
 
         <button

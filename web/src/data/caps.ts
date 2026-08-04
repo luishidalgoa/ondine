@@ -1,5 +1,6 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
+import { ruta } from "../lib/rutas";
 
 // Resuelve el fotograma de cada episodio leyendo la carpeta EN TIEMPO DE
 // COMPILACIÓN, en vez de dar por hecho un nombre exacto.
@@ -62,12 +63,12 @@ function mapear(): Map<string, string> {
 const CAPS = mapear();
 
 /** Devuelve la ruta pública del fotograma, o null si todavía no está puesto. */
-export function fotograma(episodio: string, base: string): string | null {
+export function fotograma(episodio: string): string | null {
   const codigo = leerCodigo(episodio);
   const fichero = codigo ? CAPS.get(codigo) : undefined;
   if (!fichero) return null;
   // El nombre puede traer espacios o acentos, así que se codifica.
-  return `${base}/img/caps/${encodeURIComponent(fichero)}`;
+  return ruta(`img/caps/${encodeURIComponent(fichero)}`);
 }
 
 /** Para poder avisar por consola de cuántos faltan al compilar. */

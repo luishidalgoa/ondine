@@ -4,6 +4,7 @@ import Marca from "../components/Marca.astro";
 import FondoGradiente from "../components/FondoGradiente.astro";
 import SelectorIdioma from "../components/SelectorIdioma.astro";
 import { idiomaDe, textos } from "../i18n/textos";
+import { ruta, rutaAbsoluta } from "../lib/rutas";
 import { siGithub } from "simple-icons";
 
 interface Props {
@@ -11,7 +12,6 @@ interface Props {
   descripcion: string;
 }
 const { titulo, descripcion } = Astro.props;
-const base = import.meta.env.BASE_URL;
 const idioma = idiomaDe(Astro.currentLocale);
 const t = textos(idioma);
 
@@ -20,15 +20,15 @@ const REPO = "https://github.com/luishidalgoa/ondine";
 // Cada idioma tiene su portada y su «sobre mí». El selector necesita saber
 // estas rutas y los buscadores también, para no tratar las dos versiones como
 // contenido duplicado.
-const PORTADA = idioma === "en" ? `${base}/` : `${base}/es/`;
-const SOBRE_MI = idioma === "en" ? `${base}/about` : `${base}/es/sobre-mi`;
+const PORTADA = idioma === "en" ? ruta() : ruta("es/");
+const SOBRE_MI = idioma === "en" ? ruta("about") : ruta("es/sobre-mi");
 
 // `x-default` es la que se sirve a quien no encaja en ningún idioma declarado,
 // así que apunta al que va sin prefijo.
 const ALTERNAS = [
-  { hreflang: "en", href: new URL(`${base}/`, Astro.site).href },
-  { hreflang: "es", href: new URL(`${base}/es/`, Astro.site).href },
-  { hreflang: "x-default", href: new URL(`${base}/`, Astro.site).href },
+  { hreflang: "en", href: rutaAbsoluta("", Astro.site) },
+  { hreflang: "es", href: rutaAbsoluta("es/", Astro.site) },
+  { hreflang: "x-default", href: rutaAbsoluta("", Astro.site) },
 ];
 ---
 
@@ -41,7 +41,7 @@ const ALTERNAS = [
     <meta name="description" content={descripcion} />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#161826" />
-    <link rel="icon" type="image/png" href={`${base}/icon.png`} />
+    <link rel="icon" type="image/png" href={ruta("icon.png")} />
 
     {ALTERNAS.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
 

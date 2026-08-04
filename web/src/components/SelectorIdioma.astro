@@ -36,7 +36,7 @@ const BANDERAS: Record<string, string> = Object.fromEntries(
 
 const actual = idiomaDe(Astro.currentLocale);
 const t = textos(actual);
-const base = import.meta.env.BASE_URL;
+import { BASE, ruta } from "../lib/rutas";
 
 // La ruta equivalente en el otro idioma. Se calcula quitando el prefijo de
 // idioma y el de despliegue, y volviendo a montarlos: asi «/ondine/en/about»
@@ -50,14 +50,17 @@ const EQUIVALENTES: Record<string, Record<string, string>> = {
   "es/sobre-mi": { en: "about", es: "es/sobre-mi" },
 };
 
-const ruta = Astro.url.pathname
-  .replace(base, "")
+// Se llama `aqui` y no `ruta` porque `ruta` es la función que compone rutas y
+// se importa arriba. Con los dos nombres iguales, la constante tapaba a la
+// función y la compilación se caía con «ruta is not a function».
+const aqui = Astro.url.pathname
+  .replace(BASE, "")
   .replace(/^\/+|\/+$/g, "");
 
 const destino = (idioma: string) => {
-  const par = EQUIVALENTES[ruta];
+  const par = EQUIVALENTES[aqui];
   const trozo = par ? par[idioma] : idioma === "en" ? "" : "es/";
-  return `${base}/${trozo}`.replace(/\/{2,}/g, "/");
+  return ruta(trozo);
 };
 ---
 
