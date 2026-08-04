@@ -1,7 +1,8 @@
 <Window x:Class="Ondine.RenameWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Renombrar salida" Width="820" Height="640" WindowStyle="None" ResizeMode="CanResize"
+        xmlns:i="clr-namespace:Ondine.Localizacion"
+        Title="{i:T RenameTitulo}" Width="820" Height="640" WindowStyle="None" ResizeMode="CanResize"
         MinWidth="700" MinHeight="520" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="Transparent">
   <!-- 8 px: el mismo radio que Windows 11 recorta por fuera, para que el borde dibujado
@@ -19,8 +20,8 @@
 
       <!-- header (arrastrable) -->
       <Grid x:Name="header" Grid.Row="0" Height="46" Background="Transparent">
-        <TextBlock Text="Renombrar salida" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Margin="18,0,0,0"/>
-        <TextBlock Text="se aplica al archivo comprimido de cada vídeo, según se procesa" FontSize="11"
+        <TextBlock Text="{i:T RenameTitulo}" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Margin="18,0,0,0"/>
+        <TextBlock Text="{i:T RenameSubtitulo}" FontSize="11"
                    Foreground="{StaticResource Neutral600}" VerticalAlignment="Center" Margin="150,2,0,0"/>
         <Button x:Name="btnX" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
                 Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="Hand" Foreground="{StaticResource Neutral500}">
@@ -33,7 +34,7 @@
       <Grid Grid.Row="1" Margin="18,0,18,12">
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0">
-          <TextBlock Text="Buscar" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+          <TextBlock Text="{i:T RenameBuscar}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
           <TextBox x:Name="txtSearch"/>
           <Popup x:Name="popSearch" PlacementTarget="{Binding ElementName=txtSearch}" Placement="Bottom"
                  AllowsTransparency="True" StaysOpen="False" Focusable="False" PopupAnimation="Fade"
@@ -57,7 +58,7 @@
           </Popup>
         </StackPanel>
         <StackPanel Grid.Column="2">
-          <TextBlock Text="Reemplazar por" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+          <TextBlock Text="{i:T RenameReemplazarPor}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
           <TextBox x:Name="txtReplace"/>
           <Popup x:Name="popReplace" PlacementTarget="{Binding ElementName=txtReplace}" Placement="Bottom"
                  AllowsTransparency="True" StaysOpen="False" Focusable="False" PopupAnimation="Fade"
@@ -86,45 +87,45 @@
       <Border Grid.Row="2" Margin="18,0,18,12" Background="{StaticResource Surface}" CornerRadius="8" Padding="12,10">
         <StackPanel>
           <WrapPanel>
-            <CheckBox x:Name="chkRegex" Content="Usar expresiones regulares" Margin="0,0,18,6"/>
-            <CheckBox x:Name="chkCase" Content="Distinguir mayúsculas y minúsculas" Margin="0,0,18,6"/>
-            <CheckBox x:Name="chkAll" Content="Todas las coincidencias" Margin="0,0,18,6"/>
-            <CheckBox x:Name="chkEnum" Content="Enumerar elementos" Margin="0,0,18,6"/>
-            <CheckBox x:Name="chkRand" Content="Cadenas aleatorias" Margin="0,0,0,6"/>
+            <CheckBox x:Name="chkRegex" Content="{i:T RenameUsarRegex}" Margin="0,0,18,6"/>
+            <CheckBox x:Name="chkCase" Content="{i:T RenameDistinguirMayusculas}" Margin="0,0,18,6"/>
+            <CheckBox x:Name="chkAll" Content="{i:T RenameTodasCoincidencias}" Margin="0,0,18,6"/>
+            <CheckBox x:Name="chkEnum" Content="{i:T RenameEnumerar}" Margin="0,0,18,6"/>
+            <CheckBox x:Name="chkRand" Content="{i:T RenameAleatorias}" Margin="0,0,0,6"/>
           </WrapPanel>
           <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-            <TextBlock Text="Aplicar a" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock Text="{i:T RenameAplicarA}" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <ComboBox x:Name="cboTarget" Width="180" SelectedIndex="0">
-              <ComboBoxItem Content="Solo el nombre"/>
-              <ComboBoxItem Content="Solo la extensión"/>
-              <ComboBoxItem Content="Nombre y extensión"/>
+              <ComboBoxItem Content="{i:T RenameSoloNombre}"/>
+              <ComboBoxItem Content="{i:T RenameSoloExtension}"/>
+              <ComboBoxItem Content="{i:T RenameNombreYExtension}"/>
             </ComboBox>
-            <TextBlock Text="Formato del texto" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center" Margin="22,0,8,0"/>
+            <TextBlock Text="{i:T RenameFormatoTexto}" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center" Margin="22,0,8,0"/>
             <ComboBox x:Name="cboCase" Width="200" SelectedIndex="0">
-              <ComboBoxItem Content="Sin cambio"/>
-              <ComboBoxItem Content="minúsculas"/>
-              <ComboBoxItem Content="MAYÚSCULAS"/>
-              <ComboBoxItem Content="Primera letra del nombre"/>
-              <ComboBoxItem Content="Mayúscula En Cada Palabra"/>
+              <ComboBoxItem Content="{i:T RenameFormatoNinguno}"/>
+              <ComboBoxItem Content="{i:T RenameFormatoMinusculas}"/>
+              <ComboBoxItem Content="{i:T RenameFormatoMayusculas}"/>
+              <ComboBoxItem Content="{i:T RenameFormatoPrimeraLetra}"/>
+              <ComboBoxItem Content="{i:T RenameFormatoCadaPalabra}"/>
             </ComboBox>
           </StackPanel>
-          <TextBlock x:Name="lblExtWarn" Text="Ojo: la extensión determina el formato real del archivo; cambiarla no reconvierte el vídeo."
+          <TextBlock x:Name="lblExtWarn" Text="{i:T RenameAvisoExtension}"
                      FontSize="10.5" Foreground="#E0B341" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed"/>
         </StackPanel>
       </Border>
 
       <!-- Variables disponibles -->
-      <Expander Grid.Row="3" Margin="18,0,18,10" Header="Variables disponibles" Foreground="{StaticResource Neutral500}" FontSize="11.5">
+      <Expander Grid.Row="3" Margin="18,0,18,10" Header="{i:T RenameVariablesTitulo}" Foreground="{StaticResource Neutral500}" FontSize="11.5">
         <Border Background="{StaticResource Field}" CornerRadius="6" Padding="12,10" Margin="0,6,0,0">
           <StackPanel>
             <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11" Foreground="{StaticResource Neutral400}" TextWrapping="Wrap"
-                       Text="Contadores (con «Enumerar elementos»):  ${}   ${start=N}   ${increment=N}   ${padding=N}   ·  combinables: ${padding=4;increment=2;start=10}"/>
+                       Text="{i:T RenameVariablesContadores}"/>
             <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11" Foreground="{StaticResource Neutral400}" TextWrapping="Wrap" Margin="0,6,0,0"
-                       Text="Fecha del original:  $YYYY $YY $Y  $MMMM $MMM $MM $M  $DDDD $DDD $DD $D  $hh $h  $mm $m  $ss $s  $fff $ff $f"/>
+                       Text="{i:T RenameVariablesFecha}"/>
             <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11" Foreground="{StaticResource Neutral400}" TextWrapping="Wrap" Margin="0,6,0,0"
-                       Text="Regex:  grupos de captura $1 … $9   ·   $$ = un dólar literal"/>
+                       Text="{i:T RenameVariablesRegex}"/>
             <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11" Foreground="{StaticResource Neutral400}" TextWrapping="Wrap" Margin="0,6,0,0"
-                       Text="Aleatorio (con «Cadenas aleatorias»):  ${rstringalnum=N}  ${rstringalpha=N}  ${rstringdigit=N}  ${ruuidv4}"/>
+                       Text="{i:T RenameVariablesAleatorio}"/>
           </StackPanel>
         </Border>
       </Expander>
@@ -133,14 +134,14 @@
       <Border Grid.Row="4" Margin="18,0,18,0" Background="{StaticResource Surface}" CornerRadius="8" Padding="0,4">
         <DockPanel>
           <Grid DockPanel.Dock="Top" Margin="12,6,12,6">
-            <TextBlock Text="VISTA PREVIA" FontSize="10" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+            <TextBlock Text="{i:T RenameVistaPrevia}" FontSize="10" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
             <TextBlock x:Name="lblCount" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
           </Grid>
           <ListView x:Name="lstPrev" Style="{StaticResource TableView}" SelectionMode="Single">
             <ListView.View>
               <GridView ColumnHeaderContainerStyle="{StaticResource ColHeader}">
-                <GridViewColumn Header="ORIGINAL" Width="360" DisplayMemberBinding="{Binding Original}"/>
-                <GridViewColumn Header="NUEVO NOMBRE" Width="380">
+                <GridViewColumn Header="{i:T RenameColumnaOriginal}" Width="360" DisplayMemberBinding="{Binding Original}"/>
+                <GridViewColumn Header="{i:T RenameColumnaNuevo}" Width="380">
                   <GridViewColumn.CellTemplate>
                     <DataTemplate>
                       <TextBlock Text="{Binding Nuevo}" Foreground="{Binding Color}"/>
@@ -156,11 +157,11 @@
       <!-- footer -->
       <Border Grid.Row="5" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0" Padding="18,12" Margin="0,12,0,0">
         <Grid>
-          <Button x:Name="btnClear" Style="{StaticResource BtnGhost}" Content="Quitar regla" HorizontalAlignment="Left"
-                  ToolTip="Desactiva el renombrado: la salida conservará el nombre original"/>
+          <Button x:Name="btnClear" Style="{StaticResource BtnGhost}" Content="{i:T RenameQuitarRegla}" HorizontalAlignment="Left"
+                  ToolTip="{i:T RenameQuitarReglaAyuda}"/>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="btnCancel" Style="{StaticResource BtnSecondary}" Content="Cancelar" Width="100" Margin="0,0,8,0"/>
-            <Button x:Name="btnApply" Style="{StaticResource BtnPrimary}" Content="Aplicar" Width="110" IsDefault="True"/>
+            <Button x:Name="btnCancel" Style="{StaticResource BtnSecondary}" Content="{i:T Cancelar}" Width="100" Margin="0,0,8,0"/>
+            <Button x:Name="btnApply" Style="{StaticResource BtnPrimary}" Content="{i:T Aplicar}" Width="110" IsDefault="True"/>
           </StackPanel>
         </Grid>
       </Border>

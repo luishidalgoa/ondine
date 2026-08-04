@@ -1,7 +1,8 @@
 <Window x:Class="Ondine.FaltantesWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Qué falta" Width="720" Height="600" MinWidth="480" MinHeight="360"
+        xmlns:i="clr-namespace:Ondine.Localizacion"
+        Title="{i:T FaltantesTitulo}" Width="720" Height="600" MinWidth="480" MinHeight="360"
         WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterOwner"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
   <WindowChrome.WindowChrome>
@@ -19,7 +20,7 @@
       </Grid.RowDefinitions>
 
       <Grid Grid.Row="0" Height="38">
-        <TextBlock x:Name="lblTitulo" Text="Qué falta" FontSize="13.5" FontWeight="Medium"
+        <TextBlock x:Name="lblTitulo" Text="{i:T FaltantesTitulo}" FontSize="13.5" FontWeight="Medium"
                    VerticalAlignment="Center" Margin="16,0,0,0"/>
         <Button x:Name="btnCerrar" Style="{StaticResource BtnClose}" HorizontalAlignment="Right"
                 WindowChrome.IsHitTestVisibleInChrome="True">
@@ -36,7 +37,7 @@
              útil es qué queda de la que estás completando. El rótulo dice «Temporada» o «Año»
              según cómo las numere el catálogo (hay series que van por año de emisión). -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-          <TextBlock x:Name="lblTemporada" Text="Temporada" FontSize="12" VerticalAlignment="Center"
+          <TextBlock x:Name="lblTemporada" Text="{i:T FaltantesTemporada}" FontSize="12" VerticalAlignment="Center"
                      Foreground="{StaticResource Neutral400}" Margin="0,0,8,0"/>
           <ComboBox x:Name="cboTemporada" MinWidth="150" Height="30" VerticalContentAlignment="Center"/>
         </StackPanel>
@@ -45,7 +46,7 @@
                    Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>
         <CheckBox x:Name="chkTodas" Margin="0,8,0,0" FontSize="12"
                   Foreground="{StaticResource Neutral400}"
-                  Content="Incluir las temporadas que no he empezado"/>
+                  Content="{i:T FaltantesIncluirNoEmpezadas}"/>
       </StackPanel>
 
       <ListBox x:Name="lista" Grid.Row="2" Background="Transparent" BorderThickness="0"
@@ -95,9 +96,9 @@
       <Grid Grid.Row="3" Margin="16,10,16,14">
         <TextBlock x:Name="lblPie" FontSize="11" Foreground="{StaticResource Neutral500}"
                    VerticalAlignment="Center" TextWrapping="Wrap"
-                   Text="Se cuenta por historias: un capítulo con tres y solo dos en disco sale como incompleto."/>
+                   Text="{i:T FaltantesPie}"/>
         <Button x:Name="btnCopiar" Style="{StaticResource BtnSecondary}" HorizontalAlignment="Right"
-                Content="Copiar la lista" FontSize="12" Padding="12,5"/>
+                Content="{i:T FaltantesCopiarLista}" FontSize="12" Padding="12,5"/>
       </Grid>
     </Grid>
   </Border>

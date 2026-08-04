@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -76,11 +77,16 @@ public partial class MainWindow : Window
         try { marcaDev += " " + System.IO.File.GetLastWriteTime(Environment.ProcessPath!).ToString("dd/MM HH:mm"); }
         catch { /* sin ruta de proceso: basta con «dev» */ }
         lblVersion.Text = "v" + Updater.Current + marcaDev;
-        lblVersion.ToolTip = "Compilación local de desarrollo (no es la versión publicada en GitHub)";
+        lblVersion.ToolTip = Textos.Instancia.MainVersionDevTip;
 #else
         lblVersion.Text = "v" + Updater.Current;
 #endif
         _previewBtnContent = btnPreview.Content;   // para restaurar tras "Cancelar"
+
+        // Valores de partida que llevan dentro un dato (el segundo del timeline) o un código
+        // que no se traduce (el idioma de la pista): se escriben aquí y no en el XAML.
+        cboLang.Text = Textos.Instancia.MainIdiomaPistaPorDefecto;
+        lblPreviewAt.Text = string.Format(Textos.Instancia.MainPrevisualizarDesde, FmtTime(0));
 
         _settings = SettingsStore.Load();
         ApplySettings();
@@ -187,7 +193,7 @@ public partial class MainWindow : Window
         _scrubTimer.Tick += async (_, _) => { _scrubTimer.Stop(); await ShowScrubFrameAsync(); };
         sldPreview.ValueChanged += (_, _) =>
         {
-            lblPreviewAt.Text = $"Previsualizar desde {FmtTime((int)sldPreview.Value)}";
+            lblPreviewAt.Text = string.Format(Textos.Instancia.MainPrevisualizarDesde, FmtTime((int)sldPreview.Value));
             _scrubTimer.Stop(); _scrubTimer.Start();   // debounce: muestra el fotograma al soltar/pausar
         };
 
@@ -205,7 +211,7 @@ public partial class MainWindow : Window
         {
             if (cboPreset.SelectedItem == null) cboLang.Text = _settings.DefaultLang;
             if (!await Engine.ToolsAvailableAsync())
-                DialogWindow.Aviso(this, "Falta FFmpeg", "No se encuentra FFmpeg. Instálalo (por ejemplo con:  winget install Gyan.FFmpeg) y vuelve a abrir la app.");
+                DialogWindow.Aviso(this, Textos.Instancia.MainFaltaFfmpegTitulo, Textos.Instancia.MainFaltaFfmpegTexto);
             if (_settings.CheckUpdatesOnStart) await CheckUpdateAsync(manual: false);
         };
     }
@@ -238,7 +244,7 @@ public partial class MainWindow : Window
             _settings = dlg.Result;
             SettingsStore.Save(_settings);
             ApplySettings();
-            lblProg.Text = "Preferencias guardadas.";
+            lblProg.Text = Textos.Instancia.MainPreferenciasGuardadas;
         }
     }
 
@@ -261,8 +267,8 @@ public partial class MainWindow : Window
             SettingsStore.Save(_settings);
             UpdateRenameStatus();
             lblProg.Text = _settings.Rename.HasEffect
-                ? "Regla de renombrado activa."
-                : "Renombrado desactivado: la salida conserva el nombre original.";
+                ? Textos.Instancia.MainRenombradoActivo
+                : Textos.Instancia.MainRenombradoDesactivado;
         }
     }
 
@@ -275,52 +281,50 @@ public partial class MainWindow : Window
     private void UpdateRenameStatus()
     {
         bool on = _settings.Rename.HasEffect;
-        lblRename.Text = on ? "Renombrar salida ✓" : "Renombrar salida";
+        lblRename.Text = on ? Textos.Instancia.MainRenombrarSalidaActiva : Textos.Instancia.MainRenombrarSalida;
         lblRename.Foreground = on ? (Brush)FindResource("Accent300") : (Brush)FindResource("Text");
     }
 
-    private void ShowAbout() => DialogWindow.Aviso(this, "Acerca de Ondine", $"Ondine v{Updater.Current}\n\n" +
-        "Prepara tu biblioteca antes de que Plex o Jellyfin la escaneen: comprime, ordena contra un\n" +
-        "catálogo y parte los episodios que traen varias historias.\n\n" +
-        "Antes se llamaba ShrinkStudio. Usa FFmpeg por debajo. Nunca toca los originales salvo que\n" +
-        "lo pidas explícitamente.");
+    private void ShowAbout() => DialogWindow.Aviso(this, Textos.Instancia.MainMenuAcercaDe,
+        string.Format(Textos.Instancia.MainAcercaDeTexto, Updater.Current));
 
     /// <summary>Modal antes de comprimir: ¿enviar cada original a la Papelera al terminar? Devuelve (proceder, borrar, recordar).</summary>
     private (bool proceed, bool delete, bool remember) AskAfterCompress(int count)
     {
         var win = new Window
         {
-            Title = "Comprimir", Width = 470, SizeToContent = SizeToContent.Height, Owner = this,
+            Title = Textos.Instancia.MainPaginaComprimir, Width = 470, SizeToContent = SizeToContent.Height, Owner = this,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.NoResize,
             WindowStyle = WindowStyle.None, Background = Brushes.Transparent, AllowsTransparency = true,
         };
         var panel = new StackPanel { Margin = new Thickness(22) };
         panel.Children.Add(new TextBlock
         {
-            Text = $"Vas a comprimir {count} archivo(s).", FontSize = 14, FontWeight = FontWeights.Medium,
+            Text = string.Format(Textos.Instancia.MainAvisoComprimirCuantos, count),
+            FontSize = 14, FontWeight = FontWeights.Medium,
             Foreground = (Brush)FindResource("Text"), Margin = new Thickness(0, 0, 0, 14),
         });
         var chkDel = new CheckBox
         {
-            Content = "Enviar cada original a la Papelera cuando su comprimido esté listo",
+            Content = Textos.Instancia.MainAvisoComprimirPapelera,
             Foreground = (Brush)FindResource("Neutral300"), Margin = new Thickness(0, 0, 0, 9),
         };
         var chkRemember = new CheckBox
         {
-            Content = "No volver a preguntar (se cambia en Preferencias)",
+            Content = Textos.Instancia.MainAvisoComprimirNoPreguntar,
             Foreground = (Brush)FindResource("Neutral500"),
         };
         panel.Children.Add(chkDel);
         panel.Children.Add(chkRemember);
         panel.Children.Add(new TextBlock
         {
-            Text = "Los originales van a la Papelera de reciclaje (recuperables), archivo por archivo según van terminando — nunca al final ni de forma definitiva.",
+            Text = Textos.Instancia.MainAvisoComprimirNota,
             FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = (Brush)FindResource("Neutral600"),
             Margin = new Thickness(0, 12, 0, 16),
         });
         var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var cancel = new Button { Content = "Cancelar", Width = 100, Style = (Style)FindResource("BtnSecondary"), Margin = new Thickness(0, 0, 8, 0), IsCancel = true };
-        var okb = new Button { Content = "Comprimir", Width = 110, Style = (Style)FindResource("BtnPrimary"), IsDefault = true };
+        var cancel = new Button { Content = Textos.Instancia.Cancelar, Width = 100, Style = (Style)FindResource("BtnSecondary"), Margin = new Thickness(0, 0, 8, 0), IsCancel = true };
+        var okb = new Button { Content = Textos.Instancia.MainPaginaComprimir, Width = 110, Style = (Style)FindResource("BtnPrimary"), IsDefault = true };
         row.Children.Add(cancel);
         row.Children.Add(okb);
         panel.Children.Add(row);
@@ -338,7 +342,7 @@ public partial class MainWindow : Window
     // ---------- selección de rutas ----------
     private void PickFolder(TextBox target)
     {
-        var d = new OpenFolderDialog { Title = "Elige la carpeta" };
+        var d = new OpenFolderDialog { Title = Textos.Instancia.MainElegirCarpetaTitulo };
         if (d.ShowDialog(this) == true) target.Text = d.FolderName;
     }
     private async Task AddFilesDialogAsync()
@@ -346,8 +350,8 @@ public partial class MainWindow : Window
         var d = new OpenFileDialog
         {
             Multiselect = true,
-            Title = "Elige uno o varios vídeos (Ctrl/Shift para seleccionar varios)",
-            Filter = "Vídeos|*.mkv;*.mp4;*.avi;*.m4v;*.mov;*.wmv;*.webm;*.mpg;*.mpeg;*.flv|Todos|*.*"
+            Title = Textos.Instancia.MainElegirVideosTitulo,
+            Filter = Textos.Instancia.MainFiltroVideos
         };
         if (d.ShowDialog(this) == true) await AddFilesAsync(d.FileNames);
     }
@@ -373,7 +377,7 @@ public partial class MainWindow : Window
         }
         if (nuevos.Count == 0) return;
         foreach (var row in nuevos) lst.SelectedItems.Add(row);   // los recién añadidos entran seleccionados
-        lblLangHint.Text = " detectando…";
+        lblLangHint.Text = Textos.Instancia.MainDetectando;
         await ProbeRowsAsync(nuevos);
     }
     // ---------- arrastrar y soltar desde el Explorador ----------
@@ -388,7 +392,7 @@ public partial class MainWindow : Window
         e.Handled = true;
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         var vids = ShellIntegration.ExpandVideos(paths, chkRec.IsChecked == true);
-        if (vids.Count == 0) { lblProg.Text = "Ahí no había vídeos que añadir."; return; }
+        if (vids.Count == 0) { lblProg.Text = Textos.Instancia.MainSinVideosQueAnadir; return; }
         AddFilesFromShell(vids);
     }
 
@@ -406,13 +410,13 @@ public partial class MainWindow : Window
             txtSrc.Text = Path.GetDirectoryName(nuevos[0]) ?? "";
 
         int antes = _rows.Count;
-        lblProg.Text = $"Añadiendo {nuevos.Count} vídeo(s) desde el Explorador…";
+        lblProg.Text = string.Format(Textos.Instancia.MainAnadiendoDesdeExplorador, nuevos.Count);
         await AddFilesAsync(nuevos);
 
         int añadidos = _rows.Count - antes;
         lblProg.Text = añadidos == 0
-            ? "Esos vídeos ya estaban en la lista."
-            : $"{añadidos} vídeo(s) añadidos desde el Explorador.";
+            ? Textos.Instancia.MainYaEstabanEnLista
+            : string.Format(Textos.Instancia.MainAnadidosDesdeExplorador, añadidos);
     }
 
     private string EffectiveOutput()
@@ -441,11 +445,11 @@ public partial class MainWindow : Window
         var src = txtSrc.Text.Trim();
         if (string.IsNullOrEmpty(src) || (!Directory.Exists(src) && !File.Exists(src)))
         {
-            DialogWindow.Aviso(this, "Origen", "Indica un archivo o carpeta de origen válido.");
+            DialogWindow.Aviso(this, Textos.Instancia.MainOrigen, Textos.Instancia.MainOrigenInvalido);
             return;
         }
         _rows.Clear(); pnlALang.Children.Clear(); pnlSLang.Children.Clear();
-        lblLangHint.Text = " detectando…";
+        lblLangHint.Text = Textos.Instancia.MainDetectando;
 
         var outDir = EffectiveOutput();
         List<string> files;
@@ -471,12 +475,12 @@ public partial class MainWindow : Window
                 SizeMB = $"{fi.Length / 1048576.0:n0} MB",
             });
         }
-        lblProg.Text = $"{_rows.Count} vídeo(s) encontrados. Leyendo pistas…";
-        if (_rows.Count == 0) { lblLangHint.Text = "(nada que analizar)"; return; }
+        lblProg.Text = string.Format(Textos.Instancia.MainVideosEncontrados, _rows.Count);
+        if (_rows.Count == 0) { lblLangHint.Text = Textos.Instancia.MainNadaQueAnalizar; return; }
         lst.SelectAll();   // por defecto se procesan todos; el usuario acota con la selección
 
         await ProbeRowsAsync(_rows.ToList());
-        lblLangHint.Text = pnlSLang.Children.Count == 0 ? "(sin subtítulos detectados)" : "";
+        lblLangHint.Text = pnlSLang.Children.Count == 0 ? Textos.Instancia.MainSinSubtitulosDetectados : "";
     }
 
     /// <summary>Lee las pistas de cada fila con ffprobe y va poblando los idiomas detectados.</summary>
@@ -493,7 +497,9 @@ public partial class MainWindow : Window
             // avisa aquí y no se preselecciona, en vez de descubrirlo al lanzar la tanda.
             int totalKbps = row.DurationSec > 0 ? (int)(row.Bytes * 8.0 / row.DurationSec / 1000.0) : 0;
             row.YaComprimido = Engine.AlreadyCompressed(info.Codec, totalKbps);
-            row.Estado = row.YaComprimido ? $"Ya en {info.Codec.ToUpperInvariant()}" : "Pendiente";
+            row.Estado = row.YaComprimido
+                ? string.Format(Textos.Instancia.MainEstadoYaEn, info.Codec.ToUpperInvariant())
+                : Textos.Instancia.Pendiente;
             row.Width = info.Width; row.Height = info.Height; row.Fps = info.Fps;
             row.DurationSec = info.DurationSec;
             row.VideoBitrateKbps = info.VideoBitrateKbps; row.AudioBitrateKbps = info.AudioBitrateKbps;
@@ -511,11 +517,12 @@ public partial class MainWindow : Window
         {
             lst.UnselectAll();
             foreach (var r in _rows.Where(r => !r.YaComprimido)) lst.SelectedItems.Add(r);
-            lblProg.Text = $"{_rows.Count} vídeo(s) · {utiles} por comprimir · {_rows.Count - utiles} ya comprimidos (sin marcar).";
+            lblProg.Text = string.Format(Textos.Instancia.MainResumenPreseleccion,
+                                         _rows.Count, utiles, _rows.Count - utiles);
         }
         else lblProg.Text = utiles == 0 && _rows.Count > 0
-            ? $"{_rows.Count} vídeo(s): todos están ya bien comprimidos."
-            : $"{_rows.Count} vídeo(s) en la lista.";
+            ? string.Format(Textos.Instancia.MainResumenTodosComprimidos, _rows.Count)
+            : string.Format(Textos.Instancia.MainResumenEnLista, _rows.Count);
     }
 
     /// <summary>Llena el combo de idioma principal con los idiomas de audio realmente detectados.</summary>
@@ -557,10 +564,12 @@ public partial class MainWindow : Window
         UpdateEstimate();
         sldPreview.Maximum = Math.Max(0, r.DurationSec - 10);
         if (sldPreview.Value > sldPreview.Maximum) sldPreview.Value = 0;
-        lblPreviewAt.Text = $"Previsualizar desde {FmtTime((int)sldPreview.Value)}";
+        lblPreviewAt.Text = string.Format(Textos.Instancia.MainPrevisualizarDesde, FmtTime((int)sldPreview.Value));
         lblPrevName.Text = r.Name;
-        lblPrevInfo.Text = $"{r.Dir}  ·  {r.SizeMB}  ·  {r.Dur}\n{r.Codec}  ·  audio: {r.Audio}" +
-                           (string.IsNullOrEmpty(r.Subs) ? "" : $"  ·  subs: {r.Subs}");
+        lblPrevInfo.Text = string.Format(Textos.Instancia.MainDetalleInfo, r.Dir, r.SizeMB, r.Dur, r.Codec, r.Audio)
+                         + (string.IsNullOrEmpty(r.Subs)
+                                ? ""
+                                : string.Format(Textos.Instancia.MainDetalleSubs, r.Subs));
 
         await ShowScrubFrameAsync();   // muestra el fotograma del punto de previsualización
     }
@@ -698,8 +707,8 @@ public partial class MainWindow : Window
         if (nombre == null)
         {
             lblProg.Text = _pilaPapelera.Count == 0
-                ? "No hay nada que recuperar."
-                : "No se pudo recuperar (su sitio ya está ocupado).";
+                ? Textos.Instancia.MainNadaQueRecuperar
+                : Textos.Instancia.MainNoSePudoRecuperar;
             return;
         }
         if (_pilaPapelera.Count > 0 && Path.GetFileName(_pilaPapelera.Peek().Path) == nombre)
@@ -707,7 +716,7 @@ public partial class MainWindow : Window
             var r = _pilaPapelera.Pop();
             if (!_rows.Contains(r)) _rows.Add(r);
         }
-        lblProg.Text = $"Recuperado «{nombre}».";
+        lblProg.Text = string.Format(Textos.Instancia.MainRecuperado, nombre);
     }
 
     /// <summary>Con el botón derecho, si la fila no estaba seleccionada pasa a serlo (como el explorador).</summary>
@@ -727,8 +736,8 @@ public partial class MainWindow : Window
         if (sel.Count == 0) return;
         foreach (var r in sel) _rows.Remove(r);
         lblProg.Text = sel.Count == 1
-            ? "1 vídeo quitado de la lista (el archivo sigue en su sitio)."
-            : $"{sel.Count} vídeos quitados de la lista (los archivos siguen en su sitio).";
+            ? Textos.Instancia.MainQuitadoUno
+            : string.Format(Textos.Instancia.MainQuitadosVarios, sel.Count);
     }
 
     /// <summary>
@@ -740,19 +749,18 @@ public partial class MainWindow : Window
     {
         if (SelectedRows().FirstOrDefault() is not { } r || !File.Exists(r.Path)) return;
 
-        lblProg.Text = "Leyendo las pistas…";
+        lblProg.Text = Textos.Instancia.MainLeyendoPistas;
         var (pistas, dur) = await _engine.PistasDeAsync(r.Path);
         if (pistas.Count == 0)
         {
             lblProg.Text = "";
-            DialogWindow.Aviso(this, "Pistas", "No se han podido leer las pistas de este fichero.");
+            DialogWindow.Aviso(this, Textos.Instancia.MainPistasTitulo, Textos.Instancia.MainPistasNoLeidas);
             return;
         }
         if (pistas.Count(p => p.Tipo != TipoPista.Video) == 0)
         {
             lblProg.Text = "";
-            DialogWindow.Aviso(this, "Pistas",
-                "Este fichero solo trae vídeo: no hay pistas de audio ni de subtítulos que quitar.");
+            DialogWindow.Aviso(this, Textos.Instancia.MainPistasTitulo, Textos.Instancia.MainPistasSoloVideo);
             return;
         }
 
@@ -766,7 +774,7 @@ public partial class MainWindow : Window
         var ruta = r.Path;
         _rows.Remove(r);
         await AddFilesAsync(new[] { ruta });
-        lblProg.Text = $"Pistas quitadas de «{Path.GetFileName(ruta)}».";
+        lblProg.Text = string.Format(Textos.Instancia.MainPistasQuitadas, Path.GetFileName(ruta));
     }
 
     private void UpdateContextMenu()
@@ -776,8 +784,12 @@ public partial class MainWindow : Window
         miCtxOpenFolder.IsEnabled = n > 0;
         miCtxInvert.IsEnabled = _rows.Count > 0;
         miCtxSelectAll.IsEnabled = _rows.Count > 0;
-        miCtxRemove.Header = n > 1 ? $"Quitar {n} de la lista" : "Quitar de la lista";
-        miCtxRecycle.Header = n > 1 ? $"Enviar {n} archivos a la Papelera…" : "Enviar el archivo a la Papelera…";
+        miCtxRemove.Header = n > 1
+            ? string.Format(Textos.Instancia.MainCtxQuitarVarias, n)
+            : Textos.Instancia.MainCtxQuitar;
+        miCtxRecycle.Header = n > 1
+            ? string.Format(Textos.Instancia.MainCtxPapeleraVarios, n)
+            : Textos.Instancia.MainCtxPapelera;
     }
 
     private void OpenContainingFolder()
@@ -787,7 +799,7 @@ public partial class MainWindow : Window
         {
             Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{r.Path}\"") { UseShellExecute = true });
         }
-        catch (Exception ex) { lblProg.Text = "No se pudo abrir la carpeta: " + ex.Message; }
+        catch (Exception ex) { lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoAbrirCarpeta, ex.Message); }
     }
 
     private void CopySelectedPaths()
@@ -797,9 +809,11 @@ public partial class MainWindow : Window
         try
         {
             Clipboard.SetText(string.Join(Environment.NewLine, sel.Select(r => r.Path)));
-            lblProg.Text = sel.Count == 1 ? "Ruta copiada." : $"{sel.Count} rutas copiadas.";
+            lblProg.Text = sel.Count == 1
+                ? Textos.Instancia.MainRutaCopiada
+                : string.Format(Textos.Instancia.MainRutasCopiadas, sel.Count);
         }
-        catch (Exception ex) { lblProg.Text = "No se pudo copiar: " + ex.Message; }
+        catch (Exception ex) { lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoCopiar, ex.Message); }
     }
 
     private void InvertSelection()
@@ -894,17 +908,16 @@ public partial class MainWindow : Window
         var est = Estimator.Compute(r, BuildOptions());
         if (!est.Valid) { ClearEstimate(); return; }
         lblEstSize.Text = "≈ " + Human(est.EstBytes);
-        lblEstSaving.Text = $"−{est.SavedPct}% · ahorras {Human(est.SavedBytes)}";
+        lblEstSaving.Text = string.Format(Textos.Instancia.MainEstAhorroResumen, est.SavedPct, Human(est.SavedBytes));
         SetBar(barVQ, est.VideoQuality); SetBar(barVS, est.VideoSaving);
         SetBar(barAQ, est.AudioQuality); SetBar(barAS, est.AudioSaving);
-        lblEstDetail.Text = $"Vídeo ≈ {est.EstVideoKbps} kbps · audio ≈ {est.EstAudioKbps} kbps. " +
-                            "Estimación aproximada; el resultado real depende del contenido.";
+        lblEstDetail.Text = string.Format(Textos.Instancia.MainEstDetalle, est.EstVideoKbps, est.EstAudioKbps);
     }
 
     private void ClearEstimate()
     {
         lblEstSize.Text = "—";
-        lblEstSaving.Text = "Selecciona un vídeo analizado";
+        lblEstSaving.Text = Textos.Instancia.MainEstSinSeleccion;
         foreach (var b in new[] { barVQ, barVS, barAQ, barAS }) SetBar(b, 0);
         lblEstDetail.Text = "";
     }
@@ -937,26 +950,26 @@ public partial class MainWindow : Window
     {
         if (lst.SelectedItem is not VideoRow r || !r.Probed)
         {
-            DialogWindow.Aviso(this, "Medir", "Selecciona un vídeo analizado.");
+            DialogWindow.Aviso(this, Textos.Instancia.MainMedirTitulo, Textos.Instancia.MainSeleccionaVideoAnalizado);
             return;
         }
-        if (_running) { DialogWindow.Aviso(this, "Medir", "Espera a que termine la compresión en curso."); return; }
+        if (_running) { DialogWindow.Aviso(this, Textos.Instancia.MainMedirTitulo, Textos.Instancia.MainMedirEspera); return; }
 
         var opt = BuildOptions();
-        if (opt.AudioOnly) { DialogWindow.Aviso(this, "Medir", "En modo «solo audio» el tamaño ya es exacto: no hace falta medir."); return; }
+        if (opt.AudioOnly) { DialogWindow.Aviso(this, Textos.Instancia.MainMedirTitulo, Textos.Instancia.MainMedirSoloAudio); return; }
 
         btnMeasure.IsEnabled = false;
         progRow.Visibility = Visibility.Visible; bar.Value = 0;
-        lblProg.Text = "Midiendo con muestras reales…";
-        lblMeasure.Text = "Codificando 3 fragmentos con estos ajustes…";
+        lblProg.Text = Textos.Instancia.MainMidiendo;
+        lblMeasure.Text = Textos.Instancia.MainMidiendoFragmentos;
         var cts = new CancellationTokenSource();
         try
         {
             int kbps = await _engine.MeasureVideoBitrateAsync(r.Path, opt, new PreviewReporter(this), cts.Token);
             if (kbps <= 0)
             {
-                lblMeasure.Text = "No se pudo medir este vídeo.";
-                lblProg.Text = "No se pudo medir.";
+                lblMeasure.Text = Textos.Instancia.MainMedirFallo;
+                lblProg.Text = Textos.Instancia.MainMedirFalloCorto;
                 return;
             }
             // el contenido manda: deducimos su factor de complejidad y recalibramos
@@ -965,12 +978,14 @@ public partial class MainWindow : Window
             _settings.ComplexityFactor = factor;
             SettingsStore.Save(_settings);
             UpdateEstimate();
-            lblMeasure.Text = $"Medido: vídeo ≈ {kbps} kbps. Contenido {(factor < 0.85 ? "más fácil" : factor > 1.15 ? "más exigente" : "normal")} " +
-                              $"de lo típico (×{factor:0.00}); el resto de la lista ya usa esta calibración.";
-            lblProg.Text = "Medición aplicada a la estimación.";
+            var veredicto = factor < 0.85 ? Textos.Instancia.MainMedidoFacil
+                          : factor > 1.15 ? Textos.Instancia.MainMedidoExigente
+                          : Textos.Instancia.MainMedidoNormal;
+            lblMeasure.Text = string.Format(Textos.Instancia.MainMedidoResultado, kbps, veredicto, factor);
+            lblProg.Text = Textos.Instancia.MainMedicionAplicada;
         }
-        catch (OperationCanceledException) { lblMeasure.Text = "Medición cancelada."; }
-        catch (Exception ex) { lblMeasure.Text = "Error al medir: " + ex.Message; }
+        catch (OperationCanceledException) { lblMeasure.Text = Textos.Instancia.MainMedicionCancelada; }
+        catch (Exception ex) { lblMeasure.Text = string.Format(Textos.Instancia.MainMedirError, ex.Message); }
         finally
         {
             cts.Dispose();
@@ -985,13 +1000,13 @@ public partial class MainWindow : Window
         if (_previewCts != null) { _previewCts.Cancel(); return; }   // ya generando → el botón cancela
         if (lst.SelectedItem is not VideoRow r || !r.Probed)
         {
-            DialogWindow.Aviso(this, "Previsualizar", "Selecciona un vídeo analizado.");
+            DialogWindow.Aviso(this, Textos.Instancia.MainPrevisualizarTitulo, Textos.Instancia.MainSeleccionaVideoAnalizado);
             return;
         }
         _previewCts = new CancellationTokenSource();
-        btnPreview.Content = "■  Cancelar previsualización";
+        btnPreview.Content = Textos.Instancia.MainCancelarPrevisualizacion;
         progRow.Visibility = Visibility.Visible; bar.Value = 0;
-        lblProg.Text = "Generando previsualización (10 s)…";
+        lblProg.Text = Textos.Instancia.MainGenerandoPrevisualizacion;
         try
         {
             Directory.CreateDirectory(_previewDir);
@@ -1001,13 +1016,13 @@ public partial class MainWindow : Window
                                                   new PreviewReporter(this), _previewCts.Token);
             if (path != null)
             {
-                lblProg.Text = "Previsualización lista (se borra sola).";
+                lblProg.Text = Textos.Instancia.MainPrevisualizacionLista;
                 Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
             }
-            else lblProg.Text = "No se pudo generar la previsualización.";
+            else lblProg.Text = Textos.Instancia.MainPrevisualizacionFallo;
         }
-        catch (OperationCanceledException) { lblProg.Text = "Previsualización cancelada."; }
-        catch (Exception ex) { lblProg.Text = "Error en la previsualización: " + ex.Message; }
+        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainPrevisualizacionCancelada; }
+        catch (Exception ex) { lblProg.Text = string.Format(Textos.Instancia.MainPrevisualizacionError, ex.Message); }
         finally
         {
             progRow.Visibility = Visibility.Collapsed;
@@ -1031,20 +1046,21 @@ public partial class MainWindow : Window
     private void DeleteSelected()
     {
         var sel = SelectedRows();
-        if (sel.Count == 0) { DialogWindow.Aviso(this, "Eliminar", "No hay vídeos seleccionados."); return; }
+        if (sel.Count == 0) { DialogWindow.Aviso(this, Textos.Instancia.MainEliminarTitulo, Textos.Instancia.MainSinVideosSeleccionados); return; }
         double mb = sel.Sum(r => r.Bytes) / 1048576.0;
-        if (!DialogWindow.Confirmar(this, "Eliminar marcados", $"¿Enviar {sel.Count} vídeo(s) ({mb:n0} MB) a la Papelera de reciclaje?")) return;
+        if (!DialogWindow.Confirmar(this, Textos.Instancia.MainEliminarMarcadosTitulo,
+                                    string.Format(Textos.Instancia.MainEliminarMarcadosPregunta, sel.Count, mb))) return;
         _pilaPapelera.Clear();   // una tanda nueva; el Ctrl+Z restaura de esta tanda hacia atrás
         foreach (var r in sel)
         {
             // Papelera PROPIA de la app (no la de Windows): permite deshacer con Ctrl+Z de forma
             // fiable y, al acumularse o cerrar, se finaliza en la Papelera del sistema.
             if (Reindex.PapeleraApp.Enviar(r.Path) != null) { _rows.Remove(r); _pilaPapelera.Push(r); }
-            else r.Estado = "error al borrar";
+            else r.Estado = Textos.Instancia.MainEstadoErrorAlBorrar;
         }
         lblProg.Text = _pilaPapelera.Count > 0
-            ? $"A la Papelera. Ctrl+Z para recuperar «{Reindex.PapeleraApp.UltimoNombre}»."
-            : "Enviados a la Papelera.";
+            ? string.Format(Textos.Instancia.MainALaPapeleraDeshacer, Reindex.PapeleraApp.UltimoNombre)
+            : Textos.Instancia.MainEnviadosALaPapelera;
     }
     private void DeleteFolders()
     {
@@ -1054,11 +1070,13 @@ public partial class MainWindow : Window
             var s = txtSrc.Text.Trim();
             if (!string.IsNullOrEmpty(s) && Directory.Exists(s)) dirs = new() { s };
         }
-        if (dirs.Count == 0) { DialogWindow.Aviso(this, "Eliminar carpeta", "Marca algún vídeo o indica una carpeta de origen."); return; }
-        if (!DialogWindow.Confirmar(this, "Eliminar carpeta", $"¿Enviar estas {dirs.Count} carpeta(s) COMPLETAS a la Papelera?\n\n{string.Join("\n", dirs)}")) return;
+        if (dirs.Count == 0) { DialogWindow.Aviso(this, Textos.Instancia.MainEliminarCarpeta, Textos.Instancia.MainEliminarCarpetaSinNada); return; }
+        if (!DialogWindow.Confirmar(this, Textos.Instancia.MainEliminarCarpeta,
+                                    string.Format(Textos.Instancia.MainEliminarCarpetaPregunta,
+                                                  dirs.Count, string.Join("\n", dirs)))) return;
         foreach (var d in dirs) RecycleBin.Send(d);
         foreach (var r in _rows.Where(r => Path.GetDirectoryName(r.Path) is { } d && dirs.Contains(d)).ToList()) _rows.Remove(r);
-        lblProg.Text = "Carpeta(s) enviadas a la Papelera.";
+        lblProg.Text = Textos.Instancia.MainCarpetasALaPapelera;
     }
 
     // ---------- comprimir ----------
@@ -1098,7 +1116,7 @@ public partial class MainWindow : Window
     private async Task RunAsync()
     {
         var selRows = SelectedRows();
-        if (selRows.Count == 0) { DialogWindow.Aviso(this, "Comprimir", "Analiza y selecciona al menos un vídeo (arrastra o Ctrl/Shift+click)."); return; }
+        if (selRows.Count == 0) { DialogWindow.Aviso(this, Textos.Instancia.MainPaginaComprimir, Textos.Instancia.MainComprimirSinSeleccion); return; }
         var sel = selRows.Select(r => r.Path).ToList();
 
         var opt = BuildOptions();
@@ -1124,14 +1142,14 @@ public partial class MainWindow : Window
         _cts = new CancellationTokenSource();
         _running = true;
         btnRun.IsEnabled = false; btnCancel.IsEnabled = true; btnPause.IsEnabled = true;
-        _paused = false; btnPause.Content = "Pausar";
+        _paused = false; btnPause.Content = Textos.Instancia.MainPausar;
         progRow.Visibility = Visibility.Visible; bar.Value = 0;
         tglLog.IsChecked = true;
         txtLog.Clear();
-        lblProg.Text = $"Procesando {sel.Count} vídeo(s)…";
+        lblProg.Text = string.Format(Textos.Instancia.MainProcesando, sel.Count);
         ActualizarTextoPildora(0, sel.Count, 0);   // ya recalcula el indicador global
 
-        foreach (var r in selRows) r.Estado = "En cola";
+        foreach (var r in selRows) r.Estado = Textos.Instancia.MainEstadoEnCola;
         var reporter = new Reporter(this, deleteOriginals, selRows);
         // «ok» vive fuera del try porque el resumen de subtítulos lo consulta al terminar
         var ok = new List<FileResult>();
@@ -1148,17 +1166,18 @@ public partial class MainWindow : Window
                 double inGb = ok.Sum(r => r.InBytes) / 1073741824.0;
                 double outGb = ok.Sum(r => r.OutBytes!.Value) / 1073741824.0;
                 int pct = (int)Math.Round(100 - (outGb / Math.Max(inGb, 1e-9) * 100));
-                lblProg.Text = $"Terminado ✓  {inGb:n2} GB → {outGb:n2} GB  (-{pct}%)  ·  {ok.Count} archivo(s)";
+                lblProg.Text = string.Format(Textos.Instancia.MainTerminadoResumen, inGb, outGb, pct, ok.Count);
             }
-            else lblProg.Text = "Terminado ✓";
+            else lblProg.Text = Textos.Instancia.MainTerminado;
         }
-        catch (OperationCanceledException) { lblProg.Text = "Cancelado."; }
-        catch (Exception ex) { lblProg.Text = "Error: " + ex.Message; AppendLog("ERROR: " + ex); }
+        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainCancelado; }
+        // «Error» sale de Comun; los dos puntos son puntuación, no texto que traducir.
+        catch (Exception ex) { lblProg.Text = Textos.Instancia.Error + ": " + ex.Message; AppendLog("ERROR: " + ex); }
         finally
         {
             _running = false; _paused = false;
             btnRun.IsEnabled = true; btnCancel.IsEnabled = false;
-            btnPause.IsEnabled = false; btnPause.Content = "Pausar";
+            btnPause.IsEnabled = false; btnPause.Content = Textos.Instancia.MainPausar;
             progRow.Visibility = Visibility.Collapsed;
             _cts?.Dispose(); _cts = null;
             // La píldora pasa a «✓ N hechos» un momento y se retira sola: si desapareciera
@@ -1196,7 +1215,7 @@ public partial class MainWindow : Window
 
     private void SavePreset()
     {
-        var name = InputName("Nombre del preset:", "Guardar preset");
+        var name = InputName(Textos.Instancia.MainNombrePresetPrompt, Textos.Instancia.MainGuardarPresetTitulo);
         if (string.IsNullOrWhiteSpace(name)) return;
         var user = PresetStore.LoadUser();
         user.RemoveAll(x => x.Name == name);
@@ -1208,7 +1227,7 @@ public partial class MainWindow : Window
         });
         PresetStore.SaveUser(user);
         ReloadPresets(name);
-        lblProg.Text = $"Preset «{name}» guardado.";
+        lblProg.Text = string.Format(Textos.Instancia.MainPresetGuardado, name);
     }
 
     private string? InputName(string prompt, string title)
@@ -1221,7 +1240,7 @@ public partial class MainWindow : Window
             Background = (Brush)FindResource("Surface"),
         };
         var tb = new TextBox { Margin = new Thickness(0, 0, 0, 12) };
-        var ok = new Button { Content = "Guardar", Width = 90, Style = (Style)FindResource("BtnPrimary"), IsDefault = true };
+        var ok = new Button { Content = Textos.Instancia.Guardar, Width = 90, Style = (Style)FindResource("BtnPrimary"), IsDefault = true };
         var panel = new StackPanel { Margin = new Thickness(16) };
         panel.Children.Add(new TextBlock { Text = prompt, Foreground = (Brush)FindResource("Text"), Margin = new Thickness(0, 0, 0, 8) });
         panel.Children.Add(tb);
@@ -1245,26 +1264,26 @@ public partial class MainWindow : Window
         var afectados = done.Where(r => !string.IsNullOrEmpty(r.SubtitleWarning)).ToList();
         if (afectados.Count == 0) return;
 
-        lblProg.Text += "  ·  ⚠ sin algunos subtítulos";
+        lblProg.Text += Textos.Instancia.MainAvisoSubsPie;
 
         // Un motivo por línea; casi siempre será uno solo repetido en varios archivos.
         var motivos = afectados.Select(r => r.SubtitleWarning!).Distinct().ToList();
         string cuerpo = afectados.Count == 1
-            ? $"«{afectados[0].Name}»:\n\n{motivos[0]}"
-            : $"{afectados.Count} de los {done.Count} vídeos han salido sin parte de sus subtítulos:\n\n"
+            ? string.Format(Textos.Instancia.MainSubsUnoAfectado, afectados[0].Name, motivos[0])
+            : string.Format(Textos.Instancia.MainSubsVariosAfectados, afectados.Count, done.Count)
               + string.Join("\n\n", motivos)
-              + "\n\nAfectados:\n· " + string.Join("\n· ", afectados.Take(8).Select(r => r.Name))
-              + (afectados.Count > 8 ? $"\n… y {afectados.Count - 8} más" : "");
+              + Textos.Instancia.MainSubsAfectadosLista + string.Join("\n· ", afectados.Take(8).Select(r => r.Name))
+              + (afectados.Count > 8 ? string.Format(Textos.Instancia.MainSubsYMas, afectados.Count - 8) : "");
 
-        DialogWindow.Aviso(this, "Subtítulos no incluidos", cuerpo);
+        DialogWindow.Aviso(this, Textos.Instancia.MainSubsTitulo, cuerpo);
     }
 
     private void TogglePause()
     {
         if (!_running) return;
         _paused = !_paused;
-        if (_paused) { _engine.Pause(); btnPause.Content = "Reanudar"; lblProg.Text = "En pausa — FFmpeg suspendido"; }
-        else { _engine.Resume(); btnPause.Content = "Pausar"; lblProg.Text = "Comprimiendo… (mira la barra)"; }
+        if (_paused) { _engine.Pause(); btnPause.Content = Textos.Instancia.MainReanudar; lblProg.Text = Textos.Instancia.MainEnPausa; }
+        else { _engine.Resume(); btnPause.Content = Textos.Instancia.MainPausar; lblProg.Text = Textos.Instancia.MainComprimiendoBarra; }
     }
 
     private void AppendLog(string line)
@@ -1321,9 +1340,9 @@ public partial class MainWindow : Window
         // El botón del conmutador refleja la página actual.
         lblPaginaActual.Text = pagina switch
         {
-            Pagina.Comprimir => "Comprimir",
-            Pagina.Organizar => "Organizar",
-            _ => "Recortes",
+            Pagina.Comprimir => Textos.Instancia.MainPaginaComprimir,
+            Pagina.Organizar => Textos.Instancia.MainPaginaOrganizar,
+            _ => Textos.Instancia.MainPaginaRecortes,
         };
 
         var comprimir = pagina == Pagina.Comprimir ? Visibility.Visible : Visibility.Collapsed;
@@ -1400,7 +1419,9 @@ public partial class MainWindow : Window
         foreach (var rb in panelTabs.Children.OfType<RadioButton>())
         {
             var destino = rb;
-            var item = new MenuItem { Header = rb.Tag as string ?? "", IsChecked = rb.IsChecked == true };
+            // El rótulo sale del propio RadioButton: su Content ya viene del catálogo de
+            // textos, así que el menú habla el idioma en curso sin una segunda tabla.
+            var item = new MenuItem { Header = rb.Content ?? "", IsChecked = rb.IsChecked == true };
             item.Click += (_, _) => destino.IsChecked = true;   // dispara Checked → CambiarPagina
             menu.Items.Add(item);
         }
@@ -1443,8 +1464,8 @@ public partial class MainWindow : Window
     private void ActualizarTextoPildora(int hecho, int total, double fraccion)
     {
         _compEtiqueta = total > 0
-            ? $"Comprimiendo {hecho}/{total} · {fraccion * 100:0} %"
-            : "Comprimiendo";
+            ? string.Format(Textos.Instancia.MainPildoraProgreso, hecho, total, fraccion * 100)
+            : Textos.Instancia.MainPildoraComprimiendo;
         ActualizarIndicadorGlobal();
     }
 
@@ -1454,7 +1475,8 @@ public partial class MainWindow : Window
     /// </summary>
     private void AnunciarFinEnPildora(int total)
     {
-        _compEtiqueta = $"✓ {total} hecho{(total == 1 ? "" : "s")}";
+        _compEtiqueta = string.Format(
+            total == 1 ? Textos.Instancia.MainPildoraFinUno : Textos.Instancia.MainPildoraFinVarios, total);
         ActualizarIndicadorGlobal();
 
         var reloj = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
@@ -1497,7 +1519,7 @@ public partial class MainWindow : Window
                 _lastPct = -1;
                 // el motor numera del 1 al total en el mismo orden en que se le pasó la cola
                 _current = i >= 1 && i <= _queue.Count ? _queue[i - 1] : null;
-                if (_current != null) _current.Estado = "Comprimiendo…";
+                if (_current != null) _current.Estado = Textos.Instancia.MainEstadoComprimiendo;
                 _w.ActualizarTextoPildora(i, t, 0);
             });
 
@@ -1508,7 +1530,11 @@ public partial class MainWindow : Window
             {
                 _w.bar.Value = frac;
                 // solo se reescribe la fila al cambiar de entero: si no, repinta sin parar
-                if (_current != null && pct != _lastPct) { _lastPct = pct; _current.Estado = $"Comprimiendo… {pct}%"; }
+                if (_current != null && pct != _lastPct)
+                {
+                    _lastPct = pct;
+                    _current.Estado = string.Format(Textos.Instancia.MainEstadoComprimiendoPct, pct);
+                }
                 _w.ActualizarTextoPildora(_idx, _total, frac);
             });
         }
@@ -1528,7 +1554,7 @@ public partial class MainWindow : Window
             _w.Dispatcher.BeginInvoke(() =>
             {
                 if (RowOf(r.SourcePath) is { } row)
-                    row.Estado = r.Ok ? $"{r.Status} · {Human(r.OutBytes!.Value)}" : "Error";
+                    row.Estado = r.Ok ? $"{r.Status} · {Human(r.OutBytes!.Value)}" : Textos.Instancia.Error;
                 if (_current != null && string.Equals(_current.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase))
                     _current = null;
             });
@@ -1543,9 +1569,9 @@ public partial class MainWindow : Window
                     {
                         var row = _w._rows.FirstOrDefault(x => string.Equals(x.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase));
                         if (row != null) _w._rows.Remove(row);
-                        _w.AppendLog($"    original a la Papelera: {r.Name}");
+                        _w.AppendLog(string.Format(Textos.Instancia.MainLogOriginalAPapelera, r.Name));
                     }
-                    else _w.AppendLog($"    no se pudo enviar a la Papelera: {r.Name}");
+                    else _w.AppendLog(string.Format(Textos.Instancia.MainLogPapeleraFallo, r.Name));
                 });
             });
         }
@@ -1553,8 +1579,8 @@ public partial class MainWindow : Window
         public void DiskFull(bool paused) => _w.Dispatcher.BeginInvoke(() =>
         {
             _w.lblProg.Text = paused
-                ? "⛔ Disco lleno — pausado. Libera espacio y continuará solo."
-                : "Comprimiendo… (mira la barra)";
+                ? Textos.Instancia.MainDiscoLleno
+                : Textos.Instancia.MainComprimiendoBarra;
         });
     }
 
@@ -1565,7 +1591,7 @@ public partial class MainWindow : Window
         {
             btnCheckUpdate.IsEnabled = false;         // evita repetir la búsqueda a lo tonto
             miCheckUpd.IsEnabled = false;
-            lblProg.Text = "Buscando actualizaciones…";
+            lblProg.Text = Textos.Instancia.MainBuscandoActualizaciones;
         }
         try
         {
@@ -1575,23 +1601,23 @@ public partial class MainWindow : Window
             {
                 // antes esto se confundía con «estás al día»: se decía que no había nada
                 // nuevo aunque en realidad no hubiera habido conexión
-                if (manual) lblProg.Text = "No se pudo comprobar: " + res.Error;
+                if (manual) lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoComprobar, res.Error);
                 return;
             }
             if (!res.Available)
             {
-                if (manual) lblProg.Text = $"Ya tienes la última versión (v{Updater.Current}).";
+                if (manual) lblProg.Text = string.Format(Textos.Instancia.MainYaAlDia, Updater.Current);
                 return;
             }
 
             var info = res.Info!;
-            lblUpdate.Text = $"Versión nueva disponible: {info.Tag}  (tienes v{Updater.Current}).";
+            lblUpdate.Text = string.Format(Textos.Instancia.MainVersionNuevaDetalle, info.Tag, Updater.Current);
             updateBar.Visibility = Visibility.Visible;
             btnUpdateNow.Click -= OnUpdateNow;   // evitar suscripción doble
             btnUpdateNow.Click += OnUpdateNow;
             _pendingUpdate = info;
             // faltaba: sin esto se quedaba «Buscando actualizaciones…» para siempre
-            lblProg.Text = $"Versión {info.Tag} disponible — mira el aviso de arriba.";
+            lblProg.Text = string.Format(Textos.Instancia.MainVersionNuevaProgreso, info.Tag);
         }
         finally
         {
@@ -1605,28 +1631,29 @@ public partial class MainWindow : Window
     {
         if (_pendingUpdate == null) return;
         btnUpdateNow.IsEnabled = false;
-        lblUpdate.Text = $"Descargando {_pendingUpdate.AssetName}…";
+        lblUpdate.Text = string.Format(Textos.Instancia.MainDescargando, _pendingUpdate.AssetName);
         progRow.Visibility = Visibility.Visible; bar.Value = 0;
-        lblProg.Text = "Descargando la actualización…";
+        lblProg.Text = Textos.Instancia.MainDescargandoActualizacion;
         try
         {
             var progress = new Progress<double>(p =>
             {
-                lblUpdate.Text = $"Descargando {_pendingUpdate.AssetName}…  {p * 100:n0}%";
+                lblUpdate.Text = string.Format(Textos.Instancia.MainDescargandoPct, _pendingUpdate.AssetName, p * 100);
                 bar.Value = p;
             });
             var installer = await Updater.DownloadAsync(_pendingUpdate, progress);
-            lblUpdate.Text = "Descarga lista. Abriendo el instalador; la app se cerrará para actualizarse.";
-            lblProg.Text = "Abriendo el instalador…";
+            lblUpdate.Text = Textos.Instancia.MainDescargaLista;
+            lblProg.Text = Textos.Instancia.MainAbriendoInstalador;
             Updater.LaunchInstallerAndExit(installer);
         }
         catch (Exception ex)
         {
             btnUpdateNow.IsEnabled = true;
             progRow.Visibility = Visibility.Collapsed;
-            lblUpdate.Text = "No se pudo descargar la actualización.";
-            lblProg.Text = "Fallo al descargar la actualización.";
-            DialogWindow.Aviso(this, "Actualizar", "No se pudo descargar la actualización:\n" + ex.Message);
+            lblUpdate.Text = Textos.Instancia.MainDescargaFallo;
+            lblProg.Text = Textos.Instancia.MainDescargaFalloProgreso;
+            DialogWindow.Aviso(this, Textos.Instancia.MainActualizarTitulo,
+                               string.Format(Textos.Instancia.MainDescargaFalloDetalle, ex.Message));
         }
     }
 
@@ -1635,7 +1662,7 @@ public partial class MainWindow : Window
     {
         if (_running)
         {
-            if (DialogWindow.Confirmar(this, "Salir", "Hay una compresión en curso. ¿Cerrar y cancelarla?"))
+            if (DialogWindow.Confirmar(this, Textos.Instancia.MainMenuSalir, Textos.Instancia.MainSalirEnCurso))
                 _cts?.Cancel();
             else { e.Cancel = true; return; }
         }

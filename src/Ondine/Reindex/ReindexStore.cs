@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Ondine.Localizacion;
 
 namespace Ondine.Reindex;
 
@@ -37,11 +38,14 @@ public sealed class CatalogoGuardado
     /// del listado, así que si esta tarjeta se ve, su fichero está.
     /// </summary>
     public string Procedencia =>
-        $"en {Carpeta}" + (Importado.Length > 0 ? $" · añadido el {Importado}" : "");
+        string.Format(Textos.Instancia.ReindexTarjetaEn, Carpeta)
+        + (Importado.Length > 0
+            ? string.Format(Textos.Instancia.ReindexTarjetaAnadido, Importado)
+            : "");
 
     /// <summary>Para el globo: la ruta completa, que en la línea de la tarjeta va recortada.</summary>
     public string ProcedenciaDetalle =>
-        $"La app lee este fichero directamente (sin copia):\n{Ruta}\n\nClic derecho para abrir su ubicación.";
+        string.Format(Textos.Instancia.ReindexTarjetaProcedenciaDetalle, Ruta);
 
     /// <summary>
     /// Lo que accesibilidad lee de este catálogo. Sin esto, un lector de pantalla anuncia el
@@ -54,14 +58,29 @@ public sealed class CatalogoGuardado
     public int ConVariosSegmentos { get; init; }
     public IReadOnlyList<string> Advertencias { get; init; } = Array.Empty<string>();
 
-    /// <summary>«769 episodios · 74 especiales · 464 con varios segmentos»</summary>
+    /// <summary>
+    /// «769 episodios · 74 especiales · 464 con varios segmentos». El « · » que une los trozos
+    /// es formato y no se traduce; cada trozo sí, y el de los episodios lo dice con las mismas
+    /// palabras que el explorador del catálogo (misma cuenta, mismo texto).
+    /// </summary>
     public string Resumen
     {
         get
         {
-            var partes = new List<string> { $"{Episodios} episodios" };
-            partes.Add(Especiales > 0 ? $"{Especiales} especiales" : "sin especiales catalogados");
-            if (ConVariosSegmentos > 0) partes.Add($"{ConVariosSegmentos} con varios segmentos");
+            var partes = new List<string>
+            {
+                string.Format(Episodios == 1
+                    ? Textos.Instancia.CatalogoCuentaEpisodioUno
+                    : Textos.Instancia.CatalogoCuentaEpisodios, Episodios),
+            };
+            partes.Add(Especiales switch
+            {
+                0 => Textos.Instancia.ReindexTarjetaSinEspeciales,
+                1 => string.Format(Textos.Instancia.ReindexTarjetaEspecialUno, Especiales),
+                _ => string.Format(Textos.Instancia.ReindexTarjetaEspeciales, Especiales),
+            });
+            if (ConVariosSegmentos > 0)
+                partes.Add(string.Format(Textos.Instancia.ReindexTarjetaVariosSegmentos, ConVariosSegmentos));
             return string.Join(" · ", partes);
         }
     }
@@ -88,7 +107,8 @@ public sealed class LoteJournal
     [JsonPropertyName("movimientos")] public List<MovimientoJournal> Movimientos { get; set; } = new();
 
     /// <summary>Texto del botón persistente: «Deshacer lote 14:32 (185)».</summary>
-    public string Etiqueta => $"Deshacer lote {Hora} ({Movimientos.Count})";
+    public string Etiqueta =>
+        string.Format(Textos.Instancia.ReindexLoteDeshacer, Hora, Movimientos.Count);
 }
 
 /// <summary>Fichero de la memoria de decisiones.</summary>

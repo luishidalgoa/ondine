@@ -21,6 +21,11 @@
     <Compile Include="..\..\src\Ondine\Reindex\*.cs" LinkBase="Reindex" />
     <!-- Igual que Reindex: lógica sin WPF ni ffmpeg, así que entra en el arnés y corre en CI. -->
     <Compile Include="..\..\src\Ondine\Pistas\*.cs" LinkBase="Pistas" />
+    <!-- El resumen de una pista es texto de interfaz y sale del catálogo, así que las fuentes
+         de Pistas ya no compilan sin él. Se enlazan `Idioma.cs` y los `Textos.*.cs` uno a uno
+         y NO la carpeta entera: `T.cs` es la extensión de marcado y depende de WPF. -->
+    <Compile Include="..\..\src\Ondine\Localizacion\Idioma.cs" LinkBase="Localizacion" />
+    <Compile Include="..\..\src\Ondine\Localizacion\Textos.*.cs" LinkBase="Localizacion" />
     <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
          ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->
     <Compile Include="..\..\src\Ondine\Rutas\*.cs" LinkBase="Rutas" />

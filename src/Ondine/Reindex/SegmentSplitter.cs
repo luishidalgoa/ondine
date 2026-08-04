@@ -1,3 +1,5 @@
+using Ondine.Localizacion;
+
 namespace Ondine.Reindex;
 
 /// <summary>
@@ -74,9 +76,11 @@ public static class SegmentSplitter
                 .FirstOrDefault();
 
             if (mejor == default || Math.Abs(mejor.Inicio - esperado) > margen)
+                // El minuto se redondea AQUÍ y entra ya escrito: la plantilla no lleva formato
+                // para que la misma cifra salga igual en los dos idiomas.
                 return new Plan(Array.Empty<Trozo>(), false,
-                    $"No se ha encontrado un corte claro cerca del minuto {esperado / 60:0.0}. " +
-                    "Ábrelo en Recortes y marca el corte a mano.");
+                    string.Format(Textos.Instancia.ReindexSinCorteClaro,
+                        (esperado / 60).ToString("0.0"), Textos.Instancia.RecortesTitulo));
 
             juntas.Add(mejor);
         }

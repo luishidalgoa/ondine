@@ -1,3 +1,5 @@
+using Ondine.Localizacion;
+
 namespace Ondine;
 
 /// <summary>
@@ -6,23 +8,46 @@ namespace Ondine;
 ///
 /// Existe porque Comprimir y Recortes ofrecen los MISMOS ajustes de salida: con dos copias
 /// del switch, el día que se añada un formato o cambie un CRF una de las dos se queda atrás
-/// y nadie se entera hasta que el fichero sale distinto. Aquí también viven los textos de
-/// los desplegables, para que las dos páginas ni siquiera puedan ofrecer opciones distintas.
+/// y nadie se entera hasta que el fichero sale distinto. Aquí también vive la LISTA de
+/// opciones de los desplegables, para que las dos páginas ni siquiera puedan ofrecer
+/// opciones distintas; los rótulos los pone la localización (claves <c>Main…</c>), las
+/// mismas que usa Comprimir en su XAML.
 /// </summary>
 public static class OpcionesSalida
 {
-    public static readonly string[] Formatos =
-    {
-        "MKV", "MP4", "WebM", "MP3 · solo audio", "M4A · solo audio", "FLAC · solo audio", "Opus · solo audio",
-    };
-    public static readonly string[] Codecs = { "H.265", "H.264", "AV1" };
-    public static readonly string[] Calidades =
-        { "Automática", "22 · muy alta", "24 · alta", "27 · equilibrada", "30 · muy comprimida" };
-    public static readonly string[] Resoluciones = { "Sin cambio", "1080p", "720p", "480p" };
-    public static readonly string[] Audios =
-    {
-        "Máxima (copiar original)", "AAC 192 kbps", "AAC 160 kbps", "AAC 128 kbps", "AAC 96 kbps",
-    };
+    // Los rótulos son PROPIEDADES, no arrays estáticos: un `static readonly`
+    // se rellena una vez, con el idioma que hubiera al arrancar, y Recortes se
+    // quedaba en castellano con la aplicación en inglés. Evaluándolos al
+    // pedirlos, quien los muestre los vuelve a leer traducidos.
+    //
+    // Y son las MISMAS claves que usa Comprimir en su XAML (Main…): el ajuste
+    // es el mismo, así que el texto tiene que ser el mismo. Con dos juegos de
+    // claves, cambiar «27 · equilibrada» en una pantalla lo dejaba distinto en
+    // la otra.
+    private static Textos Txt => Textos.Instancia;
+
+    public static string[] Formatos =>
+    [
+        Txt.MainFormatoMkv, Txt.MainFormatoMp4, Txt.MainFormatoWebm,
+        Txt.MainFormatoMp3, Txt.MainFormatoM4a, Txt.MainFormatoFlac, Txt.MainFormatoOpus,
+    ];
+
+    public static string[] Codecs => [Txt.MainCodecH265, Txt.MainCodecH264, Txt.MainCodecAv1];
+
+    public static string[] Calidades =>
+    [
+        Txt.MainCalidadAuto, Txt.MainCalidad22, Txt.MainCalidad24, Txt.MainCalidad27, Txt.MainCalidad30,
+    ];
+
+    public static string[] Resoluciones =>
+    [
+        Txt.MainResolucionSinCambio, Txt.MainResolucion1080, Txt.MainResolucion720, Txt.MainResolucion480,
+    ];
+
+    public static string[] Audios =>
+    [
+        Txt.MainAudioCopiar, Txt.MainAudioAac192, Txt.MainAudioAac160, Txt.MainAudioAac128, Txt.MainAudioAac96,
+    ];
 
     public static string CodecDe(int i) => i switch { 1 => "h264", 2 => "av1", _ => "hevc" };
     public static int CalidadDe(int i) => i switch { 1 => 22, 2 => 24, 3 => 27, 4 => 30, _ => 0 };

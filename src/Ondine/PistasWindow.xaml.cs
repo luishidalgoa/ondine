@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -16,7 +17,7 @@ public sealed class PistaVista : INotifyPropertyChanged
 
     /// <summary>La de vídeo no se ofrece: sin ella el resultado ya no es este vídeo.</summary>
     public bool SePuedeQuitar => Pista.Tipo != TipoPista.Video;
-    public string Nota => Pista.Tipo == TipoPista.Video ? "se conserva siempre" : "";
+    public string Nota => Pista.Tipo == TipoPista.Video ? Textos.Instancia.PistasNotaSeConserva : "";
 
     private bool _quitar;
     public bool Quitar
@@ -51,7 +52,8 @@ public partial class PistasWindow : Window
         _path = path;
         _duracion = duracionSeg;
 
-        lblTitulo.Text = "Quitar pistas";
+        // El rótulo de la barra lo pone el XAML con {i:T}: asignarlo aquí rompería
+        // el enlace y el título se quedaría en el idioma de arranque.
         lblFichero.Text = Path.GetFileName(path);
         _vistas = pistas.Select(p => new PistaVista { Pista = p }).ToList();
         foreach (var v in _vistas) v.Cambio = Refrescar;
@@ -67,21 +69,25 @@ public partial class PistasWindow : Window
         _vistas.Select(v => v.Pista).ToList(),
         _vistas.Where(v => v.Quitar && v.SePuedeQuitar).Select(v => v.Pista.Indice).ToList());
 
+    /// <summary>Megas con el separador de miles del sistema, ya en texto.</summary>
+    private static string Mb(double bytes) => (bytes / 1048576.0).ToString("n0");
+
     private void Refrescar()
     {
+        var t = Textos.Instancia;
         var plan = PlanActual();
         btnQuitar.IsEnabled = plan.HayCambios;
 
         long ahorro = plan.BytesQueSeAhorran(_duracion);
         lblAhorro.Text = !plan.HayCambios
-            ? "Marca alguna pista para quitarla."
+            ? t.PistasNadaMarcado
             : ahorro > 0
-                ? $"Se quitan {plan.Quitadas.Count} pista(s) · unos {ahorro / 1048576.0:n0} MB menos"
-                : $"Se quitan {plan.Quitadas.Count} pista(s) · el ahorro será pequeño (no declaran su caudal)";
+                ? string.Format(t.PistasAhorro, plan.Quitadas.Count, Mb(ahorro))
+                : string.Format(t.PistasAhorroDesconocido, plan.Quitadas.Count);
 
         // Quedarse sin audio es legítimo, pero nadie lo espera: mejor decirlo antes.
         lblAviso.Visibility = plan.HayCambios && plan.QuedaSinAudio ? Visibility.Visible : Visibility.Collapsed;
-        lblAviso.Text = "Ojo: así el vídeo se queda SIN audio.";
+        lblAviso.Text = t.PistasAvisoSinAudio;
     }
 
     private async Task QuitarAsync()
@@ -89,33 +95,31 @@ public partial class PistasWindow : Window
         var plan = PlanActual();
         if (!plan.HayCambios) return;
 
+        var t = Textos.Instancia;
         var queSeVa = string.Join("\n", plan.Quitadas.Select(p => $"  · {p.Resumen}"));
-        if (!DialogWindow.Confirmar(this, "Quitar pistas",
-                $"Se van a quitar de «{Path.GetFileName(_path)}»:\n\n{queSeVa}\n\n" +
-                "El vídeo NO se recomprime: se copia tal cual, así que la imagen queda idéntica.\n" +
-                "El fichero original va a la Papelera (recuperable con Ctrl+Z).",
-                "Quitar", "Cancelar"))
+        if (!DialogWindow.Confirmar(this, t.PistasTitulo,
+                string.Format(t.PistasConfirmarCuerpo, Path.GetFileName(_path), queSeVa),
+                t.Quitar, t.Cancelar))
             return;
 
         btnQuitar.IsEnabled = false;
-        lblAhorro.Text = "Reempaquetando…";
+        lblAhorro.Text = t.PistasReempaquetando;
         var (ok, msg, antes, despues) = await _engine.QuitarPistasAsync(_path, plan);
         if (ok)
         {
             SeCambioAlgo = true;
-            double ahorrado = (antes - despues) / 1048576.0;
-            lblAhorro.Text = $"Listo · {antes / 1048576.0:n0} MB → {despues / 1048576.0:n0} MB " +
-                             $"({ahorrado:n0} MB menos)";
-            DialogWindow.Aviso(this, "Listo",
-                $"Pistas quitadas.\n\n{antes / 1048576.0:n0} MB → {despues / 1048576.0:n0} MB " +
-                $"({ahorrado:n0} MB menos, sin tocar la imagen).");
+            string mbAntes = Mb(antes), mbDespues = Mb(despues), mbAhorrado = Mb(antes - despues);
+            lblAhorro.Text = string.Format(t.PistasHecho, mbAntes, mbDespues, mbAhorrado);
+            DialogWindow.Aviso(this, t.Listo,
+                string.Format(t.PistasHechoCuerpo, mbAntes, mbDespues, mbAhorrado));
             Close();
         }
         else
         {
-            lblAhorro.Text = "No se pudo.";
+            lblAhorro.Text = t.PistasNoSePudo;
             btnQuitar.IsEnabled = true;
-            DialogWindow.Aviso(this, "No se pudo quitar", msg);
+            // `msg` lo escribe ffmpeg: es un diagnóstico, no un texto de interfaz.
+            DialogWindow.Aviso(this, t.PistasFalloTitulo, msg);
         }
     }
 }

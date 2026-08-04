@@ -1,7 +1,8 @@
 <Window x:Class="Ondine.ReproductorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Reproductor" Width="1120" Height="680" MinWidth="560" MinHeight="360"
+        xmlns:i="clr-namespace:Ondine.Localizacion"
+        Title="{i:T ReproductorTitulo}" Width="1120" Height="680" MinWidth="560" MinHeight="360"
         WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterOwner"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="#08090F">
   <WindowChrome.WindowChrome>
@@ -28,7 +29,7 @@
       <TextBlock x:Name="lblFallo" TextWrapping="Wrap" TextAlignment="Center" FontSize="12.5"
                  Foreground="{StaticResource Neutral400}" LineHeight="19"/>
       <Button x:Name="btnSistema" Style="{StaticResource BtnPrimary}" Margin="0,14,0,0"
-              HorizontalAlignment="Center" Content="Abrir en el reproductor del sistema"/>
+              HorizontalAlignment="Center" Content="{i:T ReproductorAbrirEnSistema}"/>
     </StackPanel>
 
     <!-- ══ Capa superior: título y cierre ══ -->
@@ -114,21 +115,21 @@
         <Grid Grid.Row="1">
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Button x:Name="btnAtras" Style="{StaticResource BtnIcono}" Margin="0,0,10,0"
-                    ToolTip="Atrás 10 s  (flecha izquierda)">
+                    ToolTip="{i:T ReproductorAtrasTip}">
               <Path Data="M10,5 L4.5,10 L10,15 M16,5 L10.5,10 L16,15" Stretch="None" Width="20" Height="20"
                     Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                     StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                     StrokeLineJoin="Round"/>
             </Button>
 
-            <Button x:Name="btnPlay" Style="{StaticResource BtnPlay}" ToolTip="Reproducir / pausar  (espacio)">
+            <Button x:Name="btnPlay" Style="{StaticResource BtnPlay}" ToolTip="{i:T ReproductorPlayTip}">
               <Path x:Name="glifoPlay" Fill="White" Stretch="None"
                     Data="M6,3 L6,17 M13,3 L13,17" Stroke="White" StrokeThickness="3.2"
                     StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="19" Height="20"/>
             </Button>
 
             <Button x:Name="btnAdelante" Style="{StaticResource BtnIcono}" Margin="10,0,0,0"
-                    ToolTip="Adelante 10 s  (flecha derecha)">
+                    ToolTip="{i:T ReproductorAdelanteTip}">
               <Path Data="M10,5 L15.5,10 L10,15 M4,5 L9.5,10 L4,15" Stretch="None" Width="20" Height="20"
                     Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                     StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
@@ -137,7 +138,7 @@
           </StackPanel>
 
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <Button x:Name="btnMudo" Style="{StaticResource BtnIcono}" ToolTip="Silenciar  (M)">
+            <Button x:Name="btnMudo" Style="{StaticResource BtnIcono}" ToolTip="{i:T ReproductorMudoTip}">
               <Path x:Name="glifoVol" Stretch="None" Width="20" Height="20"
                     Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                     Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -146,7 +147,7 @@
             </Button>
             <Slider x:Name="volumen" Style="{StaticResource BarraVolumen}" VerticalAlignment="Center"
                     Margin="2,0,8,0" Minimum="0" Maximum="1" Value="0.8"/>
-            <Button x:Name="btnPantalla" Style="{StaticResource BtnIcono}" ToolTip="Pantalla completa  (F)">
+            <Button x:Name="btnPantalla" Style="{StaticResource BtnIcono}" ToolTip="{i:T ReproductorPantallaTip}">
               <Path x:Name="glifoPantalla" Stretch="None" Width="20" Height="20"
                     Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                     StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeLineJoin="Round"

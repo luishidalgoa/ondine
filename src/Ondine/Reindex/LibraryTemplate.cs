@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using Ondine.Localizacion;
 
 namespace Ondine.Reindex;
 
@@ -21,27 +22,41 @@ public sealed class LibraryTemplate
 {
     public const string PatronPorDefecto = "<serie> - S<temp>E<num> - <título>";
 
-    /// <summary>Las marcas disponibles, en el orden en que se ofrecen.</summary>
-    public static readonly MarcaPlantilla[] Marcas =
-    {
-        new("<serie>",  "Serie",
-            "El nombre de la serie, tal cual lo escribiste en el catálogo.", "Doraemon (2005)"),
-        new("<temp>",   "Temporada",
-            "El año o número de temporada del episodio. Si el catálogo no lo trae, se usa el de la carpeta.", "2005"),
-        new("<num>",    "Número",
-            "El número del episodio según el catálogo: el que se corrige si el fichero traía otro.", "2"),
-        new("<título>", "Título",
-            "El título del episodio. Si tiene varias historias se unen con «+».",
+    /// <summary>
+    /// Las marcas disponibles, en el orden en que se ofrecen.
+    ///
+    /// <para>
+    /// Es una propiedad y no un campo <c>static readonly</c> porque los rótulos y las
+    /// explicaciones se traducen: un campo se rellenaría una sola vez, al cargar el tipo,
+    /// y al cambiar de idioma la lista seguiría en el anterior.
+    /// </para>
+    /// <para>
+    /// La MARCA en sí («&lt;serie&gt;», «&lt;num:000&gt;») es sintaxis que lee
+    /// <see cref="RxMarca"/>: no se traduce nunca, ni suelta ni citada dentro de una
+    /// explicación. Los EJEMPLOS tampoco: son datos de un catálogo real (el nombre de una
+    /// serie, títulos de episodios, números), y traducirlos dejaría el ejemplo sin
+    /// correspondencia con nada que el usuario pueda reconocer.
+    /// </para>
+    /// </summary>
+    public static MarcaPlantilla[] Marcas =>
+    [
+        new("<serie>",  Textos.Instancia.ReindexMarcaSerie,
+            Textos.Instancia.ReindexMarcaSerieAyuda, "Doraemon (2005)"),
+        new("<temp>",   Textos.Instancia.ReindexMarcaTemporada,
+            Textos.Instancia.ReindexMarcaTemporadaAyuda, "2005"),
+        new("<num>",    Textos.Instancia.ReindexMarcaNumero,
+            Textos.Instancia.ReindexMarcaNumeroAyuda, "2"),
+        new("<título>", Textos.Instancia.ReindexMarcaTitulo,
+            Textos.Instancia.ReindexMarcaTituloAyuda,
             "Con calma y con prisa + La mujer de Nobita"),
-        new("<seg>",    "Sub-segmento",
-            "La letra de «[438a]», para distinguir mitades de un mismo episodio. Vacío si no la hay.", "a"),
-        new("<num:000>", "Número con ceros",
-            "El número relleno hasta esas cifras: «<num:000>» da 001, 012, 278. Si el número ya es más largo, no se recorta.",
-            "012"),
-        new("<título: ┃ >", "Título con otro separador",
-            "Como «<título>» pero uniendo las historias con lo que pongas tras los dos puntos, espacios incluidos.",
+        new("<seg>",    Textos.Instancia.ReindexMarcaSegmento,
+            Textos.Instancia.ReindexMarcaSegmentoAyuda, "a"),
+        new("<num:000>", Textos.Instancia.ReindexMarcaNumeroCeros,
+            Textos.Instancia.ReindexMarcaNumeroCerosAyuda, "012"),
+        new("<título: ┃ >", Textos.Instancia.ReindexMarcaTituloSeparador,
+            Textos.Instancia.ReindexMarcaTituloSeparadorAyuda,
             "El cometa ┃ Nieve en agosto"),
-    };
+    ];
 
     /// <summary>
     /// Una marca, con parámetro opcional tras los dos puntos: «&lt;num:000&gt;», «&lt;título: ┃ &gt;».

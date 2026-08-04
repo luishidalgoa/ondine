@@ -86,6 +86,20 @@ jobs:
           # las notas de la Release salen del propio CHANGELOG
           { echo "$BODY"; } > release-notes.md
 
+      # Durante el desarrollo se escribe en castellano y el resto de idiomas se
+      # rellenan después, a petición. Eso ahorra trabajo real: un texto que va a
+      # cambiar tres veces no se traduce tres veces.
+      #
+      # Pero «luego lo rellenamos» se convierte en nunca si nada lo comprueba.
+      # Aquí es donde deja de valer: al cortar una versión, ni un solo texto
+      # puede quedar pendiente. Se corre en el MISMO trabajo que valida el
+      # CHANGELOG porque es la misma puerta, la que decide si se publica.
+      - name: Comprobar que no queda nada sin traducir
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          ONDINE_RELEASE: "1"
+        run: dotnet run --project tests/Reindex.Tests
+
       - name: Guardar las notas de la versión
         uses: actions/upload-artifact@v7
         with:

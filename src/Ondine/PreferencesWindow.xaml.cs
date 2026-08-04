@@ -1,11 +1,24 @@
 using System.Windows;
 using System.Windows.Input;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
 public partial class PreferencesWindow : Window
 {
-    private const string NoPreset = "— ninguno —";
+    /// <summary>
+    /// El «ninguno» del desplegable de presets, que además hace de centinela: si
+    /// es lo elegido, no hay preset por defecto.
+    ///
+    /// <para>
+    /// Se guarda en un campo en vez de pedírselo a <see cref="Textos"/> cada vez
+    /// porque así el texto que se mete en la lista y el que se compara en
+    /// <see cref="Save"/> son el MISMO. Pidiéndolo dos veces, cambiar de idioma
+    /// con la ventana abierta dejaría un elemento en el idioma viejo que ya no
+    /// casaría con nada, y «ninguno» pasaría por ser el nombre de un preset.
+    /// </para>
+    /// </summary>
+    private readonly string _sinPreset = Textos.Instancia.PreferenciasSinPreset;
 
     /// <summary>Ajustes resultantes tras pulsar Guardar (null si se cancela).</summary>
     public Settings? Result { get; private set; }
@@ -20,10 +33,13 @@ public partial class PreferencesWindow : Window
         btnSave.Click += (_, _) => Save();
 
         // General
-        cboDefPreset.Items.Add(NoPreset);
+        cboDefPreset.Items.Add(_sinPreset);
         foreach (var n in presetNames) cboDefPreset.Items.Add(n);
-        cboDefPreset.SelectedItem = string.IsNullOrEmpty(current.DefaultPreset) ? NoPreset
-            : (cboDefPreset.Items.Contains(current.DefaultPreset) ? current.DefaultPreset : NoPreset);
+        // El ajuste guarda el NOMBRE del preset, que en los de fábrica está
+        // traducido: si se eligió con la app en el otro idioma, hay que pasarlo
+        // por NombreVigente o el preset por defecto parecería haber desaparecido.
+        var guardado = PresetStore.NombreVigente(current.DefaultPreset);
+        cboDefPreset.SelectedItem = cboDefPreset.Items.Contains(guardado) ? guardado : _sinPreset;
         txtDefLang.Text = current.DefaultLang;
         chkRecurse.IsChecked = current.Recurse;
         chkUpdates.IsChecked = current.CheckUpdatesOnStart;
@@ -48,13 +64,14 @@ public partial class PreferencesWindow : Window
         {
             bool ok = quiere ? ShellIntegration.Register() : ShellIntegration.Unregister();
             if (!ok)
-                DialogWindow.Aviso(this, "Menú del Explorador", quiere ? "No se pudo añadir la entrada al menú del Explorador."
-                           : "No se pudo quitar la entrada del menú del Explorador.");
+                DialogWindow.Aviso(this, Textos.Instancia.PreferenciasMenuAvisoTitulo,
+                    quiere ? Textos.Instancia.PreferenciasMenuAvisoAlta
+                           : Textos.Instancia.PreferenciasMenuAvisoBaja);
         }
 
         var s = new Settings
         {
-            DefaultPreset = cboDefPreset.SelectedItem is string p && p != NoPreset ? p : "",
+            DefaultPreset = cboDefPreset.SelectedItem is string p && p != _sinPreset ? p : "",
             DefaultLang = string.IsNullOrWhiteSpace(txtDefLang.Text) ? "spa" : txtDefLang.Text.Trim(),
             Recurse = chkRecurse.IsChecked == true,
             CheckUpdatesOnStart = chkUpdates.IsChecked == true,

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Windows;
+using Ondine.Localizacion;
 using Ondine.Reindex;
 
 namespace Ondine;
@@ -10,7 +11,9 @@ public sealed class FaltaVista
     public required CoberturaCatalogo.Hueco Hueco { get; init; }
     public string Codigo => Hueco.Codigo;
     public string Titulos => Hueco.Titulos;
-    public string Etiqueta => Hueco.Entero ? "entero" : "a medias";
+    public string Etiqueta => Hueco.Entero
+        ? Textos.Instancia.FaltantesEntero
+        : Textos.Instancia.FaltantesAMedias;
 }
 
 /// <summary>
@@ -32,7 +35,7 @@ public partial class FaltantesWindow : Window
         _catalogo = catalogo;
         _resoluciones = resoluciones;
 
-        lblTitulo.Text = $"Qué falta — {catalogo.Serie}";
+        lblTitulo.Text = string.Format(Textos.Instancia.FaltantesTituloSerie, catalogo.Serie);
         btnCerrar.Click += (_, _) => Close();
         chkTodas.Checked += (_, _) => Pintar();
         chkTodas.Unchecked += (_, _) => Pintar();
@@ -41,11 +44,15 @@ public partial class FaltantesWindow : Window
         // El rótulo depende de cómo numere el catálogo: hay series que van por año de emisión y
         // ahí «Temporada 2005» chirría — es el año.
         _porAnio = CoberturaCatalogo.TemporadasSonAnios(catalogo);
-        lblTemporada.Text = _porAnio ? "Año" : "Temporada";
+        lblTemporada.Text = _porAnio ? Textos.Instancia.FaltantesAnio : Textos.Instancia.FaltantesTemporada;
 
-        cboTemporada.Items.Add(_porAnio ? "Todos los años" : "Todas las temporadas");
+        cboTemporada.Items.Add(_porAnio
+            ? Textos.Instancia.FaltantesTodosLosAnios
+            : Textos.Instancia.FaltantesTodasLasTemporadas);
         foreach (var t in CoberturaCatalogo.TemporadasDe(catalogo))
-            cboTemporada.Items.Add(_porAnio ? t.ToString() : $"Temporada {t}");
+            cboTemporada.Items.Add(_porAnio
+                ? t.ToString()
+                : string.Format(Textos.Instancia.FaltantesTemporadaN, t));
         cboTemporada.SelectedIndex = 0;
         cboTemporada.SelectionChanged += (_, _) => Pintar();
 
@@ -81,22 +88,30 @@ public partial class FaltantesWindow : Window
 
         lblResumen.Text = temporada == null
             ? _informe.Resumen
-            : $"{(_porAnio ? "Año" : "Temporada")} {temporada}: {_informe.Resumen}";
+            : string.Format(_porAnio
+                                ? Textos.Instancia.FaltantesResumenAnio
+                                : Textos.Instancia.FaltantesResumenTemporada,
+                            temporada, _informe.Resumen);
         lblEspeciales.Text = _informe.EspecialesQueFaltan > 0
-            ? $"Aparte, faltan {_informe.EspecialesQueFaltan} especial(es). Se cuentan por separado " +
-              "porque casi nadie los tiene completos."
+            ? string.Format(_informe.EspecialesQueFaltan == 1
+                                ? Textos.Instancia.FaltantesEspecialesUno
+                                : Textos.Instancia.FaltantesEspeciales,
+                            _informe.EspecialesQueFaltan)
             : "";
         lista.ItemsSource = _informe.Huecos.Select(h => new FaltaVista { Hueco = h }).ToList();
         btnCopiar.IsEnabled = _informe.Huecos.Count > 0;
 
         if (_informe.Huecos.Count == 0)
             lblPie.Text = temporada != null
-                ? $"No falta nada de {(_porAnio ? "" : "la temporada ")}{temporada}."
+                ? string.Format(_porAnio
+                                    ? Textos.Instancia.FaltantesNadaAnio
+                                    : Textos.Instancia.FaltantesNadaTemporada,
+                                temporada)
                 : chkTodas.IsChecked == true
-                    ? "No falta nada del catálogo entero."
-                    : "No falta nada de las temporadas que has empezado.";
+                    ? Textos.Instancia.FaltantesNadaCatalogo
+                    : Textos.Instancia.FaltantesNadaEmpezadas;
         else
-            lblPie.Text = "Se cuenta por historias: un capítulo con tres y solo dos en disco sale como incompleto.";
+            lblPie.Text = Textos.Instancia.FaltantesPie;
     }
 
     /// <summary>
@@ -105,17 +120,27 @@ public partial class FaltantesWindow : Window
     /// </summary>
     private void Copiar()
     {
+        // El sufijo sale de la MISMA clave que el distintivo de la fila: así lo pegado
+        // dice lo mismo que se estaba viendo en pantalla.
+        var aMedias = $"\t({Textos.Instancia.FaltantesAMedias})";
+
         var sb = new StringBuilder();
-        sb.AppendLine($"{_catalogo.Serie} — {_informe.Resumen}");
+        sb.AppendLine($"{_catalogo.Serie} - {_informe.Resumen}");
         sb.AppendLine();
         foreach (var h in _informe.Huecos)
-            sb.AppendLine($"{h.Codigo}\t{h.Titulos}{(h.Entero ? "" : "\t(a medias)")}");
+            sb.AppendLine($"{h.Codigo}\t{h.Titulos}{(h.Entero ? "" : aMedias)}");
 
         try
         {
             Clipboard.SetText(sb.ToString());
-            lblPie.Text = $"Copiado: {_informe.Huecos.Count} línea(s).";
+            lblPie.Text = string.Format(_informe.Huecos.Count == 1
+                                            ? Textos.Instancia.FaltantesCopiadoUno
+                                            : Textos.Instancia.FaltantesCopiado,
+                                        _informe.Huecos.Count);
         }
-        catch (Exception ex) { lblPie.Text = $"No se pudo copiar: {ex.Message}"; }
+        catch (Exception ex)
+        {
+            lblPie.Text = string.Format(Textos.Instancia.FaltantesNoSePudoCopiar, ex.Message);
+        }
     }
 }

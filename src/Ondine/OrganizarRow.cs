@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
+using Ondine.Localizacion;
 using Ondine.Reindex;
 
 namespace Ondine;
@@ -28,7 +29,9 @@ public sealed class CandidatoVista
         ? $"E{Episodio.Num} · {Episodio.Temporada}"
         : $"E{Episodio.Num}";
 
-    public string TextoBoton => EsElegido ? $"Dejar E{Episodio.Num}" : $"Cambiar a E{Episodio.Num}";
+    public string TextoBoton => string.Format(
+        EsElegido ? Textos.Instancia.OrganizarBotonDejar : Textos.Instancia.OrganizarBotonCambiar,
+        Episodio.Num);
 }
 
 /// <summary>
@@ -123,16 +126,13 @@ public sealed class OrganizarRow : INotifyPropertyChanged
                 seg is { Length: > 0 }
                     ? seg.Select(c => char.ToLowerInvariant(c) - 'a')
                          .Where(i => i >= 0 && i < e.TitulosSalida.Count)
-                         .Select(i => $"«{e.TitulosSalida[i]}» (ep. {e.Num})")
-                    : new[] { $"el episodio {e.Num} entero" };
+                         .Select(i => string.Format(Textos.Instancia.OrganizarHistoriaDe,
+                                                    e.TitulosSalida[i], e.Num))
+                    : new[] { string.Format(Textos.Instancia.OrganizarEpisodioEntero, e.Num) };
 
             var todas = Cuales(ep, SegElegido).Concat(_tambien.SelectMany(h => Cuales(h.Episodio, h.Segmento)));
-            var aviso = _tambien.Count > 0
-                ? "\n\nOJO: mezcla historias de episodios distintos. El nombre lo dice, pero la app " +
-                  "no sabrá releerlo y al reanalizar saldrá como duda."
-                : "";
-            return $"Este fichero trae: {string.Join(", ", todas)}.\n" +
-                   "Con el botón derecho puedes cambiar qué historias son." + aviso;
+            var aviso = _tambien.Count > 0 ? Textos.Instancia.OrganizarSegmentoAviso : "";
+            return string.Format(Textos.Instancia.OrganizarSegmentoTrae, string.Join(", ", todas)) + aviso;
         }
     }
 
@@ -231,21 +231,21 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     {
         get
         {
-            if (Aplicado) return "Hecho";
+            if (Aplicado) return Textos.Instancia.OrganizarEstadoHecho;
             // «Partir» manda sobre el estado: un fichero con dos episodios no es un renombrado
             // pendiente, es un corte. Decirle «Con cambios» invitaría justo al error de
             // ponerle un nombre y perder la otra historia.
-            if (RecomiendaRecortar) return "Partir en 2";
+            if (RecomiendaRecortar) return Textos.Instancia.OrganizarEstadoPartir;
             return Res.Estado switch
             {
                 // «Correcto», no «Limpio»: el nombre ya está bien, no es que se haya limpiado.
-                ReindexEstado.Limpio => "Correcto",
+                ReindexEstado.Limpio => Textos.Instancia.OrganizarEstadoCorrecto,
                 // «Con cambios», no «Corregido»: aún no se ha corregido nada — hay un cambio
                 // propuesto que espera a que lo apliques.
-                ReindexEstado.Corregido => "Con cambios",
-                ReindexEstado.Especial => "Especial",
-                ReindexEstado.Conflicto => "Conflicto",
-                _ => "Error",
+                ReindexEstado.Corregido => Textos.Instancia.OrganizarEstadoConCambios,
+                ReindexEstado.Especial => Textos.Instancia.OrganizarEstadoEspecial,
+                ReindexEstado.Conflicto => Textos.Instancia.OrganizarEstadoConflicto,
+                _ => Textos.Instancia.Error,
             };
         }
     }
@@ -289,25 +289,18 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     {
         get
         {
-            if (Aplicado) return "Renombrado en este lote.";
+            if (Aplicado) return Textos.Instancia.OrganizarTooltipHecho;
 
-            if (SinCambios)
-                return "Ya se llama exactamente como debe: no hay nada que aplicar.\n\n" +
-                       "Que el nombre coincida entero con el que produciría la plantilla es la " +
-                       "confirmación más fuerte que hay de que el episodio es este.";
+            if (SinCambios) return Textos.Instancia.OrganizarTooltipSinCambios;
 
             var porque = string.IsNullOrWhiteSpace(Res.Motivo) ? "" : $" ({Res.Motivo})";
-            return Res.Confianza switch
+            var plantilla = Res.Confianza switch
             {
-                ReindexConfianza.Alta =>
-                    $"{EstadoTexto} · identificación segura{porque}.",
-                ReindexConfianza.Revisar =>
-                    $"{EstadoTexto}, pero la identificación NO está confirmada{porque}.\n\n" +
-                    "Va en ámbar por eso: el nombre puede estar ya bien y aun así no ser este episodio. " +
-                    "Ábrela para ver contra qué ha casado.",
-                _ =>
-                    $"{EstadoTexto} · esto lo tienes que decidir tú{porque}.",
+                ReindexConfianza.Alta => Textos.Instancia.OrganizarTooltipSegura,
+                ReindexConfianza.Revisar => Textos.Instancia.OrganizarTooltipRevisar,
+                _ => Textos.Instancia.OrganizarTooltipDecides,
             };
+            return string.Format(plantilla, EstadoTexto, porque);
         }
     }
 
@@ -333,33 +326,35 @@ public sealed class OrganizarRow : INotifyPropertyChanged
             switch (Res.Estado)
             {
                 case ReindexEstado.Error:
-                    return "— nombre no parseable · elige episodio a mano";
+                    return Textos.Instancia.OrganizarPropuestaNoParseable;
 
                 // Un duplicado no se explica con los candidatos de título: lo que hay que
                 // contar es quién le ganó el sitio. Mezclar las dos cosas hacía una frase
                 // larguísima que no decía ninguna de las dos bien.
                 case ReindexEstado.Conflicto when Res.EsDuplicado:
-                    return "— " + Res.Motivo;
+                    return "- " + Res.Motivo;
 
                 case ReindexEstado.Conflicto when Res.Alternativas.Count >= 2:
                     var a = Res.Alternativas[0].Episodio;
                     var b = Res.Alternativas[1].Episodio;
-                    return $"¿E{a.Num} ({a.Temporada}) o E{b.Num} ({b.Temporada})? El título existe dos veces";
+                    return string.Format(Textos.Instancia.OrganizarPropuestaDosTitulos,
+                                         a.Num, a.Temporada, b.Num, b.Temporada);
 
                 case ReindexEstado.Conflicto:
-                    return "— " + Res.Motivo;
+                    return "- " + Res.Motivo;
 
                 case ReindexEstado.Especial when Res.Episodio != null:
-                    return $"¿Especial {Res.Episodio.Num} — {Res.Episodio.TituloPrincipal}? Confirmar";
+                    return string.Format(Textos.Instancia.OrganizarPropuestaEspecial,
+                                         Res.Episodio.Num, Res.Episodio.TituloPrincipal);
 
                 case ReindexEstado.Especial:
-                    return "¿Qué especial es? Elegir a mano";
+                    return Textos.Instancia.OrganizarPropuestaQueEspecial;
             }
 
             // Ya trae el nombre correcto: no hay nada que hacer, y decirlo es la información
-            if (NombreNuevo == null) return "— sin propuesta";
+            if (NombreNuevo == null) return Textos.Instancia.OrganizarPropuestaSinPropuesta;
             if (string.Equals(NombreNuevo, Original, StringComparison.OrdinalIgnoreCase))
-                return "(sin cambios)";
+                return Textos.Instancia.OrganizarPropuestaSinCambios;
             return NombreNuevo;
         }
     }
@@ -389,22 +384,22 @@ public sealed class OrganizarRow : INotifyPropertyChanged
 
             string evidencia = Res.Hint switch
             {
-                ReindexHint.Override => "decisión tuya",
-                ReindexHint.IndiceFecha => "nº + fecha exacta",
-                ReindexHint.OrdinalTemporada => "nº de temporada",
+                ReindexHint.Override => Textos.Instancia.OrganizarPorQueDecision,
+                ReindexHint.IndiceFecha => Textos.Instancia.OrganizarPorQueNumFecha,
+                ReindexHint.OrdinalTemporada => Textos.Instancia.OrganizarPorQueOrdinal,
                 ReindexHint.Titulo => Res.Archivo.Segmentos.Count > 1
-                    ? $"{Res.Archivo.Segmentos.Count} segmentos · títulos"
-                    : "título",
-                ReindexHint.IndiceFechaAprox => "nº + fecha≈",
-                ReindexHint.TituloDebil => "título débil",
-                _ => "sin señales",
+                    ? string.Format(Textos.Instancia.OrganizarPorQueSegmentos, Res.Archivo.Segmentos.Count)
+                    : Textos.Instancia.OrganizarPorQueTitulo,
+                ReindexHint.IndiceFechaAprox => Textos.Instancia.OrganizarPorQueNumFechaAprox,
+                ReindexHint.TituloDebil => Textos.Instancia.OrganizarPorQueTituloDebil,
+                _ => Textos.Instancia.OrganizarPorQueSinSenales,
             };
             partes.Add($"{evidencia} {Res.Score.ToString("0.00", Es)}");
 
             if (Res.Alternativas.Count > 0)
-                partes.Add(Res.Estado == ReindexEstado.Conflicto
-                    ? $"{Res.Alternativas.Count} candidatos"
-                    : $"{Res.Alternativas.Count} alternativas");
+                partes.Add(string.Format(Res.Estado == ReindexEstado.Conflicto
+                    ? Textos.Instancia.OrganizarPorQueCandidatos
+                    : Textos.Instancia.OrganizarPorQueAlternativas, Res.Alternativas.Count));
 
             return string.Join(" · ", partes);
         }
@@ -429,7 +424,7 @@ public sealed class OrganizarRow : INotifyPropertyChanged
 
             if (Res.Episodio != null)
                 lista.Add(Ver(Res.Episodio, Res.Score, esElegido: true, Res.Alternativas.Count > 0
-                    ? new[] { "＋ es la que propone la app ahora mismo" }
+                    ? new[] { Textos.Instancia.OrganizarCandidatoActual }
                     : Array.Empty<string>()));
 
             foreach (var alt in Res.Alternativas)
@@ -448,9 +443,12 @@ public sealed class OrganizarRow : INotifyPropertyChanged
         {
             Episodio = ep,
             EsElegido = esElegido,
-            Etiqueta = (esElegido ? "más probable" : "alternativa") + $" · {score.ToString("0.00", Es)}",
+            Etiqueta = (esElegido
+                           ? Textos.Instancia.OrganizarCandidatoProbable
+                           : Textos.Instancia.OrganizarCandidatoAlternativa)
+                       + $" · {score.ToString("0.00", Es)}",
             Titulo = ep.TituloCompleto,
-            NombreResultante = nombre ?? "(sin nombre que proponer)",
+            NombreResultante = nombre ?? Textos.Instancia.OrganizarCandidatoSinNombre,
             Evidencia = evidencia,
         };
     }
@@ -498,7 +496,9 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     /// <summary>Carpeta de ESTE fichero, para distinguirlo de su pareja cuando comparten nombre.</summary>
     public string CarpetaPropia => System.IO.Path.GetDirectoryName(Res.Archivo.Path) ?? "";
     /// <summary>Nombre del OTRO fichero (el que la app conserva), o «(desconocido)».</summary>
-    public string NombrePareja => Res.RutaPareja != null ? System.IO.Path.GetFileName(Res.RutaPareja) : "(desconocido)";
+    public string NombrePareja => Res.RutaPareja != null
+        ? System.IO.Path.GetFileName(Res.RutaPareja)
+        : Textos.Instancia.OrganizarDesconocido;
     /// <summary>Carpeta del OTRO fichero.</summary>
     public string CarpetaPareja => Res.RutaPareja != null ? System.IO.Path.GetDirectoryName(Res.RutaPareja) ?? "" : "";
 
@@ -512,16 +512,16 @@ public sealed class OrganizarRow : INotifyPropertyChanged
         Res.RutaPareja = null;
         Res.Estado = Res.Episodio?.Especial == true ? ReindexEstado.Especial : ReindexEstado.Corregido;
         Res.Confianza = ReindexConfianza.Alta;
-        Res.Motivo = "El otro fichero fue a la Papelera: esta es la copia que se conserva.";
+        Res.Motivo = Textos.Instancia.OrganizarMotivoOtroALaPapelera;
         Res.Alternativas = Array.Empty<ReindexCandidato>();
         Recalcular();
     }
 
     /// <summary>Cabecera del panel: partir manda sobre resolver, y un repetido tiene su propio texto.</summary>
     public string TituloDetalle => RecomiendaRecortar
-        ? "DOS EPISODIOS EN UN MISMO FICHERO"
-        : EsRepetido ? "FICHERO REPETIDO"
-        : "RESOLVER CONFLICTO";
+        ? Textos.Instancia.OrganizarDetalleDosEpisodios
+        : EsRepetido ? Textos.Instancia.OrganizarDetalleRepetido
+        : Textos.Instancia.OrganizarDetalleConflicto;
 
     /// <summary>
     /// El selector de «elige un episodio» se esconde cuando la respuesta es partir (ofrecer E588 o
@@ -559,8 +559,8 @@ public sealed class OrganizarRow : INotifyPropertyChanged
         Res.TraeDosEpisodios = false;
         Res.Estado = ep.Especial ? ReindexEstado.Especial : ReindexEstado.Corregido;
         Res.Motivo = seg == null
-            ? $"Lo elegiste tú: episodio {ep.Num}"
-            : $"Lo elegiste tú: la historia «{seg}» del episodio {ep.Num}";
+            ? string.Format(Textos.Instancia.OrganizarMotivoElegido, ep.Num)
+            : string.Format(Textos.Instancia.OrganizarMotivoElegidoHistoria, seg, ep.Num);
         Res.Alternativas = Array.Empty<ReindexCandidato>();
         Recalcular();
     }

@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -131,12 +133,15 @@ public partial class RenameWindow : Window
             _preview.Add(new RenamePreviewRow
             {
                 Original = name,
-                Nuevo = nuevo ?? "— sin cambio —",
+                Nuevo = nuevo ?? Textos.Instancia.RenameSinCambio,
                 Color = nuevo != null ? changed : same,
             });
         }
+        // el castellano concuerda el verbo con el primer número, así que el
+        // singular tiene su propia frase
+        var plantilla = n == 1 ? Textos.Instancia.RenameCuentaUno : Textos.Instancia.RenameCuenta;
         lblCount.Text = _items.Count == 0
-            ? "no hay vídeos seleccionados"
-            : $"{n} de {_items.Count} se renombran";
+            ? Textos.Instancia.RenameSinVideos
+            : string.Format(CultureInfo.CurrentCulture, plantilla, n, _items.Count);
     }
 }
