@@ -1,0 +1,246 @@
+---
+import Ficha from "./Ficha.astro";
+import { BIBLIOTECA } from "../data/biblioteca";
+
+// Alternativa B del spot: el vídeo EMERGE desde detrás de un primer plano
+// mientras se hace scroll, en vez de aparecer entero de golpe.
+//
+// En el ejemplo de referencia el primer plano son unas colinas, o sea
+// decoración. Aquí son las fichas de la biblioteca, que es lo que la página ya
+// tiene y además significa algo: el spot sale de detrás de la biblioteca que
+// acabas de ver ordenarse.
+//
+// Autorreproducido, en bucle y sin barra de controles, igual que la A. Y con
+// las mismas dos consecuencias: empieza en silencio porque los navegadores no
+// autorreproducen con sonido, y a quien tiene las animaciones desactivadas no
+// se le mueve nada solo.
+const PRIMER_PLANO = BIBLIOTECA.slice(0, 6);
+const base = import.meta.env.BASE_URL;
+---
+
+<section id="spot-b" class="emergente">
+  <div class="lienzo">
+    <div class="cielo" aria-hidden="true"></div>
+
+    <h2 class="acero titulo">Cuarenta y cuatro segundos.</h2>
+
+    <div class="escena">
+      <div class="marco-video" data-marco>
+        <video
+          data-video-b
+          poster={`${base}/spot-portada.jpg`}
+          preload="metadata"
+          muted
+          loop
+          playsinline
+          width="1920"
+          height="1080"
+        >
+          <source src={`${base}/spot-ondine.mp4`} type="video/mp4" />
+        </video>
+
+        <button class="sonido" data-sonido-b type="button" aria-pressed="false">
+          <span data-sonido-b-texto>Activar sonido</span>
+        </button>
+      </div>
+
+      <!-- El primer plano. Va por delante del vídeo y se mueve al revés que
+           él, que es lo que produce la sensación de que el vídeo sale de
+           detrás en vez de simplemente crecer. -->
+      <div class="primer-plano" data-primer aria-hidden="true">
+        {PRIMER_PLANO.map((f, i) => <Ficha ficha={f} indice={i} estado="resuelto" />)}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .emergente {
+    position: relative;
+    height: 230vh;
+  }
+
+  .lienzo {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: clamp(4.5rem, 11vh, 7rem);
+  }
+
+  /* Un cielo muy contenido, del propio lienzo a un morado hondo. Nada de
+     degradado de colores: es la misma familia de la paleta, solo que el fondo
+     se aclara un poco hacia el horizonte para que el vídeo recorte contra él. */
+  .cielo {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        120% 70% at 50% 78%,
+        rgb(93 82 148 / 0.28) 0%,
+        rgb(22 24 38 / 0) 62%
+      ),
+      linear-gradient(to bottom, #161826 0%, #191b2b 55%, #161826 100%);
+  }
+
+  .titulo {
+    position: relative;
+    font-size: clamp(26px, 3.4vw, 42px);
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    text-align: center;
+    padding: 0 1.5rem;
+  }
+
+  .escena {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .marco-video {
+    position: relative;
+    width: min(100%, 940px);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #101120;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.09),
+      0 40px 90px rgb(8 9 16 / 0.65);
+    will-change: transform;
+  }
+
+  .marco-video video {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .sonido {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    padding: 0.45rem 0.9rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(22 24 38 / 0.72);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+    backdrop-filter: blur(6px);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #c9ccd6;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .sonido:hover { background: rgb(22 24 38 / 0.9); color: #e9e9ed; }
+
+  /* ── el primer plano ───────────────────────────────────────────────────── */
+  /* Se sale por los dos lados y por abajo a propósito: tiene que leerse como
+     que la fila sigue más allá del encuadre, no como seis fichas centradas. */
+  .primer-plano {
+    position: absolute;
+    left: -6%;
+    right: -6%;
+    bottom: -12%;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    padding: 0 1.5rem;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .primer-plano :global(.ficha) {
+    box-shadow: 0 -14px 40px rgb(8 9 16 / 0.5);
+  }
+
+  @media (max-width: 900px) {
+    .primer-plano { grid-template-columns: repeat(3, 1fr); }
+    .primer-plano :global(.ficha:nth-child(n + 4)) { display: none; }
+  }
+
+  /* Fotograma quieto: sin anclaje, sin emerger y sin autorreproducción. El
+     vídeo se queda en su portada con sus controles, que es lo que espera quien
+     ha pedido que nada se mueva solo. */
+  @media (prefers-reduced-motion: reduce) {
+    .emergente { height: auto; padding: 4rem 0; }
+    .lienzo { position: static; height: auto; padding-bottom: 3rem; }
+    .escena { display: block; padding-top: 2rem; }
+    .marco-video { margin: 0 auto; }
+    .primer-plano { display: none; }
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const video = document.querySelector<HTMLVideoElement>("[data-video-b]");
+  const sonido = document.querySelector<HTMLButtonElement>("[data-sonido-b]");
+  const texto = document.querySelector<HTMLElement>("[data-sonido-b-texto]");
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (video) {
+    if (quieto) {
+      video.controls = true;
+      if (sonido) sonido.hidden = true;
+    } else {
+      const ojo = new IntersectionObserver(
+        ([e]) => (e.isIntersecting ? void video.play().catch(() => {}) : video.pause()),
+        { threshold: 0.3 },
+      );
+      ojo.observe(video);
+
+      sonido?.addEventListener("click", () => {
+        video.muted = !video.muted;
+        sonido.setAttribute("aria-pressed", String(!video.muted));
+        if (texto) texto.textContent = video.muted ? "Activar sonido" : "Silenciar";
+      });
+
+      // El vídeo sube y crece; el primer plano baja. Los dos a la vez son lo
+      // que hace que parezca que sale de detrás. Si solo creciera el vídeo,
+      // se leería como un simple zoom.
+      const linea = gsap.timeline({
+        scrollTrigger: {
+          trigger: ".emergente",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.6,
+        },
+      });
+
+      linea.fromTo(
+        "[data-marco]",
+        { yPercent: 26, scale: 0.74 },
+        { yPercent: 0, scale: 1, ease: "none" },
+        0,
+      );
+      linea.fromTo(
+        "[data-primer]",
+        { yPercent: -6 },
+        { yPercent: 26, ease: "none" },
+        0,
+      );
+
+      gsap.from("#spot-b .titulo", {
+        opacity: 0,
+        y: 22,
+        duration: 0.7,
+        ease: "power2.out",
+        scrollTrigger: { trigger: ".emergente", start: "top 70%" },
+      });
+    }
+  }
+</script>

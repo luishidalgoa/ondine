@@ -1,15 +1,22 @@
 ---
-// El spot, servido desde la propia página. Nada de YouTube: un incrustado de
-// terceros mete scripts y cookies a quien solo pasaba por aquí, y además saca
-// al visitante de la página justo antes de la descarga, que es lo último que
-// interesa.
+// El spot, servido desde la propia página y reproduciéndose solo. Nada de
+// YouTube: un incrustado de terceros mete scripts y cookies a quien solo
+// pasaba por aquí, y saca al visitante fuera justo antes de la descarga.
+//
+// Va sin barra de controles, en bucle, y arranca cuando entra en pantalla.
+// Dos cosas que eso obliga y no se pueden saltar:
+//
+//   1. Los navegadores solo autorreproducen si el vídeo está EN SILENCIO. No
+//      es opcional ni se puede rodear. Pero este spot tiene música compuesta
+//      para él, así que hay un interruptor de sonido: pequeño, en una esquina
+//      y sin barra de controles alrededor.
+//   2. Un vídeo moviéndose solo es justo lo que evita quien navega con
+//      `prefers-reduced-motion`. A esa persona no se le autorreproduce nada:
+//      se le deja la portada y un botón.
 //
 // El vídeo original pesaba 15,9 MB. Aquí va a 3,1 MB, a 1280 de ancho y con
 // los metadatos al principio del fichero para que empiece antes de acabar de
 // bajar. Lo comprimió Ondine, que es de lo que va esto.
-//
-// `preload="metadata"` es deliberado: sin pulsar no se descargan los 3 MB,
-// solo la cabecera. La portada es una imagen aparte de 59 KB.
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -17,25 +24,35 @@ const base = import.meta.env.BASE_URL;
   <div class="marco">
     <h2 class="acero titulo">Cuarenta y cuatro segundos.</h2>
 
-    <div class="reproductor" data-reproductor>
-      <video
-        data-video
-        poster={`${base}/spot-portada.jpg`}
-        preload="metadata"
-        playsinline
-        width="1920"
-        height="1080"
-      >
-        <source src={`${base}/spot-ondine.mp4`} type="video/mp4" />
-        Tu navegador no reproduce vídeo. <a href={`${base}/spot-ondine.mp4`}>
-          Descarga el spot</a
-        >.
-      </video>
+    <div class="escena">
+      <div class="reproductor" data-reproductor>
+        <video
+          data-video
+          poster={`${base}/spot-portada.jpg`}
+          preload="metadata"
+          muted
+          loop
+          playsinline
+          width="1920"
+          height="1080"
+        >
+          <source src={`${base}/spot-ondine.mp4`} type="video/mp4" />
+          Tu navegador no reproduce vídeo. <a href={`${base}/spot-ondine.mp4`}>
+            Descarga el spot</a
+          >.
+        </video>
 
-      <button class="disparo" data-disparo type="button">
-        <span class="disco" aria-hidden="true"><span class="punta"></span></span>
-        <span class="rotulo">Reproducir el spot</span>
-      </button>
+        <!-- Solo aparece si no hay autorreproducción, que es el caso de quien
+             tiene las animaciones desactivadas. -->
+        <button class="disparo" data-disparo type="button" hidden>
+          <span class="disco" aria-hidden="true"><span class="punta"></span></span>
+          <span class="rotulo">Reproducir el spot</span>
+        </button>
+
+        <button class="sonido" data-sonido type="button" aria-pressed="false">
+          <span data-sonido-texto>Activar sonido</span>
+        </button>
+      </div>
     </div>
   </div>
 </section>
@@ -57,13 +74,22 @@ const base = import.meta.env.BASE_URL;
     letter-spacing: -0.025em;
   }
 
+  /* La escena existe solo para dar sitio a la inclinación: sin ella, las
+     esquinas giradas se comerían el relleno de la sección. */
+  .escena {
+    margin-top: clamp(1.5rem, 3.5vh, 2.25rem);
+    perspective: 1600px;
+  }
+
   .reproductor {
     position: relative;
-    margin-top: clamp(1.5rem, 3.5vh, 2.25rem);
     border-radius: 12px;
     overflow: hidden;
     background: #101120;
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.06),
+      0 30px 80px rgb(8 9 16 / 0.55);
+    will-change: transform;
   }
 
   .reproductor video {
@@ -72,9 +98,34 @@ const base = import.meta.env.BASE_URL;
     height: auto;
   }
 
-  /* El disparador tapa el vídeo entero mientras no se ha pulsado. Al pulsar,
-     se retira y aparecen los controles nativos, que es lo que la gente ya
-     sabe manejar. */
+  /* ── el interruptor de sonido ──────────────────────────────────────────── */
+  /* No es una barra de controles: es un botón suelto y pequeño. Sin él, la
+     música del spot no sonaría nunca, porque autorreproducir obliga a
+     empezar en silencio. */
+  .sonido {
+    position: absolute;
+    right: clamp(0.75rem, 1.6vw, 1.25rem);
+    bottom: clamp(0.75rem, 1.6vw, 1.25rem);
+    padding: 0.45rem 0.9rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(22 24 38 / 0.72);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+    backdrop-filter: blur(6px);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #c9ccd6;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .sonido:hover {
+    background: rgb(22 24 38 / 0.9);
+    color: #e9e9ed;
+  }
+  .sonido[hidden] { display: none; }
+
+  /* ── el disparador de reserva ──────────────────────────────────────────── */
   .disparo {
     position: absolute;
     inset: 0;
@@ -85,7 +136,7 @@ const base = import.meta.env.BASE_URL;
     padding: 0;
     background: rgb(22 24 38 / 0.28);
     cursor: pointer;
-    transition: opacity 0.35s, background-color 0.3s;
+    transition: background-color 0.3s;
   }
   .disparo:hover { background: rgb(22 24 38 / 0.14); }
   .disparo[hidden] { display: none; }
@@ -131,33 +182,80 @@ const base = import.meta.env.BASE_URL;
 
   const video = document.querySelector<HTMLVideoElement>("[data-video]");
   const disparo = document.querySelector<HTMLButtonElement>("[data-disparo]");
-
-  disparo?.addEventListener("click", () => {
-    if (!video) return;
-    video.controls = true;
-    disparo.hidden = true;
-    // La reproducción la ha pedido una persona pulsando, así que puede sonar.
-    void video.play();
-  });
-
-  // Si se acaba, vuelve la portada: deja la sección como estaba en vez de
-  // quedarse con el último fotograma congelado.
-  video?.addEventListener("ended", () => {
-    if (!disparo) return;
-    video.controls = false;
-    video.load();
-    disparo.hidden = false;
-  });
+  const sonido = document.querySelector<HTMLButtonElement>("[data-sonido]");
+  const sonidoTexto = document.querySelector<HTMLElement>("[data-sonido-texto]");
 
   const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!quieto) {
-    gsap.from("#spot .titulo, #spot .reproductor", {
-      opacity: 0,
-      y: 26,
-      duration: 0.75,
-      stagger: 0.12,
-      ease: "power2.out",
-      scrollTrigger: { trigger: "#spot", start: "top 78%" },
-    });
+
+  if (video) {
+    if (quieto) {
+      // Nada se mueve solo. Portada, botón, y si lo pulsa, con controles.
+      if (disparo) disparo.hidden = false;
+      if (sonido) sonido.hidden = true;
+      disparo?.addEventListener("click", () => {
+        video.controls = true;
+        video.muted = false;
+        disparo.hidden = true;
+        void video.play();
+      });
+    } else {
+      // Solo se reproduce mientras se está viendo. Un vídeo corriendo fuera de
+      // pantalla gasta batería y datos sin que nadie lo mire.
+      const ojo = new IntersectionObserver(
+        ([e]) => {
+          if (e.isIntersecting) {
+            video.play().catch(() => {
+              // Si el navegador se niega aun estando en silencio, no se deja
+              // al visitante con un cuadro parado: se le da el botón.
+              if (disparo) disparo.hidden = false;
+            });
+          } else {
+            video.pause();
+          }
+        },
+        { threshold: 0.35 },
+      );
+      ojo.observe(video);
+
+      disparo?.addEventListener("click", () => {
+        disparo.hidden = true;
+        void video.play();
+      });
+
+      sonido?.addEventListener("click", () => {
+        video.muted = !video.muted;
+        sonido.setAttribute("aria-pressed", String(!video.muted));
+        if (sonidoTexto) {
+          sonidoTexto.textContent = video.muted
+            ? "Activar sonido"
+            : "Silenciar";
+        }
+      });
+
+      // Entra girado y se endereza. El giro es el mismo gesto que el mural del
+      // hero, así que la página se reconoce a sí misma en vez de estrenar un
+      // efecto nuevo aquí.
+      gsap.from("#spot .titulo", {
+        opacity: 0,
+        y: 24,
+        duration: 0.7,
+        ease: "power2.out",
+        scrollTrigger: { trigger: "#spot", start: "top 78%" },
+      });
+
+      gsap.fromTo(
+        "[data-reproductor]",
+        { rotateY: -9, rotateX: 4, scale: 0.94, opacity: 0 },
+        {
+          rotateY: 0,
+          rotateX: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 1.1,
+          ease: "power3.out",
+          scrollTrigger: { trigger: "#spot", start: "top 80%" },
+        },
+      );
+    }
   }
 </script>
