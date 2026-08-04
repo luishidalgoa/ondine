@@ -44,10 +44,10 @@ export const BIBLIOTECA: Ficha[] = [
   { crudo: "simpsons temporada 4 - 12.mkv", titulo: "Marge contra el monorraíl",       episodio: "S04E12", tinte: "#4C3659", variante: "arco" },
   { crudo: "los simpson 5x02.avi",      titulo: "Cabo Miedo",                          episodio: "S05E02", tinte: "#2F4A54", variante: "onda" },
   { crudo: "video_2019.avi",            titulo: "Bart consigue un elefante",           episodio: "S05E17", tinte: "#574538", variante: "columna" },
-  { crudo: "descarga final.mp4",        titulo: "¿Quién disparó al señor Burns?",      episodio: "S06E25", tinte: "#35496A", variante: "horizonte" },
+  { crudo: "descarga final.mp4",        titulo: "El limonero de Troya",                episodio: "S06E24", tinte: "#35496A", variante: "horizonte" },
 
   { crudo: "simpson 7x21.mkv",          titulo: "22 historias cortas sobre Springfield", episodio: "S07E21", tinte: "#3D3A5C", variante: "horizonte" },
   { crudo: "cap sin nombre 3.mkv",      titulo: "Homerpalooza",                        episodio: "S07E24", tinte: "#3D5A52", variante: "columna" },
-  { crudo: "temp8_23.mkv",              titulo: "El limonero de Troya",                episodio: "S08E23", tinte: "#5A4038", variante: "onda" },
+  { crudo: "temp8_23.mkv",              titulo: "El enemigo de Homer",                 episodio: "S08E23", tinte: "#5A4038", variante: "onda" },
   { crudo: "nuevo_cap (1).mkv",         titulo: "La ciudad de Nueva York contra Homer", episodio: "S09E01", tinte: "#384168", variante: "arco" },
 ];

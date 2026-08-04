@@ -18,10 +18,10 @@ de ancho.
 | `s04e12.jpg` | S04E12 | Marge contra el monorraíl |
 | `s05e02.jpg` | S05E02 | Cabo Miedo |
 | `s05e17.jpg` | S05E17 | Bart consigue un elefante |
-| `s06e25.jpg` | S06E25 | ¿Quién disparó al señor Burns? |
+| `s06e24.jpg` | S06E24 | El limonero de Troya |
 | `s07e21.jpg` | S07E21 | 22 historias cortas sobre Springfield |
 | `s07e24.jpg` | S07E24 | Homerpalooza |
-| `s08e23.jpg` | S08E23 | El limonero de Troya |
+| `s08e23.jpg` | S08E23 | El enemigo de Homer |
 | `s09e01.jpg` | S09E01 | La ciudad de Nueva York contra Homer |
 
 Los ocho primeros son además los que salen en la comparativa del final, así
