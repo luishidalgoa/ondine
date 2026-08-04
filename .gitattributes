@@ -1,0 +1,11 @@
+# Los guiones de shell van SIEMPRE con finales de línea de Unix.
+#
+# Sin esto, git los convierte a CRLF al pasar por una máquina Windows, y un
+# script cuya primera línea es «#!/bin/sh\r» no arranca: el sistema busca un
+# intérprete llamado «sh\r» y no lo encuentra. El error que da no menciona los
+# finales de línea por ningún sitio, así que se tarda un rato en verlo.
+*.sh text eol=lf
+
+# Lo mismo para lo que consume una herramienta de Unix.
+*.yml text eol=lf
+*.yaml text eol=lf
