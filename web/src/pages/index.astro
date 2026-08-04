@@ -9,6 +9,18 @@ import Tamano from "../components/Tamano.astro";
 import Comparativa from "../components/Comparativa.astro";
 import Spot from "../components/Spot.astro";
 import Descarga from "../components/Descarga.astro";
+import { BIBLIOTECA } from "../data/biblioteca";
+import { fotograma } from "../data/caps";
+
+// Aviso al compilar. Que falte un fotograma no rompe la página, pero callarse
+// hace que uno crea que están todos puestos cuando no lo están.
+const sinImagen = BIBLIOTECA.filter((f) => !fotograma(f.episodio, ""));
+if (sinImagen.length) {
+  console.log(
+    `[caps] ${BIBLIOTECA.length - sinImagen.length} de ${BIBLIOTECA.length} fotogramas puestos. ` +
+      `Faltan: ${sinImagen.map((f) => f.episodio).join(", ")}`,
+  );
+}
 
 // El orden no es el del producto, es el de la conversión. «Partir» va antes
 // que «Ordenar» porque es lo único que no hace ninguna otra herramienta, y

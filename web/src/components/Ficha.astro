@@ -1,5 +1,6 @@
 ---
 import type { Ficha } from "../data/biblioteca";
+import { fotograma } from "../data/caps";
 
 // Una ficha de episodio con sus dos estados apilados: el de arriba es cómo
 // llega el fichero (sin fotograma, con el nombre a pelo, que es exactamente lo
@@ -21,8 +22,9 @@ interface Props {
 }
 const { ficha, indice, estado = "ambos" } = Astro.props;
 
-const base = import.meta.env.BASE_URL;
-const imagen = `${base}/img/caps/${ficha.episodio.toLowerCase()}.jpg`;
+// Se busca el fichero de verdad en la carpeta, sin exigir un nombre clavado.
+// Si no hay ninguno, no se pinta la etiqueta <img> siquiera.
+const imagen = fotograma(ficha.episodio, import.meta.env.BASE_URL);
 ---
 
 <article
@@ -47,13 +49,16 @@ const imagen = `${base}/img/caps/${ficha.episodio.toLowerCase()}.jpg`;
         {ficha.variante === "horizonte" && <span class="forma-horizonte" />}
         {ficha.variante === "columna" && <span class="forma-columna" />}
       </div>
-      <img
-        src={imagen}
-        alt={`Fotograma de ${ficha.titulo}`}
-        loading="lazy"
-        decoding="async"
-        onerror="this.remove()"
-      />
+      {
+        imagen && (
+          <img
+            src={imagen}
+            alt={`Fotograma de ${ficha.titulo}`}
+            loading="lazy"
+            decoding="async"
+          />
+        )
+      }
     </div>
     <div class="pie">
       <h3 class="titulo">{ficha.titulo}</h3>
