@@ -32,6 +32,28 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Ondine habla inglés.** Toda la interfaz está en inglés y en castellano, y se cambia de idioma
+  sin reiniciar: los textos se rehacen solos en cuanto lo eliges. La primera vez la app mira el
+  idioma de tu sistema, así que si usas Windows en castellano se abre en castellano; a partir de
+  ahí manda lo que elijas. Son 1152 textos, y están todos: los rótulos, los mensajes del panel
+  *Registro*, los avisos, los globos de ayuda y el encargo que se le pasa a la IA para construir
+  un catálogo.
+
+### Corregido
+
+- **La explicación de «demasiadas dudas» no salía con la app en inglés.** Al decidir qué
+  explicación mostrar, la app comparaba un aviso contra un trozo de texto escrito en castellano.
+  Con la interfaz en otro idioma esa comparación nunca acertaba, y siempre acababa enseñando la
+  explicación genérica en vez de la que tocaba.
+- **Los desplegables de *Recortes* se quedaban en el idioma de arranque.** Formato, calidad,
+  resolución y audio se rellenaban una sola vez al abrir la pestaña, así que al cambiar de idioma
+  seguían como estaban. Ahora se rellenan de nuevo, respetando lo que tuvieras elegido.
+- **El mismo ajuste salía en dos idiomas según la pestaña.** Los desplegables de *Recortes* y los
+  de *Comprimir* son los mismos, pero cada uno tenía su lista de textos por separado; ahora
+  comparten una sola.
+
 ## [1.5.0] - 2026-07-30
 
 La app cambia de nombre: **ShrinkStudio pasa a llamarse Ondine**. Al actualizar no tienes que hacer
