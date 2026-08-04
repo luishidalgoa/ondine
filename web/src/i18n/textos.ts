@@ -45,6 +45,9 @@ const es = {
       "Cada capítulo con su título, su número y su temporada. Escrito como los metadatos esperan encontrarlo.",
     descargar: "Descargar para Windows",
     terminal: "Instalar por terminal",
+    // Lo que dice el botón DESPUÉS de pulsarlo. Sin esta confirmación, copiar
+    // al portapapeles no se nota y la gente pulsa tres veces.
+    terminalCopiado: "Copiado",
   },
 
   compatibilidad: {
@@ -150,6 +153,12 @@ const es = {
     boton: "Descargar",
     modalTitulo: "Elige tu sistema",
     cerrar: "Cerrar",
+    terminalTitulo: "DESDE EL TERMINAL",
+    terminalNota:
+      "Detecta tu sistema y tu procesador, baja el binario que toca y lo deja en ~/.local/bin. Sin sudo y sin tocar nada fuera de tu carpeta personal.",
+    terminalOrden: "curl -fsSL https://ondine.hdglabs.com/install.sh | sh",
+    terminalManual: "O a mano, con el paquete de arriba:",
+    terminalComandos: "tar xzf ondine-linux-x64.tar.gz\n./ondine --help",
     pieA: "Todas las versiones y sus notas están en ",
     pieEnlace: "la página de versiones",
     pieB: ".",
@@ -248,6 +257,7 @@ const en: typeof es = {
       "Every episode with its title, its number and its season. Written the way metadata expects to find it.",
     descargar: "Download for Windows",
     terminal: "Install from the terminal",
+    terminalCopiado: "Copied",
   },
 
   compatibilidad: {
@@ -353,6 +363,12 @@ const en: typeof es = {
     boton: "Download",
     modalTitulo: "Choose your system",
     cerrar: "Close",
+    terminalTitulo: "FROM THE TERMINAL",
+    terminalNota:
+      "It works out your system and CPU, downloads the right binary and drops it in ~/.local/bin. No sudo, and nothing outside your home directory is touched.",
+    terminalOrden: "curl -fsSL https://ondine.hdglabs.com/install.sh | sh",
+    terminalManual: "Or by hand, with the package above:",
+    terminalComandos: "tar xzf ondine-linux-x64.tar.gz\n./ondine --help",
     pieA: "Every release and its notes are on ",
     pieEnlace: "the releases page",
     pieB: ".",
