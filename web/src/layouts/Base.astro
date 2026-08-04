@@ -20,12 +20,14 @@ const REPO = "https://github.com/luishidalgoa/ondine";
 // Cada idioma tiene su portada y su «sobre mí». El selector necesita saber
 // estas rutas y los buscadores también, para no tratar las dos versiones como
 // contenido duplicado.
-const PORTADA = idioma === "es" ? `${base}/` : `${base}/en/`;
-const SOBRE_MI = idioma === "es" ? `${base}/sobre-mi` : `${base}/en/about`;
+const PORTADA = idioma === "en" ? `${base}/` : `${base}/es/`;
+const SOBRE_MI = idioma === "en" ? `${base}/about` : `${base}/es/sobre-mi`;
 
+// `x-default` es la que se sirve a quien no encaja en ningún idioma declarado,
+// así que apunta al que va sin prefijo.
 const ALTERNAS = [
-  { hreflang: "es", href: new URL(`${base}/`, Astro.site).href },
-  { hreflang: "en", href: new URL(`${base}/en/`, Astro.site).href },
+  { hreflang: "en", href: new URL(`${base}/`, Astro.site).href },
+  { hreflang: "es", href: new URL(`${base}/es/`, Astro.site).href },
   { hreflang: "x-default", href: new URL(`${base}/`, Astro.site).href },
 ];
 ---

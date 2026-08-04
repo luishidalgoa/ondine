@@ -13,6 +13,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.0",
     "@tailwindcss/vite": "^4.1.0",
     "astro": "^7.1.6",
+    "country-flag-icons": "^1.6.20",
     "gsap": "^3.13.0",
     "simple-icons": "^16.28.0",
     "tailwindcss": "^4.1.0"
