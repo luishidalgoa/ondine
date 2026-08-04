@@ -1,0 +1,274 @@
+---
+// El tamaño. Eran dos secciones y ahora es una con dos tiempos muy desiguales:
+// arriba el que sorprende, abajo el que la gente ya espera de cualquier
+// herramienta. Con el mismo peso, el bueno se pierde.
+//
+// La familia de composición es la de «una sola cifra enorme», que no se repite
+// en ninguna otra sección de la página.
+---
+
+<section id="tamano" class="tamano">
+  <div class="marco">
+    <p class="rotulo"><span class="asterisco">✳</span>EL TAMAÑO</p>
+
+    <!-- Tiempo 1: el que sorprende. -->
+    <div class="acto">
+      <h2 class="acero titulo">Adelgaza sin recomprimir.</h2>
+      <p class="cuerpo">
+        Un vídeo trae doblajes y subtítulos que nunca vas a usar. Quitarlos no
+        es recodificar: es descartar pistas. El vídeo que queda es
+        <strong>idéntico bit a bit</strong> al de partida.
+      </p>
+
+      <div class="numeraco">
+        <div class="salto">
+          <span class="antes cifras">1 GB</span>
+          <span class="flecha" aria-hidden="true"></span>
+          <span class="despues cifras" data-peso>133 MB</span>
+        </div>
+        <p class="crono">en <span class="cifras">0,6 s</span></p>
+      </div>
+
+      <ul class="pistas">
+        <li class="queda"><span class="lengua">spa</span> audio · se queda</li>
+        <li class="va"><span class="lengua">eng</span> audio · se va</li>
+        <li class="va"><span class="lengua">eng</span> subtítulos · se va</li>
+      </ul>
+
+      <p class="sello" data-sello>vídeo idéntico</p>
+    </div>
+
+    <!-- Tiempo 2: el que ya se espera. Menos aire y menos cuerpo de letra. -->
+    <div class="acto secundario">
+      <h3 class="subtitulo">Y si sí quieres recomprimir.</h3>
+      <p class="cuerpo-2">
+        Reduce entre un <strong>80 y un 90 %</strong> con aceleración por
+        hardware. Pero antes de empezar te enseña un pronóstico del tamaño
+        final, y si quieres afinarlo lo mide de verdad codificando muestras
+        cortas. Ese «te lo digo antes de hacerlo» es el argumento, no el
+        porcentaje.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tamano { padding: clamp(6rem, 12vh, 9rem) 0; }
+
+  .marco {
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+  }
+  @media (min-width: 1024px) { .marco { padding: 0 2.5rem; } }
+
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: #8a8fa3;
+  }
+  .asterisco { color: #968ae0; letter-spacing: 0; }
+
+  .titulo {
+    margin-top: 1.35rem;
+    font-size: clamp(30px, 4vw, 48px);
+    line-height: 1.1;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  .cuerpo {
+    margin-top: 1.15rem;
+    max-width: 52ch;
+    font-size: 17px;
+    line-height: 1.65;
+    color: #8a8fa3;
+  }
+  .cuerpo strong { color: #e9e9ed; font-weight: 500; }
+
+  /* ── la cifra ──────────────────────────────────────────────────────────── */
+  .numeraco {
+    margin-top: clamp(2.5rem, 6vh, 4rem);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 2rem;
+  }
+
+  .salto {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.25rem);
+  }
+
+  .antes,
+  .despues {
+    font-size: clamp(40px, 8vw, 104px);
+    font-weight: 500;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+  }
+  .antes { color: #4a4f63; }
+  .despues { color: #e9e9ed; }
+
+  /* La flecha es una regla, no un icono: dos trazos y ya. Dibujar un glifo a
+     mano sería peor que no ponerlo. */
+  .flecha {
+    position: relative;
+    width: clamp(28px, 5vw, 64px);
+    height: 2px;
+    background: #4a4f63;
+    flex: none;
+  }
+  .flecha::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    border-top: 2px solid #4a4f63;
+    border-right: 2px solid #4a4f63;
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .crono {
+    font-size: clamp(17px, 1.8vw, 22px);
+    color: #8a8fa3;
+  }
+  .crono .cifras { color: #c9ccd6; }
+
+  /* ── las pistas ────────────────────────────────────────────────────────── */
+  .pistas {
+    margin-top: 2.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    font-size: 15px;
+  }
+  .pistas li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .queda { color: #c9ccd6; }
+  .va { color: #6c7080; text-decoration: line-through; text-decoration-color: rgb(108 112 128 / 0.5); }
+
+  .lengua {
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .queda .lengua {
+    background: rgb(93 184 114 / 0.13);
+    box-shadow: inset 0 0 0 1px rgb(93 184 114 / 0.38);
+    color: #5db872;
+  }
+  .va .lengua {
+    background: #232532;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07);
+    color: #6c7080;
+  }
+
+  .sello {
+    margin-top: 2.25rem;
+    display: inline-block;
+    padding: 0.55rem 1.1rem;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgb(150 138 224 / 0.45);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: #b5abfc;
+  }
+
+  /* ── el segundo tiempo ─────────────────────────────────────────────────── */
+  .secundario {
+    margin-top: clamp(4rem, 9vh, 6rem);
+    padding-top: clamp(2rem, 5vh, 3rem);
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+  }
+
+  .subtitulo {
+    font-size: clamp(20px, 2.2vw, 26px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #c9ccd6;
+  }
+
+  .cuerpo-2 {
+    margin-top: 0.9rem;
+    max-width: 62ch;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #6c7080;
+  }
+  .cuerpo-2 strong { color: #8a8fa3; font-weight: 500; }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!quieto) {
+    gsap.from("#tamano .rotulo, #tamano .titulo, #tamano .cuerpo", {
+      opacity: 0,
+      y: 22,
+      duration: 0.7,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: "#tamano", start: "top 70%" },
+    });
+
+    // El peso baja de 1024 a 133. Se cuenta en megas todo el rato y solo se
+    // escribe «GB» en el punto de partida, que es donde la unidad cambia.
+    const peso = document.querySelector<HTMLElement>("[data-peso]");
+    if (peso) {
+      const v = { n: 1024 };
+      gsap.to(v, {
+        n: 133,
+        duration: 1.3,
+        ease: "power2.out",
+        onUpdate: () => (peso.textContent = `${Math.round(v.n)} MB`),
+        scrollTrigger: { trigger: ".numeraco", start: "top 80%" },
+      });
+    }
+
+    gsap.from(".pistas li", {
+      opacity: 0,
+      x: -12,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".pistas", start: "top 88%" },
+    });
+
+    gsap.from("[data-sello]", {
+      opacity: 0,
+      scale: 0.94,
+      duration: 0.5,
+      ease: "back.out(2)",
+      scrollTrigger: { trigger: "[data-sello]", start: "top 92%" },
+    });
+
+    gsap.from("#tamano .secundario", {
+      opacity: 0,
+      y: 20,
+      duration: 0.7,
+      ease: "power2.out",
+      scrollTrigger: { trigger: "#tamano .secundario", start: "top 85%" },
+    });
+  }
+</script>

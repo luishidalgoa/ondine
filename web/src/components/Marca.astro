@@ -1,0 +1,27 @@
+---
+// Tres trazos que van de onda a media onda a recta: lo que entra revuelto
+// sale ordenado. Trazo abierto, sin contenedor, sin fondo y sin degradado
+// detrás. Retícula de 64 y grosor 6, que es como está definida la marca.
+interface Props {
+  clase?: string;
+  titulo?: string;
+}
+const { clase = "size-8", titulo } = Astro.props;
+---
+
+<svg
+  viewBox="0 0 64 64"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class={clase}
+  role={titulo ? "img" : "presentation"}
+  aria-hidden={titulo ? undefined : "true"}
+>
+  {titulo && <title>{titulo}</title>}
+  <path d="M7 17 C 15.5 9 26.5 25 35 17 C 43.5 9 48.5 25 57 17"></path>
+  <path d="M7 32 C 16 28 26 36 35 32 C 44 28 48 36 57 32"></path>
+  <path d="M7 47 L 57 47"></path>
+</svg>

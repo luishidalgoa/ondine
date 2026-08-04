@@ -1,0 +1,167 @@
+---
+// La descarga. Repite la llamada del hero con el MISMO texto: dos etiquetas
+// distintas para la misma intención es lo que hace dudar de dónde hay que
+// pulsar.
+//
+// Las tres promesas van aquí dentro y no como sección propia. Son exactamente
+// lo que este público comprueba antes de instalar nada, pero no aguantan una
+// pantalla para ellas solas.
+
+const SALIDAS = [
+  { sistema: "Linux", orden: "curl -fsSL https://ondine.sh/instalar | sh" },
+  { sistema: "macOS", orden: "brew install ondine" },
+  { sistema: "Windows", orden: "winget install ondine" },
+];
+
+const PROMESAS = [
+  "Nunca toca los originales salvo que se lo pidas, y entonces van a la papelera, no a borrado.",
+  "Todo ocurre en tu máquina. No manda tus ficheros a ninguna parte.",
+  "Código abierto, licencia MIT, en GitHub.",
+];
+---
+
+<section id="descarga" class="descarga">
+  <div class="marco">
+    <h2 class="acero titulo">Ordena tu biblioteca.</h2>
+
+    <a class="boton-grande" href="https://github.com/luishidalgoa/ondine/releases/latest">
+      Descargar para Windows
+    </a>
+
+    <ul class="salidas">
+      {
+        SALIDAS.map((s) => (
+          <li>
+            <span class="sistema">{s.sistema}</span>
+            <code class="orden">{s.orden}</code>
+          </li>
+        ))
+      }
+    </ul>
+
+    <ul class="promesas">
+      {PROMESAS.map((p) => <li>{p}</li>)}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .descarga {
+    padding: clamp(6rem, 13vh, 10rem) 0;
+    border-top: 1px solid rgb(255 255 255 / 0.05);
+  }
+
+  .marco {
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+  }
+  @media (min-width: 1024px) { .marco { padding: 0 2.5rem; } }
+
+  .titulo {
+    font-size: clamp(32px, 4.6vw, 56px);
+    line-height: 1.08;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  .boton-grande {
+    display: inline-block;
+    margin-top: 2.25rem;
+    padding: 1.1rem 2.25rem;
+    border-radius: 999px;
+    background: #968ae0;
+    color: #12101f;
+    font-size: 17px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.2s, transform 0.1s;
+  }
+  .boton-grande:hover { background: #b5abfc; }
+  .boton-grande:active { transform: translateY(1px); }
+
+  /* ── las otras salidas ─────────────────────────────────────────────────── */
+  .salidas {
+    margin-top: clamp(2.5rem, 6vh, 3.5rem);
+    display: grid;
+    gap: 0.75rem;
+    max-width: 760px;
+  }
+
+  .salidas li {
+    display: grid;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  @media (min-width: 640px) {
+    .salidas li { grid-template-columns: 92px minmax(0, 1fr); gap: 1rem; }
+  }
+
+  .sistema {
+    font-size: 14px;
+    color: #8a8fa3;
+  }
+
+  .orden {
+    display: block;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    background: #101120;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #c9ccd6;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* ── las promesas ──────────────────────────────────────────────────────── */
+  .promesas {
+    margin-top: clamp(3rem, 7vh, 4.5rem);
+    display: grid;
+    gap: 1rem;
+    max-width: 70ch;
+  }
+
+  .promesas li {
+    padding-left: 1.4rem;
+    position: relative;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #6c7080;
+  }
+
+  /* Una raya corta en vez de un punto de color: los puntos de color delante de
+     cada línea son adorno, y aquí lo que se lee es la frase. */
+  .promesas li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 8px;
+    height: 1px;
+    background: #4a4f63;
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!quieto) {
+    gsap.from(
+      "#descarga .titulo, #descarga .boton-grande, #descarga .salidas li, #descarga .promesas li",
+      {
+        opacity: 0,
+        y: 20,
+        duration: 0.6,
+        stagger: 0.07,
+        ease: "power2.out",
+        scrollTrigger: { trigger: "#descarga", start: "top 72%" },
+      },
+    );
+  }
+</script>

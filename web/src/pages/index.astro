@@ -1,0 +1,41 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
+import Compatibilidad from "../components/Compatibilidad.astro";
+import Problema from "../components/Problema.astro";
+import Partir from "../components/Partir.astro";
+import Ordenar from "../components/Ordenar.astro";
+import Tamano from "../components/Tamano.astro";
+import Comparativa from "../components/Comparativa.astro";
+import Spot from "../components/Spot.astro";
+import Descarga from "../components/Descarga.astro";
+
+// El orden no es el del producto, es el de la conversión. «Partir» va antes
+// que «Ordenar» porque es lo único que no hace ninguna otra herramienta, y
+// estaba en quinto lugar, que es donde se abandona la página.
+//
+// Familias de composición, para que no se repita ninguna:
+//   Hero .......... mural en perspectiva con paralaje
+//   Problema ...... desfile horizontal + rejilla de fichas sin datos
+//   Partir ........ objeto único centrado, anclado y recorrido con el scroll
+//   Ordenar ....... apilado: cifras arriba, tabla debajo
+//   Tamaño ........ una sola cifra enorme, con segundo tiempo menor
+//   Comparativa ... capas superpuestas destapadas por una cortina
+//   Spot .......... media a sangre
+//   Descarga ...... llamada y lista de órdenes
+---
+
+<Base
+  titulo="Ondine · Ordena bibliotecas de series y películas"
+  descripcion="Identifica cada episodio contra un catálogo, parte los ficheros que traen dos capítulos pegados y quita las pistas que no usas sin recomprimir. Los nombres quedan escritos como los metadatos esperan encontrarlos."
+>
+  <Hero />
+  <Compatibilidad />
+  <Problema />
+  <Partir />
+  <Ordenar />
+  <Tamano />
+  <Comparativa />
+  <Spot />
+  <Descarga />
+</Base>

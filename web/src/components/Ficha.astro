@@ -1,0 +1,187 @@
+---
+import type { Ficha } from "../data/biblioteca";
+
+// Una ficha de biblioteca con sus dos estados apilados: el de arriba es cómo
+// llega el fichero (sin portada, con el nombre a pelo, que es exactamente lo
+// que enseña un servidor cuando no sabe qué tiene), y el de abajo es cómo
+// queda. La animación funde uno en otro.
+//
+// La portada es geometría plana de la paleta, no una imagen: no hay obras
+// reales en esta página y estas series no existen.
+
+// `estado` fuerza una sola cara. El hero usa «ambos» porque anima de una a
+// otra; la comparativa del final necesita las dos caras congeladas y
+// enfrentadas, y para eso pide una cada vez.
+interface Props {
+  ficha: Ficha;
+  indice: number;
+  estado?: "ambos" | "crudo" | "resuelto";
+}
+const { ficha, indice, estado = "ambos" } = Astro.props;
+---
+
+<article
+  class:list={["ficha", `es-${estado}`]}
+  data-ficha={estado === "ambos" ? "" : undefined}
+  data-indice={indice}
+>
+  <!-- Cómo queda -->
+  <div class="cara resuelta" style={`--tinte: ${ficha.tinte}`}>
+    <div class="arte" data-variante={ficha.variante}>
+      {
+        ficha.variante === "onda" && (
+          <svg viewBox="0 0 64 96" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true">
+            <path d="M8 40 C 16 32 24 48 32 40 C 40 32 48 48 56 40" />
+            <path d="M8 54 C 17 50 25 58 32 54 C 40 50 47 58 56 54" />
+            <path d="M8 68 L 56 68" />
+          </svg>
+        )
+      }
+      {ficha.variante === "arco" && <span class="forma-arco" />}
+      {ficha.variante === "horizonte" && <span class="forma-horizonte" />}
+      {ficha.variante === "columna" && <span class="forma-columna" />}
+    </div>
+    <div class="pie">
+      <h3 class="titulo">{ficha.titulo}</h3>
+      <p class="episodio">{ficha.episodio}</p>
+    </div>
+  </div>
+
+  <!-- Cómo llega -->
+  <div class="cara cruda" aria-hidden="true">
+    <div class="hueco"></div>
+    <p class="nombre-crudo">{ficha.crudo}</p>
+  </div>
+</article>
+
+<style>
+  .ficha {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 12px;
+    overflow: hidden;
+    isolation: isolate;
+    will-change: transform;
+  }
+
+  .cara {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── cómo queda ────────────────────────────────────────────────────────── */
+  .resuelta {
+    background: var(--tinte);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+
+  .arte {
+    position: relative;
+    flex: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: rgb(255 255 255 / 0.22);
+  }
+
+  .arte svg {
+    width: 46%;
+  }
+
+  .forma-arco,
+  .forma-horizonte,
+  .forma-columna {
+    position: absolute;
+    background: rgb(255 255 255 / 0.09);
+  }
+
+  /* Un círculo grande que se sale por abajo. */
+  .forma-arco {
+    width: 116%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    bottom: -46%;
+  }
+
+  /* Una banda que corta el alto por el tercio superior. */
+  .forma-horizonte {
+    left: 0;
+    right: 0;
+    top: 34%;
+    height: 22%;
+  }
+
+  /* Una columna desplazada del centro. */
+  .forma-columna {
+    top: 0;
+    bottom: 0;
+    left: 26%;
+    width: 20%;
+  }
+
+  .pie {
+    padding: 12px 13px 14px;
+    background: rgb(0 0 0 / 0.26);
+  }
+
+  .titulo {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+    color: #e9e9ed;
+  }
+
+  .episodio {
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgb(233 233 237 / 0.5);
+  }
+
+  /* ── cómo llega ────────────────────────────────────────────────────────── */
+  .cruda {
+    background: #232532;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  }
+
+  /* El servidor no tiene portada que poner, así que deja el hueco. Ese hueco
+     es el argumento: no falta diseño, faltan datos. */
+  .hueco {
+    flex: 1;
+    background: repeating-linear-gradient(
+      -45deg,
+      #262837 0 6px,
+      #232532 6px 12px
+    );
+  }
+
+  .nombre-crudo {
+    padding: 12px 13px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.35;
+    color: #6c7080;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Caras forzadas. */
+  .es-crudo .resuelta,
+  .es-resuelto .cruda {
+    display: none;
+  }
+
+  /* Sin movimiento, la ficha de doble cara se enseña ya resuelta: es el
+     fotograma quieto del hero y tiene que aguantar solo. Las forzadas no se
+     tocan, que ahí la cara es el contenido. */
+  @media (prefers-reduced-motion: reduce) {
+    .es-ambos .cruda {
+      display: none;
+    }
+  }
+</style>

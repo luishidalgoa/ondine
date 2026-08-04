@@ -1,0 +1,243 @@
+---
+import { SERIE } from "../data/biblioteca";
+
+// Ordenar. Composición apilada: las cifras arriba y la tabla debajo, sin
+// partir la pantalla en dos. Es la tercera familia de composición distinta de
+// la página y así se cumple que ninguna se repita.
+//
+// El dato que tranquiliza no es el 246, es el 0 de conflictos: dice que nada
+// se ha renombrado a ciegas. Por eso el cero pesa lo mismo que el 246 aunque
+// sea un número más pequeño.
+
+const FILAS = [
+  { crudo: "capitulo 1 (2).mkv",            titulo: "Sin blanca Navidad",       episodio: "S01E01" },
+  { crudo: "bart suspende.avi",             titulo: "Bart suspende",            episodio: "S02E01" },
+  { crudo: "Sin titulo (copia).mkv",        titulo: "Simpson y Dalila",         episodio: "S02E02" },
+  { crudo: "cap nuevo BUENO.mkv",           titulo: "Homer, el hereje",         episodio: "S04E03" },
+  { crudo: "simpsons temporada 4 - 12.mkv", titulo: "Marge contra el monorraíl", episodio: "S04E12" },
+  { crudo: "los simpson 5x02.avi",          titulo: "Cabo Miedo",               episodio: "S05E02" },
+];
+---
+
+<section id="ordenar" class="ordenar">
+  <div class="marco">
+    <h2 class="acero titulo">El catálogo no lo tecleas tú.</h2>
+    <p class="cuerpo">
+      Pegas la dirección de cualquier anexo de episodios y la IA lo convierte en
+      el fichero que la aplicación necesita. Después coteja cada vídeo contra
+      ese catálogo y <strong>propone</strong>. No renombra nada sin que se lo
+      digas.
+    </p>
+
+    <div class="codigo" data-codigo>
+      <code
+        >&#123; "num": 12, "temp": 4, "titulo": "Marge contra el monorraíl" &#125;</code
+      >
+    </div>
+
+    <div class="cifras-fila">
+      <div class="cifra">
+        <span class="numero cifras" data-contador="246">0</span>
+        <span class="rot">CORRECTOS</span>
+      </div>
+      <div class="cifra">
+        <!-- El cero no se anima nunca. Si se moviera, pediría atención, y lo
+             que dice es justamente que no ha pasado nada. -->
+        <span class="numero cifras es-cero">0</span>
+        <span class="rot">CONFLICTOS</span>
+      </div>
+    </div>
+
+    <div class="tabla" role="table" aria-label="Nombres propuestos">
+      <div class="cabecera" role="row">
+        <span role="columnheader">Fichero original</span>
+        <span role="columnheader">Propuesta</span>
+        <span role="columnheader" class="col-estado">Estado</span>
+      </div>
+      {
+        FILAS.map((f) => (
+          <div class="fila" role="row" data-fila>
+            <span class="crudo" role="cell">
+              {f.crudo}
+            </span>
+            <span class="propuesta" role="cell">
+              {SERIE} - {f.episodio} - {f.titulo}.mkv
+            </span>
+            <span class="col-estado" role="cell">
+              <span class="pildora">Correcto</span>
+            </span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .ordenar { padding: clamp(6rem, 12vh, 9rem) 0; }
+
+  .marco {
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+  }
+  @media (min-width: 1024px) { .marco { padding: 0 2.5rem; } }
+
+  .titulo {
+    font-size: clamp(28px, 3.6vw, 44px);
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    max-width: 16em;
+  }
+
+  .cuerpo {
+    margin-top: 1.15rem;
+    max-width: 56ch;
+    font-size: 16px;
+    line-height: 1.65;
+    color: #8a8fa3;
+  }
+  .cuerpo strong { color: #c9ccd6; font-weight: 500; }
+
+  .codigo {
+    margin-top: 2rem;
+    padding: 1.1rem 1.3rem;
+    border-radius: 8px;
+    background: #101120;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+    overflow-x: auto;
+  }
+  .codigo code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #8a8fa3;
+    white-space: nowrap;
+  }
+
+  .cifras-fila {
+    margin-top: clamp(2.5rem, 6vh, 4rem);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem 4.5rem;
+  }
+
+  .cifra { display: flex; flex-direction: column; gap: 0.35rem; }
+
+  .numero {
+    font-size: clamp(52px, 8vw, 96px);
+    font-weight: 500;
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    color: #5db872;
+  }
+  .es-cero { color: #c9ccd6; }
+
+  .rot {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: #6c7080;
+  }
+
+  /* ── la tabla ──────────────────────────────────────────────────────────── */
+  .tabla { margin-top: clamp(2.5rem, 6vh, 3.5rem); }
+
+  .cabecera,
+  .fila {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.3rem 1.5rem;
+    padding: 1rem 0;
+  }
+  @media (min-width: 900px) {
+    .cabecera,
+    .fila {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.6fr) 120px;
+      align-items: center;
+    }
+  }
+
+  .cabecera {
+    padding-bottom: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #4a4f63;
+  }
+
+  /* Una sola línea entre filas, no una arriba y otra abajo. */
+  .fila { border-top: 1px solid rgb(255 255 255 / 0.06); }
+
+  /* `min-width: 0` es lo que permite que el texto se recorte con puntos
+     suspensivos dentro de una rejilla. Sin él, la celda crece y empuja. */
+  .crudo,
+  .propuesta {
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .crudo { color: #6c7080; }
+  .propuesta { color: #c9ccd6; }
+
+  .col-estado { justify-self: start; }
+  @media (min-width: 900px) { .col-estado { justify-self: end; } }
+
+  .pildora {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: rgb(93 184 114 / 0.13);
+    box-shadow: inset 0 0 0 1px rgb(93 184 114 / 0.4);
+    font-size: 13px;
+    color: #5db872;
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!quieto) {
+    gsap.from("#ordenar .titulo, #ordenar .cuerpo, [data-codigo]", {
+      opacity: 0,
+      y: 22,
+      duration: 0.7,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: "#ordenar", start: "top 70%" },
+    });
+
+    // El contador sube en lineal, sin frenada final: no es un marcador de
+    // videojuego, es un recuento que termina.
+    const marca = document.querySelector<HTMLElement>("[data-contador]");
+    if (marca) {
+      const meta = Number(marca.dataset.contador ?? 0);
+      const v = { n: 0 };
+      gsap.to(v, {
+        n: meta,
+        duration: 1.9,
+        ease: "none",
+        onUpdate: () => (marca.textContent = String(Math.round(v.n))),
+        scrollTrigger: { trigger: ".cifras-fila", start: "top 80%" },
+      });
+    }
+
+    gsap.from("[data-fila]", {
+      opacity: 0,
+      y: 14,
+      duration: 0.5,
+      stagger: 0.07,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".tabla", start: "top 80%" },
+    });
+  }
+</script>

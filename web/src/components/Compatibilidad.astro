@@ -1,0 +1,102 @@
+---
+import { siPlex, siJellyfin, siKodi } from "simple-icons";
+
+// La banda de compatibilidad, justo debajo del hero y nunca dentro de él.
+//
+// Los logotipos van en MONOCROMO, sin sus colores de marca. No es un capricho
+// estético: un logo a color en la web de otro se lee como sello de aprobación,
+// y aquí no hay ningún acuerdo con nadie. En gris y en una banda aparte se
+// reconocen igual y dicen lo que tienen que decir, que es «esto encaja ahí».
+//
+// Los trazos salen de Simple Icons, o sea de la fuente, no dibujados a ojo.
+// Y el texto no dice «funciona con»: dice qué se lleva el servidor.
+const SERVIDORES = [siJellyfin, siPlex, siKodi];
+---
+
+<section class="compatibilidad" aria-labelledby="compat-titulo">
+  <div class="marco">
+    <p id="compat-titulo" class="entradilla">
+      Ondine no se conecta a tu servidor ni le pide nada. Deja los ficheros
+      escritos como el catálogo de cada uno espera encontrarlos, y el escaneo
+      hace el resto.
+    </p>
+
+    <ul class="fila">
+      {
+        SERVIDORES.map((icono) => (
+          <li>
+            <svg
+              role="img"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d={icono.path} />
+            </svg>
+            <span>{icono.title}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .compatibilidad {
+    border-top: 1px solid rgb(255 255 255 / 0.05);
+    border-bottom: 1px solid rgb(255 255 255 / 0.05);
+    padding: clamp(2.5rem, 6vh, 3.5rem) 0;
+  }
+
+  .marco {
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+  }
+  @media (min-width: 1024px) {
+    .marco {
+      padding: 0 2.5rem;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 3rem;
+    }
+  }
+
+  .entradilla {
+    max-width: 58ch;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #6c7080;
+  }
+
+  .fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem 2.5rem;
+  }
+
+  .fila li {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #8a8fa3;
+    transition: color 0.25s;
+  }
+  .fila li:hover { color: #c9ccd6; }
+
+  .fila svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  .fila span {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+</style>

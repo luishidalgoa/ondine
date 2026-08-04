@@ -1,0 +1,163 @@
+---
+// El spot ya está producido y es el mejor material que existe. Se gana su sitio
+// justo antes de la descarga: quien llega hasta aquí ya está convencido y el
+// vídeo es lo que acaba de decidirlo.
+//
+// Va como fachada: hasta que no se pulsa, no se carga nada de YouTube. Así la
+// página no arrastra scripts de terceros en la primera carga, ni pone una
+// cookie a quien solo pasaba por aquí.
+const VIDEO = "L8F6kxHy2z8";
+const base = import.meta.env.BASE_URL;
+---
+
+<section id="spot" class="spot">
+  <div class="marco">
+    <h2 class="acero titulo">Cuarenta y cuatro segundos.</h2>
+
+    <div class="marco-video">
+      <button class="fachada" data-fachada type="button" data-video={VIDEO}>
+        <img
+          src={`${base}/img/spot-portada.png`}
+          alt="Portada del spot de Ondine"
+          width="1920"
+          height="1080"
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="disco" aria-hidden="true">
+          <span class="punta"></span>
+        </span>
+        <span class="rotulo-boton">Reproducir el spot</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .spot { padding: clamp(5rem, 10vh, 8rem) 0; }
+
+  .marco {
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+  }
+  @media (min-width: 1024px) { .marco { padding: 0 2.5rem; } }
+
+  .titulo {
+    font-size: clamp(26px, 3.4vw, 42px);
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  .marco-video {
+    margin-top: clamp(1.75rem, 4vh, 2.75rem);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #101120;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+
+  .fachada {
+    position: relative;
+    display: block;
+    width: 100%;
+    cursor: pointer;
+    border: 0;
+    padding: 0;
+    background: none;
+  }
+
+  .fachada img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: opacity 0.3s;
+  }
+  .fachada:hover img { opacity: 0.82; }
+
+  .disco {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: clamp(60px, 7vw, 84px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgb(150 138 224 / 0.92);
+    display: grid;
+    place-items: center;
+    transition: transform 0.2s, background-color 0.2s;
+  }
+  .fachada:hover .disco {
+    background: #b5abfc;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+
+  /* El triángulo es geometría, no un icono dibujado a mano. */
+  .punta {
+    width: 0;
+    height: 0;
+    margin-left: 15%;
+    border-top: 0.55em solid transparent;
+    border-bottom: 0.55em solid transparent;
+    border-left: 0.95em solid #12101f;
+    font-size: clamp(15px, 1.7vw, 20px);
+  }
+
+  .rotulo-boton {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(1rem, 4vh, 2rem);
+    transform: translateX(-50%);
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    background: rgb(22 24 38 / 0.78);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: #c9ccd6;
+    white-space: nowrap;
+  }
+
+  .marco-video :global(iframe) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const fachada = document.querySelector<HTMLButtonElement>("[data-fachada]");
+  fachada?.addEventListener("click", () => {
+    const id = fachada.dataset.video;
+    const marco = fachada.parentElement;
+    if (!id || !marco) return;
+
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+    iframe.title = "Spot de Ondine";
+    iframe.allow =
+      "accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture";
+    iframe.allowFullscreen = true;
+    marco.replaceChildren(iframe);
+  });
+
+  const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!quieto) {
+    gsap.from("#spot .titulo, #spot .marco-video", {
+      opacity: 0,
+      y: 26,
+      duration: 0.75,
+      stagger: 0.12,
+      ease: "power2.out",
+      scrollTrigger: { trigger: "#spot", start: "top 75%" },
+    });
+  }
+</script>
