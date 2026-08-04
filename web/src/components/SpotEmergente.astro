@@ -18,17 +18,15 @@ import Escenario from "./Escenario.astro";
 // los metadatos al principio del fichero. Lo comprimió Ondine.
 
 interface Props {
-  escenario?: "agua" | "tira";
   titulo?: string;
 }
-const { escenario = "agua", titulo = "Cuarenta y cuatro segundos." } =
-  Astro.props;
+const { titulo = "Cuarenta y cuatro segundos." } = Astro.props;
 const base = import.meta.env.BASE_URL;
 ---
 
-<section class="emergente" data-spot data-cual={escenario}>
+<section class="emergente" data-spot>
   <div class="lienzo">
-    <Escenario cual={escenario} />
+    <Escenario />
 
     <h2 class="acero titulo">{titulo}</h2>
 
