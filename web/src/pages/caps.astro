@@ -1,0 +1,60 @@
+---
+import "../styles/global.css";
+import { BIBLIOTECA } from "../data/biblioteca";
+import { fotograma } from "../data/caps";
+
+// Página de comprobación, no forma parte del sitio y no se enlaza desde
+// ningún sitio. Sirve para ver las doce fichas de golpe y cazar la que falta,
+// la que se ha colado en el episodio equivocado o la que se ve mal recortada.
+// En el mural del hero eso no se puede comprobar, porque va en perspectiva y
+// la mitad queda fuera del encuadre a propósito.
+const base = import.meta.env.BASE_URL;
+const filas = BIBLIOTECA.map((f) => ({ ...f, src: fotograma(f.episodio, base) }));
+const puestas = filas.filter((f) => f.src).length;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Comprobación de fotogramas</title>
+  </head>
+  <body class="p-6 lg:p-10">
+    <h1 class="text-2xl font-medium">Comprobación de fotogramas</h1>
+    <p class="mt-2 text-tinta-3">
+      {puestas} de {filas.length} puestas. Esta página no se enlaza desde el
+      sitio.
+    </p>
+
+    <div
+      class="mt-8 grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-5"
+    >
+      {
+        filas.map((f) => (
+          <figure class="overflow-hidden rounded-[12px] bg-superficie ring-1 ring-white/6">
+            {f.src ? (
+              <img
+                src={f.src}
+                alt={f.titulo}
+                class="aspect-video w-full object-cover"
+              />
+            ) : (
+              <div class="grid aspect-video w-full place-items-center bg-hundido font-mono text-xs text-error">
+                falta
+              </div>
+            )}
+            <figcaption class="p-3">
+              <p class="text-sm font-medium">{f.titulo}</p>
+              <p class="mt-1 font-mono text-xs text-tinta-3">{f.episodio}</p>
+              <p class="mt-1 truncate font-mono text-[11px] text-tinta-5">
+                {f.src ? decodeURIComponent(f.src.split("/").pop() ?? "") : "-"}
+              </p>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </body>
+</html>
