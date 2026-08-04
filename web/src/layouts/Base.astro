@@ -2,6 +2,8 @@
 import "../styles/global.css";
 import Marca from "../components/Marca.astro";
 import FondoGradiente from "../components/FondoGradiente.astro";
+import SelectorIdioma from "../components/SelectorIdioma.astro";
+import { idiomaDe, textos } from "../i18n/textos";
 import { siGithub } from "simple-icons";
 
 interface Props {
@@ -10,10 +12,26 @@ interface Props {
 }
 const { titulo, descripcion } = Astro.props;
 const base = import.meta.env.BASE_URL;
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
+
+const REPO = "https://github.com/luishidalgoa/ondine";
+
+// Cada idioma tiene su portada y su «sobre mí». El selector necesita saber
+// estas rutas y los buscadores también, para no tratar las dos versiones como
+// contenido duplicado.
+const PORTADA = idioma === "es" ? `${base}/` : `${base}/en/`;
+const SOBRE_MI = idioma === "es" ? `${base}/sobre-mi` : `${base}/en/about`;
+
+const ALTERNAS = [
+  { hreflang: "es", href: new URL(`${base}/`, Astro.site).href },
+  { hreflang: "en", href: new URL(`${base}/en/`, Astro.site).href },
+  { hreflang: "x-default", href: new URL(`${base}/`, Astro.site).href },
+];
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={idioma}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,9 +41,12 @@ const base = import.meta.env.BASE_URL;
     <meta name="theme-color" content="#161826" />
     <link rel="icon" type="image/png" href={`${base}/icon.png`} />
 
+    {ALTERNAS.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+
     <meta property="og:type" content="website" />
     <meta property="og:title" content={titulo} />
     <meta property="og:description" content={descripcion} />
+    <meta property="og:locale" content={idioma === "es" ? "es_ES" : "en_GB"} />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
 
@@ -43,16 +64,18 @@ const base = import.meta.env.BASE_URL;
         <!-- Va a la portada y no a un ancla: desde una subpágina, `#inicio` no
              lleva a ninguna parte. -->
         <a
-          href={`${base}/`}
+          href={PORTADA}
           class="flex items-center gap-3 text-tinta transition-opacity hover:opacity-80"
         >
           <Marca clase="size-6 text-acento" titulo="Ondine" />
           <span class="text-[17px] font-medium tracking-[0.01em]">Ondine</span>
         </a>
 
-        <nav class="flex items-center gap-5 sm:gap-6">
+        <nav class="flex items-center gap-3 sm:gap-5">
+          <SelectorIdioma />
+
           <a
-            href="https://github.com/luishidalgoa/ondine"
+            href={REPO}
             class="flex items-center gap-2 text-sm text-tinta-3 transition-colors hover:text-tinta"
           >
             <svg
@@ -65,16 +88,17 @@ const base = import.meta.env.BASE_URL;
             >
               <path d={siGithub.path}></path>
             </svg>
-            <span class="hidden sm:inline">Código</span>
+            <span class="hidden sm:inline">{t.armazon.codigo}</span>
           </a>
+
           <!-- Abre el mismo modal que el botón de la sección de descarga: una
                sola intención, un solo texto y un solo sitio donde elegir. -->
           <button
             type="button"
             data-abre
-            class="cursor-pointer rounded-full bg-acento px-4 py-2 text-sm font-medium text-[#12101f] transition-all hover:bg-acento-claro active:translate-y-px"
+            class="cursor-pointer rounded-full bg-acento px-4 py-2 text-sm font-medium whitespace-nowrap text-[#12101f] transition-all hover:bg-acento-claro active:translate-y-px"
           >
-            Descargar
+            {t.armazon.descargar}
           </button>
         </nav>
       </div>
@@ -87,47 +111,45 @@ const base = import.meta.env.BASE_URL;
       <slot />
     </main>
 
-    <footer
-      class="relative z-[1] border-t border-white/5 px-6 py-10 lg:px-10"
-    >
+    <footer class="relative z-[1] border-t border-white/5 px-6 py-10 lg:px-10">
       <div
         class="mx-auto flex max-w-[1400px] flex-col gap-6 text-sm text-tinta-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="flex items-center gap-3">
           <Marca clase="size-5 text-trazo-tenue" />
-          <span>Ondine. Licencia MIT.</span>
+          <span>{t.armazon.licencia}</span>
         </div>
         <ul class="flex flex-wrap gap-x-6 gap-y-2">
           <li>
-            <a class="transition-colors hover:text-tinta-2" href={`${base}/sobre-mi`}
-              >Sobre mí</a
-            >
+            <a class="transition-colors hover:text-tinta-2" href={SOBRE_MI}>
+              {t.armazon.sobreMi}
+            </a>
+          </li>
+          <li>
+            <a class="transition-colors hover:text-tinta-2" href={REPO}>
+              {t.armazon.repositorio}
+            </a>
+          </li>
+          <li>
+            <a class="transition-colors hover:text-tinta-2" href={`${REPO}/releases`}>
+              {t.armazon.versiones}
+            </a>
           </li>
           <li>
             <a
               class="transition-colors hover:text-tinta-2"
-              href="https://github.com/luishidalgoa/ondine">Repositorio</a
+              href={`${REPO}/blob/main/CHANGELOG.md`}
             >
+              {t.armazon.cambios}
+            </a>
           </li>
           <li>
             <a
               class="transition-colors hover:text-tinta-2"
-              href="https://github.com/luishidalgoa/ondine/releases">Versiones</a
+              href={`${REPO}/blob/main/ROADMAP.md`}
             >
-          </li>
-          <li>
-            <a
-              class="transition-colors hover:text-tinta-2"
-              href="https://github.com/luishidalgoa/ondine/blob/main/CHANGELOG.md"
-              >Cambios</a
-            >
-          </li>
-          <li>
-            <a
-              class="transition-colors hover:text-tinta-2"
-              href="https://github.com/luishidalgoa/ondine/blob/main/ROADMAP.md"
-              >Hoja de ruta</a
-            >
+              {t.armazon.hojaDeRuta}
+            </a>
           </li>
         </ul>
       </div>

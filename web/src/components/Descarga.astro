@@ -7,9 +7,21 @@
 // fondo inerte de serie, sin librería ni JavaScript propio para nada de eso.
 
 import { siApple, siLinux } from "simple-icons";
+import { textos } from "../i18n/textos";
+
+const t = textos(Astro.currentLocale);
 
 const REPO = "https://github.com/luishidalgoa/ondine";
 const ULTIMA = `${REPO}/releases/latest/download`;
+
+// Los destinos son los mismos en los dos idiomas: solo cambian las etiquetas.
+// Van aquí y no en el fichero de textos porque una URL no se traduce, y si
+// estuviera allí habría dos copias que se desincronizarían.
+const ENLACES = [
+  [`${REPO}/releases/latest`, `${ULTIMA}/ondine-windows-x64.exe`],
+  [`${ULTIMA}/ondine-macos-arm64.tar.gz`, `${ULTIMA}/ondine-macos-x64.tar.gz`],
+  [`${ULTIMA}/ondine-linux-x64.tar.gz`, `${ULTIMA}/ondine-linux-arm64.tar.gz`],
+];
 
 // Simple Icons no trae Windows: Microsoft pidió que retirasen sus marcas del
 // paquete. Así que Apple y Tux salen de la fuente, y para Windows va un glifo
@@ -20,80 +32,26 @@ const VENTANA =
   "2.5h-13A2.5 2.5 0 0 1 3 18.5v-13Zm1.6 0v2.1h14.8V5.5a.9.9 0 0 0-.9-.9h-13a" +
   ".9.9 0 0 0-.9.9Zm14.8 3.7H4.6v9.3c0 .5.4.9.9.9h13c.5 0 .9-.4.9-.9V9.2Z";
 
-const GRUPOS = [
-  {
-    sistema: "Windows",
-    icono: VENTANA,
-    opciones: [
-      {
-        etiqueta: "Instalador",
-        detalle: "Lo habitual. Crea accesos y se actualiza solo.",
-        // El instalador lleva la versión en el nombre, así que no admite
-        // enlace fijo a la última. Va a la página de versiones.
-        href: `${REPO}/releases/latest`,
-        peso: "55 MB",
-      },
-      {
-        etiqueta: "Portable",
-        detalle: "Un ejecutable suelto. No instala nada.",
-        href: `${ULTIMA}/ondine-windows-x64.exe`,
-        peso: "13 MB",
-      },
-    ],
-  },
-  {
-    sistema: "macOS",
-    icono: siApple.path,
-    opciones: [
-      {
-        etiqueta: "Apple Silicon",
-        detalle: "M1 en adelante.",
-        href: `${ULTIMA}/ondine-macos-arm64.tar.gz`,
-        peso: "5 MB",
-      },
-      {
-        etiqueta: "Intel",
-        detalle: "Mac anteriores a 2020.",
-        href: `${ULTIMA}/ondine-macos-x64.tar.gz`,
-        peso: "6 MB",
-      },
-    ],
-  },
-  {
-    sistema: "Linux",
-    icono: siLinux.path,
-    opciones: [
-      {
-        etiqueta: "x64",
-        detalle: "La mayoría de equipos y servidores.",
-        href: `${ULTIMA}/ondine-linux-x64.tar.gz`,
-        peso: "6 MB",
-      },
-      {
-        etiqueta: "ARM64",
-        detalle: "Raspberry Pi y equipos ARM.",
-        href: `${ULTIMA}/ondine-linux-arm64.tar.gz`,
-        peso: "5 MB",
-      },
-    ],
-  },
-];
+const ICONOS = [VENTANA, siApple.path, siLinux.path];
 
-const PROMESAS = [
-  "Nunca toca los originales salvo que se lo pidas, y entonces van a la papelera, no a borrado.",
-  "Todo ocurre en tu máquina. No manda tus ficheros a ninguna parte.",
-  "Código abierto, licencia MIT, en GitHub.",
-];
+// El instalador de Windows lleva la versión en el nombre, así que no admite
+// enlace fijo a la última: ese va a la página de versiones y los otros cinco
+// descargan directo.
+const GRUPOS = t.descarga.grupos.map((g, i) => ({
+  ...g,
+  icono: ICONOS[i],
+  opciones: g.opciones.map((o, j) => ({ ...o, href: ENLACES[i][j] })),
+}));
+
+const PROMESAS = t.descarga.promesas;
 ---
 
 <section id="descarga" class="descarga">
   <div class="marco">
-    <h2 class="acero titulo">Ordena tu biblioteca.</h2>
-    <p class="apoyo">
-      Escritorio para Windows, y binarios para macOS y Linux.
-    </p>
+    <h2 class="acero titulo">{t.descarga.titulo}</h2>
+    <p class="apoyo">{t.descarga.apoyo}</p>
 
-    <button class="boton-grande" type="button" data-abre>Descargar</button>
+    <button class="boton-grande" type="button" data-abre>{t.descarga.boton}</button>
 
     <ul class="promesas">
       {PROMESAS.map((p) => <li>{p}</li>)}
@@ -103,8 +61,8 @@ const PROMESAS = [
 
 <dialog class="modal" data-modal aria-labelledby="modal-titulo">
   <div class="modal-cabecera">
-    <h3 id="modal-titulo">Elige tu sistema</h3>
-    <button class="cerrar" type="button" data-cierra aria-label="Cerrar">
+    <h3 id="modal-titulo">{t.descarga.modalTitulo}</h3>
+    <button class="cerrar" type="button" data-cierra aria-label={t.descarga.cerrar}>
       <span aria-hidden="true"></span>
     </button>
   </div>
@@ -143,9 +101,7 @@ const PROMESAS = [
   </div>
 
   <p class="modal-pie">
-    Todas las versiones y sus notas están en <a href={`${REPO}/releases`}
-      >la página de versiones</a
-    >.
+    {t.descarga.pieA}<a href={`${REPO}/releases`}>{t.descarga.pieEnlace}</a>{t.descarga.pieB}
   </p>
 </dialog>
 

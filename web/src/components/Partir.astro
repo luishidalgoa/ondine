@@ -13,39 +13,35 @@ import { SERIE } from "../data/biblioteca";
 // dedo. Es la única animación de la página que el usuario conduce, y le toca a
 // esta sección precisamente porque es el argumento diferencial.
 
-const ORIGINAL = "los simpson 7x21-22.avi";
+import { idiomaDe, textos } from "../i18n/textos";
 
-const PIEZAS = [
-  {
-    episodio: "E21",
-    nombre: `${SERIE} - S07E21 - 22 historias cortas sobre Springfield.mkv`,
-    tramo: "0:00 - 21:47",
-  },
-  {
-    episodio: "E22",
-    nombre: `${SERIE} - S07E22 - Mucho Apu y pocas nueces.mkv`,
-    tramo: "21:47 - 44:28",
-  },
-];
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
+const serie = SERIE[idioma];
+
+const ORIGINAL = t.partir.original;
+
+// El nombre completo se arma aquí y no en el fichero de textos: la plantilla
+// «serie - código - título» es la de la aplicación, no una frase que traducir.
+const PIEZAS = t.partir.piezas.map((p, i) => ({
+  ...p,
+  nombre: `${serie} - S07E${21 + i} - ${p.titulo}.mkv`,
+}));
 ---
 
 <section id="partir" class="partir">
   <div class="lienzo">
     <div class="marco">
       <p class="rotulo">
-        <span class="asterisco">✳</span>LO QUE NO HACE NINGUNA OTRA
+        <span class="asterisco">✳</span>{t.partir.rotulo}
       </p>
-      <h2 class="acero titulo">Un fichero. Dos capítulos dentro.</h2>
-      <p class="cuerpo">
-        Ondine entiende que ese vídeo de 44 minutos son en realidad dos
-        episodios pegados, encuentra la junta y lo parte. Cada mitad sale con
-        su nombre.
-      </p>
+      <h2 class="acero titulo">{t.partir.titulo}</h2>
+      <p class="cuerpo">{t.partir.cuerpo}</p>
 
       <div class="escena">
         <p class="etiqueta-origen" data-origen>
           <span class="mono">{ORIGINAL}</span>
-          <span class="meta">44:28 · 1 fichero</span>
+          <span class="meta">{t.partir.meta}</span>
         </p>
 
         <div class="objeto" data-objeto>

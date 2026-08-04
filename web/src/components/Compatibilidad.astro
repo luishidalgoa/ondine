@@ -1,5 +1,8 @@
 ---
 import { siPlex, siJellyfin, siKodi } from "simple-icons";
+import { textos } from "../i18n/textos";
+
+const t = textos(Astro.currentLocale);
 
 // La banda de compatibilidad, justo debajo del hero y nunca dentro de él.
 //
@@ -15,11 +18,7 @@ const SERVIDORES = [siJellyfin, siPlex, siKodi];
 
 <section class="compatibilidad" aria-labelledby="compat-titulo">
   <div class="marco">
-    <p id="compat-titulo" class="entradilla">
-      Ondine no se conecta a tu servidor ni le pide nada. Deja los ficheros
-      escritos como el catálogo de cada uno espera encontrarlos, y el escaneo
-      hace el resto.
-    </p>
+    <p id="compat-titulo" class="entradilla">{t.compatibilidad.entradilla}</p>
 
     <ul class="fila">
       {

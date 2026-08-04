@@ -1,0 +1,155 @@
+---
+import { IDIOMAS, NOMBRE_IDIOMA, idiomaDe, textos } from "../i18n/textos";
+
+// El selector de idioma.
+//
+// Va con <details> y no con una lista y JavaScript: <details> ya sabe abrirse,
+// cerrarse con Escape y anunciarse a un lector de pantalla, sin una linea de
+// codigo. Lo unico que hace falta a mano es cerrarlo al pulsar fuera.
+//
+// Y son ENLACES de verdad, no un cambio de estado: cada idioma tiene su URL,
+// asi que se puede compartir, indexar y abrir en otra pestaña.
+
+const actual = idiomaDe(Astro.currentLocale);
+const t = textos(actual);
+const base = import.meta.env.BASE_URL;
+
+// La ruta equivalente en el otro idioma. Se calcula quitando el prefijo de
+// idioma y el de despliegue, y volviendo a montarlos: asi «/ondine/en/about»
+// sabe volver a «/ondine/sobre-mi» y no a la portada.
+const EQUIVALENTES: Record<string, Record<string, string>> = {
+  "": { es: "", en: "en/" },
+  "sobre-mi": { es: "sobre-mi", en: "en/about" },
+  "en/about": { es: "sobre-mi", en: "en/about" },
+  "en": { es: "", en: "en/" },
+};
+
+const ruta = Astro.url.pathname
+  .replace(base, "")
+  .replace(/^\/+|\/+$/g, "");
+
+const destino = (idioma: string) => {
+  const par = EQUIVALENTES[ruta];
+  const trozo = par ? par[idioma] : idioma === "es" ? "" : "en/";
+  return `${base}/${trozo}`.replace(/\/{2,}/g, "/");
+};
+---
+
+<details class="idioma" data-idioma>
+  <summary aria-label={t.armazon.idioma}>
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M3 12h18"></path>
+      <path d="M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9s1.3-6.3 3.9-9Z"></path>
+    </svg>
+    <span class="codigo">{actual.toUpperCase()}</span>
+    <span class="punta" aria-hidden="true"></span>
+  </summary>
+
+  <ul>
+    {
+      IDIOMAS.map((i) => (
+        <li>
+          <a href={destino(i)} hreflang={i} aria-current={i === actual ? "true" : undefined}>
+            <span class="marca-actual" aria-hidden="true" />
+            {NOMBRE_IDIOMA[i]}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</details>
+
+<style>
+  .idioma {
+    position: relative;
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 999px;
+    font-size: 14px;
+    color: #8a8fa3;
+    cursor: pointer;
+    list-style: none;
+    transition: color 0.2s, background-color 0.2s;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { color: #e9e9ed; }
+  .idioma[open] summary {
+    background: rgb(255 255 255 / 0.06);
+    color: #e9e9ed;
+  }
+
+  summary svg { width: 17px; height: 17px; flex: none; }
+
+  .codigo {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Un triángulo de bordes, no un icono dibujado a mano. */
+  .punta {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4.5px solid currentColor;
+    transition: transform 0.2s;
+  }
+  .idioma[open] .punta { transform: rotate(180deg); }
+
+  ul {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    min-width: 150px;
+    padding: 0.3rem;
+    border-radius: 12px;
+    background: #232532;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.1),
+      0 18px 40px rgb(8 9 16 / 0.55);
+    z-index: 60;
+  }
+
+  ul a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #c9ccd6;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  ul a:hover { background: #292b31; color: #e9e9ed; }
+
+  /* El idioma en curso se marca con un punto, y aquí sí está justificado: no
+     es adorno, es el único dato que distingue una opción de la otra. */
+  .marca-actual {
+    width: 5px;
+    height: 5px;
+    flex: none;
+    border-radius: 50%;
+    background: transparent;
+  }
+  [aria-current="true"] .marca-actual { background: #968ae0; }
+  [aria-current="true"] { color: #e9e9ed; }
+</style>
+
+<script>
+  // Lo único que <details> no trae de serie: cerrarse al pulsar fuera.
+  const selector = document.querySelector<HTMLDetailsElement>("[data-idioma]");
+  if (selector) {
+    document.addEventListener("click", (e) => {
+      if (selector.open && !selector.contains(e.target as Node)) {
+        selector.open = false;
+      }
+    });
+  }
+</script>

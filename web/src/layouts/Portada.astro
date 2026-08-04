@@ -1,0 +1,56 @@
+---
+import Base from "./Base.astro";
+import Hero from "../components/Hero.astro";
+import Compatibilidad from "../components/Compatibilidad.astro";
+import Problema from "../components/Problema.astro";
+import Partir from "../components/Partir.astro";
+import Ordenar from "../components/Ordenar.astro";
+import Tamano from "../components/Tamano.astro";
+import Comparativa from "../components/Comparativa.astro";
+import Spot from "../components/SpotEmergente.astro";
+import Descarga from "../components/Descarga.astro";
+import { BIBLIOTECA } from "../data/biblioteca";
+import { fotograma } from "../data/caps";
+import { textos } from "../i18n/textos";
+
+// La portada, compartida por los dos idiomas. Cada página de idioma la envuelve
+// y Astro se encarga del resto: los componentes leen `Astro.currentLocale`, así
+// que no hay que pasarles nada.
+//
+// El orden no es el del producto, es el de la conversión. «Partir» va antes que
+// «Ordenar» porque es lo único que no hace ninguna otra herramienta, y estaba en
+// quinto lugar, que es donde se abandona la página.
+//
+// Familias de composición, para que no se repita ninguna:
+//   Hero .......... mural en perspectiva con paralaje
+//   Problema ...... desfile horizontal + rejilla de fichas sin datos
+//   Partir ........ objeto único centrado, anclado y recorrido con el scroll
+//   Ordenar ....... apilado: cifras arriba, tabla debajo
+//   Tamaño ........ una sola cifra enorme, con segundo tiempo menor
+//   Comparativa ... capas superpuestas destapadas por una cortina
+//   Spot .......... el vídeo emerge de detrás del agua, por capas
+//   Descarga ...... llamada y modal por sistemas
+const t = textos(Astro.currentLocale);
+
+// Aviso al compilar. Que falte un fotograma no rompe la página, pero callarse
+// hace que uno crea que están todos puestos cuando no lo están.
+const sinImagen = BIBLIOTECA.filter((f) => !fotograma(f.episodio, ""));
+if (sinImagen.length) {
+  console.log(
+    `[caps] ${BIBLIOTECA.length - sinImagen.length} de ${BIBLIOTECA.length} fotogramas puestos. ` +
+      `Faltan: ${sinImagen.map((f) => f.episodio).join(", ")}`,
+  );
+}
+---
+
+<Base titulo={t.meta.titulo} descripcion={t.meta.descripcion}>
+  <Hero />
+  <Compatibilidad />
+  <Problema />
+  <Partir />
+  <Ordenar />
+  <Tamano />
+  <Comparativa />
+  <Spot />
+  <Descarga />
+</Base>

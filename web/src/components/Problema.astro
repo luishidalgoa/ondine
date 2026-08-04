@@ -12,18 +12,12 @@ import { SERIE } from "../data/biblioteca";
 // con la duración como único dato que sabe leer, porque es el único que puede
 // sacar del propio vídeo sin que nadie se lo diga.
 
-const CRUDOS = [
-  "Cap 12 (2).mkv",
-  "episodio final BUENO.mkv",
-  "Temporada2_04-05.mkv",
-  "Sin titulo (copia).mkv",
-  "los simpson 3x07.avi",
-  "capitulo nuevo.mkv",
-  "descarga final.mp4",
-  "video_2019.avi",
-  "sin nombre 3.mkv",
-  "grabacion (copia 2).mkv",
-];
+import { idiomaDe, textos } from "../i18n/textos";
+
+const idioma = idiomaDe(Astro.currentLocale);
+const t = textos(idioma);
+const serie = SERIE[idioma];
+const CRUDOS = t.problema.crudos;
 
 const SIN_DATOS = [
   { duracion: "22:14" },
@@ -35,14 +29,9 @@ const SIN_DATOS = [
 
 <section id="problema" class="problema">
   <div class="marco">
-    <p class="rotulo"><span class="asterisco">✳</span>EL PROBLEMA</p>
-    <h2 class="acero titulo">
-      El servidor no es tonto. Le has dado datos malos.
-    </h2>
-    <p class="cuerpo">
-      Plex, Jellyfin y Kodi enseñan una biblioteca preciosa, pero solo si los
-      ficheros ya vienen bien nombrados. Cuando no, se rinden.
-    </p>
+    <p class="rotulo"><span class="asterisco">✳</span>{t.problema.rotulo}</p>
+    <h2 class="acero titulo">{t.problema.titulo}</h2>
+    <p class="cuerpo">{t.problema.cuerpo}</p>
   </div>
 
   <!-- La tira. Va duplicada porque el bucle necesita una segunda copia para
@@ -62,18 +51,15 @@ const SIN_DATOS = [
         SIN_DATOS.map((f) => (
           <article class="sin-datos">
             <div class="hueco" />
-            <p class="desconocido">Desconocido</p>
+            <p class="desconocido">{t.problema.desconocido}</p>
             <p class="dato">
-              {SERIE} · {f.duracion}
+              {serie} · {f.duracion}
             </p>
           </article>
         ))
       }
     </div>
-    <p class="pie-rejilla">
-      Sin título, sin número, sin sinopsis y sin portada. Lo único que el
-      servidor sabe leer es cuánto dura.
-    </p>
+    <p class="pie-rejilla">{t.problema.pie}</p>
   </div>
 </section>
 
