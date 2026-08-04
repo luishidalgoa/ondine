@@ -13,3 +13,6 @@ src/Ondine/Assets/app-256.png
 
 # Restos de scraping de páginas de referencia: material de consulta, no del proyecto
 .firecrawl/
+
+# Artefacto de las skills instaladas en la maquina, no del proyecto.
+skills-lock.json
