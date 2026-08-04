@@ -113,7 +113,11 @@
     letter-spacing: -0.04em;
     white-space: nowrap;
   }
-  .antes { color: #4a4f63; }
+  /* La cifra de partida es la apagada, pero apagada no puede significar
+     ilegible: el gris de un nivel más abajo no llega al mínimo de contraste ni
+     siendo esta letra tan grande. La diferencia entre el antes y el después la
+     hace el salto a blanco del segundo, que ya es bastante. */
+  .antes { color: #8a8fa3; }
   .despues { color: #e9e9ed; }
 
   /* La flecha es una regla, no un icono: dos trazos y ya. Dibujar un glifo a
