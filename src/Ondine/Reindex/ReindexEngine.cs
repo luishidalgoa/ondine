@@ -621,7 +621,75 @@ public static class ReindexEngine
         }
 
         MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones);
+        MarcarLosQueNoCuadranConElReloj(resoluciones);
     }
+
+    /// <summary>
+    /// La segunda opinión: cuánto mide el fichero frente a cuántas historias promete el
+    /// episodio que le ha tocado.
+    ///
+    /// <para>
+    /// La comprobación del nombre no llega a todo. Un fichero puede traer los dos títulos
+    /// en el nombre y contener solo una historia -media descarga, un corte mal hecho, una
+    /// copia parcial-, y ahí el nombre no delata nada. El reloj sí.
+    /// </para>
+    /// <para>
+    /// <b>Esto es de SERIES.</b> Vive en el reindexado, que solo trata episodios contra un
+    /// catálogo. Una película no tiene «historias dentro» ni un número típico con el que
+    /// comparar, así que cuando llegue esa parte no debe reutilizar nada de aquí: la idea
+    /// entera -«cuántas unidades caben en esta duración»- no significa nada para un largo.
+    /// </para>
+    /// <para>
+    /// Y se calla ante lo raro. Un especial que dura hora y media sale a nueve historias
+    /// de las de esta carpeta, y eso no es «te faltan siete»: es que no se sabe qué es.
+    /// Decir algo falso con seguridad es peor que no decir nada, así que solo se avisa
+    /// cuando el reloj apunta a un número CREÍBLE de historias.
+    /// </para>
+    /// </summary>
+    private static void MarcarLosQueNoCuadranConElReloj(List<ReindexResolution> resoluciones)
+    {
+        // Se aprende SOLO de las filas de confianza alta: aprender de las dudas es
+        // aprender del error, y bastaría un lote malo para mover la vara y callar los
+        // avisos justo cuando más falta hacen.
+        var observaciones = resoluciones
+            .Where(r => r.Confianza == ReindexConfianza.Alta && r.Episodio != null)
+            .Where(r => r.Archivo.Duracion is { } d && d > TimeSpan.Zero)
+            .Select(r => (r.Archivo.Duracion!.Value, Math.Max(1, r.Episodio!.TitulosSalida.Count)))
+            .ToList();
+
+        var unidad = MedidaDelCapitulo.Unidad(observaciones);
+        if (unidad is null) return;   // carpeta pequeña: no hay vara de la que fiarse
+
+        foreach (var r in resoluciones)
+        {
+            if (r.Episodio == null || r.Confianza != ReindexConfianza.Alta) continue;
+            if (r.Archivo.SubSegmento != null) continue;   // ya se dijo qué trozo es
+            if (r.Archivo.Duracion is not { } dura) continue;
+
+            int promete = Math.Max(1, r.Episodio.TitulosSalida.Count);
+            if (MedidaDelCapitulo.Cuadra(dura, promete, unidad)) continue;
+
+            // La guarda de los especiales. Si el reloj no apunta a un número creíble de
+            // historias, no hay nada que decir: no se sabe qué es ese fichero.
+            var sugiere = MedidaDelCapitulo.HistoriasQueSugiere(dura, unidad);
+            if (sugiere is not (>= 1 and <= MaxHistoriasCreibles)) continue;
+            if (sugiere == promete) continue;
+
+            r.Confianza = ReindexConfianza.Revisar;
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoRelojNoCuadra,
+                Reloj(dura), r.Episodio.Num, promete, Reloj(unidad.Value * promete));
+        }
+    }
+
+    /// <summary>
+    /// Por encima de esto el reloj deja de opinar. Un episodio con cinco historias ya es
+    /// raro; lo que mide diez veces la unidad no es un episodio mal contado, es otra cosa
+    /// -un especial, una película, un recopilatorio- y no se puede juzgar con esta vara.
+    /// </summary>
+    private const int MaxHistoriasCreibles = 5;
+
+    private static string Reloj(TimeSpan t) =>
+        t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}" : $"{t.Minutes}:{t.Seconds:00}";
 
     /// <summary>
     /// El caso contrario: el nombre declara UNA historia y el episodio al que se le

@@ -784,7 +784,18 @@ public partial class OrganizarView : UserControl
                 // Exigiría un ffprobe por fichero y «Simular» dejaría de ser inmediato en
                 // bibliotecas de cientos. El motor ya lo admite cuando se enganche.
                 ficheros
-                    .Select(f => SignalExtractor.Extract(f, new DirectoryInfo(Path.GetDirectoryName(f)!).Name))
+                    .AsParallel()
+                    .AsOrdered()
+                    // La duración NO sale de abrir el fichero: se lee de la ficha que
+                    // Windows guarda aparte del contenido, así que los que están en la
+                    // nube siguen sin descargarse. Medido: ~60 ms cada uno, y por eso va
+                    // en paralelo -en una carpeta de 300 serían veinte segundos seguidos-.
+                    // Si no se sabe, se queda en null y el motor se calla; nunca se cae
+                    // en abrirlo como respaldo.
+                    .Select(f => SignalExtractor.Extract(
+                        f,
+                        new DirectoryInfo(Path.GetDirectoryName(f)!).Name,
+                        duracion: FichaDeWindows.Duracion(f)))
                     .ToList()), animar);
             if (animar)
                 _pasos.Hecha(0, señales.Count == 1

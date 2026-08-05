@@ -134,6 +134,14 @@ public sealed partial class Textos
         "The name declares one story, but episode {0} has {1} in the catalogue. Renaming it as the whole episode would claim it holds stories it does not - say which ones it brings",
         "El nombre declara una historia, pero el episodio {0} tiene {1} en el catálogo. Renombrarlo como el episodio entero afirmaría que trae historias que no trae - di cuáles trae");
 
+    // {0} = lo que dura el fichero, {1} = número del episodio, {2} = cuántas
+    // historias tiene, {3} = lo que suele durar ese número de historias aquí.
+    // El aviso da los tres datos porque sin ellos no se puede juzgar: «no cuadra»
+    // a secas obliga a ir a comprobarlo a mano, que es el trabajo que sobra.
+    public string ReindexMotivoRelojNoCuadra => Idioma.Elegir(
+        "This file runs {0}, but episode {1} has {2} stories, which in this folder run about {3}. Check whether it really holds the whole episode",
+        "Este fichero dura {0}, pero el episodio {1} tiene {2} historias, que en esta carpeta duran unos {3}. Comprueba si de verdad trae el episodio entero");
+
     // {0} = número del episodio, {1} = su título, {2} = el nombre del otro
     // fichero. «Papelera» es la del sistema operativo: en inglés, «Recycle Bin».
     public string ReindexMotivoRepetido => Idioma.Elegir(

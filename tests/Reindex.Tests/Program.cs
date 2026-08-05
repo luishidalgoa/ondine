@@ -1426,6 +1426,59 @@ public static class Program
         Eq(662, mediaVerdad.Episodio?.Num, "identifica el episodio por su primera historia");
         Eq(true, mediaVerdad.Confianza != ReindexConfianza.Alta,
             "un fichero de UNA historia no se renombra solo a un episodio de DOS");
+
+        ElRelojComoSegundaOpinion(cat);
+    }
+
+    /// <summary>
+    /// El reloj, ya conectado al motor. La comprobación del nombre no llega a todo: hay
+    /// ficheros cuyo nombre no dice cuántas historias trae, y ahí lo único que queda es
+    /// cuánto miden.
+    /// </summary>
+    private static void ElRelojComoSegundaOpinion(ReindexCatalog cat)
+    {
+        Seccion("El reloj, conectado");
+
+        // Una carpeta con su ritmo: los de una historia rondan los 11 min y los de dos,
+        // los 22. Nada de esto está escrito en el programa; sale de la propia carpeta.
+        static FileSignals Con(string nombre, string carpeta, double minutos) =>
+            SignalExtractor.Extract(F(nombre), carpeta, duracion: TimeSpan.FromMinutes(minutos));
+
+        var lote = new[]
+        {
+            Con("Doraemon (2005) - S2020E615 - El robot pruebarreacciones.mkv", "Season 2020", 11.0),
+            Con("Doraemon (2005) - S2020E588 - La lanza de la consideracion que va directa al corazon.mkv", "Season 2020", 10.7),
+            Con("Doraemon (2005) - S2020E589 - Cuidado con los estornudos.mkv", "Season 2020", 11.2),
+            Con("Doraemon (2005) - S2014E364 - El gorro de la suerte + El cazamariposas.mkv", "Season 2014", 22.1),
+            Con("Doraemon (2005) - S2021E662 - A por la marca perfecta + El escaparate para recoger.mkv", "Season 2021", 21.8),
+            Con("Doraemon (2005) - S2005E02 - El gorro de la suerte.mkv", "Season 2005", 10.9),
+        };
+
+        var normal = ReindexEngine.Resolve(lote, cat);
+        Assert(normal.All(r => r.Motivo?.Contains("dura") != true),
+            "en una carpeta que cuadra, el reloj no dice nada");
+
+        // El caso que lo justifica: un fichero que MIDE once minutos al que se le quiere
+        // dar un episodio de dos historias. El nombre no lo delata -trae los dos títulos-,
+        // así que la comprobación del nombre lo deja pasar. El reloj no.
+        var corto = lote.Append(
+            Con("Doraemon (2005) - S2014E364 - El gorro de la suerte + El cazamariposas (1).mkv",
+                "Season 2014", 11.0)).ToArray();
+        var conCorto = ReindexEngine.Resolve(corto, cat);
+        var sospechoso = conCorto.First(r => r.Archivo.NombreArchivo.Contains("(1)"));
+        Eq(true, sospechoso.Confianza != ReindexConfianza.Alta,
+            "un fichero que mide la mitad de lo que promete no se aplica solo");
+
+        // Y el aviso que TÚ señalaste: un especial que dura como una película. No hay que
+        // marcarlo como «te falta una historia» — no se sabe qué es, y decir algo falso es
+        // peor que callarse.
+        var especial = lote.Append(
+            Con("Doraemon (2005) - S2020E615 - El robot pruebarreacciones (especial).mkv",
+                "Season 2020", 95.0)).ToArray();
+        var conEspecial = ReindexEngine.Resolve(especial, cat);
+        var largo = conEspecial.First(r => r.Archivo.NombreArchivo.Contains("especial"));
+        Assert(largo.Motivo?.Contains("dura") != true,
+            "un especial de hora y media no recibe un aviso inventado sobre sus historias");
     }
 
     // ─────────────── La app tiene que saber leer lo que ella misma escribe ───────────────
