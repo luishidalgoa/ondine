@@ -136,3 +136,103 @@ public static class FichaDeWindowsTests
                 "Fuera de Windows devuelve «no lo sé» sin tocar el fichero");
     }
 }
+
+/// <summary>
+/// El reloj como segunda opinión sobre cuántas historias trae un fichero.
+///
+/// <para>
+/// Salió de un caso real: «Doraemon (1979) S1981E618 [618] - Doraemon, te odio.avi»
+/// anuncia UNA historia en su nombre, y la app estuvo a punto de darlo por bueno
+/// como un episodio que el catálogo cuenta con DOS. Por el título no se distingue
+/// -el parecido sale igual mida once minutos o media hora-; por la duración sí.
+/// </para>
+/// </summary>
+public static class MedidaDelCapituloTests
+{
+    private static TimeSpan Min(double m) => TimeSpan.FromMinutes(m);
+
+    public static void Todas()
+    {
+        Program.Seccion("El reloj como segunda opinión");
+
+        // Una serie de historias de ~11 min: unas de una historia, otras de dos.
+        var carpeta = new (TimeSpan, int)[]
+        {
+            (Min(11.0), 1), (Min(22.4), 2), (Min(10.6), 1),
+            (Min(21.8), 2), (Min(11.3), 1), (Min(22.0), 2),
+        };
+        var unidad = MedidaDelCapitulo.Unidad(carpeta);
+        Program.Assert(unidad is not null, "con bastantes ficheros se aprende cuánto dura una historia");
+        Program.Assert(
+            unidad!.Value.TotalMinutes is > 10.4 and < 11.4,
+            $"y sale del orden de once minutos ({unidad.Value.TotalMinutes:F1})");
+
+        // El caso del usuario: once minutos que alguien quiere dar por episodio de dos.
+        Program.Assert(
+            !MedidaDelCapitulo.Cuadra(Min(11), historias: 2, unidad),
+            "un fichero de 11 min NO es un episodio de dos historias");
+        Program.Assert(
+            MedidaDelCapitulo.Cuadra(Min(11), historias: 1, unidad),
+            "pero sí es uno de una");
+
+        // Y al revés, que es el otro que pediste: juntar de más.
+        Program.Assert(
+            !MedidaDelCapitulo.Cuadra(Min(33), historias: 1, unidad),
+            "media hora larga NO es una sola historia");
+        Program.Assert(
+            MedidaDelCapitulo.Cuadra(Min(33), historias: 3, unidad),
+            "tres historias sí explican esa duración");
+        Program.Assert(
+            MedidaDelCapitulo.Cuadra(Min(22), historias: 2, unidad),
+            "y el caso normal de dos historias no molesta");
+
+        // El margen existe para que la cabecera y los créditos no disparen el aviso.
+        Program.Assert(
+            MedidaDelCapitulo.Cuadra(Min(24.5), historias: 2, unidad),
+            "dos minutos de más sobre 22 no son sospecha");
+
+        // No saber NO es sospechar. Sin duración -un fichero que Windows no indexó- o
+        // sin unidad -una carpeta con cuatro ficheros- la comprobación se calla.
+        Program.Assert(
+            MedidaDelCapitulo.Cuadra(null, historias: 2, unidad),
+            "sin duración no se opina");
+        Program.Assert(
+            MedidaDelCapitulo.Cuadra(Min(11), historias: 2, null),
+            "sin unidad aprendida tampoco");
+        Program.Assert(
+            MedidaDelCapitulo.Unidad(new[] { (Min(11), 1), (Min(22), 2) }) is null,
+            "con cuatro ficheros no hay mediana de la que fiarse");
+
+        // La mediana y no la media: un tráiler suelto no puede mover la vara.
+        var conBasura = new (TimeSpan, int)[]
+        {
+            (Min(11.0), 1), (Min(11.1), 1), (Min(10.9), 1),
+            (Min(11.2), 1), (Min(10.8), 1), (Min(0.5), 1),
+        };
+        Program.Assert(
+            MedidaDelCapitulo.Unidad(conBasura)!.Value.TotalMinutes > 10.5,
+            "un fichero de medio minuto no arrastra la medida");
+
+        // Y lo que hace falta para redactar el aviso.
+        Program.Assert(
+            MedidaDelCapitulo.HistoriasQueSugiere(Min(11), unidad) == 1,
+            "el reloj dice cuántas historias ve: una");
+        Program.Assert(
+            MedidaDelCapitulo.HistoriasQueSugiere(Min(22), unidad) == 2,
+            "y dos cuando son dos");
+
+        // Una serie de 45 min se mide con su propia vara: nada está escrito a mano.
+        var larga = new (TimeSpan, int)[]
+        {
+            (Min(44), 1), (Min(46), 1), (Min(45), 1),
+            (Min(43), 1), (Min(47), 1), (Min(45), 1),
+        };
+        var unidadLarga = MedidaDelCapitulo.Unidad(larga);
+        Program.Assert(
+            MedidaDelCapitulo.Cuadra(Min(45), historias: 1, unidadLarga),
+            "en una serie de 45 min, 45 min es UNA historia");
+        Program.Assert(
+            !MedidaDelCapitulo.Cuadra(Min(45), historias: 2, unidadLarga),
+            "y no dos");
+    }
+}
