@@ -325,7 +325,10 @@ public partial class ComplementosWindow : Window
                     (Textos.Instancia.ComplementosDesconocido, Pincel("#20222A"), Pincel("#8A8FA3"), false),
             };
 
-            f.Detalle = v.Episodio is { } ep
+            // El número SOLO cuando se sabe. Enseñar «episodio 1734» al lado de «no
+            // se sabe» es contradecirse: ese número es el mejor parecido que se
+            // encontró, no una conclusión, y ponerlo invita a creérselo.
+            f.Detalle = v.Estado != CotejoDeLista.Estado.Desconocido && v.Episodio is { } ep
                 ? $"{Reloj(f)}  ·  {Textos.Instancia.ComplementosEpisodio} {ep.Num}"
                 : Reloj(f);
         }

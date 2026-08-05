@@ -52,6 +52,7 @@
           </StackPanel>
 
           <ListBox x:Name="listaInstalados" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                   FocusVisualStyle="{x:Null}"
                    Margin="8,0,8,0" HorizontalContentAlignment="Stretch"
                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemTemplate>
@@ -61,7 +62,8 @@
                     <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
                   </Grid.ColumnDefinitions>
                   <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding Nombre}" FontSize="13.5" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Nombre}" FontSize="13.5" Foreground="{StaticResource Text}"
+                               TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding Donde}" FontFamily="{StaticResource FontMono}" FontSize="9.5"
                                Margin="0,3,0,0" Foreground="{StaticResource Neutral600}"/>
                   </StackPanel>
@@ -144,6 +146,7 @@
             </StackPanel>
 
             <ListBox x:Name="lista" Background="Transparent" BorderThickness="0"
+                     FocusVisualStyle="{x:Null}"
                      Visibility="Collapsed" HorizontalContentAlignment="Stretch"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
               <ListBox.ItemTemplate>
@@ -168,6 +171,7 @@
 
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Titulo}" FontSize="13.5"
+                                 Foreground="{StaticResource Text}"
                                  TextTrimming="CharacterEllipsis"/>
                       <TextBlock Text="{Binding Detalle}" FontFamily="{StaticResource FontMono}"
                                  FontSize="10.5" Margin="0,4,0,0"
@@ -186,6 +190,7 @@
 
             <!-- los disponibles, en el mismo hueco -->
             <ListBox x:Name="listaTienda" Background="Transparent" BorderThickness="0"
+                     FocusVisualStyle="{x:Null}"
                      Visibility="Collapsed" HorizontalContentAlignment="Stretch"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
               <ListBox.ItemTemplate>
@@ -196,7 +201,8 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                       <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Nombre}" FontSize="14" FontWeight="Medium"/>
+                        <TextBlock Text="{Binding Nombre}" FontSize="14" FontWeight="Medium"
+                                   Foreground="{StaticResource Text}"/>
                         <TextBlock Text="{Binding Version}" FontFamily="{StaticResource FontMono}"
                                    FontSize="10.5" Margin="9,3,0,0"
                                    Foreground="{StaticResource Neutral600}"/>
@@ -220,17 +226,26 @@
           <!-- ══ pie ══ -->
           <Border Grid.Row="3" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0"
                   Padding="26,14">
+            <!-- Tres COLUMNAS y no tres bloques alineados dentro de la misma celda.
+                 Un Grid sin columnas los superpone: el recuento se pintaba encima
+                 del botón de disponibles. Alinear no es repartir. -->
             <Grid>
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button x:Name="btnSoloFaltan" Style="{StaticResource BtnGhost}" FontSize="12"
                         Content="{i:T ComplementosMarcarLosQueFaltan}"/>
                 <Button x:Name="btnNinguno" Style="{StaticResource BtnGhost}" FontSize="12"
                         Margin="4,0,0,0" Content="{i:T ComplementosDesmarcar}"/>
               </StackPanel>
-              <TextBlock x:Name="lblEstado" HorizontalAlignment="Center" VerticalAlignment="Center"
-                         FontSize="11.5" MaxWidth="300" TextTrimming="CharacterEllipsis"
+              <TextBlock x:Name="lblEstado" Grid.Column="1" HorizontalAlignment="Center"
+                         VerticalAlignment="Center" Margin="16,0" FontSize="11.5"
+                         TextTrimming="CharacterEllipsis"
                          Foreground="{StaticResource Neutral600}"/>
-              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="btnDisponibles" Style="{StaticResource BtnGhost}" FontSize="12"
                         Margin="0,0,10,0" Content="{i:T ComplementosDisponibles}"/>
                 <Button x:Name="btnCerrar" Style="{StaticResource BtnSecondary}" Width="96"
