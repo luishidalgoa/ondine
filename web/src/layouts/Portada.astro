@@ -9,6 +9,7 @@ import Tamano from "../components/Tamano.astro";
 import Comparativa from "../components/Comparativa.astro";
 import Spot from "../components/SpotEmergente.astro";
 import Descarga from "../components/Descarga.astro";
+import Terminal from "../components/Terminal.astro";
 import { BIBLIOTECA } from "../data/biblioteca";
 import { fotograma } from "../data/caps";
 import { textos } from "../i18n/textos";
@@ -30,6 +31,7 @@ import { textos } from "../i18n/textos";
 //   Comparativa ... capas superpuestas destapadas por una cortina
 //   Spot .......... el vídeo emerge de detrás del agua, por capas
 //   Descarga ...... llamada y modal por sistemas
+//   Terminal ...... modal del terminal, que abre el boton del hero
 const t = textos(Astro.currentLocale);
 
 // Aviso al compilar. Que falte un fotograma no rompe la página, pero callarse
@@ -53,4 +55,9 @@ if (sinImagen.length) {
   <Comparativa />
   <Spot />
   <Descarga />
+
+  <!-- El cuadro del terminal. Vive al final y no dentro del hero: es un
+       <dialog>, se pinta en la capa superior y desde dentro del hero heredaria
+       su recorte y su contexto de apilamiento. -->
+  <Terminal />
 </Base>
