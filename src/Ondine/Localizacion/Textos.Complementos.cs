@@ -145,7 +145,7 @@ public sealed partial class Textos
         "{0} ticked of {1}  ·  {2} missing",
         "{0} marcados de {1}  ·  te faltan {2}");
 
-    public string ComplementosTraer => Idioma.Elegir("Fetch the ticked ones", "Traer los marcados");
+    public string ComplementosTraer => Idioma.Elegir("Download", "Descargar");
 
     public string ComplementosDondeDejarlos => Idioma.Elegir(
         "Where should the files go?", "¿Dónde dejo los ficheros?");

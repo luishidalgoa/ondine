@@ -113,12 +113,15 @@ public static class Invocador
         // -parece colgado y en realidad está esperando a que alguien lea-.
         var ruido = Task.Run(() => proceso.StandardError.ReadToEndAsync(), CancellationToken.None);
 
+        var seExplico = false;
         try
         {
             while (await proceso.StandardOutput.ReadLineAsync(corte).ConfigureAwait(false) is { } linea)
             {
                 var m = Mensaje.Interpretar(linea);
-                if (m is not null) yield return m;
+                if (m is null) continue;
+                if (m.Tipo == Mensaje.TipoError) seExplico = true;
+                yield return m;
             }
         }
         finally
@@ -133,7 +136,11 @@ public static class Invocador
         // Un código de salida distinto de cero SIN un mensaje de error propio es
         // el caso peor: el complemento se murió sin explicarse. Se dice, porque
         // si no la lista se queda a medias y parece que eso era todo lo que había.
-        if (proceso.ExitCode != 0 && !corte.IsCancellationRequested)
+        // ...Y SOLO si no se explicó. Un complemento que dice su motivo y luego
+        // sale con código 1 está haciendo lo correcto -«no descargo», y lo dice-.
+        // Soltarle encima «se murió sin explicarse» tapa el motivo bueno con uno
+        // falso, y quien lo lee se queda pensando que el complemento está roto.
+        if (proceso.ExitCode != 0 && !corte.IsCancellationRequested && !seExplico)
         {
             var suyo = "";
             try { suyo = (await ruido.ConfigureAwait(false) ?? "").Trim(); } catch { }
