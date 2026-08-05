@@ -81,6 +81,10 @@ public partial class ComplementosWindow : Window
 
         Closed += (_, _) => _corte?.Cancel();
 
+        listaTienda.ItemsSource = _tienda;
+        tabInstalados.Checked += (_, _) => CambiarSeccion();
+        tabDisponibles.Checked += async (_, _) => { CambiarSeccion(); await CargarTiendaAsync(); };
+
         CargarComplementos();
     }
 
@@ -105,6 +109,129 @@ public partial class ComplementosWindow : Window
             btnListar.IsEnabled = false;
             lblVacio.Text = string.Format(Textos.Instancia.ComplementosNinguno, Descubridor.Carpeta);
         }
+    }
+
+    // ── la sección de disponibles ───────────────────────────────────────────
+
+    /// <summary>Una entrada del índice, ya con lo que la pantalla necesita saber.</summary>
+    public sealed class Oferta : INotifyPropertyChanged
+    {
+        public required Indice.Entrada Entrada { get; init; }
+        public string Nombre => Entrada.Nombre;
+        public string Version => Entrada.Version;
+        public string Descripcion => Entrada.Descripcion;
+
+        /// <summary>Dónde va a salir, dicho en palabras: es lo que decide si te sirve.</summary>
+        public string Donde => Entrada.Ambito.Count == 0 ||
+                               Entrada.Ambito.Contains(Complemento.AmbitoGlobal, StringComparer.OrdinalIgnoreCase)
+            ? Textos.Instancia.ComplementosSaleEnTodo
+            : string.Format(Textos.Instancia.ComplementosSaleEn, string.Join(", ", Entrada.Ambito));
+
+        private string _accion = Textos.Instancia.ComplementosInstalar;
+        public string Accion { get => _accion; set { _accion = value; Avisar(nameof(Accion)); } }
+
+        private bool _sePuede = true;
+        public bool SePuede { get => _sePuede; set { _sePuede = value; Avisar(nameof(SePuede)); } }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void Avisar(string p) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
+    }
+
+    private readonly ObservableCollection<Oferta> _tienda = new();
+    private bool _tiendaCargada;
+
+    /// <summary>
+    /// Las dos secciones comparten el mismo hueco: nunca se enseñan a la vez, y
+    /// tener dos zonas que se tapan sería peor que una que cambia.
+    /// </summary>
+    private void CambiarSeccion()
+    {
+        bool disponibles = tabDisponibles.IsChecked == true;
+
+        cboComplemento.Visibility = txtFuente.Visibility = btnListar.Visibility =
+            disponibles ? Visibility.Collapsed : Visibility.Visible;
+
+        listaTienda.Visibility = disponibles && _tienda.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        lista.Visibility = !disponibles && _filas.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        lblVacio.Visibility = listaTienda.Visibility == Visibility.Visible ||
+                              lista.Visibility == Visibility.Visible
+            ? Visibility.Collapsed : Visibility.Visible;
+
+        btnSoloFaltan.IsEnabled = btnNinguno.IsEnabled = !disponibles;
+        if (disponibles) btnTraer.IsEnabled = false; else RefrescarPie();
+    }
+
+    private async Task CargarTiendaAsync()
+    {
+        if (_tiendaCargada) return;
+        _tiendaCargada = true;
+
+        lblVacio.Text = Textos.Instancia.ComplementosListando;
+        lblVacio.Visibility = Visibility.Visible;
+
+        var traida = await Tienda.TraerIndiceAsync(Tienda.IndiceOficial);
+        if (traida.Indice is null)
+        {
+            lblVacio.Text = traida.Error ?? "";
+            _tiendaCargada = false;   // que se pueda reintentar volviendo a la pestaña
+            return;
+        }
+
+        var puestos = Descubridor.Buscar().Bueno.Select(c => c.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var e in traida.Indice.Complementos.Where(e => e.Reparo() is null))
+        {
+            var o = new Oferta { Entrada = e };
+            if (puestos.Contains(e.Id))
+            {
+                o.Accion = Textos.Instancia.ComplementosYaInstalado;
+                o.SePuede = false;
+            }
+            _tienda.Add(o);
+        }
+
+        if (_tienda.Count == 0) lblVacio.Text = Textos.Instancia.ComplementosTiendaVacia;
+        CambiarSeccion();
+    }
+
+    private async void OnInstalar(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button b || b.Tag is not Oferta o) return;
+
+        o.SePuede = false;
+        o.Accion = Textos.Instancia.ComplementosInstalando;
+
+        var paquete = await Tienda.TraerPaqueteAsync(o.Entrada);
+        if (paquete.Bytes is null)
+        {
+            lblEstado.Text = paquete.Error ?? "";
+            o.Accion = Textos.Instancia.ComplementosInstalar;
+            o.SePuede = true;
+            return;
+        }
+
+        // La verificación y la extracción van fuera del hilo de la interfaz: son
+        // un sha256 y un descomprimido, y con un paquete grande se nota.
+        var r = await Task.Run(() =>
+            Instalador.Instalar(o.Entrada, paquete.Bytes, Descubridor.Carpeta));
+
+        if (!r.Ok)
+        {
+            lblEstado.Text = r.Motivo ?? "";
+            o.Accion = Textos.Instancia.ComplementosInstalar;
+            o.SePuede = true;
+            return;
+        }
+
+        o.Accion = Textos.Instancia.ComplementosYaInstalado;
+        lblEstado.Text = string.Format(Textos.Instancia.ComplementosInstalado, o.Nombre);
+
+        // El desplegable de instalados se rehace: acabar de instalar algo y no
+        // verlo en la otra pestaña parece que no funcionó.
+        cboComplemento.Items.Clear();
+        cajaDescartados.Visibility = Visibility.Collapsed;
+        CargarComplementos();
     }
 
     /// <summary>Envoltorio para que el desplegable enseñe el nombre y guarde el objeto.</summary>

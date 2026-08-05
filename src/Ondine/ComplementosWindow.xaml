@@ -46,6 +46,16 @@
           </StackPanel>
         </Border>
 
+        <!-- Dos pestañas y no dos ventanas: instalar y usar son el mismo viaje
+             -«necesito algo que haga X»- y partirlo en dos sitios obliga a
+             acordarse de dónde estaba cada cosa. -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+          <RadioButton x:Name="tabInstalados" GroupName="secc" IsChecked="True"
+                       Style="{StaticResource PageTab}" Content="{i:T ComplementosInstalados}"/>
+          <RadioButton x:Name="tabDisponibles" GroupName="secc"
+                       Style="{StaticResource PageTab}" Content="{i:T ComplementosDisponibles}"/>
+        </StackPanel>
+
         <TextBlock Text="{i:T ComplementosCual}" FontSize="11"
                    Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
         <Grid>
@@ -70,6 +80,37 @@
                      MaxWidth="420" TextAlignment="Center" FontSize="12.5"
                      Foreground="{StaticResource Neutral600}"
                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+          <!-- Los disponibles. Comparten el mismo hueco que los elementos: nunca
+               se enseñan las dos cosas a la vez. -->
+          <ListBox x:Name="listaTienda" Background="Transparent" BorderThickness="0"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                   HorizontalContentAlignment="Stretch" Visibility="Collapsed">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="6,7">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding Nombre}" FontSize="13.5" FontWeight="Medium"/>
+                      <TextBlock Text="{Binding Version}" FontSize="11" Margin="8,2,0,0"
+                                 Foreground="{StaticResource Neutral600}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Descripcion}" FontSize="11.5" TextWrapping="Wrap"
+                               Margin="0,3,12,0" Foreground="{StaticResource Neutral500}"/>
+                    <TextBlock Text="{Binding Donde}" FontSize="10.5" Margin="0,3,0,0"
+                               Foreground="{StaticResource Neutral600}"/>
+                  </StackPanel>
+                  <Button Grid.Column="1" Style="{StaticResource BtnSecondary}" Height="30"
+                          MinWidth="96" VerticalAlignment="Center" Margin="8,0,4,0"
+                          Content="{Binding Accion}" IsEnabled="{Binding SePuede}"
+                          Tag="{Binding}" Click="OnInstalar"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
 
           <ListBox x:Name="lista" Background="Transparent" BorderThickness="0"
                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"

@@ -12,6 +12,41 @@ namespace Ondine.Localizacion;
 /// </summary>
 public sealed partial class Textos
 {
+    // ---- la tienda ----
+
+    public string ComplementosInstalados => Idioma.Elegir("Installed", "Instalados");
+    public string ComplementosDisponibles => Idioma.Elegir("Available", "Disponibles");
+
+    public string ComplementosInstalar => Idioma.Elegir("Install", "Instalar");
+    public string ComplementosYaInstalado => Idioma.Elegir("Installed", "Ya instalado");
+    public string ComplementosInstalando => Idioma.Elegir("Installing...", "Instalando...");
+
+    public string ComplementosTiendaVacia => Idioma.Elegir(
+        "There is nothing published yet",
+        "Todavía no hay nada publicado");
+
+    // {0} = el nombre del complemento.
+    public string ComplementosInstalado => Idioma.Elegir(
+        "\"{0}\" installed", "«{0}» instalado");
+
+    // {0} = los modos donde sale, ya montados.
+    public string ComplementosSaleEn => Idioma.Elegir("Shows up in: {0}", "Sale en: {0}");
+    public string ComplementosSaleEnTodo => Idioma.Elegir("Shows up everywhere", "Sale en toda la aplicación");
+
+
+    public string TiendaIndiceIlegible => Idioma.Elegir(
+        "The index could be reached but not understood: either it is not valid or it speaks another contract",
+        "El índice se ha podido traer pero no entender: o no es válido o habla otro contrato");
+
+    // {0} = lo que dijo el sistema.
+    public string TiendaSinRed => Idioma.Elegir(
+        "Could not be downloaded: {0}", "No se ha podido descargar: {0}");
+
+    // {0} = el limite en megas.
+    public string TiendaDemasiadoGrande => Idioma.Elegir(
+        "The package is over {0} MB and has not been downloaded",
+        "El paquete pasa de {0} MB y no se ha descargado");
+
     // ---- el indice y la instalacion ----
 
     public string IndiceSinId => Idioma.Elegir(
