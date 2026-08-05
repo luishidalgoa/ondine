@@ -26,12 +26,19 @@
 ---
 
 <p align="center">
-  <a href="https://ondine.hdglabs.com">
-    <img src="docs/img/spot-en.jpg" alt="Watch the Ondine spot" width="760">
-  </a>
+  <img src="docs/antes-despues.gif" alt="The same folder in a media server: on the left, filenames like «final episode GOOD.mkv»; on the right, every episode with its title, number and description." width="760">
 </p>
 
 <p align="center">
+  <i>The same folder, before and after. Left, what the server could make of it; right, what it
+  makes of it once Ondine has been through.</i>
+</p>
+
+<p align="center">
+  <a href="https://ondine.hdglabs.com">
+    <img src="docs/img/spot-en.jpg" alt="Watch the Ondine spot" width="520">
+  </a>
+  <br>
   <i>Forty-four seconds · <a href="https://ondine.hdglabs.com">plays on ondine.hdglabs.com</a></i>
 </p>
 

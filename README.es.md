@@ -26,12 +26,19 @@
 ---
 
 <p align="center">
-  <a href="https://ondine.hdglabs.com/es/">
-    <img src="docs/img/spot-es.jpg" alt="Ver el spot de Ondine" width="760">
-  </a>
+  <img src="docs/antes-despues.gif" alt="La misma carpeta en un servidor multimedia: a la izquierda, nombres de fichero como «final episode GOOD.mkv»; a la derecha, cada capítulo con su título, su número y su sinopsis." width="760">
 </p>
 
 <p align="center">
+  <i>La misma carpeta, antes y después. A la izquierda, lo que el servidor pudo sacar de ella;
+  a la derecha, lo que saca cuando ha pasado Ondine.</i>
+</p>
+
+<p align="center">
+  <a href="https://ondine.hdglabs.com/es/">
+    <img src="docs/img/spot-es.jpg" alt="Ver el spot de Ondine" width="520">
+  </a>
+  <br>
   <i>Cuarenta y cuatro segundos · <a href="https://ondine.hdglabs.com/es/">se reproduce en ondine.hdglabs.com</a></i>
 </p>
 
