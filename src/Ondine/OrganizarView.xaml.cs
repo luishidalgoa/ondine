@@ -868,7 +868,15 @@ public partial class OrganizarView : UserControl
                     // deduplicación miran al conjunto y parchear filas sueltas las esquivaría.
                     for (int i = 0; i < señales.Count; i++)
                         if (metadatos.TryGetValue(señales[i].Path, out var titulo))
-                            señales[i] = SignalExtractor.Extract(señales[i].Path, señales[i].Carpeta, titulo);
+                            // La duración se ARRASTRA. Este segundo pase existe para reidentificar con el
+                            // título que trajo el .nfo o el contenedor, y volver a extraer desde cero
+                            // se la llevaba por delante: los ficheros que TENÍAN .nfo -justo los mejor
+                            // documentados- salían sin duración y el reloj se quedaba sin datos con
+                            // los que aprender. Volver a leerla aquí costaría otros 60 ms por fichero
+                            // para obtener exactamente lo mismo.
+                            señales[i] = SignalExtractor.Extract(
+                                señales[i].Path, señales[i].Carpeta, titulo,
+                                duracion: señales[i].Duracion);
                     resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
                     Escribir(string.Format(Textos.Instancia.OrganizarLogTitulosMetadatos, metadatos.Count));
                 }
