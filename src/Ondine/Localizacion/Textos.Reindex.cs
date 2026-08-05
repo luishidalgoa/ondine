@@ -127,6 +127,13 @@ public sealed partial class Textos
         "This file brings two catalogue episodes: {0} and {1} (\"{2}\"). Giving it the number of one would lose the other",
         "Este fichero trae dos episodios del catálogo: el {0} y el {1} («{2}»). Ponerle el número de uno perdería el otro");
 
+    // {0} = número del episodio, {1} = cuántas historias tiene según el catálogo.
+    // Al revés que el de arriba: allí el fichero trae DOS y se le quiere dar UN
+    // número; aquí trae UNA y se le quiere dar el nombre de un episodio de dos.
+    public string ReindexMotivoNombreDeMas => Idioma.Elegir(
+        "The name declares one story, but episode {0} has {1} in the catalogue. Renaming it as the whole episode would claim it holds stories it does not - say which ones it brings",
+        "El nombre declara una historia, pero el episodio {0} tiene {1} en el catálogo. Renombrarlo como el episodio entero afirmaría que trae historias que no trae - di cuáles trae");
+
     // {0} = número del episodio, {1} = su título, {2} = el nombre del otro
     // fichero. «Papelera» es la del sistema operativo: en inglés, «Recycle Bin».
     public string ReindexMotivoRepetido => Idioma.Elegir(

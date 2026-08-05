@@ -619,6 +619,72 @@ public static class ReindexEngine
                 break;
             }
         }
+
+        MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones);
+    }
+
+    /// <summary>
+    /// El caso contrario: el nombre declara UNA historia y el episodio al que se le
+    /// quiere renombrar tiene DOS.
+    ///
+    /// <para>
+    /// «Doraemon (1979) S1981E618 [618] - Doraemon, te odio.avi» anuncia una sola, y la
+    /// app lo daba por bueno -en verde, listo para aplicar- como el episodio 629, que el
+    /// catálogo cuenta con dos historias. El nombre resultante afirmaría que el fichero
+    /// trae las dos. Después de eso ya no hay forma de saber que falta una: el nombre
+    /// miente y nadie lo sabe. Es el mismo daño que renombrar un fichero de dos con el
+    /// número de uno, solo que al revés.
+    /// </para>
+    /// <para>
+    /// No hace falta abrir el fichero ni medir nada. Lo decide una comparación: ¿el título
+    /// del fichero se parece más a UNA historia suelta que a las dos juntas? Si sí, el
+    /// nombre está hablando de una sola.
+    /// </para>
+    /// <para>
+    /// Contar separadores NO vale, y costó dos pruebas rotas averiguarlo: hay ficheros que
+    /// traen las dos historias pegadas sin separador ninguno («Miedo a una Burger
+    /// Cangreburger La concha de un hombre»), y ahí «no hay separador» no significa «una
+    /// sola historia». Con la comparación esos salen bien solos, porque casan con el
+    /// conjunto y no con una suelta.
+    /// </para>
+    /// <para>
+    /// Lo que se decide no puede decidirlo el programa -si el fichero trae el episodio
+    /// entero mal nombrado o solo una historia, eso solo lo sabe quien lo vea-, así que se
+    /// pregunta en vez de aplicarse.
+    /// </para>
+    /// </summary>
+    private static void MarcarLosQueDeclaranMenosDeLoQuePromete(List<ReindexResolution> resoluciones)
+    {
+        foreach (var r in resoluciones)
+        {
+            if (r.Episodio == null) continue;
+            if (r.Confianza != ReindexConfianza.Alta) continue;
+            // Ya se decidió qué trozo es: el nombre no promete de más.
+            if (r.Archivo.SubSegmento != null) continue;
+
+            // Los del idioma de SALIDA, no `TitulosNorm`: aquellos juntan todos los
+            // idiomas para poder comparar, así que un episodio con título en castellano y
+            // en inglés parecía tener dos historias. Son el mismo título dicho dos veces.
+            var historias = r.Episodio.TitulosSalida.Select(TitleMatch.Norm).ToList();
+            if (historias.Count <= 1) continue;
+
+            // Si el nombre no aporta título, no hay nada que lo contradiga. El episodio
+            // pudo identificarse por el número o por el metadato del contenedor, y de
+            // ninguno de los dos se deduce cuántas historias trae el fichero.
+            var suyo = TitleMatch.Norm(r.Archivo.TituloNombre);
+            if (suyo.Length < 4) continue;
+
+            double conElConjunto = TitleMatch.Sim(suyo, string.Join(" ", historias));
+            double conLaMejorSuelta = historias.Max(h => TitleMatch.Sim(suyo, h));
+
+            // El margen evita disparar en los empates: si casa parecido con las dos
+            // lecturas, no hay nada claro que objetar y se deja pasar.
+            if (conLaMejorSuelta <= conElConjunto + 0.08) continue;
+
+            r.Confianza = ReindexConfianza.Revisar;
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoNombreDeMas,
+                r.Episodio.Num, historias.Count);
+        }
     }
 
     private static void Deduplicar(List<ReindexResolution> resoluciones)

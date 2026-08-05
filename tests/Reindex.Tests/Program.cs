@@ -1409,6 +1409,23 @@ public static class Program
             "y no se le llama duplicado: no sobra, hay que partirlo");
         Eq(true, (elQueTraeDos.Motivo ?? "").Contains("662"),
             "el motivo sigue nombrando el episodio de la otra historia, no al fichero rival");
+
+        // El caso al revés, y el que se aplicaba SOLO: el fichero declara UNA historia y el
+        // episodio al que se le quiere renombrar tiene DOS. Salía en verde, listo para
+        // aplicar, y el nombre resultante afirmaría que el fichero trae las dos. Después de
+        // eso ya no hay forma de saber que falta una: el nombre miente y nadie lo sabe.
+        //
+        // Es contable sin abrir el fichero: cuántos títulos declara el nombre frente a
+        // cuántos tiene el episodio en el catálogo.
+        var mediaVerdad = ReindexEngine.Resolve(new[] {
+            SignalExtractor.Extract(
+                F("Doraemon (2005) - S2021E662 - A por la marca perfecta.mkv"),
+                "Season 2021"),
+        }, cat)[0];
+
+        Eq(662, mediaVerdad.Episodio?.Num, "identifica el episodio por su primera historia");
+        Eq(true, mediaVerdad.Confianza != ReindexConfianza.Alta,
+            "un fichero de UNA historia no se renombra solo a un episodio de DOS");
     }
 
     // ─────────────── La app tiene que saber leer lo que ella misma escribe ───────────────
