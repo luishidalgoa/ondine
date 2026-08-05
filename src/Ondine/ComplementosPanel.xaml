@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:i="clr-namespace:Ondine.Localizacion"
         MinWidth="360"
-        FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
+        FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="Transparent">
 
   <!-- Maestro-detalle y no una tabla ancha. Una tabla es para comparar muchas
        filas por sus columnas; aquí hay pocos complementos y de cada uno importa
@@ -13,7 +13,12 @@
        ventana. Acoplado, una tarjeta dentro de la ventana dibuja un marco que no
        separa nada -lo que separa es la linea de la izquierda, y ya esta puesta-.
        Un contenedor que no divide nada solo mete ruido. -->
-  <Border Background="{StaticResource Bg}">
+  <!-- SIN fondo propio. Un fondo opaco aqui vuelve a hacer lo que hacia el borde:
+       recorta un rectangulo dentro de la ventana y lo convierte en una lamina
+       pegada encima. Dejandolo pasar, la luz de ambiente cruza tambien por
+       detras del panel y lo que se ve es una ventana con una zona mas, no dos
+       superficies distintas. -->
+  <Border Background="Transparent">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>

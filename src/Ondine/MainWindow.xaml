@@ -53,7 +53,7 @@
            El BitmapCache pinta los degradados una sola vez; el DesiredFrameRate del
            latido (abajo) es el que de verdad importa — la historia completa está en
            el comentario de la animación. -->
-      <Grid x:Name="ambiente" Grid.Row="0" Grid.RowSpan="8" IsHitTestVisible="False" Panel.ZIndex="-1">
+      <Grid x:Name="ambiente" Grid.Row="0" Grid.RowSpan="8" Grid.ColumnSpan="2" IsHitTestVisible="False" Panel.ZIndex="-1">
         <Grid.CacheMode>
           <BitmapCache/>
         </Grid.CacheMode>
