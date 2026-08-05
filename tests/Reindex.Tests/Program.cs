@@ -1382,6 +1382,32 @@ public static class Program
             "aunque el empate lo deje en Revisar, sigue siendo un fichero de dos episodios → partir");
         Eq(true, (empate.Motivo ?? "").Contains("588") && (empate.Motivo ?? "").Contains("589"),
             "y el motivo nombra los dos episodios, no ofrece elegir uno");
+
+        // Con un rival por el mismo número: el que trae dos historias tiene que seguir
+        // marcado para partir, no acabar tratado como una copia sobrante. Aquí gana la
+        // deduplicación, así que conserva la marca -pero el detector corre DESPUÉS de
+        // deduplicar y arranca con «si no es Alta o Revisar, siguiente», así que a un
+        // fichero al que la deduplicación deje en Ninguna no llega a mirarle dentro. Este
+        // caso no cae en esa grieta; queda anotado que la grieta existe.
+        var conRival = ReindexEngine.Resolve(new[] {
+            SignalExtractor.Extract(
+                F("Doraemon (2005) - S2020E615 - El robot pruebarreacciones + A por la marca perfecta.mkv"),
+                "Season 2020"),
+            SignalExtractor.Extract(
+                F("Doraemon (2005) - S2020E615 - El robot pruebarreacciones.mkv"),
+                "Season 2020"),
+        }, cat);
+
+        var elQueTraeDos = conRival.First(r =>
+            r.Archivo.NombreArchivo.Contains("A por la marca perfecta"));
+
+
+        Eq(true, elQueTraeDos.TraeDosEpisodios,
+            "traer dos episodios se detecta AUNQUE otro fichero reclame el mismo número");
+        Eq(false, elQueTraeDos.EsDuplicado,
+            "y no se le llama duplicado: no sobra, hay que partirlo");
+        Eq(true, (elQueTraeDos.Motivo ?? "").Contains("662"),
+            "el motivo sigue nombrando el episodio de la otra historia, no al fichero rival");
     }
 
     // ─────────────── La app tiene que saber leer lo que ella misma escribe ───────────────
