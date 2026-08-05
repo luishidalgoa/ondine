@@ -25,6 +25,9 @@
          de Pistas ya no compilan sin él. Se enlazan `Idioma.cs` y los `Textos.*.cs` uno a uno
          y NO la carpeta entera: `T.cs` es la extensión de marcado y depende de WPF. -->
     <Compile Include="..\..\src\Ondine\Localizacion\Idioma.cs" LinkBase="Localizacion" />
+    <Compile Include="..\..\src\Ondine\Settings.cs" LinkBase="Ajustes" />
+    <Compile Include="..\..\src\Ondine\RenameRule.cs" LinkBase="Ajustes" />
+    <Compile Include="..\..\src\Ondine\Preset.cs" LinkBase="Ajustes" />
     <Compile Include="..\..\src\Ondine\Localizacion\Textos.*.cs" LinkBase="Localizacion" />
     <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
          ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->

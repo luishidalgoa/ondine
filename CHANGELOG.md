@@ -32,16 +32,37 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Ya se puede elegir el idioma.** Está en *Herramientas › Preferencias › General*, el primer
+  ajuste de la pestaña. Tres opciones: *El del sistema*, *English* y *Español*. Se aplica al
+  momento, sin reiniciar, y se recuerda. Si no eliges nada manda el idioma de Windows, así que
+  con Windows en castellano la app se abre en castellano. La 1.6.0 tradujo los textos pero se
+  dejó esto fuera: no había ningún sitio donde cambiarlo y siempre arrancaba en inglés.
+
+### Corregido
+
+- **Guardar Preferencias borraba el historial de renombrado.** También el factor de complejidad
+  que la app aprende midiendo tus vídeos. Se rehacían los ajustes desde cero cada vez que
+  pulsabas *Guardar*, así que se perdía todo lo que no sale en esa ventana.
+- **El preset por defecto desaparecía al cambiar de idioma.** Los presets de fábrica se guardan
+  por su nombre, y su nombre está traducido: el que elegiste en castellano no existía con la app
+  en inglés, y el desplegable se quedaba vacío como si lo hubieras borrado. Ahora se reconoce en
+  los dos idiomas.
+- **«Previsualizar desde 0:00» se quedaba en el idioma de arranque.** Ese rótulo se escribe al
+  abrir la ventana en vez de venir enlazado, así que no se enteraba del cambio de idioma hasta
+  que movías el deslizador.
+- **La pestaña *General* de Preferencias no cabía entera.** La última casilla, la del menú del
+  Explorador, quedaba cortada por debajo del borde.
+
 ## [1.6.0] - 2026-08-04
 
 ### Añadido
 
-- **Ondine habla inglés.** Toda la interfaz está en inglés y en castellano, y se cambia de idioma
-  sin reiniciar: los textos se rehacen solos en cuanto lo eliges. La primera vez la app mira el
-  idioma de tu sistema, así que si usas Windows en castellano se abre en castellano; a partir de
-  ahí manda lo que elijas. Son 1152 textos, y están todos: los rótulos, los mensajes del panel
-  *Registro*, los avisos, los globos de ayuda y el encargo que se le pasa a la IA para construir
-  un catálogo.
+- **Ondine habla inglés.** Toda la interfaz está en inglés y en castellano, y los textos se
+  rehacen solos en cuanto cambia el idioma, sin reiniciar. Son 1152 textos, y están todos: los
+  rótulos, los mensajes del panel *Registro*, los avisos, los globos de ayuda y el encargo que
+  se le pasa a la IA para construir un catálogo.
 
 ### Corregido
 
