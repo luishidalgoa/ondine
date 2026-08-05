@@ -45,6 +45,13 @@ public static class Invocador
             // las busca por ruta relativa. Sin esto funciona al desarrollarlo y
             // falla al instalarlo, que es la peor forma de fallar.
             WorkingDirectory = quien.Carpeta,
+            // UTF-8 EXPLÍCITO. Sin esto se lee con la página de códigos de la
+            // consola de Windows y «máquina» llega como «mÃ¡quina»: el
+            // complemento escribe bien y quien lee lo estropea. Y un título con
+            // los acentos rotos no casa con nada del catálogo, así que el fallo
+            // no se queda en lo feo — se lleva por delante el cotejo.
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
+            StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
 
         foreach (var a in quien.Argumentos) psi.ArgumentList.Add(a);
