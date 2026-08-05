@@ -127,6 +127,11 @@ const SISTEMAS = [
   .modal {
     width: min(560px, calc(100vw - 2rem));
     max-height: 86vh;
+    /* Un <dialog> se centra solo con el `margin: auto` que le pone el
+       navegador, pero el reset de Tailwind pone `margin: 0` en todo y se lo
+       lleva por delante. Sin esta línea el cuadro se va a la esquina de
+       arriba a la izquierda. */
+    margin: auto;
     padding: 0;
     border: 0;
     border-radius: 16px;
@@ -265,16 +270,22 @@ const SISTEMAS = [
 
   .bloque pre {
     padding: 0.95rem 1rem;
-    /* La orden de Windows son dos líneas largas: que se desplace ella sola en
-       vez de empujar el ancho del cuadro. */
-    overflow-x: auto;
   }
   .bloque code {
     font-family: var(--font-mono);
     font-size: 12.5px;
     line-height: 1.7;
     color: #e9e9ed;
-    white-space: pre;
+    /* La orden de Windows lleva una URL larga. Antes se desplazaba de lado y
+       quedaba cortada a media palabra: quien la mira no puede comprobar a
+       dónde apunta, y a una línea que vas a pegar en tu terminal eso es justo
+       lo que hay que dejar leer. Se parte, con sangría para que se vea que la
+       segunda línea viene de la primera. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    display: block;
+    padding-left: 1.1em;
+    text-indent: -1.1em;
   }
 
   .copiar {
