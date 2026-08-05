@@ -67,7 +67,7 @@ const es = {
     notaUnix:
       "Detecta tu procesador, baja el binario que le toca y lo deja en ~/.local/bin. Sin sudo y sin tocar nada fuera de tu carpeta personal. Necesita ffmpeg instalado; si falta, te lo dice.",
     notaWindows:
-      "En Windows no hay guion de instalación: el de arriba es un script de shell y en Windows se para solo. Esto se baja la herramienta de terminal suelta con PowerShell. Si lo que quieres es la aplicación de escritorio, está en la descarga normal.",
+      "En Windows no hay guion de instalación: el de macOS y Linux es un script de shell y aquí se para solo. Esto se baja la herramienta de terminal suelta con PowerShell. Si lo que quieres es la aplicación de escritorio, está en la descarga normal.",
     pieA: "Todos los paquetes, y sus sumas de verificación, están en ",
     pieEnlace: "la última versión",
     pieB: ".",
@@ -292,7 +292,7 @@ const en: typeof es = {
     notaUnix:
       "It works out your processor, downloads the right binary and drops it in ~/.local/bin. No sudo, and nothing touched outside your home folder. It needs ffmpeg installed; if it is missing, it tells you.",
     notaWindows:
-      "There is no install script on Windows: the one above is a shell script and it stops on its own there. This downloads the standalone terminal tool with PowerShell. If what you want is the desktop app, it is in the normal download.",
+      "There is no install script on Windows: the one for macOS and Linux is a shell script and it stops on its own here. This downloads the standalone terminal tool with PowerShell. If what you want is the desktop app, it is in the normal download.",
     pieA: "Every package, and its checksums, live in ",
     pieEnlace: "the latest release",
     pieB: ".",
