@@ -91,7 +91,14 @@ const ALTERNAS = [
         name: "Ondine",
         description: descripcion,
         applicationCategory: "MultimediaApplication",
+        // Los términos por los que se busca esto de verdad. Van aquí y no en
+        // una etiqueta `keywords`: Google dejó de leer aquella hace años, pero
+        // los datos estructurados sí los leen el resto de buscadores y los
+        // asistentes que recomiendan herramientas.
+        keywords: t.meta.claves,
         operatingSystem: "Windows, macOS, Linux",
+        softwareRequirements: "ffmpeg",
+        isAccessibleForFree: true,
         url: new URL("/", Astro.site).href,
         downloadUrl: `${REPO}/releases/latest`,
         license: "https://opensource.org/licenses/MIT",

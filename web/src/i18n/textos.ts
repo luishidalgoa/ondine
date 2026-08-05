@@ -18,9 +18,18 @@ export const NOMBRE_IDIOMA: Record<Idioma, string> = {
 
 const es = {
   meta: {
-    titulo: "Ondine · Ordena bibliotecas de series y películas",
+    // El título y la descripción llevan «Plex», «Jellyfin» y «Kodi» porque son
+    // las palabras que la gente escribe de verdad al buscar esto. Nadie busca
+    // «ordenar bibliotecas»: busca «renombrar episodios para Plex». Nombrarlos
+    // aquí es describir el resultado, no decir que Ondine sea un añadido suyo.
+    titulo: "Ondine · Renombra tu biblioteca para Plex, Jellyfin y Kodi",
     descripcion:
-      "Identifica cada episodio contra un catálogo, parte los ficheros que traen dos capítulos pegados y quita las pistas que no usas sin recomprimir. Los nombres quedan escritos como los metadatos esperan encontrarlos.",
+      "Renombra cada episodio como Plex, Jellyfin y Kodi esperan encontrarlo: lo identifica contra un catálogo, separa los capítulos dobles y comprime hasta un 90 %. Gratis y de código abierto.",
+    // Las palabras que van en los datos estructurados. Google ya no lee la
+    // etiqueta `keywords`, pero esto sí lo leen el resto de buscadores y los
+    // asistentes que recomiendan herramientas, que es de donde llega el nicho.
+    claves:
+      "renombrar episodios, organizar biblioteca Plex, Jellyfin, Kodi, renombrar series, metadatos de series, servidor multimedia, comprimir vídeo, HEVC, biblioteca de películas, autoalojado",
     tituloSobreMi: "Sobre mí · Ondine",
     altVistaPrevia:
       "La misma biblioteca antes y después de pasarla por Ondine, con el nombre de Ondine encima.",
@@ -244,9 +253,11 @@ const es = {
 // compilación se cae en vez de salir a producción a medio traducir.
 const en: typeof es = {
   meta: {
-    titulo: "Ondine · Get your TV and film library in order",
+    titulo: "Ondine · Rename your library for Plex, Jellyfin and Kodi",
     descripcion:
-      "Matches every episode against a catalogue, splits the files that carry two episodes stuck together, and drops the tracks you never use without re-encoding. Names end up written the way metadata expects to find them.",
+      "Renames every episode the way Plex, Jellyfin and Kodi expect to find it: matches it against a catalogue, splits double episodes and compresses by up to 90%. Free and open source.",
+    claves:
+      "rename episodes, organise Plex library, Jellyfin, Kodi, tv show renamer, media metadata, media server, video compression, HEVC, film library, self-hosted",
     tituloSobreMi: "About · Ondine",
     altVistaPrevia:
       "The same library before and after running it through Ondine, with the Ondine name over it.",
