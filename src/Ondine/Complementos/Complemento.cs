@@ -66,6 +66,44 @@ public sealed class Complemento
     /// </summary>
     [JsonPropertyName("contrato")] public int Contrato { get; set; } = 1;
 
+    /// <summary>
+    /// Dónde aplica. Vacío o <c>["global"]</c> significa toda la aplicación; si
+    /// no, la lista de modos en los que tiene sentido: <c>organizar</c>,
+    /// <c>comprimir</c>, <c>recortes</c>. Un complemento puede declarar varios.
+    ///
+    /// <para>
+    /// Se declara en vez de deducirse de lo que hace. Un complemento que trae
+    /// vídeos de fuera sirve tanto en Organizar -para llenar huecos del catálogo-
+    /// como suelto, y solo su autor sabe cuál de las dos cosas quería.
+    /// </para>
+    /// </summary>
+    [JsonPropertyName("ambito")] public List<string> Ambito { get; set; } = new();
+
+    /// <summary>
+    /// Cómo aparece. <c>propia</c> -lo normal- le da su propio panel detrás del
+    /// botón de complementos, como las extensiones de un navegador. <c>nativa</c>
+    /// se mete en la interfaz de la aplicación.
+    ///
+    /// <para>
+    /// Lo normal es <c>propia</c> a propósito: un complemento que reordena la
+    /// pantalla de quien lo instala tiene que ser una decisión consciente, no lo
+    /// que pasa por no escribir un campo.
+    /// </para>
+    /// </summary>
+    [JsonPropertyName("integracion")] public string Integracion { get; set; } = IntegracionPropia;
+
+    /// <summary>Su propio panel detrás del botón de complementos.</summary>
+    public const string IntegracionPropia = "propia";
+
+    /// <summary>Se mete en la interfaz de la aplicación.</summary>
+    public const string IntegracionNativa = "nativa";
+
+    /// <summary>El ámbito que vale para toda la aplicación.</summary>
+    public const string AmbitoGlobal = "global";
+
+    /// <summary>Los modos que la aplicación conoce hoy.</summary>
+    public static readonly string[] Modos = ["organizar", "comprimir", "recortes"];
+
     /// <summary>La única versión del contrato que esta app sabe hablar.</summary>
     public const int ContratoActual = 1;
 
@@ -92,6 +130,20 @@ public sealed class Complemento
 
         if (Capacidades.Count == 0) return Textos.Instancia.ComplementoSinCapacidades;
 
+        // Un modo que esta versión no conoce NO se ignora en silencio: el
+        // complemento no saldría en ninguna parte y su autor lo daría por
+        // instalado. Callarlo convierte un error de escritura en un fantasma.
+        var desconocido = Ambito.FirstOrDefault(a =>
+            !string.Equals(a, AmbitoGlobal, StringComparison.OrdinalIgnoreCase) &&
+            !Modos.Contains(a, StringComparer.OrdinalIgnoreCase));
+        if (desconocido is not null)
+            return string.Format(Textos.Instancia.ComplementoAmbitoDesconocido,
+                desconocido, string.Join(", ", Modos));
+
+        if (!string.Equals(Integracion, IntegracionPropia, StringComparison.OrdinalIgnoreCase) &&
+            !EsNativa)
+            return string.Format(Textos.Instancia.ComplementoIntegracionDesconocida, Integracion);
+
         // Una ruta que se sale de su carpeta no es un complemento mal escrito: es
         // un manifiesto pidiendo ejecutar cualquier cosa del disco. Se comprueba
         // sobre la ruta ya resuelta, porque «..\..\windows\system32\x.exe» solo
@@ -112,6 +164,26 @@ public sealed class Complemento
 
     public bool Puede(string capacidad) =>
         Capacidades.Contains(capacidad, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Vale en toda la aplicación, no solo en un modo.</summary>
+    public bool EsGlobal =>
+        Ambito.Count == 0 || Ambito.Contains(AmbitoGlobal, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// ¿Sale en este modo? Los globales salen en todos. Los que declaran modos,
+    /// solo en los suyos.
+    ///
+    /// <para>
+    /// Enseñar todos en todas partes convierte el botón en un cajón: con quince
+    /// instalados, encontrar el que sirve aquí cuesta más que abrirlo a mano.
+    /// </para>
+    /// </summary>
+    public bool SaleEn(string modo) =>
+        EsGlobal || Ambito.Contains(modo, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Se mete en la interfaz de la aplicación en vez de traer la suya.</summary>
+    public bool EsNativa =>
+        string.Equals(Integracion, IntegracionNativa, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Lee un manifiesto. Devuelve null si no es JSON válido: un fichero roto en

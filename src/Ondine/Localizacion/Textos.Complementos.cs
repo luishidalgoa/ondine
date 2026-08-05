@@ -78,6 +78,16 @@ public sealed partial class Textos
         "It speaks contract version {0} and this version of Ondine speaks {1}",
         "Habla la versión {0} del contrato y esta versión de Ondine habla la {1}");
 
+    // {0} = lo que puso, {1} = los modos que la app conoce.
+    public string ComplementoAmbitoDesconocido => Idioma.Elegir(
+        "It applies to \"{0}\", which this version does not know. The modes are: {1}",
+        "Dice que aplica a «{0}», que esta versión no conoce. Los modos son: {1}");
+
+    // {0} = lo que puso.
+    public string ComplementoIntegracionDesconocida => Idioma.Elegir(
+        "Its integration is \"{0}\": it has to be \"propia\" or \"nativa\"",
+        "Su integración es «{0}»: tiene que ser «propia» o «nativa»");
+
     public string ComplementoSinCapacidades => Idioma.Elegir(
         "It declares nothing it can do",
         "No declara nada que sepa hacer");

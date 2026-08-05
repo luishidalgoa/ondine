@@ -5,5 +5,7 @@
   "autor": "Ondine",
   "ejecutable": "demo.cmd",
   "capacidades": ["importar"],
+  "ambito": ["organizar"],
+  "integracion": "propia",
   "contrato": 1
 }

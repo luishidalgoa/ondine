@@ -315,6 +315,46 @@ public static class ComplementoTests
             // Un fichero roto no puede impedir que arranque la aplicación.
             Program.Assert(Complemento.Leer(Manifiesto("{ esto no es json")) is null,
                 "un manifiesto roto se ignora sin reventar");
+
+            // ── ámbito e integración ────────────────────────────────────────
+            var global = Complemento.Leer(Manifiesto("""
+            {"nombre":"G","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1}
+            """))!;
+            Program.Assert(global.EsGlobal, "sin ámbito declarado, vale para toda la aplicación");
+            Program.Assert(global.SaleEn("organizar") && global.SaleEn("recortes"),
+                "y sale en todos los modos");
+            Program.Assert(!global.EsNativa,
+                "y por defecto trae su propio panel: meterse en la interfaz tiene que ser deliberado");
+
+            var soloOrganizar = Complemento.Leer(Manifiesto("""
+            {"nombre":"O","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1,"ambito":["organizar"]}
+            """))!;
+            Program.Assert(soloOrganizar.Reparo() is null, "declarar un modo conocido es correcto");
+            Program.Assert(soloOrganizar.SaleEn("organizar"), "sale en el suyo");
+            Program.Assert(!soloOrganizar.SaleEn("comprimir"),
+                "y NO en los demás: enseñar todo en todas partes convierte el botón en un cajón");
+
+            var mixto = Complemento.Leer(Manifiesto("""
+            {"nombre":"M","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1,
+             "ambito":["organizar","recortes"],"integracion":"nativa"}
+            """))!;
+            Program.Assert(mixto.Reparo() is null, "varios modos a la vez son válidos");
+            Program.Assert(mixto.SaleEn("organizar") && mixto.SaleEn("recortes") && !mixto.SaleEn("comprimir"),
+                "sale en los dos que declara y en ninguno más");
+            Program.Assert(mixto.EsNativa, "y este sí pide meterse en la interfaz");
+
+            // Un modo mal escrito NO se ignora: el complemento no saldría en
+            // ninguna parte y su autor lo daría por instalado.
+            var errata = Complemento.Leer(Manifiesto("""
+            {"nombre":"E","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1,"ambito":["organizarr"]}
+            """))!;
+            Program.Assert(errata.Reparo() is not null,
+                "un modo que no existe se rechaza en vez de dejar un complemento fantasma");
+
+            var rara = Complemento.Leer(Manifiesto("""
+            {"nombre":"R","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1,"integracion":"flotante"}
+            """))!;
+            Program.Assert(rara.Reparo() is not null, "una integración que no existe también");
         }
         finally
         {
