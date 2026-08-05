@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-08-05
+
 ### Añadido
 
 - **Ya se puede elegir el idioma.** Está en *Herramientas › Preferencias › General*, el primer
