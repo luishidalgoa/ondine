@@ -248,6 +248,10 @@ the Release. If the contract is not met, nothing gets published.
 
 ---
 
+## Licence
+
+[MIT](LICENSE). Do what you like with it, keep the notice.
+
 <p align="center">
   <i>It used to be called ShrinkStudio.</i>
 </p>

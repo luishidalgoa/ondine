@@ -231,3 +231,9 @@ Release. Si el contrato no se cumple, no se publica nada.
 - Salta lo ya comprimido (HEVC/AV1 con bitrate bajo) y los archivos que aún se están descargando.
 - Escribe siempre a un temporal y solo lo mueve al destino cuando termina bien, así una interrupción
   nunca deja un vídeo a medias haciéndose pasar por bueno.
+
+---
+
+## Licencia
+
+[MIT](LICENSE). Haz lo que quieras con esto, deja el aviso puesto.
