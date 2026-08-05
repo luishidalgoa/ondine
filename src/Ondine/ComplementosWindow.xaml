@@ -105,13 +105,16 @@
 
           <!-- la ficha del complemento -->
           <StackPanel x:Name="ficha" Grid.Row="0" Margin="26,22,26,0" Visibility="Collapsed">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock x:Name="lblNombre" FontSize="21" FontWeight="Medium"
-                         VerticalAlignment="Baseline"/>
-              <TextBlock x:Name="lblVersion" FontFamily="{StaticResource FontMono}" FontSize="11"
-                         Margin="10,0,0,0" VerticalAlignment="Baseline"
-                         Foreground="{StaticResource Neutral600}"/>
-            </StackPanel>
+            <!-- Un solo TextBlock con dos Run y no dos TextBlock en fila: así el
+                 nombre y la versión comparten línea base de VERDAD. Alinearlos por
+                 su caja los deja bailando cuando cambia el tamaño de uno.
+                 («Baseline» NO es un valor de VerticalAlignment en WPF -eso es de
+                 CSS-, y ponerlo revienta la ventana al abrirse, no al compilar.) -->
+            <TextBlock>
+              <Run x:Name="lblNombre" FontSize="21" FontWeight="Medium"/>
+              <Run x:Name="lblVersion" FontFamily="{StaticResource FontMono}" FontSize="11"
+                   Foreground="{StaticResource Neutral600}"/>
+            </TextBlock>
             <TextBlock x:Name="lblDescripcion" FontSize="13" Margin="0,7,0,0" MaxWidth="560"
                        HorizontalAlignment="Left" TextWrapping="Wrap"
                        Foreground="{StaticResource Neutral400}"/>

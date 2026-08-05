@@ -206,7 +206,7 @@ public partial class ComplementosWindow : Window
         }
 
         lblNombre.Text = c.Nombre;
-        lblVersion.Text = c.Version;
+        lblVersion.Text = string.IsNullOrWhiteSpace(c.Version) ? "" : "  " + c.Version;
         lblDescripcion.Text = c.Descripcion;
         txtFuente.Text = "";
 
