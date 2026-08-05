@@ -1428,33 +1428,68 @@ public partial class MainWindow : Window
         menu.IsOpen = true;
     }
 
-    private ComplementosWindow? _complementos;
+    private ComplementosPanel? _complementos;
+
+    /// <summary>
+    /// Lo que ocupa el panel al abrirse, y lo que recupera al volver de estar
+    /// encogido. Se guarda porque el tirador lo cambia y sería tonto olvidarlo
+    /// cada vez que se cierra.
+    /// </summary>
+    private double _anchoPanel = 460;
 
     private void AbrirComplementos(Complementos.Complemento? cual)
     {
-        // Una sola ventana. Sin modal se puede abrir varias veces por descuido, y
-        // dos listas de lo mismo peleando por la misma carpeta de instalación no
-        // le sirve a nadie.
-        if (_complementos is { IsLoaded: true })
+        // Ya estaba puesto: no se rehace. Volver a montarlo tiraría la lista que
+        // se acabase de traer, que es justo lo que costó minutos.
+        if (_complementos is not null)
         {
-            _complementos.Activate();
+            if (panelLateral.Visibility != Visibility.Visible) MostrarPanel(true);
+            _complementos.Enfocar(cual);
             return;
         }
 
-        var v = new ComplementosWindow(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual)
-            { Owner = this };
+        var v = new ComplementosPanel(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual);
         _complementos = v;
 
-        // Sin modal ya no vale devolver nada al cerrarse: la entrega llega por
-        // aviso, en cuanto pasa, con la ventana todavía abierta.
         v.Traido += carpeta =>
         {
             CambiarPagina(Pagina.Organizar);
             pageOrganizar.ApuntarA(carpeta);
         };
-        v.Closed += (_, _) => { _complementos = null; RefrescarComplementos(); };
+        v.Cerrar += () => MostrarPanel(false);
 
-        v.Show();
+        huecoPanel.Content = v;
+        MostrarPanel(true);
+    }
+
+    private void MostrarPanel(bool abierto)
+    {
+        if (!abierto)
+        {
+            // Se guarda lo ancho que estaba antes de cerrarlo: quien lo estiró
+            // lo estiró por algo, y devolvérselo estrecho la próxima vez es
+            // hacerle repetir el ajuste.
+            if (colPanel.Width.Value > 0) _anchoPanel = colPanel.Width.Value;
+            colPanel.Width = new GridLength(0);
+            panelLateral.Visibility = Visibility.Collapsed;
+            RefrescarComplementos();
+            return;
+        }
+
+        panelLateral.Visibility = Visibility.Visible;
+        colPanel.Width = new GridLength(AnchoQueCabe(_anchoPanel));
+    }
+
+    /// <summary>
+    /// El ancho pedido, recortado a lo que la ventana puede dar sin comerse la
+    /// tabla. En una ventana pequeña un panel de 460 px deja la tabla en un
+    /// canalón donde no se lee ni la columna de fichero.
+    /// </summary>
+    private double AnchoQueCabe(double pedido)
+    {
+        var disponible = ActualWidth > 0 ? ActualWidth : Width;
+        if (double.IsNaN(disponible) || disponible <= 0) return pedido;
+        return Math.Max(360, Math.Min(pedido, disponible * 0.5));
     }
 
     private void CambiarPagina(Pagina pagina)

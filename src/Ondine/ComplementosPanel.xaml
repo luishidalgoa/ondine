@@ -1,9 +1,8 @@
-<Window x:Class="Ondine.ComplementosWindow"
+<UserControl x:Class="Ondine.ComplementosPanel"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:i="clr-namespace:Ondine.Localizacion"
-        Title="{i:T ComplementosTitulo}" Width="980" Height="660" MinWidth="820" MinHeight="520"
-        WindowStyle="None" WindowStartupLocation="CenterOwner"
+        MinWidth="360"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
 
   <!-- Maestro-detalle y no una tabla ancha. Una tabla es para comparar muchas
@@ -259,4 +258,4 @@
       </Border>
     </Grid>
   </Border>
-</Window>
+</UserControl>

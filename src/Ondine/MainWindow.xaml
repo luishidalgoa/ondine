@@ -23,6 +23,16 @@
            título quedaba fuera. Resultado: no se podía mover la ventana de ninguna de
            las dos formas. Con la barra siempre arriba, el arrastre, el doble clic para
            maximizar y el Aero Snap siguen siendo los del sistema, sin parches. -->
+      <!-- El panel lateral vive en una SEGUNDA COLUMNA, no encima. Empuja el
+           contenido en vez de taparlo: lo que se está mirando en Organizar es
+           justo contra lo que se coteja la lista, y esconderlo para enseñar la
+           lista obliga a cerrarla para mirar. Todo lo demás se queda en la
+           columna 0 sin tocar nada, que es la de por defecto. -->
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" MinWidth="420"/>
+        <ColumnDefinition x:Name="colPanel" Width="0"/>
+      </Grid.ColumnDefinitions>
+
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/><!-- titlebar -->
         <RowDefinition Height="Auto"/><!-- banner -->
@@ -698,6 +708,29 @@
                    Padding="10,8" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
         </Border>
       </StackPanel>
+
+      <!-- ══ Panel lateral de complementos ══
+           Desde la fila 1: la barra de título sigue cruzando entera, porque es
+           la franja que WindowChrome reserva para arrastrar la ventana y
+           partirla deja media ventana sin agarre. -->
+      <Grid x:Name="panelLateral" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
+            Visibility="Collapsed">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Se agarra y se estira. Cuánto sitio merece la lista frente a la
+             tabla depende de lo que se esté haciendo, y eso no lo sabe la app. -->
+        <GridSplitter x:Name="tirador" Grid.Column="0" Width="6"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                      Background="Transparent" ResizeDirection="Columns"
+                      ResizeBehavior="PreviousAndCurrent" Cursor="SizeWE"/>
+        <Border Grid.Column="0" Width="1" HorizontalAlignment="Center"
+                Background="{StaticResource Divider}" IsHitTestVisible="False"/>
+
+        <ContentControl x:Name="huecoPanel" Grid.Column="1"/>
+      </Grid>
     </Grid>
   </Border>
 </Window>

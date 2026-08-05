@@ -154,9 +154,17 @@ def listar(fuente):
         error("Esa lista no tiene videos, o no es publica.")
 
     perdidos = len(todas) - len(entradas)
-    aviso = f" ({perdidos} ya no estan disponibles)" if perdidos else ""
+    aviso = f", {perdidos} ya no disponibles" if perdidos else ""
+
+    # Se dice QUE va a tardar y POR QUE antes de empezar, no despues. Lo que
+    # viene es una peticion por episodio y son decenas de segundos sin nada que
+    # pintar: una pantalla quieta que no explica el silencio es indistinguible
+    # de una colgada, y quien mira acaba cortando algo que iba bien.
     decir(tipo="progreso", avance=0.0,
-          texto=f"{len(entradas)} videos{aviso}. Leyendo las descripciones...")
+          texto=f"Lista leida: {len(entradas)} videos{aviso}")
+    decir(tipo="progreso", avance=0.02,
+          texto=f"Consultando la ficha de cada video para ver si alguno trae dos "
+                f"historias ({len(entradas)} consultas, puede tardar un minuto)")
 
     descripciones = _descripciones(exe, fuente, len(entradas))
 
@@ -177,7 +185,8 @@ def listar(fuente):
             miniatura=miniatura,
             duracion=e.get("duration"),
         )
-        decir(tipo="progreso", avance=(i + 1) / len(entradas), texto="")
+        decir(tipo="progreso", avance=(i + 1) / len(entradas),
+              texto=f"Cotejando con tu catalogo: {i + 1} de {len(entradas)}")
 
     decir(tipo="hecho", ficheros=[])
 

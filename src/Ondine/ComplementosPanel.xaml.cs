@@ -26,7 +26,7 @@ namespace Ondine;
 /// tratarlo como un diálogo de sí/no, que no lo es.
 /// </para>
 /// </summary>
-public partial class ComplementosWindow : Window
+public partial class ComplementosPanel : UserControl
 {
     /// <summary>Un elemento de la fuente.</summary>
     public sealed class Fila : INotifyPropertyChanged
@@ -121,17 +121,22 @@ public partial class ComplementosWindow : Window
     /// </summary>
     public event Action<string>? Traido;
 
-    public ComplementosWindow(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay,
+    /// <summary>Han pedido cerrar el panel desde dentro.</summary>
+    public event Action? Cerrar;
+
+    public ComplementosPanel(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay,
                               Complemento? elegido = null)
     {
         InitializeComponent();
         _catalogo = catalogo;
         _loQueHay = loQueHay ?? Array.Empty<ReindexResolution>();
 
-        header.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) DragMove(); };
-        btnX.Click += (_, _) => Close();
-        btnCerrar.Click += (_, _) => Close();
-        Closed += (_, _) => _corte?.Cancel();
+        // Va acoplado a la ventana, no flotando: no hay nada que arrastrar ni
+        // ventana que cerrar. Pedir el cierre es cosa de quien lo aloja, que es
+        // el unico que sabe si se esconde, se encoge o se queda.
+        btnX.Click += (_, _) => Cerrar?.Invoke();
+        btnCerrar.Click += (_, _) => Cerrar?.Invoke();
+        Unloaded += (_, _) => _corte?.Cancel();
 
         listaInstalados.ItemsSource = _puestos;
         lista.ItemsSource = _filas;
@@ -147,12 +152,23 @@ public partial class ComplementosWindow : Window
 
         CargarInstalados();
 
+        Enfocar(elegido);
+    }
+
+    /// <summary>
+    /// Deja mirando al complemento que se pide, sin rehacer nada. El panel se
+    /// queda puesto entre aperturas: volver a montarlo tiraría la lista recién
+    /// traída, que es justo lo que costó minutos.
+    /// </summary>
+    public void Enfocar(Complemento? elegido)
+    {
         if (elegido is not null)
         {
             var suyo = _puestos.FirstOrDefault(p => p.Cual.Id == elegido.Id);
             if (suyo is not null) listaInstalados.SelectedItem = suyo;
         }
-        else if (_puestos.Count > 0) listaInstalados.SelectedIndex = 0;
+        else if (listaInstalados.SelectedItem is null && _puestos.Count > 0)
+            listaInstalados.SelectedIndex = 0;
 
         MostrarElElegido();
     }
@@ -259,6 +275,22 @@ public partial class ComplementosWindow : Window
                 fuente.Length > 0 ? new[] { fuente } : Array.Empty<string>(), _corte.Token))
             {
                 if (m.Tipo == Mensaje.TipoError) { error = m.MensajeError; continue; }
+
+                // Lo que el complemento diga que está haciendo, tal cual, y con
+                // el porcentaje si lo sabe. Se tiraba a la basura: leer las
+                // descripciones de una lista tarda medio minuto largo, y durante
+                // todo ese rato la pantalla decía «listando» sin moverse. Un
+                // proceso que no cuenta lo que hace no se distingue de uno
+                // colgado, y quien mira acaba cerrando algo que iba bien.
+                if (m.Tipo == Mensaje.TipoProgreso)
+                {
+                    if (!string.IsNullOrWhiteSpace(m.Texto))
+                        Estado(m.Avance is { } a and > 0 and < 1
+                            ? $"{m.Texto}   {a:P0}"
+                            : m.Texto!, "");
+                    continue;
+                }
+
                 if (m.Tipo != Mensaje.TipoElemento) continue;
 
                 var f = new Fila
@@ -457,7 +489,7 @@ public partial class ComplementosWindow : Window
         // un destino decidido por un programa de fuera es lo último que se quiere
         // de algo que baja ficheros.
         var elegir = new Microsoft.Win32.OpenFolderDialog { Title = Textos.Instancia.ComplementosDondeDejarlos };
-        if (elegir.ShowDialog(this) != true) return;
+        if (elegir.ShowDialog(Window.GetWindow(this)) != true) return;
         var destino = elegir.FolderName;
 
         _corte?.Cancel();
@@ -493,7 +525,7 @@ public partial class ComplementosWindow : Window
         // Se avisa del destino elegido y no de la carpeta del primer fichero: un
         // complemento puede repartir por temporadas, y entonces la del primero
         // sería solo una parte de lo traído.
-        if (DialogWindow.Confirmar(this, Textos.Instancia.ComplementosTraer,
+        if (DialogWindow.Confirmar(Window.GetWindow(this), Textos.Instancia.ComplementosTraer,
                 string.Format(Textos.Instancia.ComplementosLlevarAOrganizar, traidos.Count, destino)))
             Traido?.Invoke(destino);
     }
