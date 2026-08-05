@@ -78,6 +78,8 @@ public sealed partial class Textos
 
     // Con puntos suspensivos porque abre una ventana; el título de esa ventana es
     // PreferenciasTitulo, que va sin ellos.
+    public string MainMenuComplementos => Idioma.Elegir("Plugins...", "Complementos...");
+
     public string MainMenuPreferencias => Idioma.Elegir("Preferences…", "Preferencias…");
 
     public string MainMenuAyuda => Idioma.Elegir("Help", "Ayuda");

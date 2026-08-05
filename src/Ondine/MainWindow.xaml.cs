@@ -132,6 +132,13 @@ public partial class MainWindow : Window
         miDelSel.Click += (_, _) => DeleteSelected();
         miRename.Click += (_, _) => OpenRenameDialog();
         btnRename.Click += (_, _) => OpenRenameDialog();
+        // El catálogo y lo resuelto se le pasan a la ventana en vez de que ella
+        // los busque: así la pantalla de complementos no sabe nada de Organizar,
+        // solo recibe dos datos, y se puede abrir desde otro sitio mañana.
+        miComplementos.Click += (_, _) =>
+            new ComplementosWindow(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay)
+                { Owner = this }.ShowDialog();
+
         miPrefs.Click += (_, _) => OpenPreferences();
         miCheckUpd.Click += async (_, _) => await CheckUpdateAsync(manual: true);
         miAbout.Click += (_, _) => ShowAbout();

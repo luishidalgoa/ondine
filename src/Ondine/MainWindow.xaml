@@ -147,6 +147,8 @@
             <MenuItem Header="{i:T MainMenuHerramientas}">
               <MenuItem x:Name="miRename" Header="{i:T MainMenuRenombrarSalida}"/>
               <Separator/>
+              <MenuItem x:Name="miComplementos" Header="{i:T MainMenuComplementos}"/>
+              <Separator/>
               <MenuItem x:Name="miPrefs" Header="{i:T MainMenuPreferencias}"/>
               <Separator/>
               <MenuItem x:Name="miCheckUpd" Header="{i:T MainBuscarActualizaciones}"/>

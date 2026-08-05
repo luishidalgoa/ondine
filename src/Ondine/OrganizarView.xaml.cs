@@ -34,6 +34,17 @@ public sealed class CatalogoCard
 public partial class OrganizarView : UserControl
 {
     private readonly ObservableCollection<OrganizarRow> _filas = new();
+
+    /// <summary>
+    /// El catálogo que hay abierto ahora mismo, para quien lo necesite desde
+    /// fuera. Lo pide la pantalla de complementos: sin él puede enseñar la lista
+    /// de una fuente, pero no decir qué de eso te falta -que es su gracia-.
+    /// </summary>
+    public Reindex.ReindexCatalog? CatalogoAbierto => _catalogoCargado;
+
+    /// <summary>Lo ya resuelto de la carpeta, por lo mismo: de ahí sale qué está cubierto.</summary>
+    public IReadOnlyList<Reindex.ReindexResolution> LoQueHay =>
+        _filas.Select(f => f.Res).ToList();
     private bool _ordenManual;   // hay un orden por cabecera activo (oculta las bandas de temporada)
     private readonly List<CatalogoGuardado> _catalogos = new();
     private CatalogoGuardado? _catalogoElegido;
