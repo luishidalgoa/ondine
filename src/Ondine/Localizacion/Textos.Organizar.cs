@@ -844,6 +844,11 @@ public sealed partial class Textos
     public string OrganizarDetalleRepetido => Idioma.Elegir("DUPLICATE FILE", "FICHERO REPETIDO");
     public string OrganizarDetalleConflicto => Idioma.Elegir("RESOLVE CONFLICT", "RESOLVER CONFLICTO");
 
+    // La cabecera del desplegable cuando la app ya resolvio la fila y solo se abre para
+    // cambiar la propuesta a mano. No es un conflicto: no hay nada que resolver.
+    public string OrganizarDetalleCambiar =>
+        Idioma.Elegir("CHANGE THE PROPOSAL", "CAMBIAR LA PROPUESTA");
+
     public string OrganizarDesconocido => Idioma.Elegir("(unknown)", "(desconocido)");
 
     // ═══ La fila: píldora de segmento ═══════════════════════════════════════

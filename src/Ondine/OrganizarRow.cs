@@ -409,7 +409,20 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     public string Explicacion => Res.Motivo;
 
     /// <summary>¿Merece la pena desplegar el resolutor bajo esta fila?</summary>
-    public bool TieneDetalle => Res.Alternativas.Count > 0 || Res.EsDuda;
+    /// <summary>
+    /// Si la fila se puede desplegar.
+    ///
+    /// <para>
+    /// También las verdes. El motor les vacía las alternativas a propósito -ofrecer
+    /// candidatos peores en una fila ya resuelta es ruido que invita a un clic
+    /// equivocado-, y de rebote se quedaban sin poder abrirse: si la app acertaba pero
+    /// no era lo que tú querías, no había por dónde cambiarlo. Se abren igual; lo que
+    /// no traen es la lista de candidatos ni el botón de confirmar uno, que ahí no
+    /// significa nada. Quedan las dos salidas que sí valen: elegir otro episodio a mano
+    /// y dejarlo como está.
+    /// </para>
+    /// </summary>
+    public bool TieneDetalle => Res.Alternativas.Count > 0 || Res.EsDuda || Res.Episodio != null;
 
     /// <summary>
     /// Las opciones del resolvedor: primero la que la app propone, después las descartadas.
@@ -521,6 +534,10 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     public string TituloDetalle => RecomiendaRecortar
         ? Textos.Instancia.OrganizarDetalleDosEpisodios
         : EsRepetido ? Textos.Instancia.OrganizarDetalleRepetido
+        // En una fila que la app resolvió sola no hay conflicto ninguno, y llamarlo asi
+        // seria mentirle a quien solo queria cambiar la propuesta.
+        : !Res.EsDuda && Res.Alternativas.Count == 0
+            ? Textos.Instancia.OrganizarDetalleCambiar
         : Textos.Instancia.OrganizarDetalleConflicto;
 
     /// <summary>
