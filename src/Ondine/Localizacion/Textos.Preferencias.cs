@@ -6,6 +6,20 @@ namespace Ondine.Localizacion;
 /// </summary>
 public sealed partial class Textos
 {
+    // ── Idioma de la interfaz ───────────────────────────────────────────────
+    // Va el primero de la pestaña General y separado del «idioma de audio»,
+    // que está tres líneas más abajo y es otra cosa: aquel es la pista que se
+    // elige dentro del vídeo, este es en qué habla la aplicación.
+    public string PreferenciasIdiomaApp =>
+        Idioma.Elegir("Application language", "Idioma de la aplicación");
+
+    public string PreferenciasIdiomaAppAyuda => Idioma.Elegir(
+        "Applies right away, without restarting. Not the same as the audio language below.",
+        "Se aplica al momento, sin reiniciar. No es el idioma de audio de aquí abajo.");
+
+    public string PreferenciasIdiomaAppSistema =>
+        Idioma.Elegir("Same as the system", "El del sistema");
+
     // ── Ventana ─────────────────────────────────────────────────────────────
     // Sirve para el Title y para el rótulo de la cabecera: es el mismo texto y
     // se traduce una vez.

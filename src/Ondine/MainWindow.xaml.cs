@@ -85,8 +85,13 @@ public partial class MainWindow : Window
 
         // Valores de partida que llevan dentro un dato (el segundo del timeline) o un código
         // que no se traduce (el idioma de la pista): se escriben aquí y no en el XAML.
-        cboLang.Text = Textos.Instancia.MainIdiomaPistaPorDefecto;
-        lblPreviewAt.Text = string.Format(Textos.Instancia.MainPrevisualizarDesde, FmtTime(0));
+        TextosDeArranque();
+
+        // Lo escrito a mano NO es un enlace, así que cambiar de idioma no lo
+        // toca. Los textos que se reescriben al hacer algo se arreglan solos la
+        // próxima vez; estos no, porque solo se ponen al abrir, y se quedaban en
+        // el idioma viejo para siempre.
+        Idioma.Cambio += (_, _) => Dispatcher.BeginInvoke(TextosDeArranque);
 
         _settings = SettingsStore.Load();
         ApplySettings();
@@ -283,6 +288,23 @@ public partial class MainWindow : Window
         bool on = _settings.Rename.HasEffect;
         lblRename.Text = on ? Textos.Instancia.MainRenombrarSalidaActiva : Textos.Instancia.MainRenombrarSalida;
         lblRename.Foreground = on ? (Brush)FindResource("Accent300") : (Brush)FindResource("Text");
+    }
+
+    /// <summary>
+    /// Los textos que se escriben a mano y NO los vuelve a tocar nadie.
+    ///
+    /// <para>
+    /// El resto de lo imperativo se reescribe al analizar, al seleccionar o al
+    /// mover el deslizador, así que un cambio de idioma se le nota a la
+    /// siguiente. Estos dos solo se ponen al abrir la ventana: si no se
+    /// rehacen aquí, se quedan en el idioma con el que arrancó la app.
+    /// </para>
+    /// </summary>
+    private void TextosDeArranque()
+    {
+        cboLang.Text = Textos.Instancia.MainIdiomaPistaPorDefecto;
+        lblPreviewAt.Text = string.Format(
+            Textos.Instancia.MainPrevisualizarDesde, FmtTime((int)sldPreview.Value));
     }
 
     private void ShowAbout() => DialogWindow.Aviso(this, Textos.Instancia.MainMenuAcercaDe,
@@ -1196,7 +1218,15 @@ public partial class MainWindow : Window
         _applyingPreset = true;
         cboPreset.ItemsSource = all;
         _applyingPreset = false;
-        if (select != null) cboPreset.SelectedItem = all.FirstOrDefault(p => p.Name == select);
+        // El nombre entra por NombreVigente y no crudo: los presets de fábrica se
+        // guardan por su nombre TRADUCIDO, así que el que se eligió con la app en
+        // castellano no existe con la app en inglés. Se quedaba sin casar y el
+        // preset por defecto parecía haberse borrado solo.
+        if (select != null)
+        {
+            var vigente = PresetStore.NombreVigente(select);
+            cboPreset.SelectedItem = all.FirstOrDefault(p => p.Name == vigente);
+        }
     }
 
     private void ApplyPreset()

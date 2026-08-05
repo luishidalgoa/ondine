@@ -62,6 +62,12 @@ public partial class App : Application
 
         base.OnStartup(e);
 
+        // El idioma, ANTES de construir ninguna ventana: los textos se enlazan
+        // al crear los controles, y aunque cambiarlo después también los
+        // refrescaría, la primera ventana llegaría a pintarse en inglés y se
+        // vería el cambio. Vacío = todavía no se ha elegido, y manda el sistema.
+        Localizacion.Idioma.Actual = Localizacion.Idioma.Resolver(SettingsStore.Load().Idioma);
+
         // La app se llamaba ShrinkStudio: hay que borrar lo que dejó en el registro y en «Enviar
         // a», o queda un «Comprimir con ShrinkStudio» fantasma en el botón derecho, apuntando a
         // un ejecutable que ya no existe.

@@ -2,9 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:i="clr-namespace:Ondine.Localizacion"
-        Title="{i:T PreferenciasTitulo}" Width="580" Height="470" WindowStyle="None" ResizeMode="NoResize"
+        Title="{i:T PreferenciasTitulo}" Width="580" Height="560" WindowStyle="None" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
+  <!-- El alto de la ventana es fijo y las pestañas no llevan barra de desplazamiento:
+       cada línea que se añada a una pestaña hay que pagarla en el Height de arriba. Al
+       meter el selector de idioma se quedó fuera la última casilla de «General». -->
+
   <!-- 8 px: el mismo radio que Windows 11 recorta por fuera, para que el borde dibujado
        y el recorte del sistema coincidan en vez de pelearse en la esquina. -->
   <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}" BorderThickness="1" CornerRadius="8">
@@ -29,6 +33,10 @@
         <!-- ══ General ══ -->
         <TabItem Header="{i:T PreferenciasTabGeneral}">
           <StackPanel>
+            <TextBlock Text="{i:T PreferenciasIdiomaApp}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T PreferenciasIdiomaAppAyuda}" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cboIdioma" Width="200" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+
             <TextBlock Text="{i:T PreferenciasPresetPorDefecto}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
             <ComboBox x:Name="cboDefPreset" Width="320" HorizontalAlignment="Left" Margin="0,0,0,16"/>
 

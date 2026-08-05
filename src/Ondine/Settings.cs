@@ -16,6 +16,18 @@ public enum AfterCompress
 public sealed class Settings
 {
     // --- General ---
+
+    /// <summary>
+    /// Idioma de la INTERFAZ (<c>en</c> / <c>es</c>). Vacío = todavía no se ha
+    /// elegido, y entonces manda el del sistema.
+    ///
+    /// <para>
+    /// No confundir con <see cref="DefaultLang"/>, que es el idioma del AUDIO
+    /// y va en código de tres letras porque es lo que entiende ffmpeg.
+    /// </para>
+    /// </summary>
+    public string Idioma { get; set; } = "";
+
     public string DefaultPreset { get; set; } = "";      // preset a aplicar al abrir ("" = ninguno)
     public string DefaultLang { get; set; } = "spa";     // idioma de audio por defecto
     public bool Recurse { get; set; } = true;            // analizar subcarpetas

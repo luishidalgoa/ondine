@@ -61,6 +61,7 @@ public static class Program
         // único que corre en cada cambio. Una prueba que vive fuera del CI no
         // es un arnés, es una intención.
         TraduccionTests.Todas();
+        Ondine.Reindex.Tests.IdiomaElegidoTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;

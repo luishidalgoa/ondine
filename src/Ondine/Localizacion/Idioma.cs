@@ -102,6 +102,25 @@ public static class Idioma
     /// </summary>
     public static string DelSistema() =>
         Normalizar(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+
+    /// <summary>
+    /// Con qué idioma arranca la app, a partir de lo que hubiera guardado.
+    ///
+    /// <para>
+    /// Vacío significa «todavía no he elegido», y entonces manda el sistema. Un
+    /// código que aquí no existe -porque se eligió en una versión más nueva y
+    /// luego se volvió atrás- se trata igual que no haber elegido: caer en
+    /// inglés a secas dejaría la app en un idioma que esa persona no pidió
+    /// nunca, teniendo el del sistema a mano.
+    /// </para>
+    /// </summary>
+    /// <param name="guardado">Lo que venga del fichero de preferencias.</param>
+    public static string Resolver(string? guardado)
+    {
+        if (string.IsNullOrWhiteSpace(guardado)) return DelSistema();
+        var corto = guardado.Split('-', '_')[0].ToLowerInvariant();
+        return Array.IndexOf(Disponibles, corto) >= 0 ? corto : DelSistema();
+    }
 }
 
 /// <summary>
