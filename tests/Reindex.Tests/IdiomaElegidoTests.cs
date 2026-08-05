@@ -478,6 +478,27 @@ public static class DescubridorTests
     {
         Program.Seccion("Descubrir complementos y leer lo que dicen");
 
+        // ── Pasar argumentos a un .cmd ──────────────────────────────────────
+        // Un fichero por lotes NO recibe los argumentos como un programa normal:
+        // los pasa por cmd.exe, y ahi «&» separa ordenes. Una URL de lista de
+        // YouTube lleva «&list=...&index=6», asi que el complemento recibia la
+        // direccion partida y cmd intentaba EJECUTAR «list» y «index».
+        //
+        // Y esa es la parte seria: si un «&» puede colar una orden, tambien puede
+        // colarla una fuente preparada a mala idea. Entrecomillar no es cosmetico.
+        Program.Assert(
+            Ondine.Complementos.Invocador.ParaLote("https://x.com/?v=1&list=AB&index=6")
+                == "\"https://x.com/?v=1&list=AB&index=6\"",
+            "la URL entera va entre comillas: dentro, cmd no parte por «&»");
+
+        Program.Assert(
+            Ondine.Complementos.Invocador.ParaLote("di \"hola\"") == "\"di \"\"hola\"\"\"",
+            "las comillas de dentro se doblan, que es como las escapa cmd");
+
+        Program.Assert(
+            Ondine.Complementos.Invocador.ParaLote("") == "\"\"",
+            "un argumento vacio sigue siendo UN argumento, no ninguno");
+
         var raiz = Path.Combine(Path.GetTempPath(), "ondine-desc-" + Guid.NewGuid().ToString("N")[..8]);
         try
         {

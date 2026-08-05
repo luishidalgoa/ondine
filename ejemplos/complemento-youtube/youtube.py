@@ -166,7 +166,9 @@ def listar(fuente):
           texto=f"Consultando la ficha de cada video para ver si alguno trae dos "
                 f"historias ({len(entradas)} consultas, puede tardar un minuto)")
 
-    descripciones = _descripciones(exe, fuente, len(entradas))
+    # len(TODAS), no len(entradas): yt-dlp consulta tambien los borrados, asi que
+    # contra el numero de los buenos el contador se pasaba -«video 13 de 8»-.
+    descripciones = _descripciones(exe, fuente, len(todas))
 
     for i, e in enumerate(entradas):
         # La miniatura: la mas grande de las que trae. Vienen de menor a mayor,
@@ -208,9 +210,7 @@ def _descripciones(exe, fuente, cuantos):
     Si falla no se aborta: se devuelve lo que haya. Quedarse sin lista por no
     poder leer un extra seria cambiar un dato de mas por todos los datos.
     """
-    try:
-        salida = subprocess.run(
-            [exe, "--no-warnings",
+    orden = [exe, "--no-warnings",
              # Sin esto YouTube contesta «This video is not available» a la
              # ficha del video, aunque la lista se lea sin problema.
              "--extractor-args", "youtube:player_client=web_safari",
@@ -218,26 +218,54 @@ def _descripciones(exe, fuente, cuantos):
              # formato que bajar y aborta la ficha entera cuando no lo hay.
              "--ignore-no-formats-error",
              # En Windows yt-dlp escribe con la pagina de codigos de la consola:
-             # «confesión» salia como el byte f3 suelto, que no es UTF-8 valido y
-             # se perdia. El listado se libraba por venir en JSON, que escapa lo
-             # que no es ASCII; la descripcion sale en crudo y no.
-             #
-             # Se pide aqui y no por PYTHONIOENCODING porque yt-dlp se distribuye
-             # como ejecutable congelado y esa variable no le llega.
+             # «confesion» salia con un byte suelto que no es UTF-8 valido y se
+             # perdia. El listado se libraba por venir en JSON, que escapa lo que
+             # no es ASCII; la descripcion sale en crudo y no.
              "--encoding", "utf-8",
              "--print", _MARCA + "%(id)s@@%(description)s",
-             fuente],
-            capture_output=True, text=True, encoding="utf-8",
-            errors="replace", timeout=60 + 20 * cuantos,
-        )
-    except (subprocess.TimeoutExpired, OSError):
+             fuente]
+
+    # Se lee SEGUN SALE, no al final. Con una sola llamada que devuelve todo de
+    # golpe hay medio minuto en que el complemento no puede decir nada aunque
+    # quiera: no es que se olvide de informar, es que no tiene el turno. Leyendo
+    # linea a linea, cada video que yt-dlp termina se cuenta en el acto.
+    fuera = {}
+    try:
+        proc = subprocess.Popen(orden, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                text=True, encoding="utf-8", errors="replace", bufsize=1)
+    except OSError:
         return {}
 
-    fuera = {}
-    for ficha in (salida.stdout or "").split(_MARCA)[1:]:
-        ident, _, resto = ficha.partition("@@")
-        if ident.strip():
-            fuera[ident.strip()] = resto
+    actual = None
+    trozos = []
+
+    def cerrar():
+        if actual:
+            fuera[actual] = "".join(trozos)
+
+    try:
+        for linea in proc.stdout:
+            if not linea.startswith(_MARCA):
+                trozos.append(linea)
+                continue
+
+            cerrar()
+            ident, _, resto = linea[len(_MARCA):].partition("@@")
+            actual = ident.strip() or None
+            trozos = [resto]
+
+            hechos = len(fuera) + (1 if actual else 0)
+            decir(tipo="progreso", avance=min(0.95, 0.02 + 0.93 * hechos / max(1, cuantos)),
+                  texto=f"Leyendo la ficha del video {hechos} de {cuantos}")
+        cerrar()
+    except Exception:
+        pass
+    finally:
+        try:
+            proc.wait(timeout=30)
+        except Exception:
+            proc.kill()
+
     return fuera
 
 

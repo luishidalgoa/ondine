@@ -22,6 +22,28 @@ public static class Invocador
     /// <summary>Traer los elementos elegidos a una carpeta.</summary>
     public const string ComandoTraer = "traer";
 
+    private static bool EsPorLotes(string ruta) =>
+        ruta.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
+        ruta.EndsWith(".bat", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Un argumento tal y como hay que dárselo a un fichero por lotes.
+    ///
+    /// <para>
+    /// Entre comillas siempre, aunque no tenga espacios: lo que hay que neutralizar
+    /// no son los espacios sino «&amp;», «|», «&gt;» y compañía, que fuera de comillas
+    /// cmd toma como sintaxis y no como texto. Las comillas de dentro se doblan,
+    /// que es como las escapa cmd.
+    /// </para>
+    /// <para>
+    /// Queda un cabo: dentro de comillas cmd sigue expandiendo «%VAR%». No se
+    /// puede escapar de forma fiable, así que un complemento que reciba textos de
+    /// fuera hace mejor en no ser un .cmd — el ejemplo de YouTube llama a Python
+    /// directamente por eso.
+    /// </para>
+    /// </summary>
+    public static string ParaLote(string a) => "\"" + (a ?? "").Replace("\"", "\"\"") + "\"";
+
     /// <summary>
     /// Corre el complemento y devuelve sus mensajes uno a uno.
     /// </summary>
@@ -54,9 +76,19 @@ public static class Invocador
             StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
 
-        foreach (var a in quien.Argumentos) psi.ArgumentList.Add(a);
-        psi.ArgumentList.Add(comando);
-        foreach (var a in argumentos) psi.ArgumentList.Add(a);
+        var todos = quien.Argumentos.Append(comando).Concat(argumentos);
+
+        // Un fichero por lotes NO recibe los argumentos como un programa normal:
+        // van por cmd.exe, y ahí «&» separa órdenes. La URL de una lista de
+        // YouTube lleva «&list=...&index=6», así que llegaba partida y cmd
+        // intentaba EJECUTAR «list» y «index».
+        //
+        // Y ahí está lo serio: si un «&» cuela una orden, la cuela igual una
+        // fuente escrita a mala idea. Entrecomillar no es para que se vea bien.
+        if (EsPorLotes(quien.RutaEjecutable))
+            psi.Arguments = string.Join(' ', todos.Select(ParaLote));
+        else
+            foreach (var a in todos) psi.ArgumentList.Add(a);
 
         using var proceso = new Process { StartInfo = psi };
 
