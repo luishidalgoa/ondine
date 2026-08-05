@@ -1428,23 +1428,33 @@ public partial class MainWindow : Window
         menu.IsOpen = true;
     }
 
+    private ComplementosWindow? _complementos;
+
     private void AbrirComplementos(Complementos.Complemento? cual)
     {
+        // Una sola ventana. Sin modal se puede abrir varias veces por descuido, y
+        // dos listas de lo mismo peleando por la misma carpeta de instalación no
+        // le sirve a nadie.
+        if (_complementos is { IsLoaded: true })
+        {
+            _complementos.Activate();
+            return;
+        }
+
         var v = new ComplementosWindow(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual)
             { Owner = this };
-        var trajo = v.ShowDialog();
+        _complementos = v;
 
-        // Al volver puede haber uno nuevo instalado.
-        RefrescarComplementos();
-
-        // Y si se trajo algo y se pidió llevarlo, se va a Organizar apuntando ahí.
-        // Cerrar la ventana y dejar a quien acaba de bajar cuarenta capítulos
-        // buscando la carpeta a mano es abandonar el trabajo en el último paso.
-        if (trajo == true && v.CarpetaTraida is { } carpeta)
+        // Sin modal ya no vale devolver nada al cerrarse: la entrega llega por
+        // aviso, en cuanto pasa, con la ventana todavía abierta.
+        v.Traido += carpeta =>
         {
             CambiarPagina(Pagina.Organizar);
             pageOrganizar.ApuntarA(carpeta);
-        }
+        };
+        v.Closed += (_, _) => { _complementos = null; RefrescarComplementos(); };
+
+        v.Show();
     }
 
     private void CambiarPagina(Pagina pagina)

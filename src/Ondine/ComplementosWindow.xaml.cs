@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Ondine.Complementos;
@@ -11,20 +12,23 @@ using Ondine.Reindex;
 namespace Ondine;
 
 /// <summary>
-/// La pantalla de complementos: elegir uno, pedirle qué hay en una fuente, y
-/// marcar qué traer.
+/// La pantalla de complementos.
 ///
 /// <para>
-/// Lo que la hace útil no es la lista: es el <b>cotejo</b>. Una lista de
-/// cuatrocientos vídeos sin más obliga a ir uno por uno acordándose de qué se
-/// tiene. Con el catálogo abierto en Organizar al lado, cada fila dice si eso ya
-/// está, está a medias -y qué historia falta- o no está. El botón que de verdad
-/// se usa es «marcar los que faltan».
+/// <b>Maestro-detalle y no una tabla ancha.</b> Una tabla sirve para comparar
+/// muchas filas por sus columnas; aquí hay pocos complementos y de cada uno
+/// importa lo SUYO, no cómo se compara con los demás. La lista de la izquierda
+/// es el índice; a la derecha vive el que estés mirando.
+/// </para>
+/// <para>
+/// <b>No es modal.</b> Esto es un sitio donde se está un rato -mirar qué hay,
+/// instalar, listar, elegir- y bloquear la ventana principal mientras tanto es
+/// tratarlo como un diálogo de sí/no, que no lo es.
 /// </para>
 /// </summary>
 public partial class ComplementosWindow : Window
 {
-    /// <summary>Una fila de la lista. Notifica porque la casilla se marca desde varios sitios.</summary>
+    /// <summary>Un elemento de la fuente.</summary>
     public sealed class Fila : INotifyPropertyChanged
     {
         public required string Id { get; init; }
@@ -37,7 +41,12 @@ public partial class ComplementosWindow : Window
         public Brush ColorFondo { get; set; } = Brushes.Transparent;
         public Brush ColorTexto { get; set; } = Brushes.Gray;
 
-        /// <summary>Si no se sabe qué es, no se marca por defecto ni con «los que faltan».</summary>
+        /// <summary>
+        /// El hueco de la miniatura solo se reserva si ALGUNA la trae. Un
+        /// rectángulo gris en todas las filas parece roto y no informa de nada.
+        /// </summary>
+        public Visibility HuecoMiniatura { get; set; } = Visibility.Collapsed;
+
         public bool Falta { get; set; }
 
         private bool _marcado;
@@ -52,79 +61,28 @@ public partial class ComplementosWindow : Window
         private void Avisar(string p) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
     }
 
-    private readonly ObservableCollection<Fila> _filas = new();
-    private readonly ReindexCatalog? _catalogo;
-    private readonly IReadOnlyList<ReindexResolution> _loQueHay;
-    private CancellationTokenSource? _corte;
-
-    /// <param name="catalogo">
-    /// El que esté abierto en Organizar, si lo hay. Sin él la ventana sigue
-    /// sirviendo -se ve la lista y se puede traer- pero no puede decir qué falta,
-    /// que es la mitad de su gracia.
-    /// </param>
-    /// <param name="loQueHay">Las filas ya resueltas de la carpeta abierta.</param>
-    /// <param name="elegido">
-    /// Con cuál abrir. Viene del botón de la barra: si has pulsado uno concreto,
-    /// abrir la ventana en otro sería perder el gesto que acabas de hacer.
-    /// </param>
-    public ComplementosWindow(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay,
-                              Complemento? elegido = null)
+    /// <summary>Un complemento instalado, tal y como se enseña en el índice de la izquierda.</summary>
+    public sealed class Puesto : INotifyPropertyChanged
     {
-        InitializeComponent();
-        _catalogo = catalogo;
-        _loQueHay = loQueHay ?? Array.Empty<ReindexResolution>();
+        public required Complemento Cual { get; init; }
+        public string Nombre => Cual.Nombre;
 
-        header.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) DragMove(); };
-        btnX.Click += (_, _) => Close();
-        btnCerrar.Click += (_, _) => Close();
+        public string Donde => Cual.EsGlobal
+            ? Textos.Instancia.ComplementosSaleEnTodo
+            : string.Format(Textos.Instancia.ComplementosSaleEn, string.Join(" · ", Cual.Ambito));
 
-        lista.ItemsSource = _filas;
-        btnListar.Click += async (_, _) => await ListarAsync();
-        btnSoloFaltan.Click += (_, _) => { foreach (var f in _filas) f.Marcado = f.Falta; };
-        btnNinguno.Click += (_, _) => { foreach (var f in _filas) f.Marcado = false; };
-        btnTraer.Click += (_, _) => Traer();
-
-        Closed += (_, _) => _corte?.Cancel();
-
-        listaTienda.ItemsSource = _tienda;
-        tabInstalados.Checked += (_, _) => CambiarSeccion();
-        tabDisponibles.Checked += async (_, _) => { CambiarSeccion(); await CargarTiendaAsync(); };
-
-        CargarComplementos();
-
-        if (elegido is not null)
+        private bool _activo = true;
+        public bool Activo
         {
-            var suyo = cboComplemento.Items.OfType<Opcion>().FirstOrDefault(o => o.Cual.Id == elegido.Id);
-            if (suyo is not null) cboComplemento.SelectedItem = suyo;
+            get => _activo;
+            set { if (_activo == value) return; _activo = value; Avisar(nameof(Activo)); }
         }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void Avisar(string p) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
     }
 
-    private void CargarComplementos()
-    {
-        var h = Descubridor.Buscar();
-
-        foreach (var c in h.Bueno.Where(c => c.Puede(Complemento.CapacidadImportar)))
-            cboComplemento.Items.Add(new Opcion(c));
-        if (cboComplemento.Items.Count > 0) cboComplemento.SelectedIndex = 0;
-
-        if (h.Descartado.Count > 0)
-        {
-            cajaDescartados.Visibility = Visibility.Visible;
-            listaDescartados.ItemsSource = h.Descartado
-                .Select(d => $"{d.Cual.Id}: {d.Motivo}")
-                .ToList();
-        }
-
-        if (cboComplemento.Items.Count == 0)
-        {
-            btnListar.IsEnabled = false;
-            lblVacio.Text = string.Format(Textos.Instancia.ComplementosNinguno, Descubridor.Carpeta);
-        }
-    }
-
-    // ── la sección de disponibles ───────────────────────────────────────────
-
-    /// <summary>Una entrada del índice, ya con lo que la pantalla necesita saber.</summary>
+    /// <summary>Una entrada del índice remoto.</summary>
     public sealed class Oferta : INotifyPropertyChanged
     {
         public required Indice.Entrada Entrada { get; init; }
@@ -132,11 +90,10 @@ public partial class ComplementosWindow : Window
         public string Version => Entrada.Version;
         public string Descripcion => Entrada.Descripcion;
 
-        /// <summary>Dónde va a salir, dicho en palabras: es lo que decide si te sirve.</summary>
         public string Donde => Entrada.Ambito.Count == 0 ||
                                Entrada.Ambito.Contains(Complemento.AmbitoGlobal, StringComparer.OrdinalIgnoreCase)
             ? Textos.Instancia.ComplementosSaleEnTodo
-            : string.Format(Textos.Instancia.ComplementosSaleEn, string.Join(", ", Entrada.Ambito));
+            : string.Format(Textos.Instancia.ComplementosSaleEn, string.Join(" · ", Entrada.Ambito));
 
         private string _accion = Textos.Instancia.ComplementosInstalar;
         public string Accion { get => _accion; set { _accion = value; Avisar(nameof(Accion)); } }
@@ -148,122 +105,139 @@ public partial class ComplementosWindow : Window
         private void Avisar(string p) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
     }
 
+    private readonly ObservableCollection<Fila> _filas = new();
+    private readonly ObservableCollection<Puesto> _puestos = new();
     private readonly ObservableCollection<Oferta> _tienda = new();
-    private bool _tiendaCargada;
+
+    private readonly ReindexCatalog? _catalogo;
+    private readonly IReadOnlyList<ReindexResolution> _loQueHay;
+    private CancellationTokenSource? _corte;
+    private bool _enTienda;
+    private Action? _accionVacio;
 
     /// <summary>
-    /// Las dos secciones comparten el mismo hueco: nunca se enseñan a la vez, y
-    /// tener dos zonas que se tapan sería peor que una que cambia.
+    /// Se trajo algo, y dónde. Lo escucha quien abrió la ventana para llevar a
+    /// Organizar: sin modal ya no vale devolverlo al cerrarse.
     /// </summary>
-    private void CambiarSeccion()
+    public event Action<string>? Traido;
+
+    public ComplementosWindow(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay,
+                              Complemento? elegido = null)
     {
-        bool disponibles = tabDisponibles.IsChecked == true;
+        InitializeComponent();
+        _catalogo = catalogo;
+        _loQueHay = loQueHay ?? Array.Empty<ReindexResolution>();
 
-        cboComplemento.Visibility = txtFuente.Visibility = btnListar.Visibility =
-            disponibles ? Visibility.Collapsed : Visibility.Visible;
+        header.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) DragMove(); };
+        btnX.Click += (_, _) => Close();
+        btnCerrar.Click += (_, _) => Close();
+        Closed += (_, _) => _corte?.Cancel();
 
-        listaTienda.Visibility = disponibles && _tienda.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        lista.Visibility = !disponibles && _filas.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        listaInstalados.ItemsSource = _puestos;
+        lista.ItemsSource = _filas;
+        listaTienda.ItemsSource = _tienda;
 
-        lblVacio.Visibility = listaTienda.Visibility == Visibility.Visible ||
-                              lista.Visibility == Visibility.Visible
-            ? Visibility.Collapsed : Visibility.Visible;
+        listaInstalados.SelectionChanged += (_, _) => MostrarElElegido();
+        btnListar.Click += async (_, _) => await ListarAsync();
+        btnSoloFaltan.Click += (_, _) => { foreach (var f in _filas) f.Marcado = f.Falta; };
+        btnNinguno.Click += (_, _) => { foreach (var f in _filas) f.Marcado = false; };
+        btnTraer.Click += (_, _) => Traer();
+        btnDisponibles.Click += async (_, _) => await AlternarTiendaAsync();
+        btnAccionVacio.Click += (_, _) => _accionVacio?.Invoke();
 
-        btnSoloFaltan.IsEnabled = btnNinguno.IsEnabled = !disponibles;
-        if (disponibles) btnTraer.IsEnabled = false; else RefrescarPie();
+        CargarInstalados();
+
+        if (elegido is not null)
+        {
+            var suyo = _puestos.FirstOrDefault(p => p.Cual.Id == elegido.Id);
+            if (suyo is not null) listaInstalados.SelectedItem = suyo;
+        }
+        else if (_puestos.Count > 0) listaInstalados.SelectedIndex = 0;
+
+        MostrarElElegido();
     }
 
-    private async Task CargarTiendaAsync()
+    private Complemento? Elegido => (listaInstalados.SelectedItem as Puesto)?.Cual;
+
+    private void CargarInstalados()
     {
-        if (_tiendaCargada) return;
-        _tiendaCargada = true;
+        _puestos.Clear();
+        var h = Descubridor.Buscar();
+        foreach (var c in h.Bueno) _puestos.Add(new Puesto { Cual = c });
 
-        lblVacio.Text = Textos.Instancia.ComplementosListando;
-        lblVacio.Visibility = Visibility.Visible;
+        cajaDescartados.Visibility = h.Descartado.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        listaDescartados.ItemsSource = h.Descartado.Select(d => $"{d.Cual.Id} · {d.Motivo}").ToList();
+    }
 
-        var traida = await Tienda.TraerIndiceAsync(Tienda.IndiceOficial);
-        if (traida.Indice is null)
+    // ── el detalle ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Pinta la parte derecha para el complemento elegido.
+    ///
+    /// <para>
+    /// UN solo sitio decide qué se ve. Con cada botón tocando visibilidades por su
+    /// cuenta se acaba con dos cosas encima a la vez, y eso solo se descubre
+    /// pulsando en el orden que a nadie se le ocurrió probar.
+    /// </para>
+    /// </summary>
+    private void MostrarElElegido()
+    {
+        _enTienda = false;
+        listaTienda.Visibility = Visibility.Collapsed;
+        btnDisponibles.Content = Textos.Instancia.ComplementosDisponibles;
+
+        _filas.Clear();
+        lista.Visibility = Visibility.Collapsed;
+
+        var c = Elegido;
+        ficha.Visibility = c is null ? Visibility.Collapsed : Visibility.Visible;
+        zonaFuente.Visibility = c is not null && c.Puede(Complemento.CapacidadImportar)
+            ? Visibility.Visible : Visibility.Collapsed;
+
+        btnSoloFaltan.IsEnabled = btnNinguno.IsEnabled = btnTraer.IsEnabled = false;
+        lblEstado.Text = "";
+
+        if (c is null)
         {
-            lblVacio.Text = traida.Error ?? "";
-            _tiendaCargada = false;   // que se pueda reintentar volviendo a la pestaña
+            Estado(Textos.Instancia.ComplementosNingunoTitulo,
+                   string.Format(Textos.Instancia.ComplementosNinguno, Descubridor.Carpeta),
+                   Textos.Instancia.ComplementosDisponibles, async () => await AlternarTiendaAsync());
             return;
         }
 
-        var puestos = Descubridor.Buscar().Bueno.Select(c => c.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        lblNombre.Text = c.Nombre;
+        lblVersion.Text = c.Version;
+        lblDescripcion.Text = c.Descripcion;
+        txtFuente.Text = "";
 
-        foreach (var e in traida.Indice.Complementos.Where(e => e.Reparo() is null))
-        {
-            var o = new Oferta { Entrada = e };
-            if (puestos.Contains(e.Id))
-            {
-                o.Accion = Textos.Instancia.ComplementosYaInstalado;
-                o.SePuede = false;
-            }
-            _tienda.Add(o);
-        }
-
-        if (_tienda.Count == 0) lblVacio.Text = Textos.Instancia.ComplementosTiendaVacia;
-        CambiarSeccion();
+        Estado(Textos.Instancia.ComplementosListoTitulo, Textos.Instancia.ComplementosVacio);
     }
 
-    private async void OnInstalar(object sender, RoutedEventArgs e)
+    /// <summary>El estado de la zona central: título, explicación y, si aplica, una salida.</summary>
+    private void Estado(string titulo, string detalle, string? boton = null, Action? alPulsar = null)
     {
-        if (sender is not System.Windows.Controls.Button b || b.Tag is not Oferta o) return;
+        cajaEstado.Visibility = Visibility.Visible;
+        lblVacioTitulo.Text = titulo;
+        lblVacio.Text = detalle;
 
-        o.SePuede = false;
-        o.Accion = Textos.Instancia.ComplementosInstalando;
-
-        var paquete = await Tienda.TraerPaqueteAsync(o.Entrada);
-        if (paquete.Bytes is null)
-        {
-            lblEstado.Text = paquete.Error ?? "";
-            o.Accion = Textos.Instancia.ComplementosInstalar;
-            o.SePuede = true;
-            return;
-        }
-
-        // La verificación y la extracción van fuera del hilo de la interfaz: son
-        // un sha256 y un descomprimido, y con un paquete grande se nota.
-        var r = await Task.Run(() =>
-            Instalador.Instalar(o.Entrada, paquete.Bytes, Descubridor.Carpeta));
-
-        if (!r.Ok)
-        {
-            lblEstado.Text = r.Motivo ?? "";
-            o.Accion = Textos.Instancia.ComplementosInstalar;
-            o.SePuede = true;
-            return;
-        }
-
-        o.Accion = Textos.Instancia.ComplementosYaInstalado;
-        lblEstado.Text = string.Format(Textos.Instancia.ComplementosInstalado, o.Nombre);
-
-        // El desplegable de instalados se rehace: acabar de instalar algo y no
-        // verlo en la otra pestaña parece que no funcionó.
-        cboComplemento.Items.Clear();
-        cajaDescartados.Visibility = Visibility.Collapsed;
-        CargarComplementos();
+        _accionVacio = alPulsar;
+        btnAccionVacio.Content = boton ?? "";
+        btnAccionVacio.Visibility = boton is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>Envoltorio para que el desplegable enseñe el nombre y guarde el objeto.</summary>
-    private sealed record Opcion(Complemento Cual)
-    {
-        public override string ToString() => Cual.Nombre;
-    }
+    // ── listar ──────────────────────────────────────────────────────────────
 
     private async Task ListarAsync()
     {
-        if (cboComplemento.SelectedItem is not Opcion op) return;
+        if (Elegido is not { } c) return;
 
         _corte?.Cancel();
         _corte = new CancellationTokenSource();
 
         _filas.Clear();
         lista.Visibility = Visibility.Collapsed;
-        lblVacio.Visibility = Visibility.Visible;
-        lblVacio.Text = Textos.Instancia.ComplementosListando;
+        Estado(Textos.Instancia.ComplementosListando, "");
         btnListar.IsEnabled = false;
-        btnTraer.IsEnabled = false;
 
         var fuente = txtFuente.Text?.Trim() ?? "";
         string? error = null;
@@ -271,7 +245,7 @@ public partial class ComplementosWindow : Window
         try
         {
             await foreach (var m in Invocador.CorrerAsync(
-                op.Cual, Invocador.ComandoListar,
+                c, Invocador.ComandoListar,
                 fuente.Length > 0 ? new[] { fuente } : Array.Empty<string>(), _corte.Token))
             {
                 if (m.Tipo == Mensaje.TipoError) { error = m.MensajeError; continue; }
@@ -279,40 +253,40 @@ public partial class ComplementosWindow : Window
 
                 var f = new Fila
                 {
-                    Id = m.Id,
-                    Titulo = m.Titulo,
-                    Miniatura = m.Miniatura,
-                    Duracion = m.ComoDuracion,
+                    Id = m.Id, Titulo = m.Titulo,
+                    Miniatura = m.Miniatura, Duracion = m.ComoDuracion,
                 };
                 f.Cambio += RefrescarPie;
                 _filas.Add(f);
+
                 // Se va pintando según llega: con listas largas, esperar al final
-                // deja la ventana en blanco durante todo el rato que tarde.
+                // deja la ventana en blanco todo el rato que tarde.
+                cajaEstado.Visibility = Visibility.Collapsed;
                 lista.Visibility = Visibility.Visible;
-                lblVacio.Visibility = Visibility.Collapsed;
             }
         }
         catch (OperationCanceledException) { }
         finally { btnListar.IsEnabled = true; }
 
-        Cotejar();
-        RefrescarPie();
-
         if (_filas.Count == 0)
         {
-            lblVacio.Visibility = Visibility.Visible;
-            lblVacio.Text = error ?? Textos.Instancia.ComplementosNadaEnLaFuente;
+            Estado(error is null ? Textos.Instancia.ComplementosNadaTitulo
+                                 : Textos.Instancia.ComplementosFalloTitulo,
+                   error ?? Textos.Instancia.ComplementosNadaEnLaFuente);
+            return;
         }
-        else if (error is not null)
-        {
-            lblEstado.Text = error;
-        }
+
+        // El hueco de la miniatura se decide para TODAS a la vez: o lo reservan
+        // todas o ninguna, o las filas quedan desalineadas entre sí.
+        var hay = _filas.Any(f => !string.IsNullOrWhiteSpace(f.Miniatura));
+        foreach (var f in _filas) f.HuecoMiniatura = hay ? Visibility.Visible : Visibility.Collapsed;
+
+        Cotejar();
+        btnSoloFaltan.IsEnabled = btnNinguno.IsEnabled = true;
+        RefrescarPie();
+        if (error is not null) lblEstado.Text = error;
     }
 
-    /// <summary>
-    /// Pone el semáforo. Sin catálogo abierto no se inventa nada: se dice que no
-    /// se puede saber, en vez de dejar las filas mudas y que parezca un fallo.
-    /// </summary>
     private void Cotejar()
     {
         if (_filas.Count == 0) return;
@@ -322,9 +296,12 @@ public partial class ComplementosWindow : Window
             foreach (var f in _filas)
             {
                 f.Veredicto = Textos.Instancia.ComplementosSinCatalogo;
-                f.Detalle = Duracion(f);
+                f.ColorFondo = Pincel("#20222A");
+                f.ColorTexto = Pincel("#8A8FA3");
+                f.Detalle = Reloj(f);
                 f.Falta = false;
             }
+            lista.Items.Refresh();
             return;
         }
 
@@ -338,34 +315,29 @@ public partial class ComplementosWindow : Window
             (f.Veredicto, f.ColorFondo, f.ColorTexto, f.Falta) = v.Estado switch
             {
                 CotejoDeLista.Estado.YaEsta =>
-                    (Textos.Instancia.ComplementosYaEsta, Pastilla("#1E3A2A"), Tinta("#7FD1A6"), false),
+                    (Textos.Instancia.ComplementosYaEsta, Pincel("#17301F"), Pincel("#7FD1A6"), false),
                 CotejoDeLista.Estado.AMedias =>
                     (string.Format(Textos.Instancia.ComplementosAMedias, string.Join(", ", v.HistoriasQueFaltan)),
-                     Pastilla("#3A3320"), Tinta("#E0C07A"), true),
+                     Pincel("#35301C"), Pincel("#E0C07A"), true),
                 CotejoDeLista.Estado.Falta =>
-                    (Textos.Instancia.ComplementosFalta, Pastilla("#2A2440"), Tinta("#B5ABFC"), true),
+                    (Textos.Instancia.ComplementosFalta, Pincel("#262042"), Pincel("#B5ABFC"), true),
                 _ =>
-                    (Textos.Instancia.ComplementosDesconocido, Pastilla("#26272E"), Tinta("#8A8FA3"), false),
+                    (Textos.Instancia.ComplementosDesconocido, Pincel("#20222A"), Pincel("#8A8FA3"), false),
             };
 
             f.Detalle = v.Episodio is { } ep
-                ? $"{Duracion(f)}  ·  {Textos.Instancia.ComplementosEpisodio} {ep.Num}"
-                : Duracion(f);
+                ? $"{Reloj(f)}  ·  {Textos.Instancia.ComplementosEpisodio} {ep.Num}"
+                : Reloj(f);
         }
 
-        // La lista se repinta entera: las filas cambian de veredicto todas a la
-        // vez y notificar propiedad a propiedad no aporta nada aquí.
         lista.Items.Refresh();
     }
 
-    private static string Duracion(Fila f) => f.Duracion is { } d
+    private static string Reloj(Fila f) => f.Duracion is { } d
         ? (d.TotalHours >= 1 ? $"{(int)d.TotalHours}:{d.Minutes:00}:{d.Seconds:00}" : $"{d.Minutes}:{d.Seconds:00}")
         : "";
 
-    private static Brush Pastilla(string hex) =>
-        new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-
-    private static Brush Tinta(string hex) =>
+    private static Brush Pincel(string hex) =>
         new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
 
     private void RefrescarPie()
@@ -378,80 +350,126 @@ public partial class ComplementosWindow : Window
                 _filas.Count(f => f.Falta));
     }
 
-    /// <summary>
-    /// Dónde han caído los ficheros, si se trajo algo. Lo lee quien abrió la
-    /// ventana para llevar a Organizar ahí mismo.
-    /// </summary>
-    public string? CarpetaTraida { get; private set; }
+    // ── los disponibles ─────────────────────────────────────────────────────
+
+    private async Task AlternarTiendaAsync()
+    {
+        if (_enTienda) { MostrarElElegido(); return; }
+
+        _enTienda = true;
+        btnDisponibles.Content = Textos.Instancia.ComplementosVolver;
+        ficha.Visibility = zonaFuente.Visibility = lista.Visibility = Visibility.Collapsed;
+        btnSoloFaltan.IsEnabled = btnNinguno.IsEnabled = btnTraer.IsEnabled = false;
+
+        _tienda.Clear();
+        listaTienda.Visibility = Visibility.Collapsed;
+        Estado(Textos.Instancia.ComplementosListando, "");
+
+        var traida = await Tienda.TraerIndiceAsync(Tienda.IndiceOficial);
+        if (!_enTienda) return;   // se salió mientras se traía
+
+        if (traida.Indice is null)
+        {
+            Estado(Textos.Instancia.ComplementosFalloTitulo, traida.Error ?? "");
+            return;
+        }
+
+        var puestos = _puestos.Select(p => p.Cual.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var e in traida.Indice.Complementos.Where(e => e.Reparo() is null))
+        {
+            var o = new Oferta { Entrada = e };
+            if (puestos.Contains(e.Id)) { o.Accion = Textos.Instancia.ComplementosYaInstalado; o.SePuede = false; }
+            _tienda.Add(o);
+        }
+
+        if (_tienda.Count == 0)
+        {
+            Estado(Textos.Instancia.ComplementosTiendaVaciaTitulo, Textos.Instancia.ComplementosTiendaVacia);
+            return;
+        }
+
+        cajaEstado.Visibility = Visibility.Collapsed;
+        listaTienda.Visibility = Visibility.Visible;
+    }
+
+    private async void OnInstalar(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button b || b.Tag is not Oferta o) return;
+
+        o.SePuede = false;
+        o.Accion = Textos.Instancia.ComplementosInstalando;
+
+        var paquete = await Tienda.TraerPaqueteAsync(o.Entrada);
+        if (paquete.Bytes is null) { Rehabilitar(o, paquete.Error); return; }
+
+        // La verificación y el descomprimido, fuera del hilo de la interfaz: son
+        // un sha256 y un zip, y con un paquete grande se nota.
+        var r = await Task.Run(() => Instalador.Instalar(o.Entrada, paquete.Bytes, Descubridor.Carpeta));
+        if (!r.Ok) { Rehabilitar(o, r.Motivo); return; }
+
+        o.Accion = Textos.Instancia.ComplementosYaInstalado;
+        lblEstado.Text = string.Format(Textos.Instancia.ComplementosInstalado, o.Nombre);
+        CargarInstalados();
+    }
+
+    private void Rehabilitar(Oferta o, string? error)
+    {
+        lblEstado.Text = error ?? "";
+        o.Accion = Textos.Instancia.ComplementosInstalar;
+        o.SePuede = true;
+    }
+
+    // ── traer ───────────────────────────────────────────────────────────────
 
     private async void Traer()
     {
-        if (cboComplemento.SelectedItem is not Opcion op) return;
+        if (Elegido is not { } c) return;
 
         var marcados = _filas.Where(f => f.Marcado).Select(f => f.Id).ToList();
         if (marcados.Count == 0) return;
 
         // La carpeta la elige quien trae, no el complemento: es SU biblioteca, y
-        // un destino decidido por un programa de fuera es lo último que se
-        // quiere de algo que baja ficheros.
-        var elegir = new Microsoft.Win32.OpenFolderDialog
-        {
-            Title = Textos.Instancia.ComplementosDondeDejarlos,
-        };
+        // un destino decidido por un programa de fuera es lo último que se quiere
+        // de algo que baja ficheros.
+        var elegir = new Microsoft.Win32.OpenFolderDialog { Title = Textos.Instancia.ComplementosDondeDejarlos };
         if (elegir.ShowDialog(this) != true) return;
         var destino = elegir.FolderName;
 
         _corte?.Cancel();
         _corte = new CancellationTokenSource();
 
-        btnTraer.IsEnabled = false;
-        btnListar.IsEnabled = false;
+        btnTraer.IsEnabled = btnListar.IsEnabled = false;
         var traidos = new List<string>();
         string? error = null;
-
-        var argumentos = marcados.Concat(new[] { "--destino", destino });
 
         try
         {
             await foreach (var m in Invocador.CorrerAsync(
-                op.Cual, Invocador.ComandoTraer, argumentos, _corte.Token))
+                c, Invocador.ComandoTraer,
+                marcados.Concat(new[] { "--destino", destino }), _corte.Token))
             {
                 switch (m.Tipo)
                 {
-                    case Mensaje.TipoProgreso:
-                        // El avance se dice con palabras y no solo con una barra:
-                        // «bajando 3 de 7» sitúa, y un porcentaje solo, no.
-                        lblEstado.Text = m.Texto ?? "";
-                        break;
-                    case Mensaje.TipoHecho:
-                        traidos.AddRange(m.Ficheros);
-                        break;
-                    case Mensaje.TipoError:
-                        error = m.MensajeError;
-                        break;
+                    // El avance se dice con palabras y no solo con un porcentaje:
+                    // «bajando 3 de 7» sitúa, y un número suelto no.
+                    case Mensaje.TipoProgreso: lblEstado.Text = m.Texto ?? ""; break;
+                    case Mensaje.TipoHecho: traidos.AddRange(m.Ficheros); break;
+                    case Mensaje.TipoError: error = m.MensajeError; break;
                 }
             }
         }
         catch (OperationCanceledException) { }
-        finally { btnTraer.IsEnabled = true; btnListar.IsEnabled = true; }
+        finally { btnTraer.IsEnabled = btnListar.IsEnabled = true; }
 
         if (error is not null) { lblEstado.Text = error; return; }
 
-        // Se apunta al destino que se eligió y no a la carpeta del primer fichero:
-        // un complemento puede dejar las cosas en subcarpetas por temporada, y
-        // entonces la del primero sería solo una parte de lo traído.
-        CarpetaTraida = destino;
-
         lblEstado.Text = string.Format(Textos.Instancia.ComplementosTraidos, traidos.Count);
 
-        // Y se ofrece llevarlo a Organizar. Traer unos ficheros y dejar a quien
-        // los trajo buscando dónde han caído es dejar el trabajo a medias justo
-        // en el paso que costaba.
+        // Se avisa del destino elegido y no de la carpeta del primer fichero: un
+        // complemento puede repartir por temporadas, y entonces la del primero
+        // sería solo una parte de lo traído.
         if (DialogWindow.Confirmar(this, Textos.Instancia.ComplementosTraer,
                 string.Format(Textos.Instancia.ComplementosLlevarAOrganizar, traidos.Count, destino)))
-        {
-            DialogResult = true;
-            Close();
-        }
+            Traido?.Invoke(destino);
     }
 }

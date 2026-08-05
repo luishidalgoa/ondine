@@ -14,6 +14,15 @@ public sealed partial class Textos
 {
     // ---- la tienda ----
 
+    public string ComplementosListoTitulo => Idioma.Elegir("Ready", "Todo listo");
+    public string ComplementosNingunoTitulo => Idioma.Elegir("Nothing installed", "No hay nada instalado");
+    public string ComplementosNadaTitulo => Idioma.Elegir("Nothing there", "Ahí no hay nada");
+    public string ComplementosFalloTitulo => Idioma.Elegir("It did not work", "No ha salido");
+    public string ComplementosTiendaVaciaTitulo => Idioma.Elegir("Nothing published", "Nada publicado");
+    public string ComplementosVolver => Idioma.Elegir("Back", "Volver");
+    public string ComplementosActivar => Idioma.Elegir(
+        "Turn it off without uninstalling", "Apágalo sin desinstalarlo");
+
     public string ComplementosInstalados => Idioma.Elegir("Installed", "Instalados");
     public string ComplementosDisponibles => Idioma.Elegir("Available", "Disponibles");
 
