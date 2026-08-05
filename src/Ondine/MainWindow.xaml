@@ -715,22 +715,21 @@
            partirla deja media ventana sin agarre. -->
       <Grid x:Name="panelLateral" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
             Visibility="Collapsed">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
-        <!-- Se agarra y se estira. Cuánto sitio merece la lista frente a la
-             tabla depende de lo que se esté haciendo, y eso no lo sabe la app. -->
-        <GridSplitter x:Name="tirador" Grid.Column="0" Width="6"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                      Background="Transparent" ResizeDirection="Columns"
-                      ResizeBehavior="PreviousAndCurrent" Cursor="SizeWE"/>
-        <Border Grid.Column="0" Width="1" HorizontalAlignment="Center"
+        <ContentControl x:Name="huecoPanel" Margin="7,0,0,0"/>
+        <Border Width="1" HorizontalAlignment="Left" Margin="3,0,0,0"
                 Background="{StaticResource Divider}" IsHitTestVisible="False"/>
-
-        <ContentControl x:Name="huecoPanel" Grid.Column="1"/>
       </Grid>
+
+      <!-- El tirador va AQUÍ, hermano del panel y no dentro de él: un
+           GridSplitter solo mueve las columnas de SU Grid padre. Metido dentro
+           estiraba las columnas interiores del panel -que no son la que manda- y
+           por fuera no se movía nada. Se dibuja sobre el borde izquierdo de la
+           columna del panel, que es donde se busca con el ratón. -->
+      <GridSplitter x:Name="tirador" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
+                    Width="7" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                    Background="Transparent" ResizeDirection="Columns"
+                    ResizeBehavior="PreviousAndCurrent" Cursor="SizeWE"
+                    Panel.ZIndex="10" Visibility="Collapsed"/>
     </Grid>
   </Border>
 </Window>

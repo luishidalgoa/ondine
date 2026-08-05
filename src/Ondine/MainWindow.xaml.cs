@@ -1472,11 +1472,13 @@ public partial class MainWindow : Window
             if (colPanel.Width.Value > 0) _anchoPanel = colPanel.Width.Value;
             colPanel.Width = new GridLength(0);
             panelLateral.Visibility = Visibility.Collapsed;
+            tirador.Visibility = Visibility.Collapsed;
             RefrescarComplementos();
             return;
         }
 
         panelLateral.Visibility = Visibility.Visible;
+        tirador.Visibility = Visibility.Visible;
         colPanel.Width = new GridLength(AnchoQueCabe(_anchoPanel));
     }
 
