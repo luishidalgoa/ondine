@@ -90,3 +90,49 @@ public static class IdiomaElegidoTests
             "Clonar conserva lo que el diálogo de preferencias no edita");
     }
 }
+
+/// <summary>
+/// La ficha de propiedades que Windows guarda de un vídeo aparte de su contenido.
+///
+/// <para>
+/// Aquí solo se prueba la conversión, que es lo que se puede probar en Linux: la
+/// llamada a Windows no existe en el CI. Pero la conversión es donde está el
+/// juicio -qué se considera «no lo sé» y qué es un dato corrupto-, y eso sí es
+/// lógica que puede romperse sin que nadie lo note.
+/// </para>
+/// </summary>
+public static class FichaDeWindowsTests
+{
+    public static void Todas()
+    {
+        Program.Seccion("La ficha de propiedades de un vídeo");
+
+        Program.Assert(
+            FichaDeWindows.DeUnidadesDe100ns(12_170_000_000) == TimeSpan.FromSeconds(1217),
+            "20:17 en unidades de 100 ns se traduce bien");
+
+        // Cero NO es «dura nada»: es lo que devuelve un fichero cuyo tipo el
+        // sistema no sabe interpretar. Tratarlo como duración dejaría la barra del
+        // reproductor con máximo cero y sin poder moverse.
+        Program.Assert(
+            FichaDeWindows.DeUnidadesDe100ns(0) is null,
+            "Cero significa «no lo sé», no «dura nada»");
+
+        // Un valor absurdo es un dato corrupto. Si se cuela, la barra queda con un
+        // máximo imposible y el arrastre deja de corresponderse con el vídeo.
+        Program.Assert(
+            FichaDeWindows.DeUnidadesDe100ns((ulong)TimeSpan.FromHours(25).Ticks) is null,
+            "Una duración de más de un día se descarta por corrupta");
+
+        Program.Assert(
+            FichaDeWindows.DeUnidadesDe100ns((ulong)TimeSpan.FromHours(3).Ticks) == TimeSpan.FromHours(3),
+            "Una película larga de verdad sí pasa");
+
+        // Fuera de Windows no hay ficha, y la respuesta tiene que ser «no sé»,
+        // nunca abrir el fichero para averiguarlo.
+        if (!OperatingSystem.IsWindows())
+            Program.Assert(
+                FichaDeWindows.Duracion("/tmp/loquesea.mkv") is null,
+                "Fuera de Windows devuelve «no lo sé» sin tocar el fichero");
+    }
+}

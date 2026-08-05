@@ -67,6 +67,8 @@ public partial class ReproductorWindow : Window
         // habría forma de saber si estaba en el disco porque el usuario quiso.
         _eraMarcador = Reindex.Nube.EsMarcador(ruta);
 
+        AdelantarLaDuracion();
+
         // El vídeo se escala a la ventana; para una vista de identificación no hace falta
         // el remuestreo caro. Es la diferencia entre un escalado por hardware y uno fino.
         RenderOptions.SetBitmapScalingMode(video, BitmapScalingMode.LowQuality);
@@ -449,4 +451,37 @@ public partial class ReproductorWindow : Window
 
     private static string Fmt(TimeSpan t) =>
         t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}" : $"{t.Minutes}:{t.Seconds:00}";
+
+    /// <summary>
+    /// Pone la duración antes de que haya vídeo que reproducir.
+    ///
+    /// <para>
+    /// Con un fichero en la nube el reproductor se queda enseñando <c>0:00</c> todo
+    /// el rato que dura la descarga, que con un capítulo entero son minutos. Y la
+    /// duración no hace falta sacarla del contenido: Windows guarda su ficha aparte
+    /// y se lee sin descargar nada. Ver «20:17» mientras baja es la diferencia entre
+    /// esperar sabiendo qué esperas y esperar a ciegas.
+    /// </para>
+    /// <para>
+    /// Va fuera del hilo de la interfaz porque la consulta cuesta unos 60 ms
+    /// -medidos-, y sesenta milisegundos al abrir una ventana se notan. Cuando el
+    /// vídeo abre de verdad, <c>NaturalDuration</c> pisa esto: manda el contenido,
+    /// no la ficha.
+    /// </para>
+    /// </summary>
+    private void AdelantarLaDuracion()
+    {
+        var ruta = _ruta;
+        Task.Run(() => Reindex.FichaDeWindows.Duracion(ruta)).ContinueWith(t =>
+        {
+            if (t.Result is not { } duracion) return;   // no hay ficha: se queda como estaba
+            Dispatcher.BeginInvoke(() =>
+            {
+                // Si el vídeo ya abrió mientras se consultaba, el dato bueno ya está
+                // puesto y este llega tarde: no se pisa.
+                if (video.NaturalDuration.HasTimeSpan) return;
+                lblDur.Text = Fmt(duracion);
+            });
+        }, TaskScheduler.Default);
+    }
 }

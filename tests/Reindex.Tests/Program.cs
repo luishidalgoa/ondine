@@ -62,6 +62,7 @@ public static class Program
         // es un arnés, es una intención.
         TraduccionTests.Todas();
         Ondine.Reindex.Tests.IdiomaElegidoTests.Todas();
+        Ondine.Reindex.Tests.FichaDeWindowsTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
