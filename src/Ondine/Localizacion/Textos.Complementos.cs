@@ -12,6 +12,41 @@ namespace Ondine.Localizacion;
 /// </summary>
 public sealed partial class Textos
 {
+    // ---- el indice y la instalacion ----
+
+    public string IndiceSinId => Idioma.Elegir(
+        "An entry with no id", "Una entrada sin identificador");
+
+    public string IndiceSinPaquete => Idioma.Elegir(
+        "An entry with nothing to download", "Una entrada sin nada que descargar");
+
+    // {0} = el identificador tal cual venia.
+    public string IndiceIdRaro => Idioma.Elegir(
+        "\"{0}\" is not an id, it is a path: it would install outside where it should",
+        "«{0}» no es un identificador, es una ruta: instalaría fuera de donde debe");
+
+    public string IndiceSoloHttps => Idioma.Elegir(
+        "Packages are only downloaded over HTTPS",
+        "Los paquetes solo se descargan por HTTPS");
+
+    public string IndiceSinChecksum => Idioma.Elegir(
+        "It brings no sha256, so there is no way to tell the package is the one promised",
+        "No trae sha256, así que no hay forma de saber que el paquete es el prometido");
+
+    // {0} = el identificador del complemento.
+    public string InstaladorChecksumNoCuadra => Idioma.Elegir(
+        "The downloaded package for \"{0}\" is not the one the index promised. Nothing has been installed",
+        "El paquete descargado de «{0}» no es el que prometía el índice. No se ha instalado nada");
+
+    // {0} = la entrada del paquete que se salia.
+    public string InstaladorSaleDeLaCarpeta => Idioma.Elegir(
+        "The package tries to write outside its own folder (\"{0}\"). Nothing has been installed",
+        "El paquete intenta escribir fuera de su carpeta («{0}»). No se ha instalado nada");
+
+    public string InstaladorSinManifiesto => Idioma.Elegir(
+        "The package brings no plugin.json",
+        "El paquete no trae ningún plugin.json");
+
     // ── la pantalla ─────────────────────────────────────────────────────────
 
     public string ComplementosTitulo => Idioma.Elegir("Plugins", "Complementos");
