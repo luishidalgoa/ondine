@@ -322,3 +322,72 @@ public static class ComplementoTests
         }
     }
 }
+
+/// <summary>
+/// Cotejar una lista de fuera contra el catálogo abierto: qué de eso te falta.
+///
+/// <para>
+/// Es lo que convierte una lista de cuatrocientos vídeos en la respuesta a la
+/// única pregunta que importa. Y lo delicado no es acertar: es callarse cuando no
+/// se sabe. Decir «te falta» sobre algo que ya tienes te lo hace bajar dos veces;
+/// decir «ya lo tienes» sobre algo que no, te lo hace perder.
+/// </para>
+/// </summary>
+public static class CotejoDeListaTests
+{
+    public static void Todas()
+    {
+        Program.Seccion("Cotejar una lista contra el catálogo");
+
+        var cat = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0",
+          "serie": "Doraemon (2005)",
+          "episodios": [
+            { "num": 10, "temporada": 2020, "titulos": { "es": ["El gorro de la suerte", "El cazamariposas"] } },
+            { "num": 11, "temporada": 2020, "titulos": { "es": ["Cuidado con los estornudos"] } },
+            { "num": 12, "temporada": 2020, "titulos": { "es": ["La lanza de la consideración"] } }
+          ]
+        }
+        """);
+
+        // Lo que ya hay en la carpeta: el 10 solo por su primera historia, y el 11 entero.
+        var loQueHay = ReindexEngine.Resolve(new[]
+        {
+            SignalExtractor.Extract(Path.Combine("S", "Doraemon (2005) - S2020E10a - El gorro de la suerte.mkv"), "Season 2020"),
+            SignalExtractor.Extract(Path.Combine("S", "Doraemon (2005) - S2020E11 - Cuidado con los estornudos.mkv"), "Season 2020"),
+        }, cat);
+
+        var v = CotejoDeLista.Cotejar(new[]
+        {
+            "El gorro de la suerte + El cazamariposas",
+            "Cuidado con los estornudos",
+            "La lanza de la consideración",
+            "Un vídeo de la lista que no es de esta serie para nada",
+        }, cat, loQueHay);
+
+        Program.Assert(v.Count == 4, "sale un veredicto por elemento de la lista");
+
+        Program.Assert(v[0].Estado == CotejoDeLista.Estado.AMedias,
+            "del episodio de dos historias solo se tiene una: va a medias");
+        Program.Assert(v[0].HistoriasQueFaltan.SequenceEqual(new[] { "b" }),
+            "y dice CUÁL falta, que es lo que hay que traer");
+
+        Program.Assert(v[1].Estado == CotejoDeLista.Estado.YaEsta,
+            "el que está entero no hay que traerlo");
+        Program.Assert(v[1].HistoriasQueFaltan.Count == 0, "y no nombra historias que no faltan");
+
+        Program.Assert(v[2].Estado == CotejoDeLista.Estado.Falta,
+            "el que no está en la carpeta es el que interesa");
+
+        // El importante: callarse. Un vídeo que no casa con nada NO se declara
+        // «te falta», porque eso invita a bajarse cosas que no son de la serie.
+        Program.Assert(v[3].Estado == CotejoDeLista.Estado.Desconocido,
+            "lo que no casa con el catálogo no se declara ni presente ni ausente");
+
+        // Un episodio de UNA sola historia no nombra letras: o está o no está, y
+        // enseñar una «a» donde no hay partes confunde más que informa.
+        Program.Assert(v[2].HistoriasQueFaltan.Count == 0,
+            "un episodio de una sola historia no enseña letras");
+    }
+}
