@@ -217,6 +217,7 @@ public sealed class OrganizarRow : INotifyPropertyChanged
             nameof(RecomiendaRecortar), nameof(VerRecortar), nameof(TituloDetalle), nameof(VerSelector),
             nameof(EsRepetido), nameof(VerBorrarCopia),
             nameof(SegmentoPildora), nameof(VerSegmento), nameof(SegmentoTooltip),
+            nameof(DuracionVisible), nameof(DuracionOrden), nameof(DuracionTooltip),
             nameof(NombrePropio), nameof(CarpetaPropia), nameof(NombrePareja), nameof(CarpetaPareja),
         }) N(p);
     }
@@ -422,6 +423,26 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     /// y dejarlo como está.
     /// </para>
     /// </summary>
+    // ───────────────────────── columna DURACIÓN ─────────────────────────
+
+    /// <summary>
+    /// Lo que dura, tal cual se enseña. Un guion cuando no se sabe: dejarlo en blanco se
+    /// confunde con «cero» y con «todavía cargando», y aquí no saber es un estado normal
+    /// -Windows no tiene apuntada la ficha de todos los ficheros-.
+    /// </summary>
+    public string DuracionVisible => Res.Archivo.Duracion is { } d
+        ? (d.TotalHours >= 1 ? $"{(int)d.TotalHours}:{d.Minutes:00}:{d.Seconds:00}" : $"{d.Minutes}:{d.Seconds:00}")
+        : "-";
+
+    /// <summary>Para ordenar. Las desconocidas al final, no confundidas con las cortas.</summary>
+    public double DuracionOrden => Res.Archivo.Duracion?.TotalSeconds ?? double.MaxValue;
+
+    public string DuracionTooltip => Res.Archivo.Duracion is null
+        ? Textos.Instancia.OrganizarDuracionDesconocida
+        : string.Format(Textos.Instancia.OrganizarDuracionTip, Res.UnidadDeHistoria is { } u
+            ? (u.TotalHours >= 1 ? $"{(int)u.TotalHours}:{u.Minutes:00}:{u.Seconds:00}" : $"{u.Minutes}:{u.Seconds:00}")
+            : "?");
+
     public bool TieneDetalle => Res.Alternativas.Count > 0 || Res.EsDuda || Res.Episodio != null;
 
     /// <summary>

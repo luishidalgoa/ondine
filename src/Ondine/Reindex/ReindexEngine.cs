@@ -109,6 +109,13 @@ public sealed class ReindexResolution
     public bool TraeDosEpisodios { get; set; }
 
     /// <summary>
+    /// Lo que dura una historia en la carpeta de la que salió esta fila, aprendido de ella
+    /// misma. Se guarda para poder EXPLICARLO en la interfaz: un aviso que dice «no cuadra»
+    /// sin decir contra qué obliga a ir a comprobarlo a mano.
+    /// </summary>
+    public TimeSpan? UnidadDeHistoria { get; set; }
+
+    /// <summary>
     /// ¿Se puede aplicar sin más intervención? «Verdes + confirmados»: los especiales entran
     /// solo cuando alguien los ha confirmado, porque nacen en Revisar y únicamente una
     /// decisión humana (o un override guardado) los sube a Alta.
@@ -659,6 +666,10 @@ public static class ReindexEngine
 
         var unidad = MedidaDelCapitulo.Unidad(observaciones);
         if (unidad is null) return;   // carpeta pequeña: no hay vara de la que fiarse
+
+        // Se reparte a TODAS las filas, no solo a las que se marcan: la columna de
+        // duración la enseña para que se pueda juzgar cualquier fila, no solo las malas.
+        foreach (var r in resoluciones) r.UnidadDeHistoria = unidad;
 
         foreach (var r in resoluciones)
         {
