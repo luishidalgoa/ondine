@@ -826,7 +826,12 @@ public partial class OrganizarView : UserControl
                     : string.Format(Textos.Instancia.OrganizarPasoNombres, señales.Count));
 
             // ── Etapa 2: el motor, fuera del hilo de interfaz ──
-            if (animar) _pasos.EnCurso(1);
+            if (animar)
+            {
+                _pasos.EnCurso(1);
+                _pasos.Detalle(1, string.Format(Textos.Instancia.OrganizarPasoCotejando,
+                    señales.Count, catalogo.Serie));
+            }
             var resoluciones = await ConTiempoDeVerse(
                 Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo)), animar);
 
@@ -844,6 +849,12 @@ public partial class OrganizarView : UserControl
                 .ToList();
             if (dudosos.Count > 0)
             {
+                // Esta es la parte LENTA de verdad -abre ficheros, uno a uno- y la que
+                // mas se parecia a un cuelgue: el rotulo seguia diciendo «identificando»
+                // mientras por debajo se sondeaban ochenta videos.
+                if (animar)
+                    _pasos.Detalle(1, string.Format(
+                        Textos.Instancia.OrganizarPasoTitulosGrabados, dudosos.Count));
                 Escribir(string.Format(Textos.Instancia.OrganizarLogBuscandoTitulos, dudosos.Count));
                 var metadatos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 int enNube = 0;
@@ -910,7 +921,12 @@ public partial class OrganizarView : UserControl
             // ── Etapa 3: montar la tabla ──
             // El respiro de antes deja al arco pintarse: montar filas bloquea el hilo de
             // interfaz y sin él esta etapa pasaría de pendiente a hecha sin verse en curso.
-            if (animar) { _pasos.EnCurso(2); await Task.Delay(220); }
+            if (animar)
+            {
+                _pasos.EnCurso(2);
+                _pasos.Detalle(2, Textos.Instancia.OrganizarPasoOrdenando);
+                await Task.Delay(220);
+            }
 
             var raiz = txtCarpeta.Text?.Trim() ?? "";
             _filas.Clear();

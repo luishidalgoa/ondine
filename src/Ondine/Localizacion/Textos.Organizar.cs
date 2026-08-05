@@ -312,6 +312,17 @@ public sealed partial class Textos
 
     public string OrganizarIdentificando => Idioma.Elegir("Identifying…", "Identificando…");
 
+    // Lo que se está haciendo DENTRO de cada paso, mientras se hace.
+    public string OrganizarPasoMirando => Idioma.Elegir(
+        "Reading {0} folders", "Mirando {0} carpetas");
+    public string OrganizarPasoCotejando => Idioma.Elegir(
+        "Matching {0} names against «{1}»", "Cotejando {0} nombres contra «{1}»");
+    public string OrganizarPasoTitulosGrabados => Idioma.Elegir(
+        "Reading the title recorded inside {0} unclear files",
+        "Leyendo el título grabado dentro de {0} ficheros que no quedan claros");
+    public string OrganizarPasoOrdenando => Idioma.Elegir(
+        "Sorting and grouping the proposals", "Ordenando y agrupando las propuestas");
+
     // ═══ Menú contextual de la fila ═════════════════════════════════════════
 
     public string OrganizarReproducir => Idioma.Elegir("Play", "Reproducir");
