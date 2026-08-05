@@ -178,6 +178,24 @@
             <RadioButton x:Name="tabRecortes" Style="{StaticResource PageTab}" GroupName="pagina" Content="{i:T MainPaginaRecortes}"/>
           </StackPanel>
 
+          <!-- El botón de complementos, al estilo de las extensiones de un navegador:
+               una pieza, y detrás los que sirvan AQUÍ. Va pegado al conmutador de
+               página porque lo que enseña depende de en qué página estés, y ponerlo
+               lejos rompería esa relación. Se esconde cuando no hay ninguno: un botón
+               que solo dice «no hay nada» es un botón que estorba. -->
+          <Button x:Name="btnComplementos" Style="{StaticResource PageSelector}"
+                  Margin="0,0,4,0" Visibility="Collapsed" Click="OnBotonComplementos"
+                  ToolTip="{i:T MainComplementosTip}">
+            <StackPanel Orientation="Horizontal">
+              <!-- Una pieza de puzle dibujada con la geometría mínima: no hay
+                   librería de iconos en el proyecto y no se va a traer una por esto. -->
+              <Path Data="M4,4 h3 a1.6,1.6 0 1 1 3,0 h3 v3 a1.6,1.6 0 1 0 0,3 v3 h-3 a1.6,1.6 0 1 0 -3,0 h-3 v-3 a1.6,1.6 0 1 1 0,-3 z"
+                    Fill="{StaticResource Neutral400}" Width="17" Height="17" Stretch="Uniform"
+                    VerticalAlignment="Center"/>
+              <TextBlock x:Name="lblCuantosComplementos" Margin="7,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+
           <!-- Desplegable compacto: página actual + «▾». Al pulsarlo se despliega la lista. -->
           <Button x:Name="btnPagina" Style="{StaticResource PageSelector}" Click="OnMasTabs"
                   Margin="0,0,4,0" ToolTip="{i:T MainCambiarPagina}">

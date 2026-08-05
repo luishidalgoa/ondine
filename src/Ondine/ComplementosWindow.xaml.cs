@@ -63,7 +63,12 @@ public partial class ComplementosWindow : Window
     /// que es la mitad de su gracia.
     /// </param>
     /// <param name="loQueHay">Las filas ya resueltas de la carpeta abierta.</param>
-    public ComplementosWindow(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay)
+    /// <param name="elegido">
+    /// Con cuál abrir. Viene del botón de la barra: si has pulsado uno concreto,
+    /// abrir la ventana en otro sería perder el gesto que acabas de hacer.
+    /// </param>
+    public ComplementosWindow(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay,
+                              Complemento? elegido = null)
     {
         InitializeComponent();
         _catalogo = catalogo;
@@ -86,6 +91,12 @@ public partial class ComplementosWindow : Window
         tabDisponibles.Checked += async (_, _) => { CambiarSeccion(); await CargarTiendaAsync(); };
 
         CargarComplementos();
+
+        if (elegido is not null)
+        {
+            var suyo = cboComplemento.Items.OfType<Opcion>().FirstOrDefault(o => o.Cual.Id == elegido.Id);
+            if (suyo is not null) cboComplemento.SelectedItem = suyo;
+        }
     }
 
     private void CargarComplementos()

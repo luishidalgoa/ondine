@@ -135,9 +135,7 @@ public partial class MainWindow : Window
         // El catálogo y lo resuelto se le pasan a la ventana en vez de que ella
         // los busque: así la pantalla de complementos no sabe nada de Organizar,
         // solo recibe dos datos, y se puede abrir desde otro sitio mañana.
-        miComplementos.Click += (_, _) =>
-            new ComplementosWindow(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay)
-                { Owner = this }.ShowDialog();
+        miComplementos.Click += (_, _) => AbrirComplementos(null);
 
         miPrefs.Click += (_, _) => OpenPreferences();
         miCheckUpd.Click += async (_, _) => await CheckUpdateAsync(manual: true);
@@ -1371,6 +1369,73 @@ public partial class MainWindow : Window
     /// </summary>
     private enum Pagina { Comprimir, Organizar, Recortes }
 
+    /// <summary>El nombre del modo tal y como lo declaran los complementos.</summary>
+    private static string ModoDe(Pagina p) => p switch
+    {
+        Pagina.Organizar => "organizar",
+        Pagina.Recortes => "recortes",
+        _ => "comprimir",
+    };
+
+    /// <summary>
+    /// Pone el botón de complementos al día para la página en la que estés.
+    ///
+    /// <para>
+    /// Se recuenta en cada cambio de página y no una vez al arrancar: uno
+    /// instalado con la aplicación abierta tiene que aparecer sin reiniciar, y
+    /// además cada página enseña un conjunto distinto.
+    /// </para>
+    /// <para>
+    /// Si no hay ninguno para esta página, el botón se esconde. Uno que solo
+    /// sirve para decir «aquí no hay nada» ocupa sitio y no informa de nada.
+    /// </para>
+    /// </summary>
+    private void RefrescarComplementos()
+    {
+        var modo = ModoDe(_paginaActual);
+        var suyos = Complementos.Descubridor.Buscar().Bueno.Where(c => c.SaleEn(modo)).ToList();
+
+        btnComplementos.Visibility = suyos.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        lblCuantosComplementos.Text = suyos.Count.ToString();
+        btnComplementos.Tag = suyos;
+    }
+
+    /// <summary>
+    /// El menú del botón. Cada complemento abre SU panel; abajo, la gestión.
+    ///
+    /// <para>
+    /// Se arma al pulsarlo y no al arrancar, por lo mismo que el recuento: lo
+    /// instalado puede cambiar mientras la aplicación está abierta.
+    /// </para>
+    /// </summary>
+    private void OnBotonComplementos(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = btnComplementos, Placement = PlacementMode.Bottom };
+
+        foreach (var c in (btnComplementos.Tag as List<Complementos.Complemento>) ?? new())
+        {
+            var it = new MenuItem { Header = c.Nombre, ToolTip = c.Descripcion };
+            var suyo = c;
+            it.Click += (_, _) => AbrirComplementos(suyo);
+            menu.Items.Add(it);
+        }
+
+        if (menu.Items.Count > 0) menu.Items.Add(new Separator());
+        var gestionar = new MenuItem { Header = Textos.Instancia.MainComplementosGestionar };
+        gestionar.Click += (_, _) => AbrirComplementos(null);
+        menu.Items.Add(gestionar);
+
+        menu.IsOpen = true;
+    }
+
+    private void AbrirComplementos(Complementos.Complemento? cual)
+    {
+        new ComplementosWindow(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual)
+            { Owner = this }.ShowDialog();
+        // Al volver puede haber uno nuevo instalado.
+        RefrescarComplementos();
+    }
+
     private void CambiarPagina(Pagina pagina)
     {
         _paginaActual = pagina;
@@ -1381,6 +1446,8 @@ public partial class MainWindow : Window
             Pagina.Organizar => Textos.Instancia.MainPaginaOrganizar,
             _ => Textos.Instancia.MainPaginaRecortes,
         };
+
+        RefrescarComplementos();
 
         var comprimir = pagina == Pagina.Comprimir ? Visibility.Visible : Visibility.Collapsed;
         rowOrigen.Visibility = comprimir;
