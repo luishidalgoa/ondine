@@ -1491,7 +1491,14 @@ public partial class MainWindow : Window
     {
         var disponible = ActualWidth > 0 ? ActualWidth : Width;
         if (double.IsNaN(disponible) || disponible <= 0) return pedido;
-        return Math.Max(360, Math.Min(pedido, disponible * 0.5));
+
+        // El contenido manda: lo que quede para la tabla no puede bajar de su
+        // minimo, o la rejilla se desborda y RECORTA por la izquierda en vez de
+        // encogerse -se pierde el desplegable de catalogo y media barra-.
+        // Antes de dejar que eso pase, el panel cede.
+        const double MinimoDelContenido = 320;
+        var techo = Math.Max(0, disponible - MinimoDelContenido);
+        return Math.Max(0, Math.Min(Math.Min(pedido, disponible * 0.5), techo));
     }
 
     private void CambiarPagina(Pagina pagina)

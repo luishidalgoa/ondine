@@ -29,7 +29,7 @@
            lista obliga a cerrarla para mirar. Todo lo demás se queda en la
            columna 0 sin tocar nada, que es la de por defecto. -->
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" MinWidth="420"/>
+        <ColumnDefinition Width="*" MinWidth="320"/>
         <ColumnDefinition x:Name="colPanel" Width="0"/>
       </Grid.ColumnDefinitions>
 
