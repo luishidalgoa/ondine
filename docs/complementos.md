@@ -149,6 +149,16 @@ saber si avanza o se ha colgado.
 
 ---
 
+## Qué pasa después de traer
+
+Cuando devuelves `hecho`, Ondine ofrece **llevar la carpeta a Organizar** para
+identificar lo traído contra el catálogo. La carpeta la elige quien trae, no tú:
+es su biblioteca, y un destino decidido por un programa de fuera es lo último que
+se quiere de algo que baja ficheros. Te llega en `--destino`.
+
+Puedes dejar las cosas en subcarpetas por temporada si quieres: Ondine apunta al
+destino que se eligió, no a la carpeta del primer fichero.
+
 ## El cotejo con el catálogo
 
 Esto es lo que hace útil un complemento de importación, y **no cuesta nada al que

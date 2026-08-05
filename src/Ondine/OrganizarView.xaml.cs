@@ -537,6 +537,18 @@ public partial class OrganizarView : UserControl
         RevisarCarpeta();
     }
 
+    /// <summary>
+    /// Apunta la vista a una carpeta desde fuera y la revisa, como si la hubieras
+    /// escrito tú. Lo usa la entrega de los complementos: traer unos ficheros y
+    /// dejar a quien los trajo buscando dónde han caído es dejar el trabajo a
+    /// medias justo en el paso que costaba.
+    /// </summary>
+    public void ApuntarA(string carpeta)
+    {
+        txtCarpeta.Text = carpeta;
+        RevisarCarpeta();
+    }
+
     private void RevisarCarpeta()
     {
         var carpeta = txtCarpeta.Text?.Trim() ?? "";

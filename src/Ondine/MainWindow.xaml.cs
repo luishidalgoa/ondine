@@ -1430,10 +1430,21 @@ public partial class MainWindow : Window
 
     private void AbrirComplementos(Complementos.Complemento? cual)
     {
-        new ComplementosWindow(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual)
-            { Owner = this }.ShowDialog();
+        var v = new ComplementosWindow(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual)
+            { Owner = this };
+        var trajo = v.ShowDialog();
+
         // Al volver puede haber uno nuevo instalado.
         RefrescarComplementos();
+
+        // Y si se trajo algo y se pidió llevarlo, se va a Organizar apuntando ahí.
+        // Cerrar la ventana y dejar a quien acaba de bajar cuarenta capítulos
+        // buscando la carpeta a mano es abandonar el trabajo en el último paso.
+        if (trajo == true && v.CarpetaTraida is { } carpeta)
+        {
+            CambiarPagina(Pagina.Organizar);
+            pageOrganizar.ApuntarA(carpeta);
+        }
     }
 
     private void CambiarPagina(Pagina pagina)

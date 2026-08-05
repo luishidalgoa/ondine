@@ -131,6 +131,18 @@ public sealed partial class Textos
 
     public string ComplementosTraer => Idioma.Elegir("Fetch the ticked ones", "Traer los marcados");
 
+    public string ComplementosDondeDejarlos => Idioma.Elegir(
+        "Where should the files go?", "¿Dónde dejo los ficheros?");
+
+    // {0} = cuantos se trajeron.
+    public string ComplementosTraidos => Idioma.Elegir(
+        "{0} brought over", "{0} traídos");
+
+    // {0} = cuantos, {1} = la carpeta.
+    public string ComplementosLlevarAOrganizar => Idioma.Elegir(
+        "{0} files are now in:\n{1}\n\nOpen that folder in Organise to identify them against the catalogue?",
+        "{0} ficheros están ya en:\n{1}\n\n¿Abro esa carpeta en Organizar para identificarlos contra el catálogo?");
+
     public string ComplementosTraerPendiente => Idioma.Elegir(
         "Fetching is not wired up yet: where the files land and how they are handed over to Organise is still to be decided. Listing and checking against the catalogue do work.",
         "Traer todavía no está enganchado: falta decidir dónde caen los ficheros y cómo se entregan a Organizar. Listar y cotejar con el catálogo sí funcionan.");

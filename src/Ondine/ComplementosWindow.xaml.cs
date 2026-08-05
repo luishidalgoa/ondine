@@ -379,13 +379,79 @@ public partial class ComplementosWindow : Window
     }
 
     /// <summary>
-    /// Todavía no baja nada: falta decidir dónde deja los ficheros y cómo se
-    /// entregan a Organizar. Se avisa en vez de no hacer nada al pulsar, que es
-    /// la forma más rápida de que alguien piense que la aplicación se ha colgado.
+    /// Dónde han caído los ficheros, si se trajo algo. Lo lee quien abrió la
+    /// ventana para llevar a Organizar ahí mismo.
     /// </summary>
-    private void Traer()
+    public string? CarpetaTraida { get; private set; }
+
+    private async void Traer()
     {
-        DialogWindow.Aviso(this, Textos.Instancia.ComplementosTraer,
-            Textos.Instancia.ComplementosTraerPendiente);
+        if (cboComplemento.SelectedItem is not Opcion op) return;
+
+        var marcados = _filas.Where(f => f.Marcado).Select(f => f.Id).ToList();
+        if (marcados.Count == 0) return;
+
+        // La carpeta la elige quien trae, no el complemento: es SU biblioteca, y
+        // un destino decidido por un programa de fuera es lo último que se
+        // quiere de algo que baja ficheros.
+        var elegir = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = Textos.Instancia.ComplementosDondeDejarlos,
+        };
+        if (elegir.ShowDialog(this) != true) return;
+        var destino = elegir.FolderName;
+
+        _corte?.Cancel();
+        _corte = new CancellationTokenSource();
+
+        btnTraer.IsEnabled = false;
+        btnListar.IsEnabled = false;
+        var traidos = new List<string>();
+        string? error = null;
+
+        var argumentos = marcados.Concat(new[] { "--destino", destino });
+
+        try
+        {
+            await foreach (var m in Invocador.CorrerAsync(
+                op.Cual, Invocador.ComandoTraer, argumentos, _corte.Token))
+            {
+                switch (m.Tipo)
+                {
+                    case Mensaje.TipoProgreso:
+                        // El avance se dice con palabras y no solo con una barra:
+                        // «bajando 3 de 7» sitúa, y un porcentaje solo, no.
+                        lblEstado.Text = m.Texto ?? "";
+                        break;
+                    case Mensaje.TipoHecho:
+                        traidos.AddRange(m.Ficheros);
+                        break;
+                    case Mensaje.TipoError:
+                        error = m.MensajeError;
+                        break;
+                }
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally { btnTraer.IsEnabled = true; btnListar.IsEnabled = true; }
+
+        if (error is not null) { lblEstado.Text = error; return; }
+
+        // Se apunta al destino que se eligió y no a la carpeta del primer fichero:
+        // un complemento puede dejar las cosas en subcarpetas por temporada, y
+        // entonces la del primero sería solo una parte de lo traído.
+        CarpetaTraida = destino;
+
+        lblEstado.Text = string.Format(Textos.Instancia.ComplementosTraidos, traidos.Count);
+
+        // Y se ofrece llevarlo a Organizar. Traer unos ficheros y dejar a quien
+        // los trajo buscando dónde han caído es dejar el trabajo a medias justo
+        // en el paso que costaba.
+        if (DialogWindow.Confirmar(this, Textos.Instancia.ComplementosTraer,
+                string.Format(Textos.Instancia.ComplementosLlevarAOrganizar, traidos.Count, destino)))
+        {
+            DialogResult = true;
+            Close();
+        }
     }
 }
