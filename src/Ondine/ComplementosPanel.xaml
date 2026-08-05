@@ -25,7 +25,7 @@
         <RowDefinition Height="*"/>
       </Grid.RowDefinitions>
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="290"/>
+        <ColumnDefinition x:Name="colIndice" Width="290"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
 
@@ -45,7 +45,7 @@
       </Grid>
 
       <!-- ══ columna izquierda: el índice ══ -->
-      <Border Grid.Row="1" Grid.Column="0" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,1,0">
+      <Border x:Name="cajaIndice" Grid.Row="1" Grid.Column="0" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,1,0">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

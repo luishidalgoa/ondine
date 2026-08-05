@@ -153,6 +153,27 @@ public partial class ComplementosPanel : UserControl
         CargarInstalados();
 
         Enfocar(elegido);
+
+        SizeChanged += (_, _) => AjustarAlAncho();
+    }
+
+    /// <summary>
+    /// El índice de la izquierda se retira cuando el panel se estrecha.
+    ///
+    /// <para>
+    /// Son 290 px fijos, y en un panel de 460 dejan al detalle 170: ahí la
+    /// descripción cae a seis líneas, la casilla de la fuente se queda en un
+    /// muñón y los elementos se ven en miniaturas sin título. El índice sirve
+    /// para SALTAR entre complementos, y con dos o tres instalados eso se hace
+    /// una vez; lo que se mira todo el rato es el detalle. Cuando hay que
+    /// elegir, gana lo que se usa.
+    /// </para>
+    /// </summary>
+    private void AjustarAlAncho()
+    {
+        var estrecho = ActualWidth > 0 && ActualWidth < 620;
+        colIndice.Width = estrecho ? new GridLength(0) : new GridLength(290);
+        cajaIndice.Visibility = estrecho ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>

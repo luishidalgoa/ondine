@@ -735,9 +735,7 @@
            partirla deja media ventana sin agarre. -->
       <Grid x:Name="panelLateral" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
             Visibility="Collapsed">
-        <ContentControl x:Name="huecoPanel" Margin="7,0,0,0"/>
-        <Border Width="1" HorizontalAlignment="Left" Margin="3,0,0,0"
-                Background="{StaticResource Divider}" IsHitTestVisible="False"/>
+        <ContentControl x:Name="huecoPanel" Margin="9,0,0,0"/>
       </Grid>
 
       <!-- El tirador va AQUÍ, hermano del panel y no dentro de él: un
@@ -745,11 +743,38 @@
            estiraba las columnas interiores del panel -que no son la que manda- y
            por fuera no se movía nada. Se dibuja sobre el borde izquierdo de la
            columna del panel, que es donde se busca con el ratón. -->
+      <!-- El tirador SE VE. Transparente cumplía como zona de arrastre y no
+           existía como pista: un borde que se puede mover y no lo parece no lo
+           mueve nadie. Lleva la línea divisoria dentro -es la misma cosa, no dos-
+           y al pasar por encima se enciende, que es lo que dice «esto se agarra». -->
       <GridSplitter x:Name="tirador" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
-                    Width="7" HorizontalAlignment="Left" VerticalAlignment="Stretch"
-                    Background="Transparent" ResizeDirection="Columns"
-                    ResizeBehavior="PreviousAndCurrent" Cursor="SizeWE"
-                    Panel.ZIndex="10" Visibility="Collapsed"/>
+                    Width="9" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                    ResizeDirection="Columns" ResizeBehavior="PreviousAndCurrent"
+                    Cursor="SizeWE" Panel.ZIndex="10" Visibility="Collapsed">
+        <GridSplitter.Template>
+          <ControlTemplate TargetType="GridSplitter">
+            <Grid Background="Transparent">
+              <Border x:Name="linea" Width="1" HorizontalAlignment="Center"
+                      Background="{StaticResource Divider}"/>
+              <!-- Tres puntos en el centro: la señal de agarre de toda la vida,
+                   y no cuesta ni una línea de altura. -->
+              <StackPanel x:Name="puntos" VerticalAlignment="Center" HorizontalAlignment="Center"
+                          Opacity="0.55">
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+              </StackPanel>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="linea" Property="Background" Value="{StaticResource Accent300}"/>
+                <Setter TargetName="linea" Property="Width" Value="2"/>
+                <Setter TargetName="puntos" Property="Opacity" Value="1"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </GridSplitter.Template>
+      </GridSplitter>
     </Grid>
   </Border>
 </Window>
