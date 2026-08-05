@@ -202,7 +202,7 @@ public static class ReindexEngine
         // que la app identificó con confianza no hay nada que elegir, y ofrecer candidatos
         // peores solo mete ruido e invita a un clic equivocado. Se hace al final, después de
         // la deduplicación, porque esa puede degradar una fila que hasta entonces iba verde.
-        MarcarLosQueTraenDosEpisodios(resoluciones, catalogo, indice);
+        MarcarLosQueTraenDosEpisodios(resoluciones, catalogo, overrides, indice, modo);
 
         foreach (var r in resoluciones)
             if (r.Confianza == ReindexConfianza.Alta)
@@ -589,7 +589,8 @@ public static class ReindexEngine
     /// remake viejo y en el moderno, y eso es lo normal, no una ambigüedad.
     /// </summary>
     private static void MarcarLosQueTraenDosEpisodios(List<ReindexResolution> resoluciones,
-        ReindexCatalog cat, IndiceTitulos indice)
+        ReindexCatalog cat, IReadOnlyDictionary<string, ReindexOverride> overrides,
+        IndiceTitulos indice, ModoPrioridad modo)
     {
         foreach (var r in resoluciones)
         {
@@ -627,7 +628,7 @@ public static class ReindexEngine
             }
         }
 
-        MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones);
+        MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones, cat, overrides, indice, modo);
         MarcarLosQueNoCuadranConElReloj(resoluciones);
     }
 
@@ -732,8 +733,18 @@ public static class ReindexEngine
     /// pregunta en vez de aplicarse.
     /// </para>
     /// </summary>
-    private static void MarcarLosQueDeclaranMenosDeLoQuePromete(List<ReindexResolution> resoluciones)
+    private static void MarcarLosQueDeclaranMenosDeLoQuePromete(List<ReindexResolution> resoluciones,
+        ReindexCatalog cat, IReadOnlyDictionary<string, ReindexOverride> overrides,
+        IndiceTitulos indice, ModoPrioridad modo)
     {
+        // La vara de esta carpeta, para confirmar con el reloj lo que sospecha el nombre.
+        var unidad = MedidaDelCapitulo.Unidad(resoluciones
+            .Where(x => x.Confianza == ReindexConfianza.Alta && x.Episodio != null)
+            .Where(x => x.Archivo.Duracion is { } d && d > TimeSpan.Zero)
+            .Select(x => (x.Archivo.Duracion!.Value, Math.Max(1, x.Episodio!.TitulosSalida.Count))));
+
+        var aElegir = new List<(ReindexResolution Fila, string Letra)>();
+
         foreach (var r in resoluciones)
         {
             if (r.Episodio == null) continue;
@@ -763,6 +774,43 @@ public static class ReindexEngine
             r.Confianza = ReindexConfianza.Revisar;
             r.Motivo = string.Format(Textos.Instancia.ReindexMotivoNombreDeMas,
                 r.Episodio.Num, historias.Count);
+
+            // ¿Y CUÁL de las historias es? Cuando se sabe, no hay que preguntarlo: se
+            // propone. Avisar y dejar que la persona la elija a mano es pedirle que repita
+            // una cuenta que el programa ya ha hecho.
+            //
+            // Pero solo cuando el RELOJ lo confirma. Si el fichero mide lo que miden las
+            // dos historias, lo que trae es el episodio entero con un nombre pobre, y
+            // proponer «a» perdería la otra sin que nadie se entere. Sin duración tampoco
+            // se elige: la sospecha del nombre basta para preguntar, no para decidir.
+            int cual = historias
+                .Select((h, i) => (i, sim: TitleMatch.Sim(suyo, h)))
+                .OrderByDescending(x => x.sim)
+                .First().i;
+
+            if (unidad is not { } u) continue;
+            if (r.Archivo.Duracion is not { } dura) continue;
+            if (!MedidaDelCapitulo.Cuadra(dura, 1, u)) continue;
+
+            aElegir.Add((r, ((char)('a' + cual)).ToString()));
+        }
+
+        // Se rehace FUERA del bucle y re-resolviendo, no tocando la fila: las señales son
+        // inmutables a propósito -la decisión crea una variante, no reescribe la evidencia-
+        // y aquí se está decidiendo algo, así que le toca una variante.
+        foreach (var (fila, letra) in aElegir)
+        {
+            int i = resoluciones.IndexOf(fila);
+            if (i < 0) continue;
+
+            var rehecha = ResolverUno(fila.Archivo.ConSegmento(letra), cat, overrides, indice, modo);
+
+            // Acertar no lo vuelve automático. Lo que hay debajo es un fichero que no
+            // contiene lo que su nombre decía, y eso lo confirma quien lo tenga delante.
+            rehecha.Confianza = ReindexConfianza.Revisar;
+            rehecha.Motivo = string.Format(Textos.Instancia.ReindexMotivoHistoriaSuelta,
+                fila.Episodio!.Num, letra, Reloj(fila.Archivo.Duracion!.Value));
+            resoluciones[i] = rehecha;
         }
     }
 

@@ -1428,6 +1428,58 @@ public static class Program
             "un fichero de UNA historia no se renombra solo a un episodio de DOS");
 
         ElRelojComoSegundaOpinion(cat);
+        ProponerLaHistoriaSuelta(cat);
+    }
+
+    /// <summary>
+    /// Cuando esta claro que el fichero trae UNA de las historias, la app deja de avisar y
+    /// PROPONE esa: «S2021E662a - A por la marca perfecta» en vez del episodio entero.
+    ///
+    /// Avisar estaba bien pero dejaba el trabajo hecho a medias: sabiendo cual es -el titulo
+    /// casa con una sola y el reloj lo confirma-, obligar a abrir el desplegable y elegirla a
+    /// mano es pedirle a la persona que repita una cuenta que el programa ya hizo.
+    /// </summary>
+    private static void ProponerLaHistoriaSuelta(ReindexCatalog cat)
+    {
+        Seccion("Proponer la historia suelta");
+
+        static FileSignals Con(string nombre, string carpeta, double minutos) =>
+            SignalExtractor.Extract(F(nombre), carpeta, duracion: TimeSpan.FromMinutes(minutos));
+
+        // La carpeta da la vara: una historia son ~11 min.
+        FileSignals[] Carpeta(params FileSignals[] extra) => new[]
+        {
+            Con("Doraemon (2005) - S2020E615 - El robot pruebarreacciones.mkv", "Season 2020", 11.0),
+            Con("Doraemon (2005) - S2020E588 - La lanza de la consideracion que va directa al corazon.mkv", "Season 2020", 10.7),
+            Con("Doraemon (2005) - S2020E589 - Cuidado con los estornudos.mkv", "Season 2020", 11.2),
+            Con("Doraemon (2005) - S2014E364 - El gorro de la suerte + El cazamariposas.mkv", "Season 2014", 22.1),
+            Con("Doraemon (2005) - S2005E02 - El gorro de la suerte.mkv", "Season 2005", 10.9),
+        }.Concat(extra).ToArray();
+
+        // El caso: el fichero trae la PRIMERA historia del 662 y dura once minutos.
+        var primera = ReindexEngine.Resolve(
+            Carpeta(Con("Doraemon (2005) - S2021E662 - A por la marca perfecta.mkv", "Season 2021", 11.1)), cat);
+        var a = primera.First(r => r.Archivo.NombreArchivo.Contains("A por la marca"));
+        Eq(662, a.Episodio?.Num, "sigue siendo el episodio 662");
+        Eq("a", a.Archivo.SubSegmento, "y se propone su PRIMERA historia, no el episodio entero");
+        Eq(true, a.Confianza != ReindexConfianza.Alta,
+            "acertar no lo hace automatico: el fichero no contiene lo que su nombre decia");
+
+        // La segunda historia saca la letra que le toca.
+        var segunda = ReindexEngine.Resolve(
+            Carpeta(Con("Doraemon (2005) - S2021E662 - El escaparate para recoger.mkv", "Season 2021", 10.8)), cat);
+        var b = segunda.First(r => r.Archivo.NombreArchivo.Contains("escaparate"));
+        Eq("b", b.Archivo.SubSegmento, "la segunda historia es la «b»");
+
+        // Y lo que NO debe pasar: si el reloj dice que ahi caben las DOS, el fichero
+        // probablemente trae el episodio entero con un nombre pobre. Ahi no se elige por
+        // nadie -se avisa y ya-, porque proponer «a» perderia la otra historia.
+        var entero = ReindexEngine.Resolve(
+            Carpeta(Con("Doraemon (2005) - S2021E662 - A por la marca perfecta.mkv", "Season 2021", 22.0)), cat);
+        var dos = entero.First(r => r.Archivo.NombreArchivo.Contains("A por la marca"));
+        Eq(null, dos.Archivo.SubSegmento,
+            "con duracion de DOS historias no se elige una: se avisa y decide la persona");
+        Eq(true, dos.Confianza != ReindexConfianza.Alta, "pero sigue sin aplicarse solo");
     }
 
     /// <summary>
