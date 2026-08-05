@@ -178,6 +178,12 @@
             <RadioButton x:Name="tabRecortes" Style="{StaticResource PageTab}" GroupName="pagina" Content="{i:T MainPaginaRecortes}"/>
           </StackPanel>
 
+          <!-- En fila. El Grid de fuera NO tiene columnas, así que apila a sus hijos
+               en la misma celda: el botón de complementos quedaba DEBAJO del
+               conmutador y no se veía. Un contenedor que coloca en capas no sirve
+               para poner dos cosas al lado. -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
           <!-- El botón de complementos, al estilo de las extensiones de un navegador:
                una pieza, y detrás los que sirvan AQUÍ. Va pegado al conmutador de
                página porque lo que enseña depende de en qué página estés, y ponerlo
@@ -206,6 +212,7 @@
                     StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
             </StackPanel>
           </Button>
+          </StackPanel>
         </Grid>
 
         <!-- ══ Grupo derecho: píldora de proceso + botones de ventana ══ -->
