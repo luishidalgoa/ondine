@@ -173,6 +173,28 @@ Por debajo del umbral no se afirma nada. Decir «te falta» sobre algo que ya
 tienes te lo hace bajar dos veces; decir «ya lo tienes» sobre algo que no, te lo
 hace perder.
 
+### Cuando una cosa trae dos historias
+
+Muchas series de media hora meten dos episodios en un vídeo. Si lo sabes, **une
+los dos títulos con ` + `**:
+
+```json
+{"tipo":"elemento","id":"abc","titulo":"El controlador del mar + Alquiler estilo futurista"}
+```
+
+Es el mismo separador que usa Ondine por dentro, así que su motor lo vuelve a
+partir solo y coteja las dos historias por separado. Sin esto lo da por un
+episodio y **la mitad que falta no la reclama nadie**.
+
+Aviso, por experiencia con el de YouTube: el segundo título suele estar en un
+sitio distinto del primero —en la descripción y no en el título— y ahí es fácil
+recoger basura. Merece la pena **comprobar** en vez de interpretar: si ese otro
+texto contiene todos los trozos del título y además alguno más, es el mismo
+título escrito largo y lo que sobra son historias. Si no lo contiene, no es
+comparable y manda el título. Esa comprobación es lo que hace que la regla
+aguante en una fuente que no habías visto, en vez de acertar solo donde la
+probaste.
+
 ---
 
 ## Lo que un complemento no debe hacer

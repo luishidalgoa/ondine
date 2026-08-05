@@ -32,6 +32,23 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **La duración de cada vídeo, en Organizar y en el reproductor.** Sale también en los ficheros
+  que tienes en la nube sin descargar: se lee de la ficha que Windows ya guarda, así que verla
+  no obliga a bajarlos.
+- **Ondine avisa cuando un nombre promete más historias de las que caben en el vídeo.** Aprende
+  cuánto dura una historia en esa serie —la mediana, con al menos cinco ejemplos— y compara. Un
+  fichero de once minutos al que se le iba a poner el nombre de dos episodios deja de darse por
+  bueno. Los especiales largos no se marcan.
+- **Complementos.** Ondine puede ampliarse con programas de fuera que traen o consultan
+  material: se instalan copiando una carpeta y se ven en *Complementos*, con su propia pantalla.
+  Cada uno declara dónde aplica —toda la app, o solo Organizar, Comprimir o Recortes— y los que
+  no valen aparecen igualmente con el motivo, en vez de desaparecer sin explicación. Se incluye
+  uno de YouTube que lee una lista de reproducción y **la coteja con tu catálogo**, diciendo de
+  cada episodio si ya lo tienes, si te falta o si le falta una de sus dos historias. Cómo
+  escribir uno: [`docs/complementos.md`](docs/complementos.md).
+
 ## [1.6.1] - 2026-08-05
 
 ### Añadido
