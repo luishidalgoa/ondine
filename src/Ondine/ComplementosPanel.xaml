@@ -9,8 +9,11 @@
        filas por sus columnas; aquí hay pocos complementos y de cada uno importa
        lo SUYO, no cómo se compara con los demás. La lista de la izquierda es el
        índice; a la derecha vive el que estés mirando. -->
-  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
-          BorderThickness="1" CornerRadius="10">
+  <!-- Ni borde de tarjeta ni esquinas redondeadas: eso era de cuando flotaba como
+       ventana. Acoplado, una tarjeta dentro de la ventana dibuja un marco que no
+       separa nada -lo que separa es la linea de la izquierda, y ya esta puesta-.
+       Un contenedor que no divide nada solo mete ruido. -->
+  <Border Background="{StaticResource Bg}">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>

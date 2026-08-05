@@ -106,7 +106,13 @@
            nunca pise ni el menú (izq., Auto) ni los botones de ventana (der., Auto): así el
            conmutador escala a muchas más páginas —se desplaza y ofrece un menú «▾»— sin
            romper la cabecera. -->
-      <Grid Grid.Row="0" Height="40">
+      <!-- ColumnSpan="2": la barra cruza la ventana ENTERA, tambien por debajo del
+           panel lateral. Sin esto vivia solo en la columna del contenido, asi que
+           al abrir el panel se encogia y se llevaba por delante los botones de
+           minimizar, maximizar y cerrar: un panel no puede mover los mandos de la
+           ventana. Ademas es lo que fija el borde superior del panel, que empieza
+           justo donde acaba esta franja. -->
+      <Grid Grid.Row="0" Grid.ColumnSpan="2" Height="40" Panel.ZIndex="20">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>
