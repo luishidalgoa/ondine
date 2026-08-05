@@ -1,3 +1,4 @@
+using Ondine.Complementos;
 using Ondine.Localizacion;
 
 namespace Ondine.Reindex.Tests;
@@ -234,5 +235,90 @@ public static class MedidaDelCapituloTests
         Program.Assert(
             !MedidaDelCapitulo.Cuadra(Min(45), historias: 2, unidadLarga),
             "y no dos");
+    }
+}
+
+/// <summary>
+/// Los complementos: qué se acepta como manifiesto y qué se descarta, y por qué.
+///
+/// <para>
+/// Lo que de verdad se prueba aquí es lo que se RECHAZA. Un sistema que ejecuta
+/// programas de fuera se juzga por lo que no deja pasar, no por lo que arranca.
+/// </para>
+/// </summary>
+public static class ComplementoTests
+{
+    public static void Todas()
+    {
+        Program.Seccion("Complementos");
+
+        var raiz = Path.Combine(Path.GetTempPath(), "ondine-complementos-" + Guid.NewGuid().ToString("N")[..8]);
+        var suya = Path.Combine(raiz, "youtube");
+        Directory.CreateDirectory(suya);
+        var programa = Path.Combine(suya, "traer.cmd");
+        File.WriteAllText(programa, "@echo off");
+
+        try
+        {
+            string Manifiesto(string json)
+            {
+                var p = Path.Combine(suya, "plugin.json");
+                File.WriteAllText(p, json);
+                return p;
+            }
+
+            var bueno = Complemento.Leer(Manifiesto("""
+            {
+              "nombre": "YouTube",
+              "descripcion": "Trae vídeos de una lista",
+              "version": "1.0.0",
+              "ejecutable": "traer.cmd",
+              "capacidades": ["importar"],
+              "contrato": 1
+            }
+            """));
+            Program.Assert(bueno is not null, "un manifiesto correcto se lee");
+            Program.Assert(bueno!.Reparo() is null, "y no tiene ningún reparo");
+            Program.Assert(bueno.Id == "youtube", "el identificador sale de la carpeta, no se escribe");
+            Program.Assert(bueno.Puede("importar"), "declara que sabe importar");
+            Program.Assert(!bueno.Puede("comprimir"), "y solo lo que declara");
+
+            // Lo que se rechaza, que es lo que importa.
+            var fuera = Complemento.Leer(Manifiesto("""
+            {"nombre":"Malo","ejecutable":"../../Windows/System32/cmd.exe","capacidades":["importar"],"contrato":1}
+            """));
+            Program.Assert(fuera!.Reparo() is not null,
+                "un ejecutable que apunta FUERA de su carpeta se rechaza");
+
+            var noEsta = Complemento.Leer(Manifiesto("""
+            {"nombre":"Fantasma","ejecutable":"no-existe.exe","capacidades":["importar"],"contrato":1}
+            """));
+            Program.Assert(noEsta!.Reparo() is not null, "un programa que no está se rechaza");
+
+            var otroContrato = Complemento.Leer(Manifiesto("""
+            {"nombre":"Futuro","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":99}
+            """));
+            Program.Assert(otroContrato!.Reparo() is not null,
+                "un contrato que esta versión no habla se rechaza");
+
+            var sinNada = Complemento.Leer(Manifiesto("""
+            {"nombre":"Vago","ejecutable":"traer.cmd","capacidades":[],"contrato":1}
+            """));
+            Program.Assert(sinNada!.Reparo() is not null, "uno que no declara capacidades se rechaza");
+
+            // Y todos los reparos DICEN algo: un descarte mudo deja a quien lo
+            // instaló mirando una lista vacía sin nada que corregir.
+            foreach (var malo in new[] { fuera, noEsta, otroContrato, sinNada })
+                Program.Assert((malo!.Reparo() ?? "").Length > 10,
+                    "cada rechazo explica su motivo");
+
+            // Un fichero roto no puede impedir que arranque la aplicación.
+            Program.Assert(Complemento.Leer(Manifiesto("{ esto no es json")) is null,
+                "un manifiesto roto se ignora sin reventar");
+        }
+        finally
+        {
+            try { Directory.Delete(raiz, recursive: true); } catch { }
+        }
     }
 }

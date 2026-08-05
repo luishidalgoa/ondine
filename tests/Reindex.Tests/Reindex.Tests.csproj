@@ -28,6 +28,7 @@
     <Compile Include="..\..\src\Ondine\Settings.cs" LinkBase="Ajustes" />
     <Compile Include="..\..\src\Ondine\RenameRule.cs" LinkBase="Ajustes" />
     <Compile Include="..\..\src\Ondine\Preset.cs" LinkBase="Ajustes" />
+    <Compile Include="..\..\src\Ondine\Complementos\*.cs" LinkBase="Complementos" />
     <Compile Include="..\..\src\Ondine\Localizacion\Textos.*.cs" LinkBase="Localizacion" />
     <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
          ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->

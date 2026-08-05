@@ -64,6 +64,7 @@ public static class Program
         Ondine.Reindex.Tests.IdiomaElegidoTests.Todas();
         Ondine.Reindex.Tests.FichaDeWindowsTests.Todas();
         Ondine.Reindex.Tests.MedidaDelCapituloTests.Todas();
+        Ondine.Reindex.Tests.ComplementoTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
