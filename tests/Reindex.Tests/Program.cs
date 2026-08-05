@@ -86,13 +86,38 @@ public static class Program
         Eq("", TitleMatch.Norm(null), "null → vacío");
         // Los dígitos sobreviven: distinguen «Parte 1» de «Parte 2»
         Eq("parte 2", TitleMatch.Norm("Parte 2"), "los números se conservan");
-        // Los ordinales abreviados tienen que igualar a los escritos: el fichero dice
-        // «(2.ª parte)» donde el catálogo dice «(segunda parte)», y sin esto se quedan
-        // en «2 parte» vs «segunda parte» y el parecido baja justo lo que descalifica.
-        Eq("segunda parte", TitleMatch.Norm("2.ª parte"), "«2.ª» = «segunda»");
-        Eq("primera parte", TitleMatch.Norm("(1.ª parte)"), "«1.ª» = «primera»");
-        Eq("tercera parte", TitleMatch.Norm("3ª parte"), "también sin punto");
-        Eq("parte 2", TitleMatch.Norm("Parte 2"), "un 2 sin ordinal se queda como está");
+
+        // TODAS las formas de decir «la segunda parte» caen en la MISMA cadena. Antes se
+        // convertía al revés -dígito a palabra- y solo con marcador ordinal, así que
+        // «parte 2» se quedaba tal cual: contra un catálogo que dice «segunda parte» el
+        // dígito no aportaba nada y los dos ficheros de una historia partida en dos
+        // puntuaban IDÉNTICO (0,792 los dos, medido) contra los dos episodios. Ganaba
+        // siempre el primero y salían como duplicado en conflicto.
+        Eq("parte 2", TitleMatch.Norm("2.ª parte"), "«2.ª parte» = «parte 2»");
+        Eq("parte 1", TitleMatch.Norm("(1.ª parte)"), "«1.ª parte» = «parte 1»");
+        Eq("parte 3", TitleMatch.Norm("3ª parte"), "también sin punto");
+        Eq("parte 2", TitleMatch.Norm("segunda parte"), "la palabra también: «segunda parte»");
+        Eq("parte 1", TitleMatch.Norm("Primera parte"), "«primera parte»");
+        Eq("parte 2", TitleMatch.Norm("parte segunda"), "y con el orden al revés");
+        Eq("parte 2", TitleMatch.Norm("2 parte"), "un dígito suelto delante de «parte»");
+        Eq("part 2", TitleMatch.Norm("second part"), "en inglés, igual");
+
+        // Una palabra ordinal que NO acompaña a «parte» no se toca: es parte del título.
+        Eq("la primera vez", TitleMatch.Norm("La primera vez"), "«primera» sin «parte» se conserva");
+        Eq("segunda oportunidad", TitleMatch.Norm("Segunda oportunidad"), "y «segunda» tampoco");
+
+        // El caso real que lo destapó: dos ficheros de una historia partida en dos, con el
+        // catálogo escribiéndolo con palabras y el fichero con dígitos. Cada uno tiene que
+        // irse con SU episodio, no los dos al mismo.
+        var conPalabras = new[] { "Hola, marciano (primera parte)", "Hola, marciano (segunda parte)" };
+        Assert(
+            TitleMatch.SimRaw("Hola, marciano (parte 2)", conPalabras[1]) >
+            TitleMatch.SimRaw("Hola, marciano (parte 2)", conPalabras[0]),
+            "«parte 2» se parece más a «segunda parte» que a «primera parte»");
+        Assert(
+            TitleMatch.SimRaw("Hola, marciano (parte 1)", conPalabras[0]) >
+            TitleMatch.SimRaw("Hola, marciano (parte 1)", conPalabras[1]),
+            "y «parte 1» al revés");
     }
 
     // ─────────────────── Fase B: sim() == difflib de Python ───────────────────
