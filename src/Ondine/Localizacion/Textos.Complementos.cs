@@ -33,6 +33,21 @@ public sealed partial class Textos
         "Its program points outside its own folder. A plugin only runs what it brings with it",
         "Su programa apunta fuera de su propia carpeta. Un complemento solo ejecuta lo que trae dentro");
 
+    public string ComplementoManifiestoIlegible => Idioma.Elegir(
+        "Its plugin.json cannot be read: it is not valid JSON",
+        "Su plugin.json no se puede leer: no es JSON válido");
+
+    // {0} = el nombre del complemento, {1} = lo que dijo el sistema.
+    public string ComplementoNoArranca => Idioma.Elegir(
+        "\"{0}\" could not be started: {1}",
+        "No se ha podido arrancar «{0}»: {1}");
+
+    // {0} = el nombre, {1} = el código de salida, {2} = lo que escribió por su
+    // salida de errores, recortado.
+    public string ComplementoSalidaMala => Idioma.Elegir(
+        "\"{0}\" stopped with code {1} without explaining itself. {2}",
+        "«{0}» ha terminado con el código {1} sin explicarse. {2}");
+
     // {0} = la ruta declarada, tal cual la escribió el manifiesto.
     public string ComplementoEjecutableNoEsta => Idioma.Elegir(
         "Its program is not there: \"{0}\"",

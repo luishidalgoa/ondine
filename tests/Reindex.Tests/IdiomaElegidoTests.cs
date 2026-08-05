@@ -391,3 +391,73 @@ public static class CotejoDeListaTests
             "un episodio de una sola historia no enseña letras");
     }
 }
+
+/// <summary>
+/// Descubrir complementos y entender lo que dicen.
+///
+/// <para>
+/// La invocación en sí -arrancar el proceso- no se prueba aquí: depende del
+/// sistema y el CI corre en Linux. Lo que sí se prueba es todo lo que decide qué
+/// entra y qué se entiende, que es donde está el juicio.
+/// </para>
+/// </summary>
+public static class DescubridorTests
+{
+    public static void Todas()
+    {
+        Program.Seccion("Descubrir complementos y leer lo que dicen");
+
+        var raiz = Path.Combine(Path.GetTempPath(), "ondine-desc-" + Guid.NewGuid().ToString("N")[..8]);
+        try
+        {
+            void Complemento(string carpeta, string json, bool conPrograma = true)
+            {
+                var d = Path.Combine(raiz, carpeta);
+                Directory.CreateDirectory(d);
+                File.WriteAllText(Path.Combine(d, "plugin.json"), json);
+                if (conPrograma) File.WriteAllText(Path.Combine(d, "traer.cmd"), "@echo off");
+            }
+
+            Complemento("zeta", """{"nombre":"Zeta","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1}""");
+            Complemento("alfa", """{"nombre":"Alfa","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1}""");
+            Complemento("roto", "{ no es json");
+            Complemento("fantasma", """{"nombre":"Fantasma","ejecutable":"no-esta.exe","capacidades":["importar"],"contrato":1}""", conPrograma: false);
+            Directory.CreateDirectory(Path.Combine(raiz, "una-carpeta-cualquiera"));
+
+            var h = Ondine.Complementos.Descubridor.BuscarEn(raiz);
+
+            Program.Assert(h.Bueno.Count == 2, "entran los dos que están bien");
+            Program.Assert(h.Bueno[0].Nombre == "Alfa" && h.Bueno[1].Nombre == "Zeta",
+                "y salen por nombre: el orden del disco no es estable y la lista bailaría sola");
+
+            Program.Assert(h.Descartado.Count == 2, "los dos malos se cuentan, no se tiran");
+            Program.Assert(h.Descartado.All(d => d.Motivo.Length > 10),
+                "y cada uno dice por qué: un descarte mudo no se puede corregir");
+
+            Program.Assert(!h.Bueno.Concat(h.Descartado.Select(d => d.Cual)).Any(c => c.Id == "una-carpeta-cualquiera"),
+                "una carpeta sin manifiesto no es un complemento roto: no se menciona");
+
+            Program.Assert(Ondine.Complementos.Descubridor.BuscarEn(
+                Path.Combine(raiz, "no-existe")).Bueno.Count == 0,
+                "sin carpeta de complementos no pasa nada");
+        }
+        finally { try { Directory.Delete(raiz, recursive: true); } catch { } }
+
+        // ── lo que dicen ────────────────────────────────────────────────────
+        var elem = Mensaje.Interpretar("""{"tipo":"elemento","id":"abc","titulo":"El gorro","duracion":662.5}""");
+        Program.Assert(elem?.Tipo == Mensaje.TipoElemento, "un elemento se entiende");
+        Program.Assert(elem!.ComoDuracion == TimeSpan.FromSeconds(662.5), "con su duración en segundos");
+
+        Program.Assert(Mensaje.Interpretar("""{"tipo":"hecho","ficheros":["a.mkv","b.mkv"]}""")!.Ficheros.Count == 2,
+            "y el «hecho» trae lo que dejó en disco, para no ir a buscarlo");
+
+        // Lo importante: las herramientas que se envuelven son habladoras, y un
+        // complemento no puede romperse porque yt-dlp escriba avisos por su cuenta.
+        Program.Assert(Mensaje.Interpretar("[download]  42.0% of 55MiB") is null,
+            "una línea de texto normal se ignora");
+        Program.Assert(Mensaje.Interpretar("") is null, "una línea vacía también");
+        Program.Assert(Mensaje.Interpretar("{ roto") is null, "y un JSON a medias");
+        Program.Assert(Mensaje.Interpretar("""{"titulo":"sin tipo"}""") is null,
+            "un mensaje sin tipo se descarta: adivinarlo por sus campos sería inventarse el contrato");
+    }
+}
