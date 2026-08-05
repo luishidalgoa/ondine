@@ -1342,6 +1342,13 @@ public partial class MainWindow : Window
     /// </summary>
     private void AjustarAAncho()
     {
+        AjustarMenu();
+
+        // El panel se recorta con la ventana: si no, al estrechar se queda con su
+        // ancho y es el contenido el que desaparece.
+        if (panelLateral.Visibility == Visibility.Visible)
+            colPanel.Width = new GridLength(AnchoQueCabe(colPanel.Width.Value));
+
         bool cabeElLateral = ActualWidth >= AnchoMinimoConLateral;
 
         colLateral.Width = cabeElLateral ? new GridLength(262) : new GridLength(0);
@@ -1461,6 +1468,41 @@ public partial class MainWindow : Window
         huecoPanel.Content = v;
         MostrarPanel(true);
     }
+
+    /// <summary>
+    /// Recoge los menús en la hamburguesa cuando la barra se queda sin sitio.
+    ///
+    /// <para>
+    /// Se MUEVEN los mismos objetos, no se duplican. Dos copias del menú son dos
+    /// sitios donde añadir la próxima entrada, y siempre se olvida una: el fallo
+    /// no sería que se vea raro, sería que una opción exista solo en una anchura
+    /// de ventana.
+    /// </para>
+    /// </summary>
+    private void AjustarMenu()
+    {
+        // El umbral no es un número redondo: es el ancho a partir del cual la
+        // marca, los cuatro menús y el conmutador de página dejan de caber sin
+        // pisarse. Con el panel abierto la barra no cambia -cruza entera-, así
+        // que solo depende de la ventana.
+        var estrecho = ActualWidth > 0 && ActualWidth < 1000;
+        if (estrecho == _menuRecogido) return;
+        _menuRecogido = estrecho;
+
+        var suyos = new[] { miArchivo, miSeleccion, miHerramientas, miAyuda };
+        var de = estrecho ? menuBar.Items : miHamburguesa.Items;
+        var a = estrecho ? miHamburguesa.Items : menuBar.Items;
+
+        foreach (var m in suyos)
+        {
+            de.Remove(m);
+            a.Add(m);
+        }
+
+        miHamburguesa.Visibility = estrecho ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private bool _menuRecogido;
 
     private void MostrarPanel(bool abierto)
     {

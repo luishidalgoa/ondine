@@ -225,34 +225,59 @@
           <!-- ══ pie ══ -->
           <Border Grid.Row="3" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0"
                   Padding="26,14">
-            <!-- Tres COLUMNAS y no tres bloques alineados dentro de la misma celda.
-                 Un Grid sin columnas los superpone: el recuento se pintaba encima
-                 del botón de disponibles. Alinear no es repartir. -->
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button x:Name="btnSoloFaltan" Style="{StaticResource BtnGhost}" FontSize="12"
-                        Content="{i:T ComplementosMarcarLosQueFaltan}"/>
-                <Button x:Name="btnNinguno" Style="{StaticResource BtnGhost}" FontSize="12"
-                        Margin="4,0,0,0" Content="{i:T ComplementosDesmarcar}"/>
-              </StackPanel>
-              <TextBlock x:Name="lblEstado" Grid.Column="1" HorizontalAlignment="Center"
-                         VerticalAlignment="Center" Margin="16,0" FontSize="11.5"
-                         TextTrimming="CharacterEllipsis"
-                         Foreground="{StaticResource Neutral600}"/>
-              <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="btnDisponibles" Style="{StaticResource BtnGhost}" FontSize="12"
-                        Margin="0,0,10,0" Content="{i:T ComplementosDisponibles}"/>
-                <Button x:Name="btnCerrar" Style="{StaticResource BtnSecondary}" Width="96"
-                        Margin="0,0,8,0" Content="{i:T Cerrar}"/>
-                <Button x:Name="btnTraer" Style="{StaticResource BtnPrimary}" MinWidth="150"
-                        Content="{i:T ComplementosTraer}" IsEnabled="False"/>
-              </StackPanel>
-            </Grid>
+            <!-- DOS FILAS, no cinco acciones en línea.
+                 Antes iban las cinco en una tira y en un panel de 460 px no caben:
+                 ningún reflujo arregla eso, porque el problema no era colocarlas
+                 mejor sino que no hay cinco cosas igual de importantes. Aquí solo
+                 se viene a hacer una — traer lo marcado.
+
+                 Arriba, lo que habla de la SELECCIÓN: cuántos van y cómo cambiarla.
+                 Son texto, no botones, porque no son el final de nada.
+                 Abajo, las dos únicas acciones que cierran la tarea. -->
+            <StackPanel>
+              <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock x:Name="lblEstado" VerticalAlignment="Center" FontSize="11.5"
+                             TextTrimming="CharacterEllipsis"
+                             Foreground="{StaticResource Neutral600}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                  <Button x:Name="btnSoloFaltan" Style="{StaticResource BtnGhost}" FontSize="11.5"
+                          Padding="6,2" Content="{i:T ComplementosMarcarLosQueFaltan}"/>
+                  <Button x:Name="btnNinguno" Style="{StaticResource BtnGhost}" FontSize="11.5"
+                          Padding="6,2" Margin="2,0,0,0" Content="{i:T ComplementosDesmarcar}"/>
+                </StackPanel>
+              </Grid>
+
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Buscar complementos no es una acción del pie: no termina nada,
+                     lleva a otro sitio. Se queda a la izquierda y en tono menor
+                     para no competir con la que sí cierra la tarea. -->
+                <Button x:Name="btnDisponibles" Grid.Column="0" Style="{StaticResource BtnGhost}"
+                        FontSize="12" Padding="6,4" Content="{i:T ComplementosDisponibles}"/>
+
+                <Button x:Name="btnCerrar" Grid.Column="1" Style="{StaticResource BtnGhost}"
+                        FontSize="12" HorizontalAlignment="Right" Margin="0,0,8,0"
+                        Content="{i:T Cerrar}"/>
+
+                <!-- La única primaria, y la única con ancho propio. Si el pie se
+                     estrecha, lo que se encoge es todo lo demás. -->
+                <Button x:Name="btnTraer" Grid.Column="2" Style="{StaticResource BtnPrimary}"
+                        MinWidth="150" Content="{i:T ComplementosTraer}" IsEnabled="False"/>
+              </Grid>
+            </StackPanel>
           </Border>
         </Grid>
       </Border>

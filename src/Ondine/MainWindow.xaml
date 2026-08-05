@@ -140,21 +140,35 @@
           <TextBlock x:Name="lblVersion" Text="v0.3.0" FontSize="11" Foreground="{StaticResource Neutral600}" VerticalAlignment="Center" Margin="8,2,0,0"/>
           <Menu x:Name="menuBar" VerticalAlignment="Center" Margin="20,0,0,0" Background="Transparent"
                 WindowChrome.IsHitTestVisibleInChrome="True">
-            <MenuItem Header="{i:T MainMenuArchivo}">
+            <!-- La hamburguesa recoge los cuatro menús cuando no caben. Los mismos
+                 objetos se mueven de sitio, no se duplican: dos copias del menú son
+                 dos sitios donde añadir la próxima entrada, y una se olvida. -->
+            <MenuItem x:Name="miHamburguesa" Visibility="Collapsed" Padding="8,4">
+              <MenuItem.Header>
+                <Viewbox Width="15" Height="12">
+                  <Canvas Width="16" Height="12">
+                    <Path Data="M0,1 H16 M0,6 H16 M0,11 H16"
+                          Stroke="{StaticResource Text}" StrokeThickness="1.6"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                  </Canvas>
+                </Viewbox>
+              </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="miArchivo" Header="{i:T MainMenuArchivo}">
               <MenuItem x:Name="miPickSrc" Header="{i:T MainMenuElegirOrigen}"/>
               <MenuItem x:Name="miAddFiles" Header="{i:T MainMenuAnadirArchivos}"/>
               <MenuItem x:Name="miOpenDest" Header="{i:T MainMenuAbrirDestino}"/>
               <Separator/>
               <MenuItem x:Name="miExit" Header="{i:T MainMenuSalir}"/>
             </MenuItem>
-            <MenuItem Header="{i:T MainMenuSeleccion}">
+            <MenuItem x:Name="miSeleccion" Header="{i:T MainMenuSeleccion}">
               <MenuItem x:Name="miSelAll" Header="{i:T MainSeleccionarTodo}"/>
               <MenuItem x:Name="miSelNone" Header="{i:T MainQuitarSeleccion}"/>
               <MenuItem x:Name="miSelInvert" Header="{i:T MainInvertirSeleccion}"/>
               <Separator/>
               <MenuItem x:Name="miDelSel" Header="{i:T MainEnviarSeleccionPapelera}"/>
             </MenuItem>
-            <MenuItem Header="{i:T MainMenuHerramientas}">
+            <MenuItem x:Name="miHerramientas" Header="{i:T MainMenuHerramientas}">
               <MenuItem x:Name="miRename" Header="{i:T MainMenuRenombrarSalida}"/>
               <Separator/>
               <MenuItem x:Name="miComplementos" Header="{i:T MainMenuComplementos}"/>
@@ -163,7 +177,7 @@
               <Separator/>
               <MenuItem x:Name="miCheckUpd" Header="{i:T MainBuscarActualizaciones}"/>
             </MenuItem>
-            <MenuItem Header="{i:T MainMenuAyuda}">
+            <MenuItem x:Name="miAyuda" Header="{i:T MainMenuAyuda}">
               <MenuItem x:Name="miTutoriales" Header="{i:T MainMenuTutoriales}"/>
               <Separator/>
               <MenuItem x:Name="miAbout" Header="{i:T MainMenuAcercaDe}"/>
