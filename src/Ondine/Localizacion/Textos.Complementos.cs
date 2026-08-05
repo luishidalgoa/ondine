@@ -127,6 +127,13 @@ public sealed partial class Textos
     public string ComplementosFalta => Idioma.Elegir("missing", "te falta");
     public string ComplementosDesconocido => Idioma.Elegir("not sure", "no se sabe");
     public string ComplementosSinCatalogo => Idioma.Elegir("no catalogue", "sin catálogo");
+
+    public string ComplementosNoEnCatalogo =>
+        Idioma.Elegir("not in the catalogue", "no está en el catálogo");
+
+    public string ComplementosHaceFaltaCatalogo => Idioma.Elegir(
+        "Open a series catalogue in Organise first. Without it a list is just a list: there is nothing to compare it against.",
+        "Abre antes un catálogo de serie en Organizar. Sin él una lista es solo una lista: no hay contra qué compararla.");
     public string ComplementosEpisodio => Idioma.Elegir("episode", "episodio");
 
     public string ComplementosMarcarLosQueFaltan => Idioma.Elegir(

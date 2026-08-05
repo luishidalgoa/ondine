@@ -429,6 +429,37 @@ public static class CotejoDeListaTests
         // enseñar una «a» donde no hay partes confunde más que informa.
         Program.Assert(v[2].HistoriasQueFaltan.Count == 0,
             "un episodio de una sola historia no enseña letras");
+
+        // ---------------------------------------------------------------
+        // El caso real, y el que se escapaba: el vídeo trae dos historias y el
+        // catálogo solo conoce una.
+        //
+        // Comparando la cadena entera, el segundo título -que no está en el
+        // catálogo- hunde el parecido por debajo del umbral y el episodio ENTERO
+        // pasa a «no se sabe», cuando por su primera historia se sabe
+        // perfectamente cuál es. Se compara trozo a trozo, como haría el
+        // catálogo con cada título suelto.
+        var mixto = CotejoDeLista.Cotejar(new[]
+        {
+            "El gorro de la suerte + Alquiler estilo futurista",
+        }, cat, loQueHay);
+
+        Program.Assert(mixto[0].Episodio?.Num == 10,
+            "casa por el trozo que el catálogo SÍ conoce, en vez de callarse por el otro");
+        Program.Assert(mixto[0].Estado == CotejoDeLista.Estado.AMedias,
+            "tiene una historia y le falta la otra: va a medias");
+        Program.Assert(mixto[0].SegmentosSinCasar.SequenceEqual(new[] { "Alquiler estilo futurista" }),
+            "y dice QUÉ trozo del vídeo no reconoce, en vez de tragárselo en silencio");
+
+        // Nombrar la historia que falta. «te falta la b» obliga a ir al catálogo
+        // a ver qué era la b; con el título se sabe de un vistazo si interesa.
+        Program.Assert(v[0].TitulosQueFaltan.SequenceEqual(new[] { "El cazamariposas" }),
+            "la historia que falta se nombra, no solo se numera");
+
+        // Un vídeo de un solo título sigue comparándose igual que antes: partir
+        // por trozos no puede cambiar el veredicto de lo que no tiene trozos.
+        Program.Assert(v[1].Estado == CotejoDeLista.Estado.YaEsta && v[1].SegmentosSinCasar.Count == 0,
+            "lo de un solo título no cambia por comparar por trozos");
     }
 }
 

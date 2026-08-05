@@ -231,6 +231,16 @@ public partial class ComplementosWindow : Window
     {
         if (Elegido is not { } c) return;
 
+        // Sin catálogo abierto no se lista siquiera. Traer cuarenta títulos que
+        // no se pueden cotejar contra nada es devolver la lista tal cual está en
+        // la web: todo el valor de esto es responder «¿qué me falta?», y esa
+        // pregunta no existe sin una biblioteca contra la que hacerla.
+        if (_catalogo is null)
+        {
+            Estado(Textos.Instancia.ComplementosHaceFaltaCatalogo, "");
+            return;
+        }
+
         _corte?.Cancel();
         _corte = new CancellationTokenSource();
 
@@ -316,8 +326,14 @@ public partial class ComplementosWindow : Window
             {
                 CotejoDeLista.Estado.YaEsta =>
                     (Textos.Instancia.ComplementosYaEsta, Pincel("#17301F"), Pincel("#7FD1A6"), false),
+                // Por su NOMBRE cuando se sabe. «Te falta la b» obliga a abrir el
+                // catálogo a mirar qué era la b, justo cuando hay que decidir si
+                // interesa traerlo; con el título se ve de un vistazo.
                 CotejoDeLista.Estado.AMedias =>
-                    (string.Format(Textos.Instancia.ComplementosAMedias, string.Join(", ", v.HistoriasQueFaltan)),
+                    (string.Format(Textos.Instancia.ComplementosAMedias,
+                        string.Join(", ", v.TitulosQueFaltan.Count > 0
+                            ? v.TitulosQueFaltan
+                            : v.HistoriasQueFaltan.Count > 0 ? v.HistoriasQueFaltan : v.SegmentosSinCasar)),
                      Pincel("#35301C"), Pincel("#E0C07A"), true),
                 CotejoDeLista.Estado.Falta =>
                     (Textos.Instancia.ComplementosFalta, Pincel("#262042"), Pincel("#B5ABFC"), true),
@@ -331,6 +347,12 @@ public partial class ComplementosWindow : Window
             f.Detalle = v.Estado != CotejoDeLista.Estado.Desconocido && v.Episodio is { } ep
                 ? $"{Reloj(f)}  ·  {Textos.Instancia.ComplementosEpisodio} {ep.Num}"
                 : Reloj(f);
+
+            // Un trozo que el catálogo no reconoce se dice. Es una historia que
+            // el vídeo trae y que no está contada ni entre las que tienes ni
+            // entre las que faltan: callarla es darla por inexistente.
+            if (v.SegmentosSinCasar.Count > 0 && v.Episodio is not null)
+                f.Detalle += $"  ·  {string.Join(", ", v.SegmentosSinCasar)} ({Textos.Instancia.ComplementosNoEnCatalogo})";
         }
 
         lista.Items.Refresh();
