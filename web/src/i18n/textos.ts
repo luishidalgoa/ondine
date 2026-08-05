@@ -45,9 +45,23 @@ const es = {
       "Cada capítulo con su título, su número y su temporada. Escrito como los metadatos esperan encontrarlo.",
     descargar: "Descargar para Windows",
     terminal: "Instalar por terminal",
-    // Lo que dice el botón DESPUÉS de pulsarlo. Sin esta confirmación, copiar
-    // al portapapeles no se nota y la gente pulsa tres veces.
-    terminalCopiado: "Copiado",
+  },
+
+  // El cuadro que abre ese botón. Antes copiaba la orden directamente: había
+  // acuse de recibo, pero seguía siendo una línea a ciegas, sin decir para qué
+  // sistema era ni qué hacía. Y en Windows copiaba algo que no funciona.
+  terminalModal: {
+    titulo: "Instalar por terminal",
+    detectado: "el tuyo",
+    copiar: "Copiar la orden",
+    copiado: "Copiado al portapapeles",
+    notaUnix:
+      "Detecta tu procesador, baja el binario que le toca y lo deja en ~/.local/bin. Sin sudo y sin tocar nada fuera de tu carpeta personal. Necesita ffmpeg instalado; si falta, te lo dice.",
+    notaWindows:
+      "En Windows no hay guion de instalación: el de arriba es un script de shell y en Windows se para solo. Esto se baja la herramienta de terminal suelta con PowerShell. Si lo que quieres es la aplicación de escritorio, está en la descarga normal.",
+    pieA: "Todos los paquetes, y sus sumas de verificación, están en ",
+    pieEnlace: "la última versión",
+    pieB: ".",
   },
 
   compatibilidad: {
@@ -257,7 +271,20 @@ const en: typeof es = {
       "Every episode with its title, its number and its season. Written the way metadata expects to find it.",
     descargar: "Download for Windows",
     terminal: "Install from the terminal",
-    terminalCopiado: "Copied",
+  },
+
+  terminalModal: {
+    titulo: "Install from the terminal",
+    detectado: "yours",
+    copiar: "Copy the command",
+    copiado: "Copied to the clipboard",
+    notaUnix:
+      "It works out your processor, downloads the right binary and drops it in ~/.local/bin. No sudo, and nothing touched outside your home folder. It needs ffmpeg installed; if it is missing, it tells you.",
+    notaWindows:
+      "There is no install script on Windows: the one above is a shell script and it stops on its own there. This downloads the standalone terminal tool with PowerShell. If what you want is the desktop app, it is in the normal download.",
+    pieA: "Every package, and its checksums, live in ",
+    pieEnlace: "the latest release",
+    pieB: ".",
   },
 
   compatibilidad: {

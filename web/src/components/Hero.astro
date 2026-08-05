@@ -60,18 +60,13 @@ const COLUMNAS = [
         <p class="bajada" data-entra>{t.hero.bajada}</p>
 
         <div class="botones" data-entra>
-          <!-- Dos llamadas, y ahora son dos cosas distintas de verdad: una
-               lleva al instalador de Windows y la otra COPIA la orden de
-               terminal. Antes las dos anclaban al mismo sitio y la segunda
-               prometía unas instrucciones que no existían en ninguna parte. -->
+          <!-- Dos llamadas y dos cosas distintas: una lleva al instalador de
+               Windows y la otra abre el cuadro del terminal. Copiaba la orden
+               directamente, y eso era pedirle a alguien que pegue en su
+               terminal una línea que no ha podido leer: sin saber para qué
+               sistema era, ni qué hacía, ni -en Windows- que no funciona. -->
           <a href="#descarga" class="boton-primario">{t.hero.descargar}</a>
-          <button
-            type="button"
-            class="boton-secundario"
-            data-copiar={t.descarga.terminalOrden}
-            data-copiado={t.hero.terminalCopiado}
-            data-original={t.hero.terminal}
-          >
+          <button type="button" class="boton-secundario" data-abre-terminal>
             {t.hero.terminal}
           </button>
         </div>
@@ -284,35 +279,9 @@ const COLUMNAS = [
 
   gsap.registerPlugin(ScrollTrigger);
 
-  // El botón de terminal copia la orden al portapapeles. No lleva a ninguna
-  // parte a propósito: quien instala por terminal ya tiene una abierta, y lo
-  // único que necesita es la línea. El acuse de recibo es obligatorio, porque
-  // copiar no se ve y sin él la gente pulsa tres veces.
-  document.querySelectorAll<HTMLButtonElement>("[data-copiar]").forEach((b) => {
-    b.addEventListener("click", async () => {
-      const orden = b.dataset.copiar ?? "";
-      try {
-        await navigator.clipboard.writeText(orden);
-      } catch {
-        // Sin permiso de portapapeles (o sin HTTPS) queda el respaldo de
-        // siempre: seleccionarla para que la copie a mano.
-        const t = document.createElement("textarea");
-        t.value = orden;
-        t.style.position = "fixed";
-        t.style.opacity = "0";
-        document.body.append(t);
-        t.select();
-        document.execCommand("copy");
-        t.remove();
-      }
-      b.textContent = b.dataset.copiado ?? "";
-      b.classList.add("copiado");
-      window.setTimeout(() => {
-        b.textContent = b.dataset.original ?? "";
-        b.classList.remove("copiado");
-      }, 2000);
-    });
-  });
+  // El botón del terminal ya no copia nada aquí: abre el cuadro de
+  // `Terminal.astro`, que es quien enseña el sistema, la orden y qué hace. El
+  // guion de aquel se encarga también de abrirlo.
 
   const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 

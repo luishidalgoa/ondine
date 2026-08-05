@@ -1,0 +1,415 @@
+---
+// El modal del terminal.
+//
+// Antes el botón del hero copiaba la orden al portapapeles y ya está. El acuse
+// de recibo estaba, pero seguía siendo una orden a ciegas: no decía para qué
+// sistema era ni qué iba a hacer, y en Windows copiaba algo que ni siquiera
+// funciona -`install.sh` aborta ahí a propósito-. Copiar sin contexto es pedirle
+// a alguien que pegue en su terminal una línea que no ha podido leer.
+//
+// Ahora abre un cuadro que enseña el sistema detectado, la orden que le toca y
+// qué hace. Copiar es un gesto aparte, y deliberado.
+//
+// Es un <dialog> nativo, igual que el de la descarga: encierro del foco, cierre
+// con Escape y fondo inerte de serie.
+
+import { siApple, siLinux } from "simple-icons";
+import { textos } from "../i18n/textos";
+
+const t = textos(Astro.currentLocale);
+const tm = t.terminalModal;
+
+const REPO = "https://github.com/luishidalgoa/ondine";
+
+// El mismo glifo genérico de ventana que en el modal de descarga: Simple Icons
+// no trae el de Windows porque Microsoft pidió que retirasen sus marcas.
+const VENTANA =
+  "M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v13a2.5 2.5 0 0 1-2.5 " +
+  "2.5h-13A2.5 2.5 0 0 1 3 18.5v-13Zm1.6 0v2.1h14.8V5.5a.9.9 0 0 0-.9-.9h-13a" +
+  ".9.9 0 0 0-.9.9Zm14.8 3.7H4.6v9.3c0 .5.4.9.9.9h13c.5 0 .9-.4.9-.9V9.2Z";
+
+// Las órdenes no se traducen, así que viven aquí y no en el fichero de textos:
+// allí habría dos copias iguales esperando a desincronizarse. La de Unix es la
+// misma que enseña el modal de descarga, y sale de un único sitio.
+const SISTEMAS = [
+  {
+    id: "macos",
+    nombre: "macOS",
+    icono: siApple.path,
+    orden: t.descarga.terminalOrden,
+    nota: tm.notaUnix,
+  },
+  {
+    id: "linux",
+    nombre: "Linux",
+    icono: siLinux.path,
+    orden: t.descarga.terminalOrden,
+    nota: tm.notaUnix,
+  },
+  {
+    id: "windows",
+    nombre: "Windows",
+    icono: VENTANA,
+    // En Windows NO se ofrece el guion: es un script de shell y aborta ahí.
+    // Enseñar la misma línea «por coherencia» sería mandar a alguien a un
+    // error. Lo que sí funciona es bajarse el ejecutable suelto.
+    orden:
+      "irm https://github.com/luishidalgoa/ondine/releases/latest/download/ondine-windows-x64.exe -OutFile ondine.exe\n.\\ondine.exe --help",
+    nota: tm.notaWindows,
+  },
+];
+---
+
+<dialog class="modal" data-modal-terminal aria-labelledby="terminal-titulo">
+  <div class="cabecera">
+    <h3 id="terminal-titulo">{tm.titulo}</h3>
+    <button class="cerrar" type="button" data-cierra-terminal aria-label={t.descarga.cerrar}>
+      <span aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="cuerpo">
+    <div class="pestanas" role="tablist" aria-label={tm.titulo}>
+      {
+        SISTEMAS.map((s, i) => (
+          <button
+            type="button"
+            role="tab"
+            class:list={["pestana", { activa: i === 0 }]}
+            data-sistema={s.id}
+            aria-selected={i === 0 ? "true" : "false"}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d={s.icono} />
+            </svg>
+            <span>{s.nombre}</span>
+            {/* El distintivo de «detectado» lo enciende el guion. Va aquí y no
+                se inyecta después para que su hueco esté reservado y la
+                pestaña no cambie de ancho al aparecer. */}
+            <span class="detectado" hidden>{tm.detectado}</span>
+          </button>
+        ))
+      }
+    </div>
+
+    {
+      SISTEMAS.map((s, i) => (
+        <section class="panel" data-panel={s.id} hidden={i > 0}>
+          <p class="nota">{s.nota}</p>
+
+          <div class="bloque">
+            <pre><code>{s.orden}</code></pre>
+            <button
+              type="button"
+              class="copiar"
+              data-copiar-orden={s.orden}
+              data-etiqueta={tm.copiar}
+              data-hecho={tm.copiado}
+            >
+              {tm.copiar}
+            </button>
+          </div>
+        </section>
+      ))
+    }
+
+    {/* Un sitio vivo donde anunciar el copiado. El cambio de texto del botón lo
+        ve quien mira; esto lo oye quien no. */}
+    <p class="aviso" role="status" aria-live="polite"></p>
+  </div>
+
+  <p class="pie">
+    {tm.pieA}<a href={`${REPO}/releases/latest`}>{tm.pieEnlace}</a>{tm.pieB}
+  </p>
+</dialog>
+
+<style>
+  .modal {
+    width: min(560px, calc(100vw - 2rem));
+    max-height: 86vh;
+    padding: 0;
+    border: 0;
+    border-radius: 16px;
+    background: #1f2127;
+    color: #e9e9ed;
+    box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.75);
+  }
+  .modal::backdrop {
+    background: rgb(10 10 14 / 0.68);
+    backdrop-filter: blur(3px);
+  }
+
+  .cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  }
+
+  .cabecera h3 {
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .cerrar {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+  .cerrar:hover { background: rgb(255 255 255 / 0.07); }
+  .cerrar span,
+  .cerrar span::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 13px;
+    height: 1.4px;
+    background: #8a8fa3;
+    content: "";
+  }
+  .cerrar span { transform: translate(-50%, -50%) rotate(45deg); }
+  .cerrar span::after {
+    top: 0;
+    left: 0;
+    transform: rotate(-90deg);
+  }
+
+  .cuerpo {
+    padding: 1.25rem 1.5rem 1.4rem;
+    overflow-y: auto;
+    max-height: calc(86vh - 160px);
+  }
+
+  /* ── las pestañas de sistema ───────────────────────────────────────────── */
+  .pestanas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    padding: 3px;
+    border-radius: 11px;
+    background: #17181d;
+  }
+
+  .pestana {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.4rem;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    font: inherit;
+    font-size: 13.5px;
+    color: #8a8fa3;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .pestana:hover { color: #e9e9ed; }
+  .pestana.activa {
+    background: #2f313a;
+    color: #e9e9ed;
+  }
+  .pestana:focus-visible {
+    outline: 2px solid #b5abfc;
+    outline-offset: -2px;
+  }
+
+  .pestana svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    fill: currentColor;
+  }
+
+  /* «Detectado» va como distintivo pequeño dentro de la pestaña. Es un dato,
+     no un botón: dice de dónde venimos, no dónde hay que pulsar. */
+  .detectado {
+    padding: 0.1rem 0.35rem;
+    border-radius: 999px;
+    background: rgb(181 171 252 / 0.18);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #b5abfc;
+  }
+  .detectado[hidden] { display: none; }
+
+  /* ── el panel de cada sistema ──────────────────────────────────────────── */
+  .panel[hidden] { display: none; }
+
+  .nota {
+    margin-top: 1rem;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #8a8fa3;
+  }
+
+  .bloque {
+    margin-top: 0.85rem;
+    border-radius: 12px;
+    background: #131419;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+    overflow: hidden;
+  }
+
+  .bloque pre {
+    padding: 0.95rem 1rem;
+    /* La orden de Windows son dos líneas largas: que se desplace ella sola en
+       vez de empujar el ancho del cuadro. */
+    overflow-x: auto;
+  }
+  .bloque code {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #e9e9ed;
+    white-space: pre;
+  }
+
+  .copiar {
+    display: block;
+    width: 100%;
+    padding: 0.7rem;
+    border: 0;
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: #b5abfc;
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+  .copiar:hover { background: rgb(255 255 255 / 0.04); }
+  .copiar.hecho { color: #7fd1a6; }
+
+  .aviso {
+    margin-top: 0.75rem;
+    min-height: 1em;
+    font-size: 12.5px;
+    color: #7fd1a6;
+  }
+
+  .pie {
+    padding: 1rem 1.5rem 1.35rem;
+    border-top: 1px solid rgb(255 255 255 / 0.07);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #8a8fa3;
+  }
+  .pie a {
+    color: #b5abfc;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>
+
+<script>
+  const modal = document.querySelector<HTMLDialogElement>("[data-modal-terminal]");
+
+  if (modal) {
+    const pestanas = [...modal.querySelectorAll<HTMLButtonElement>("[data-sistema]")];
+    const paneles = [...modal.querySelectorAll<HTMLElement>("[data-panel]")];
+    const aviso = modal.querySelector<HTMLElement>(".aviso");
+
+    function mostrar(id: string) {
+      pestanas.forEach((p) => {
+        const suya = p.dataset.sistema === id;
+        p.classList.toggle("activa", suya);
+        p.setAttribute("aria-selected", String(suya));
+      });
+      paneles.forEach((p) => {
+        p.hidden = p.dataset.panel !== id;
+      });
+      if (aviso) aviso.textContent = "";
+    }
+
+    pestanas.forEach((p) =>
+      p.addEventListener("click", () => mostrar(p.dataset.sistema!)),
+    );
+
+    // Qué sistema es este. `userAgentData` es lo que hay que mirar hoy;
+    // `platform` sigue de respaldo porque Firefox y Safari no traen el primero.
+    function detectar(): string {
+      const ua = navigator.userAgent;
+      const marca =
+        (navigator as any).userAgentData?.platform ?? navigator.platform ?? "";
+      const texto = `${marca} ${ua}`;
+      // Android antes que Linux: su cadena dice «Linux» y no queremos mandar a
+      // un móvil una instalación de escritorio.
+      if (/android/i.test(texto)) return "linux";
+      if (/mac|iphone|ipad|ipod/i.test(texto)) return "macos";
+      if (/win/i.test(texto)) return "windows";
+      return "linux";
+    }
+
+    const mio = detectar();
+    mostrar(mio);
+    // El distintivo solo se enciende sobre el que de verdad se ha detectado. Si
+    // luego cambias de pestaña a mano, se queda donde está: sigue diciendo la
+    // verdad -de dónde vienes-, no lo que estás mirando.
+    pestanas
+      .find((p) => p.dataset.sistema === mio)
+      ?.querySelector(".detectado")
+      ?.removeAttribute("hidden");
+
+    // Copiar es ahora un gesto aparte y con acuse de recibo doble: el botón
+    // cambia para quien mira y el aviso se anuncia para quien no.
+    modal.querySelectorAll<HTMLButtonElement>("[data-copiar-orden]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const orden = b.dataset.copiarOrden ?? "";
+        try {
+          await navigator.clipboard.writeText(orden);
+        } catch {
+          // Sin permiso de portapapeles (o sin HTTPS) queda el respaldo de
+          // siempre: seleccionarla para que la copie a mano.
+          const caja = document.createElement("textarea");
+          caja.value = orden;
+          caja.style.position = "fixed";
+          caja.style.opacity = "0";
+          document.body.append(caja);
+          caja.select();
+          document.execCommand("copy");
+          caja.remove();
+        }
+        b.textContent = b.dataset.hecho ?? "";
+        b.classList.add("hecho");
+        if (aviso) aviso.textContent = b.dataset.hecho ?? "";
+        window.setTimeout(() => {
+          b.textContent = b.dataset.etiqueta ?? "";
+          b.classList.remove("hecho");
+        }, 2000);
+      });
+    });
+
+    document
+      .querySelectorAll<HTMLButtonElement>("[data-abre-terminal]")
+      .forEach((b) => b.addEventListener("click", () => modal.showModal()));
+
+    modal
+      .querySelector<HTMLButtonElement>("[data-cierra-terminal]")
+      ?.addEventListener("click", () => modal.close());
+
+    // Pulsar fuera del cuadro cierra. El <dialog> reparte los clics del fondo
+    // al propio elemento, así que basta con ver que el clic no cayó dentro.
+    modal.addEventListener("click", (e) => {
+      const c = modal.getBoundingClientRect();
+      const fuera =
+        e.clientX < c.left ||
+        e.clientX > c.right ||
+        e.clientY < c.top ||
+        e.clientY > c.bottom;
+      if (fuera) modal.close();
+    });
+  }
+</script>
