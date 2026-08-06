@@ -203,6 +203,12 @@ public partial class ComplementosPanel : UserControl
     /// </summary>
     public void Enfocar(Complemento? elegido)
     {
+        // Se relee el disco al volver a abrir. El panel se conserva entre aperturas
+        // -para no tirar una lista que costó minutos traer-, y con él se conservaba
+        // la lista de instalados: uno quitado a mano, o desde otra ventana, seguía
+        // apareciendo hasta reiniciar. La carpeta es la verdad; esto es su reflejo.
+        RecordarYRecargar();
+
         if (elegido is not null)
         {
             var suyo = _puestos.FirstOrDefault(p => p.Cual.Id == elegido.Id);
@@ -212,6 +218,22 @@ public partial class ComplementosPanel : UserControl
             listaInstalados.SelectedIndex = 0;
 
         MostrarElElegido();
+    }
+
+    /// <summary>
+    /// Relee la carpeta sin perder de vista al que estabas mirando. Recargar a
+    /// secas vacía la lista, y con ella la selección: volverías a la ficha del
+    /// primero cada vez que se abre el panel.
+    /// </summary>
+    private void RecordarYRecargar()
+    {
+        var mirando = Elegido?.Id;
+        CargarInstalados();
+        if (mirando is null) return;
+
+        var suyo = _puestos.FirstOrDefault(p =>
+            string.Equals(p.Cual.Id, mirando, StringComparison.OrdinalIgnoreCase));
+        if (suyo is not null) listaInstalados.SelectedItem = suyo;
     }
 
     private Complemento? Elegido => (listaInstalados.SelectedItem as Puesto)?.Cual;

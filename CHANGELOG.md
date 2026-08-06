@@ -38,6 +38,9 @@ es un acuerdo de buena voluntad: está verificado.
   podían instalar, así que quitar uno era ir a borrar su carpeta a mano — justo lo que la tienda
   venía a evitar. Y si salía una versión nueva, lo instalado se quedaba viejo para siempre sin
   que nada lo dijera: ahora el botón pasa a decir *Actualizar a X*.
+- **La lista de complementos se relee al volver a abrir el panel.** El panel se conserva entre
+  aperturas —para no tirar una lista que costó minutos traer— y con él se conservaba la lista de
+  instalados: uno quitado a mano seguía apareciendo hasta reiniciar la app.
 - **El complemento de YouTube recuerda la lista de cada catálogo.** Ya no hay que volver a pegar
   el mismo enlace: al abrir el complemento con un catálogo, vuelve puesta la última lista que
   cotejaste con él. Va por catálogo porque la lista de una serie no vale para otra.
