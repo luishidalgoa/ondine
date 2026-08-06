@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-06
+
 ### Añadido
 
 - **La duración de cada vídeo, en Organizar y en el reproductor.** Sale también en los ficheros
