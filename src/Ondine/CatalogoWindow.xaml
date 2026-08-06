@@ -31,11 +31,18 @@
       </Grid>
 
       <Grid Grid.Row="1" Margin="16,0,16,10">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <TextBox x:Name="txtBuscar"
                  ToolTip="{i:T CatalogoBuscarAyuda}"/>
         <TextBlock x:Name="lblCuenta" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0"
                    FontSize="11.5" Foreground="{StaticResource Neutral500}"/>
+        <!-- Solo aparece cuando hay una carpeta analizada detrás: sin eso, «los que
+             faltan» serían todos y el filtro mentiría. -->
+        <CheckBox x:Name="chkSoloFaltan" Grid.Row="1" Grid.ColumnSpan="2" Margin="2,8,0,0"
+                  FontSize="11.5" Visibility="Collapsed"
+                  Foreground="{StaticResource Neutral400}"
+                  Content="{i:T CatalogoSoloLosQueFaltan}"/>
       </Grid>
 
       <Grid Grid.Row="2" Margin="16,0,16,10">
@@ -100,10 +107,21 @@
                   <Run Text="{Binding Detalle, Mode=OneWay}"/><Run Text="   "/><Run Text="{Binding Cuantas, Mode=OneWay}"/>
                 </TextBlock>
               </StackPanel>
-              <Border Grid.Column="1" Background="{StaticResource Accent900}" CornerRadius="6" Padding="7,2"
-                      VerticalAlignment="Top" Visibility="{Binding EsEspecial}">
-                <TextBlock Text="{i:T CatalogoEspecial}" FontSize="10.5" Foreground="{StaticResource Accent200}"/>
-              </Border>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                <!-- ¿Lo tengo? El distintivo APUNTA al fichero: pulsarlo lo enseña en el
+                     explorador de Windows. Un distintivo que solo dice «lo tienes» te deja
+                     a ti la tarea de encontrarlo, que es justo lo que venías a evitar. -->
+                <Button Style="{StaticResource BtnGhostMuted}" Cursor="{Binding TenenciaCursor}"
+                        Padding="7,2" Margin="0,0,6,0" FontSize="10.5"
+                        Background="{Binding TenenciaFondo}" Foreground="{Binding TenenciaColor}"
+                        Content="{Binding TenenciaEtiqueta}" ToolTip="{Binding TenenciaTip}"
+                        Visibility="{Binding TenenciaVisible}"
+                        Tag="{Binding Fichero}" Click="OnIrAlFichero"/>
+                <Border Background="{StaticResource Accent900}" CornerRadius="6" Padding="7,2"
+                        Visibility="{Binding EsEspecial}">
+                  <TextBlock Text="{i:T CatalogoEspecial}" FontSize="10.5" Foreground="{StaticResource Accent200}"/>
+                </Border>
+              </StackPanel>
             </Grid>
           </DataTemplate>
         </ListBox.ItemTemplate>

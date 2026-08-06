@@ -175,4 +175,33 @@ public sealed partial class Textos
 
     // {0} = el mensaje del sistema, que viene en el idioma de Windows.
     public string FaltantesNoSePudoCopiar => Idioma.Elegir("Could not copy: {0}", "No se pudo copiar: {0}");
+
+    // ═══ ¿Lo tengo? — el distintivo de cada fila del explorador ══════════════
+
+    public string CatalogoTengo => Idioma.Elegir("you have it", "lo tienes");
+    public string CatalogoTengoAMedias => Idioma.Elegir("half of it", "a medias");
+    public string CatalogoNoTengo => Idioma.Elegir("missing", "te falta");
+
+    // {0} = la ruta del fichero.
+    public string CatalogoTengoTip => Idioma.Elegir(
+        "Click to show it in Explorer:\n{0}",
+        "Púlsalo para verlo en el explorador:\n{0}");
+
+    // {0} = la ruta del primero, {1} = cuántos hay en total.
+    public string CatalogoTengoTipVarios => Idioma.Elegir(
+        "{1} files. Click to show the first one in Explorer:\n{0}",
+        "{1} ficheros. Púlsalo para ver el primero en el explorador:\n{0}");
+
+    public string CatalogoNoTengoTip => Idioma.Elegir(
+        "It is not in the folder you analysed.",
+        "No está en la carpeta que analizaste.");
+
+    public string CatalogoSoloLosQueFaltan => Idioma.Elegir(
+        "Only the ones I am missing",
+        "Solo los que me faltan");
+
+    // {0} = cuántos hay ahora, {1} = cuántos faltan de esos.
+    public string CatalogoCuentaFaltan => Idioma.Elegir(
+        "{0} of {1} missing",
+        "{0} de {1} que faltan");
 }
