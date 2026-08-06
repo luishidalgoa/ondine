@@ -1,7 +1,7 @@
 {
   "nombre": "YouTube",
-  "descripcion": "Lee una lista de reproduccion publica y coteja lo que hay en ella con tu catalogo. Pega el enlace de la lista en la casilla de fuente.",
-  "version": "1.0.0",
+  "descripcion": "Lee una lista de reproducción pública y coteja lo que hay en ella con tu catálogo, episodio por episodio. Pega el enlace de la lista en la casilla de fuente. No descarga: lee.",
+  "version": "1.0.1",
   "autor": "Ondine",
   "ejecutable": "youtube.cmd",
   "capacidades": [
