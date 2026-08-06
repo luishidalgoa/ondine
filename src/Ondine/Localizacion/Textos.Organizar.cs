@@ -1198,6 +1198,20 @@ public sealed partial class Textos
 
     // ═══ Decidir de una para todas las filas con la misma causa ══════════════
 
+    // {0} = cuántos especiales se confirmarían en total, esta fila incluida.
+    public string OrganizarConfirmarIguales => Idioma.Elegir(
+        "Confirm the {0} certain ones",
+        "Confirmar los {0} seguros");
+
+    public string OrganizarConfirmarIgualesAyuda => Idioma.Elegir(
+        "Accepts what the app proposes for every special that matched a single catalogue entry with no room for doubt. The ones that matched loosely are left alone: those you have to look at.",
+        "Acepta lo que la app propone para todos los especiales que casaron con una sola entrada del catálogo sin margen de duda. Los que casaron flojo se quedan como están: esos hay que mirarlos.");
+
+    // {0} = cuántos se confirmaron.
+    public string OrganizarLogConfirmadosIguales => Idioma.Elegir(
+        "{0} specials confirmed.",
+        "{0} especiales confirmados.");
+
     // {0} = cuántas OTRAS filas tienen exactamente la misma causa.
     public string OrganizarDejarIguales => Idioma.Elegir(
         "Leave the other {0} the same",

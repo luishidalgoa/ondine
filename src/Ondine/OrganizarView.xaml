@@ -758,6 +758,13 @@
                     <!-- Solo aparece cuando hay OTRAS filas con la misma causa Y esa causa
                          tiene una única respuesta buena para todas. Contestar dieciséis
                          veces «esto no está en este catálogo» no es revisar, es teclear. -->
+                    <!-- La acción CONTRARIA a la de al lado: aquella dice «no toques», esta
+                         «acepta lo que propones». Por eso son dos botones y no uno. -->
+                    <Button x:Name="btnConfirmarTodosIguales" Style="{StaticResource BtnPrimary}" FontSize="12"
+                            Padding="12,4" Margin="8,0,0,0" Click="OnConfirmarTodosLosIguales"
+                            Content="{Binding ConfirmarIgualesTexto}"
+                            ToolTip="{i:T OrganizarConfirmarIgualesAyuda}"
+                            Visibility="{Binding VerConfirmarIguales}"/>
                     <Button x:Name="btnDejarTodasIguales" Style="{StaticResource BtnGhost}" FontSize="12"
                             Margin="8,0,0,0" Click="OnDejarTodasLasIguales"
                             Content="{Binding DejarIgualesTexto}"

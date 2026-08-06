@@ -32,6 +32,29 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Confirmar de una todos los especiales que la app da por seguros.** Un especial nace pidiendo
+  confirmación a propósito, pero cuando dieciséis casan sin margen de duda contra dieciséis
+  entradas distintas, contestar dieciséis veces no es revisar. Los que casaron flojo se quedan
+  fuera y siguen pidiendo mano: esos son justo los que hay que mirar.
+- **El título entero al pasar por encima**, en la lista de un complemento. Con el panel estrecho
+  se recortaba, y ahí se pierde lo único que identifica el vídeo.
+
+### Corregido
+
+- **El cotejo decía «ya lo tienes» de vídeos que traen dos episodios y solo tienes uno.** Un vídeo
+  de una lista puede juntar dos entradas del catálogo —«El controlador del mar + Alquiler estilo
+  futurista» son los episodios 985 y 1237—, y solo se miraba la que mejor casaba. La otra no
+  aparecía en ninguna cuenta: ni entre lo que tienes ni entre lo que falta. Ahora se pregunta por
+  cada cosa que trae el vídeo, en su episodio.
+- **Un fichero cuyo nombre solo dice una de las historias del episodio ya no se da por completo.**
+  La regla «sin letra de segmento, tapa el episodio entero» sigue siendo el respaldo, pero si el
+  nombre nombra solo una de las dos, tapa solo esa. La cuenta vive ahora en un sitio y no en tres.
+- **El distintivo de la lista de complementos era una píldora entera** y desentonaba con el resto
+  del panel.
+
+
 ## [1.7.0] - 2026-08-06
 
 ### Añadido

@@ -1846,12 +1846,22 @@ public partial class OrganizarView : UserControl
             cuantas[c] = cuantas.TryGetValue(c, out var n) ? n + 1 : 1;
         }
 
+        var confirmables = new Dictionary<CausaDeConflicto.Causa, int>();
+        foreach (var f in _filas)
+        {
+            var c = CausaDeConflicto.DeQueVa(f.Res);
+            if (!CausaDeConflicto.SeConfirmaEnGrupo(c)) continue;
+            confirmables[c] = confirmables.TryGetValue(c, out var n) ? n + 1 : 1;
+        }
+
         foreach (var f in _filas)
         {
             var c = CausaDeConflicto.DeQueVa(f.Res);
             // Menos ella misma: el botón habla de «las OTRAS».
             f.Iguales = CausaDeConflicto.SeDecideEnGrupo(c) && cuantas.TryGetValue(c, out var n)
                 ? n - 1 : 0;
+            f.Confirmables = CausaDeConflicto.SeConfirmaEnGrupo(c) && confirmables.TryGetValue(c, out var m)
+                ? m - 1 : 0;
         }
     }
 
@@ -1901,6 +1911,40 @@ public partial class OrganizarView : UserControl
         ActualizarContadores();
         RecargarTrasDejar();
         Escribir(string.Format(Textos.Instancia.OrganizarLogDejadasIguales, afectadas.Count));
+    }
+
+    /// <summary>
+    /// Confirma de una todos los especiales que casaron sin margen de duda.
+    ///
+    /// <para>
+    /// Un especial nace en «revisar» a propósito: solo una persona lo sube a
+    /// seguro, porque un especial mal asignado es un fichero renombrado con el
+    /// nombre de otro. Pero cuando dieciséis casan al 1,00 contra dieciséis
+    /// entradas distintas, contestar dieciséis veces no es revisar.
+    /// </para>
+    /// <para>
+    /// Los que casaron flojo se quedan fuera y siguen pidiendo mano. Esos son
+    /// justo los que hay que mirar, y meterlos en el mismo clic sería tapar la
+    /// única duda real con quince certezas.
+    /// </para>
+    /// </summary>
+    private void OnConfirmarTodosLosIguales(object sender, RoutedEventArgs e)
+    {
+        if (tabla.SelectedItem is not OrganizarRow fila) return;
+
+        var grupo = CausaDeConflicto.CompanerasParaConfirmar(_filas.Select(f => f.Res), fila.Res).ToHashSet();
+        var afectadas = _filas.Where(f => f.Res == fila.Res || grupo.Contains(f.Res)).ToList();
+
+        foreach (var f in afectadas)
+        {
+            if (f.Res.Episodio is not { } ep) continue;
+            f.Res.Confianza = ReindexConfianza.Alta;
+            f.Recalcular();
+            RecordarDecision(f, ep);
+        }
+
+        ActualizarContadores();
+        Escribir(string.Format(Textos.Instancia.OrganizarLogConfirmadosIguales, afectadas.Count));
     }
 
     private void RecordarDecision(OrganizarRow fila, CatalogEpisode ep, string? seg = null)
