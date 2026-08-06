@@ -51,6 +51,10 @@ es un acuerdo de buena voluntad: está verificado.
 - **Un fichero cuyo nombre solo dice una de las historias del episodio ya no se da por completo.**
   La regla «sin letra de segmento, tapa el episodio entero» sigue siendo el respaldo, pero si el
   nombre nombra solo una de las dos, tapa solo esa. La cuenta vive ahora en un sitio y no en tres.
+- **La tarjeta del resolutor decía un nombre y se escribía otro** cuando el fichero juntaba dos
+  episodios: enseñaba «quedaría como …E1260 - El invento para hacer bonsáis» mientras el
+  renombrado ponía «…E1260+1261 - … + La rueda auxiliar invisible». El nombre se componía en dos
+  sitios y uno se olvidaba de las historias añadidas. El renombrado siempre fue el correcto.
 - **El distintivo de la lista de complementos era una píldora entera** y desentonaba con el resto
   del panel.
 

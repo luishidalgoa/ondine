@@ -520,7 +520,22 @@ public sealed class OrganizarRow : INotifyPropertyChanged
 
     private CandidatoVista Ver(CatalogEpisode ep, double score, bool esElegido, IReadOnlyList<string> evidencia)
     {
-        var nombre = Plantilla.Render(Catalogo, ep, Res.Archivo);
+        // Para el ELEGIDO se reutiliza el nombre que ya calculó Recalcular(), no se
+        // vuelve a componer. Así la tarjeta no puede discrepar de la fila: antes
+        // renderizaba sin el segmento elegido ni las historias fusionadas, y en un
+        // fichero con dos episodios dentro la tarjeta decía «quedaría como
+        // S1993E1260 - El invento para hacer bonsáis» mientras el renombrado de
+        // verdad ponía «S1993E1260+1261 - ... + La rueda auxiliar invisible».
+        // Dos formas de calcular lo mismo son dos respuestas en cuanto una cambia.
+        //
+        // Las alternativas sí se componen aquí, porque son un «qué pasaría si»,
+        // pero con las MISMAS piezas: elegir otro episodio no descarta las
+        // historias que ya se habían fusionado.
+        var archivo = SegElegido != null ? Res.Archivo.ConSegmento(SegElegido) : Res.Archivo;
+        var nombre = esElegido && NombreNuevo != null
+            ? NombreNuevo
+            : Plantilla.Render(Catalogo, ep, archivo, _tambien.Count > 0 ? _tambien : null);
+
         return new CandidatoVista
         {
             Episodio = ep,
