@@ -124,6 +124,9 @@ public partial class ComplementosPanel : UserControl
     private readonly ObservableCollection<Oferta> _tienda = new();
 
     private readonly ReindexCatalog? _catalogo;
+
+    /// <summary>La ruta del catálogo abierto: la clave con la que se recuerda su lista.</summary>
+    private readonly string _rutaCatalogo = "";
     private readonly IReadOnlyList<ReindexResolution> _loQueHay;
     private CancellationTokenSource? _corte;
     private bool _enTienda;
@@ -139,11 +142,12 @@ public partial class ComplementosPanel : UserControl
     public event Action? Cerrar;
 
     public ComplementosPanel(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay,
-                              Complemento? elegido = null)
+                              Complemento? elegido = null, string rutaCatalogo = "")
     {
         InitializeComponent();
         _catalogo = catalogo;
         _loQueHay = loQueHay ?? Array.Empty<ReindexResolution>();
+        _rutaCatalogo = rutaCatalogo;
 
         // Va acoplado a la ventana, no flotando: no hay nada que arrastrar ni
         // ventana que cerrar. Pedir el cierre es cosa de quien lo aloja, que es
@@ -278,8 +282,12 @@ public partial class ComplementosPanel : UserControl
         lblNombre.Text = c.Nombre;
         lblVersion.Text = string.IsNullOrWhiteSpace(c.Version) ? "" : "  " + c.Version;
         lblDescripcion.Text = c.Descripcion;
-        txtFuente.Text = "";
+        // La lista de la que salió lo último que se cotejó con ESTE catálogo. Es
+        // lo que evita volver a pegar el mismo enlace cada vez, y va por catálogo
+        // porque la lista de una serie no vale para otra.
+        txtFuente.Text = ReindexStore.CargarFuente(_rutaCatalogo, c.Id);
         PintarPermisoModelo(c);
+        PintarDesinstalar(c);
 
         Estado(Textos.Instancia.ComplementosListoTitulo, Textos.Instancia.ComplementosVacio);
     }
@@ -311,6 +319,38 @@ public partial class ComplementosPanel : UserControl
         lblPermisoModelo.Text = hayModelo
             ? Textos.Instancia.ComplementoPermisoModeloAyuda
             : Textos.Instancia.ComplementoPermisoModeloSinConfigurar;
+    }
+
+    private void PintarDesinstalar(Complemento c)
+    {
+        btnDesinstalar.Visibility = Visibility.Visible;
+        btnDesinstalar.Tag = c;
+    }
+
+    /// <summary>
+    /// Quita el complemento elegido, preguntando antes.
+    ///
+    /// <para>
+    /// Se pregunta porque borra una carpeta, y un complemento puede traer ajustes
+    /// dentro. Se dice además que se puede volver a instalar: sin eso, «se borra
+    /// su carpeta» suena a definitivo y frena una decisión que no lo es.
+    /// </para>
+    /// </summary>
+    private void OnDesinstalar(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: Complemento c }) return;
+
+        if (!DialogWindow.Confirmar(Window.GetWindow(this),
+                string.Format(Textos.Instancia.ComplementosDesinstalarPregunta, c.Nombre),
+                Textos.Instancia.ComplementosDesinstalarDetalle)) return;
+
+        var r = Instalador.Desinstalar(c.Id, Descubridor.Carpeta);
+        lblEstado.Text = r.Ok
+            ? string.Format(Textos.Instancia.ComplementosDesinstalado, c.Nombre)
+            : r.Motivo ?? "";
+
+        CargarInstalados();
+        MostrarElElegido();
     }
 
     private bool _pintandoPermiso;
@@ -363,6 +403,10 @@ public partial class ComplementosPanel : UserControl
 
         var fuente = txtFuente.Text?.Trim() ?? "";
         string? error = null;
+
+        // Se apunta ANTES de listar, no después: si la lista tarda o falla, el
+        // enlace que acabas de pegar no se pierde. Y va atada a ESTE catálogo.
+        ReindexStore.GuardarFuente(_rutaCatalogo, c.Id, fuente);
 
         try
         {
@@ -532,7 +576,21 @@ public partial class ComplementosPanel : UserControl
         foreach (var e in traida.Indice.Complementos.Where(e => e.Reparo() is null))
         {
             var o = new Oferta { Entrada = e };
-            if (puestos.Contains(e.Id)) { o.Accion = Textos.Instancia.ComplementosYaInstalado; o.SePuede = false; }
+            var yaEsta = _puestos.FirstOrDefault(p =>
+                string.Equals(p.Cual.Id, e.Id, StringComparison.OrdinalIgnoreCase))?.Cual;
+
+            if (yaEsta is not null)
+            {
+                // Instalado, pero ¿viejo? Reinstalar encima ES la actualización: el
+                // instalador borra y repone. Solo cambia lo que dice el botón.
+                if (Indice.EsMasNueva(yaEsta.Version, e.Version))
+                    o.Accion = string.Format(Textos.Instancia.ComplementosHayVersion, e.Version);
+                else
+                {
+                    o.Accion = Textos.Instancia.ComplementosYaInstalado;
+                    o.SePuede = false;
+                }
+            }
             _tienda.Add(o);
         }
 

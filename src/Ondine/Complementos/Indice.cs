@@ -94,6 +94,43 @@ public sealed class Indice
     public static bool Cuadra(byte[] datos, string? esperado) =>
         EsSha256(esperado) && Huella(datos).Equals(esperado, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// ¿La del índice es más nueva que la instalada?
+    ///
+    /// <para>
+    /// Se compara <b>por número y trozo a trozo</b>, no como texto: en orden
+    /// alfabético «1.10.0» va antes que «1.9.0», y una actualización de verdad no
+    /// se ofrecería nunca.
+    /// </para>
+    /// <para>
+    /// Ante algo que no se puede leer como versión —vacío, texto— NO se ofrece
+    /// actualizar. Empujar una reinstalación por no saber leer un número es peor
+    /// que quedarse callado: el usuario acabaría bajando lo mismo que ya tiene.
+    /// </para>
+    /// </summary>
+    public static bool EsMasNueva(string? instalada, string? disponible)
+    {
+        if (Trozos(instalada) is not { } a || Trozos(disponible) is not { } b) return false;
+
+        for (int i = 0; i < Math.Max(a.Length, b.Length); i++)
+        {
+            int x = i < a.Length ? a[i] : 0;   // «1.2» es «1.2.0»
+            int y = i < b.Length ? b[i] : 0;
+            if (y != x) return y > x;
+        }
+        return false;
+    }
+
+    private static int[]? Trozos(string? v)
+    {
+        if (string.IsNullOrWhiteSpace(v)) return null;
+        var partes = v.Trim().Split('.');
+        var nums = new int[partes.Length];
+        for (int i = 0; i < partes.Length; i++)
+            if (!int.TryParse(partes[i], out nums[i])) return null;
+        return nums;
+    }
+
     /// <summary>Lee un índice. Null si no es JSON válido o habla otro contrato.</summary>
     public static Indice? Leer(string json)
     {

@@ -42,6 +42,13 @@ public partial class OrganizarView : UserControl
     /// </summary>
     public Reindex.ReindexCatalog? CatalogoAbierto => _catalogoCargado;
 
+    /// <summary>
+    /// La RUTA del catálogo abierto. El objeto del catálogo no la lleva dentro, y
+    /// hace falta para poder recordar cosas por catálogo —la lista de la que sale
+    /// lo que un complemento coteja, sin ir más lejos—.
+    /// </summary>
+    public string RutaCatalogoAbierto => _catalogoElegido?.Ruta ?? "";
+
     /// <summary>Lo ya resuelto de la carpeta, por lo mismo: de ahí sale qué está cubierto.</summary>
     public IReadOnlyList<Reindex.ReindexResolution> LoQueHay =>
         _filas.Select(f => f.Res).ToList();
