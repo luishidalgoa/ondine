@@ -55,6 +55,11 @@ es un acuerdo de buena voluntad: está verificado.
   en la descripción. Sin eso, media cinta se daba por completa y la historia que faltaba no la
   reclamaba nadie. No descarga: lee.
 - **El menú superior se recoge en una hamburguesa** cuando la ventana no da para los cuatro.
+- **En «Explorar el catálogo», cada episodio dice si lo tienes.** Un distintivo por fila —*lo
+  tienes*, *a medias*, *te falta*— con los mismos colores del semáforo de Organizar, y **pulsarlo
+  te lleva al fichero** en el explorador de Windows. Hay además una casilla para quedarte solo
+  con los que faltan, que se combina con el buscador. Si abres el catálogo sin haber analizado
+  ninguna carpeta, no aparece nada: sin haber mirado un disco, decir «te falta» sería inventarlo.
 - **Ordenar por temporadas.** Un capítulo que descargaste donde cayó se va a la carpeta de su
   temporada, y la carpeta se crea si no existe. Antes de mover se enseña la simulación entera:
   qué se movería y, sobre todo, qué no y por qué. **Solo se mueve lo ya curado** — un fichero en

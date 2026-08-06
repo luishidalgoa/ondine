@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Ondine.Localizacion;
 using Ondine.Reindex;
@@ -53,6 +54,55 @@ public sealed class EpisodioVista
     }
 
     public Visibility EsEspecial => Ep.Especial ? Visibility.Visible : Visibility.Collapsed;
+
+    // ── ¿lo tengo? ──
+    // Null = no hay carpeta analizada detrás, así que no se dice nada. Callar es la
+    // respuesta correcta ahí: un distintivo que dijera «te falta» sin haber mirado
+    // ningún disco sería una afirmación inventada.
+
+    /// <summary>Lo que hay de este episodio, o <c>null</c> si no se ha analizado nada.</summary>
+    public CoberturaCatalogo.Tenencia? Que { get; init; }
+
+    public Visibility TenenciaVisible => Que is null ? Visibility.Collapsed : Visibility.Visible;
+
+    public string TenenciaEtiqueta => Que?.Que switch
+    {
+        CoberturaCatalogo.Tengo.Entero => Textos.Instancia.CatalogoTengo,
+        CoberturaCatalogo.Tengo.AMedias => Textos.Instancia.CatalogoTengoAMedias,
+        _ => Textos.Instancia.CatalogoNoTengo,
+    };
+
+    // Los mismos tres colores que el semáforo de Organizar: verde lo que está,
+    // ámbar lo que está a medias y apagado lo que no. Reaprender un código de
+    // colores por pantalla es trabajo que se le carga a quien mira.
+    public Brush TenenciaColor => Pincel(Que?.Que switch
+    {
+        CoberturaCatalogo.Tengo.Entero => "OrgOk",
+        CoberturaCatalogo.Tengo.AMedias => "OrgWarn",
+        _ => "Neutral500",
+    });
+
+    public Brush TenenciaFondo => Pincel(Que?.Que switch
+    {
+        CoberturaCatalogo.Tengo.Entero => "OrgOkBg",
+        CoberturaCatalogo.Tengo.AMedias => "OrgWarnBg",
+        _ => "Field",
+    });
+
+    /// <summary>El fichero al que apunta el distintivo, o vacío si no hay ninguno.</summary>
+    public string Fichero => Que is { Ficheros.Count: > 0 } q ? q.Ficheros[0] : "";
+
+    /// <summary>Mano solo si hay a dónde ir: lo que parece pulsable tiene que serlo.</summary>
+    public Cursor TenenciaCursor => Fichero.Length > 0 ? Cursors.Hand : Cursors.Arrow;
+
+    public string TenenciaTip => Que is not { Ficheros.Count: > 0 } q
+        ? Textos.Instancia.CatalogoNoTengoTip
+        : q.Ficheros.Count == 1
+            ? string.Format(Textos.Instancia.CatalogoTengoTip, q.Ficheros[0])
+            : string.Format(Textos.Instancia.CatalogoTengoTipVarios, q.Ficheros[0], q.Ficheros.Count);
+
+    private static Brush Pincel(string clave) =>
+        Application.Current?.TryFindResource(clave) as Brush ?? Brushes.Gray;
 }
 
 /// <summary>
@@ -71,11 +121,31 @@ public partial class CatalogoWindow : Window
     public CatalogEpisode? Elegido { get; private set; }
     public string? SegElegido { get; private set; }
 
-    public CatalogoWindow(ReindexCatalog cat, string? consultaInicial = null, bool modoElegir = false)
+    /// <summary>
+    /// Qué hay de cada episodio en la carpeta analizada. Vacío si se abrió sin
+    /// carpeta detrás: entonces el explorador no dice nada sobre tenencia.
+    /// </summary>
+    private readonly Dictionary<int, CoberturaCatalogo.Tenencia> _tenencia = new();
+
+    /// <param name="loQueHay">
+    /// Lo identificado en la carpeta, para poder decir de cada episodio si lo
+    /// tienes y dónde. Opcional: en modo elegir, o al abrirlo sin haber
+    /// analizado, no hay nada que comparar.
+    /// </param>
+    public CatalogoWindow(ReindexCatalog cat, string? consultaInicial = null, bool modoElegir = false,
+                          IReadOnlyList<ReindexResolution>? loQueHay = null)
     {
         InitializeComponent();
         _cat = cat;
         _modoElegir = modoElegir;
+
+        if (loQueHay is { Count: > 0 })
+        {
+            _tenencia = CoberturaCatalogo.PorEpisodio(cat, loQueHay);
+            chkSoloFaltan.Visibility = Visibility.Visible;
+            chkSoloFaltan.Checked += (_, _) => Refrescar();
+            chkSoloFaltan.Unchecked += (_, _) => Refrescar();
+        }
 
         if (modoElegir)
         {
@@ -300,16 +370,54 @@ public partial class CatalogoWindow : Window
         DialogResult = true;
     }
 
+    /// <summary>
+    /// Enseña el fichero en el explorador de Windows, seleccionado. Es lo que
+    /// convierte el distintivo en algo que sirve: saber que lo tienes sin saber
+    /// dónde deja el trabajo a medias.
+    /// </summary>
+    private void OnIrAlFichero(object sender, RoutedEventArgs e)
+    {
+        // No se propaga a la fila: pulsar el distintivo es una acción suya, y en
+        // modo elegir la fila responde al doble clic escogiendo el episodio.
+        e.Handled = true;
+
+        if (sender is not Button { Tag: string ruta } || string.IsNullOrEmpty(ruta)) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                "explorer.exe", $"/select,\"{ruta}\"") { UseShellExecute = true });
+        }
+        catch { /* si el explorador no arranca, no hay nada que decir aquí */ }
+    }
+
     private void Refrescar()
     {
         var encontrados = CatalogSearch.Filtrar(_cat, txtBuscar.Text);
-        lista.ItemsSource = encontrados.Select(e => new EpisodioVista { Ep = e }).ToList();
-        lblCuenta.Text = encontrados.Count == _cat.Episodios.Count
-            ? string.Format(encontrados.Count == 1
-                                ? Textos.Instancia.CatalogoCuentaEpisodioUno
-                                : Textos.Instancia.CatalogoCuentaEpisodios,
-                            encontrados.Count)
-            : string.Format(Textos.Instancia.CatalogoCuentaFiltrada,
-                            encontrados.Count, _cat.Episodios.Count);
+
+        // El filtro se aplica DESPUÉS del buscador: los dos acotan, y así se puede
+        // buscar «playa» y quedarse solo con las que faltan.
+        if (chkSoloFaltan.IsChecked == true)
+            encontrados = encontrados
+                .Where(e => !_tenencia.TryGetValue(e.Num, out var t)
+                            || t.Que != CoberturaCatalogo.Tengo.Entero)
+                .ToList();
+
+        lista.ItemsSource = encontrados.Select(e => new EpisodioVista
+        {
+            Ep = e,
+            Que = _tenencia.Count == 0 ? null
+                : _tenencia.TryGetValue(e.Num, out var t) ? t
+                : new CoberturaCatalogo.Tenencia(CoberturaCatalogo.Tengo.Nada, Array.Empty<string>()),
+        }).ToList();
+
+        lblCuenta.Text = chkSoloFaltan.IsChecked == true
+            ? string.Format(Textos.Instancia.CatalogoCuentaFaltan, encontrados.Count, _cat.Episodios.Count)
+            : encontrados.Count == _cat.Episodios.Count
+                ? string.Format(encontrados.Count == 1
+                                    ? Textos.Instancia.CatalogoCuentaEpisodioUno
+                                    : Textos.Instancia.CatalogoCuentaEpisodios,
+                                encontrados.Count)
+                : string.Format(Textos.Instancia.CatalogoCuentaFiltrada,
+                                encontrados.Count, _cat.Episodios.Count);
     }
 }

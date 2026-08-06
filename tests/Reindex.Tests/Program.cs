@@ -72,6 +72,7 @@ public static class Program
         Ondine.Reindex.Tests.DestinoDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.PlanDeReordenadoTests.Todas();
         Ondine.Reindex.Tests.MudanzaDeTemporadaTests.Todas();
+        Ondine.Reindex.Tests.TenenciaTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2917,7 +2918,7 @@ public static class Program
     }
 
     /// <summary>Atajo de los tests: deja la resolución apuntando a un episodio del catálogo.</summary>
-    private static ReindexResolution Con(this ReindexResolution r, ReindexCatalog cat, int num)
+    internal static ReindexResolution Con(this ReindexResolution r, ReindexCatalog cat, int num)
     {
         r.Episodio = cat.Regulares.Concat(cat.Especiales).First(e => e.Num == num);
         r.Confianza = ReindexConfianza.Alta;

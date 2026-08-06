@@ -661,7 +661,11 @@ public partial class OrganizarView : UserControl
             Aviso(Textos.Instancia.OrganizarElegirCatalogoPrimero);
             return;
         }
-        new CatalogoWindow(_catalogoCargado) { Owner = Window.GetWindow(this) }.Show();
+        // Se le pasa lo analizado para que cada episodio pueda decir si lo tienes y
+        // en qué fichero. Si no hay nada analizado va vacío y el explorador calla:
+        // decir «te falta» sin haber mirado ningún disco sería inventárselo.
+        new CatalogoWindow(_catalogoCargado, loQueHay: _filas.Select(f => f.Res).ToList())
+        { Owner = Window.GetWindow(this) }.Show();
     }
 
     private void ImportarCatalogo()
