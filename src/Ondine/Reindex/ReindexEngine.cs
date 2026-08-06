@@ -662,21 +662,30 @@ public static class ReindexEngine
         var observaciones = resoluciones
             .Where(r => r.Confianza == ReindexConfianza.Alta && r.Episodio != null)
             .Where(r => r.Archivo.Duracion is { } d && d > TimeSpan.Zero)
-            .Select(r => (r.Archivo.Duracion!.Value, Math.Max(1, r.Episodio!.TitulosSalida.Count)))
+            .Select(r => (r.Archivo.Duracion!.Value,
+                          Math.Max(1, r.Episodio!.TitulosSalida.Count),
+                          Temporada(r)))
             .ToList();
 
-        var unidad = MedidaDelCapitulo.Unidad(observaciones);
-        if (unidad is null) return;   // carpeta pequeña: no hay vara de la que fiarse
+        // Una vara POR TEMPORADA, con la global de respaldo. Una serie larga cambia
+        // de formato: medido en Doraemon (1979), una historia dura ~6:12 en 1979,
+        // ~12:12 en 1986 y ~23:35 en 1991. Con una sola mediana se medía 1986 con la
+        // vara de 1979 y salían marcados 67 ficheros que eran normales para su año.
+        var varas = MedidaDelCapitulo.UnidadPorTemporada(observaciones);
+        if (varas.Global is null) return;   // carpeta pequeña: no hay vara de la que fiarse
 
         // Se reparte a TODAS las filas, no solo a las que se marcan: la columna de
         // duración la enseña para que se pueda juzgar cualquier fila, no solo las malas.
-        foreach (var r in resoluciones) r.UnidadDeHistoria = unidad;
+        foreach (var r in resoluciones) r.UnidadDeHistoria = varas.De(Temporada(r));
 
         foreach (var r in resoluciones)
         {
             if (r.Episodio == null || r.Confianza != ReindexConfianza.Alta) continue;
             if (r.Archivo.SubSegmento != null) continue;   // ya se dijo qué trozo es
             if (r.Archivo.Duracion is not { } dura) continue;
+
+            var unidad = varas.De(Temporada(r));
+            if (unidad is null) continue;
 
             int promete = Math.Max(1, r.Episodio.TitulosSalida.Count);
             if (MedidaDelCapitulo.Cuadra(dura, promete, unidad)) continue;
@@ -692,6 +701,14 @@ public static class ReindexEngine
                 Reloj(dura), r.Episodio.Num, promete, Reloj(unidad.Value * promete));
         }
     }
+
+    /// <summary>
+    /// Con qué temporada se mide esta fila. Manda la del CATÁLOGO: es el año de
+    /// emisión, que es lo que determina el formato. La de la carpeta es donde
+    /// alguien la puso, que puede estar mal — y es justo lo que se está corrigiendo.
+    /// </summary>
+    private static int? Temporada(ReindexResolution r) =>
+        r.Episodio?.Temporada ?? r.Archivo.Temporada;
 
     /// <summary>
     /// Por encima de esto el reloj deja de opinar. Un episodio con cinco historias ya es

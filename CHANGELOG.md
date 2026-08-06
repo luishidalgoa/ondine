@@ -90,6 +90,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **El aviso de duración ya no marca capítulos normales.** Aprendía cuánto dura una historia con
+  UNA sola medida para toda la serie, y las series largas cambian de formato: en Doraemon (1979)
+  una historia dura ~6:12 en 1979, ~12:12 en 1986 y ~23:35 en 1991. Con una vara única se medía
+  1986 con la de 1979 y salían en ámbar decenas de capítulos que eran perfectamente normales para
+  su año. Ahora cada temporada se mide con la suya, y la global solo se usa donde no hay muestras
+  suficientes. El aviso sigue saltando donde importa: un fichero del doble de largo que su año se
+  marca igual.
+
 - **«Analizar» ya no descarga tu biblioteca de la nube sin avisar.** Leía las pistas de cada
   vídeo con ffprobe, y abrir un fichero que solo está en OneDrive obliga a Windows a
   **descargarlo entero**. Sobre una carpeta en la nube, pulsar Analizar se convertía en bajar
