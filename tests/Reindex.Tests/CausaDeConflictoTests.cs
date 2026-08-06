@@ -102,3 +102,78 @@ public static class CausaDeConflictoTests
             "de una causa que no se decide en grupo no hay compañeras que ofrecer");
     }
 }
+
+/// <summary>
+/// Confirmar en bloque los especiales que la app da por seguros.
+///
+/// <para>
+/// Un especial nace en «revisar» a propósito: solo una persona lo sube a
+/// seguro. Pero cuando dieciséis casan al 1,00 contra dieciséis especiales
+/// distintos, confirmarlos de uno en uno no es revisar, es teclear.
+/// </para>
+/// <para>
+/// Es una acción DISTINTA de «dejar igual las otras»: allí la respuesta es «no
+/// toques esto», y aquí es «acepta lo que propones». Compartir botón las
+/// mezclaría, y son opuestas.
+/// </para>
+/// </summary>
+public static class ConfirmarEspecialesTests
+{
+    private static readonly ReindexCatalog Cat = ReindexCatalog.Parse("""
+    {
+      "esquema": "reindex/1.0", "serie": "Serie",
+      "episodios": [
+        { "num": 9001, "especial": true, "titulos": { "es": ["Uno"] } },
+        { "num": 9002, "especial": true, "titulos": { "es": ["Dos"] } },
+        { "num": 9003, "especial": true, "titulos": { "es": ["Tres"] } }
+      ]
+    }
+    """);
+
+    private static ReindexResolution Esp(int num, double score) => new()
+    {
+        Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", $"S00E{num - 9000}.avi"), "T1"),
+        Estado = ReindexEstado.Especial,
+        Confianza = ReindexConfianza.Revisar,
+        Episodio = Cat.PorNum(num),
+        Score = score,
+    };
+
+    public static void Todas()
+    {
+        Program.Seccion("Confirmar especiales en bloque");
+
+        var seguro1 = Esp(9001, 1.00);
+        var seguro2 = Esp(9002, 0.98);
+        var flojo   = Esp(9003, 0.72);
+
+        Program.Eq(CausaDeConflicto.Causa.EspecialSeguro, CausaDeConflicto.DeQueVa(seguro1),
+            "un especial que casa al 1,00 es «seguro»");
+        Program.Assert(CausaDeConflicto.DeQueVa(flojo) != CausaDeConflicto.Causa.EspecialSeguro,
+            "y uno que casa flojo NO: ese hay que mirarlo");
+
+        // «Dejar igual las otras» y «confirmar las otras» son acciones opuestas y
+        // no comparten grupo: una dice «no toques» y la otra «acepta».
+        Program.Assert(!CausaDeConflicto.SeDecideEnGrupo(CausaDeConflicto.Causa.EspecialSeguro),
+            "un especial seguro no entra en «dejarlos como están»");
+        Program.Assert(CausaDeConflicto.SeConfirmaEnGrupo(CausaDeConflicto.Causa.EspecialSeguro),
+            "pero sí en «confirmarlos»");
+        Program.Assert(!CausaDeConflicto.SeConfirmaEnGrupo(CausaDeConflicto.Causa.EspecialSinSitio),
+            "y lo que no casa con nada no se puede confirmar: no hay qué aceptar");
+        Program.Assert(!CausaDeConflicto.SeConfirmaEnGrupo(CausaDeConflicto.Causa.DudaDeCual),
+            "ni una duda normal: cada una acaba en un episodio distinto");
+
+        var lote = new[] { seguro1, seguro2, flojo };
+        Program.Eq(1, CausaDeConflicto.CompanerasParaConfirmar(lote, seguro1).Count,
+            "solo se agrupa con el otro seguro, no con el flojo");
+        Program.Eq(0, CausaDeConflicto.CompanerasParaConfirmar(lote, flojo).Count,
+            "el flojo no ofrece grupo");
+
+        // Un especial sin episodio no es confirmable aunque sea especial: no hay
+        // nada que aceptar.
+        var sinEp = Esp(9001, 1.00);
+        sinEp.Episodio = null;
+        Program.Assert(CausaDeConflicto.DeQueVa(sinEp) != CausaDeConflicto.Causa.EspecialSeguro,
+            "sin episodio propuesto no hay nada que confirmar");
+    }
+}

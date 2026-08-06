@@ -36,6 +36,20 @@ public partial class ComplementosPanel : UserControl
         public string? Miniatura { get; init; }
         public TimeSpan? Duracion { get; init; }
 
+        /// <summary>
+        /// Lo que enseña el ToolTip: el título entero y, debajo, con qué casó.
+        ///
+        /// <para>
+        /// El título de la fila se recorta con puntos suspensivos en cuanto el
+        /// panel se estrecha, y ahí se pierde lo único que identifica el vídeo.
+        /// Al pasar por encima vuelve entero, con el veredicto al lado para no
+        /// tener que cruzar la vista hasta el distintivo.
+        /// </para>
+        /// </summary>
+        public string TituloEntero => string.IsNullOrWhiteSpace(Detalle)
+            ? Titulo
+            : $"{Titulo}\n{Detalle}  ·  {Veredicto}";
+
         public string Veredicto { get; set; } = "";
         public string Detalle { get; set; } = "";
         public Brush ColorFondo { get; set; } = Brushes.Transparent;

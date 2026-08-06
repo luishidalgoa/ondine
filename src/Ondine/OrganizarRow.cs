@@ -109,6 +109,26 @@ public sealed class OrganizarRow : INotifyPropertyChanged
         ? System.Windows.Visibility.Visible
         : System.Windows.Visibility.Collapsed;
 
+    private int _confirmables;
+    /// <summary>Cuántas OTRAS filas se pueden confirmar a la vez que esta.</summary>
+    public int Confirmables
+    {
+        get => _confirmables;
+        set
+        {
+            if (_confirmables == value) return;
+            _confirmables = value;
+            N(); N(nameof(ConfirmarIgualesTexto)); N(nameof(VerConfirmarIguales));
+        }
+    }
+
+    public string ConfirmarIgualesTexto =>
+        string.Format(Textos.Instancia.OrganizarConfirmarIguales, Confirmables + 1);
+
+    public System.Windows.Visibility VerConfirmarIguales => Confirmables > 0
+        ? System.Windows.Visibility.Visible
+        : System.Windows.Visibility.Collapsed;
+
     private bool _apartada;
     /// <summary>
     /// Está en la cola. No cambia lo que la app propone: solo la señala, para poder volver

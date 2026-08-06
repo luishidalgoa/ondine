@@ -84,16 +84,11 @@ public static class CotejoDeLista
             if (!cubierto.TryGetValue(ep.Num, out var set))
                 cubierto[ep.Num] = set = new HashSet<int>();
 
-            int cuantos = Math.Max(1, ep.TitulosSalida.Count);
-            var seg = r.Archivo.SubSegmento;
-            if (string.IsNullOrEmpty(seg))
-                for (int i = 0; i < cuantos; i++) set.Add(i);
-            else
-                foreach (var c in seg)
-                {
-                    int i = char.ToLowerInvariant(c) - 'a';
-                    if (i >= 0 && i < cuantos) set.Add(i);
-                }
+            // La MISMA cuenta que usa el informe de «qué falta» y el distintivo del
+            // explorador. Tenerla repetida aquí era tener tres criterios para lo
+            // mismo, y por eso este cotejo decía «ya lo tienes» de un episodio del
+            // que solo había una de sus dos historias.
+            set.UnionWith(CoberturaCatalogo.HistoriasQueCubre(r, ep));
         }
 
         var indice = new IndiceTitulos(catalogo);
@@ -116,8 +111,14 @@ public static class CotejoDeLista
 
             CatalogEpisode? ep = null;
             double mejor = 0;
-            var casados = new List<(int Historia, double Score)>();
             var huerfanos = new List<string>();
+
+            // Lo que el vídeo TRAE, cada cosa con el episodio al que pertenece.
+            // Puede haber más de un episodio: un vídeo de media hora junta a menudo
+            // dos entradas del catálogo, y antes solo se miraba la que mejor casaba
+            // -así que la otra no aparecía ni entre lo que tienes ni entre lo que
+            // falta, y el vídeo se daba por completo teniendo la mitad-.
+            var trae = new List<(CatalogEpisode Ep, int Historia)>();
 
             foreach (var trozo in trozos)
             {
@@ -136,11 +137,12 @@ public static class CotejoDeLista
                     continue;
                 }
 
-                // El episodio lo fija el trozo que mejor casa. Si dos trozos
-                // apuntan a episodios distintos manda el más seguro, y el otro
-                // se cuenta como no reconocido: un vídeo es un episodio.
+                // El número que se ENSEÑA sigue siendo el del trozo que mejor casa:
+                // es el que sitúa el vídeo. Pero ya no descarta a los demás.
                 if (ep is null || score > mejor) { ep = suyo; mejor = score; }
-                casados.Add((QueHistoria(suyo, trozo), score));
+
+                int cual = QueHistoria(suyo, trozo);
+                trae.Add((suyo, cual >= 0 ? cual : 0));
             }
 
             if (ep is null)
@@ -149,18 +151,29 @@ public static class CotejoDeLista
                 continue;
             }
 
-            int historias = Math.Max(1, ep.TitulosSalida.Count);
-            var tengo = cubierto.TryGetValue(ep.Num, out var set2) ? set2 : new HashSet<int>();
-
-            var indices = Enumerable.Range(0, historias).Where(i => !tengo.Contains(i)).ToList();
-            var faltan = indices.Select(i => ((char)('a' + i)).ToString()).ToList();
-            var nombres = indices
-                .Where(i => i < ep.TitulosSalida.Count)
-                .Select(i => ep.TitulosSalida[i])
+            // Se pregunta por CADA cosa que trae, en su episodio. Un mismo trozo
+            // repetido no cuenta dos veces.
+            var piezas = trae.Distinct().ToList();
+            var quedan = piezas
+                .Where(p => !(cubierto.TryGetValue(p.Ep.Num, out var s) && s.Contains(p.Historia)))
                 .ToList();
 
-            var estado = faltan.Count == 0 ? Estado.YaEsta
-                       : faltan.Count == historias ? Estado.Falta
+            var nombres = quedan
+                .Select(p => p.Historia < p.Ep.TitulosSalida.Count
+                    ? p.Ep.TitulosSalida[p.Historia]
+                    : p.Ep.TituloCompleto)
+                .Distinct()
+                .ToList();
+
+            // Las letras solo tienen sentido dentro de UN episodio; con varios, un
+            // «te falta la b» no dice de cuál. Por eso lo que manda son los nombres.
+            var faltan = quedan
+                .Where(p => p.Ep.Num == ep.Num && p.Ep.TitulosSalida.Count > 1)
+                .Select(p => ((char)('a' + p.Historia)).ToString())
+                .ToList();
+
+            var estado = quedan.Count == 0 ? Estado.YaEsta
+                       : quedan.Count == piezas.Count ? Estado.Falta
                        : Estado.AMedias;
 
             // Un trozo que el catálogo no reconoce es también algo que no tienes:
@@ -168,11 +181,7 @@ public static class CotejoDeLista
             // completo es justo el error que se quiere evitar.
             if (huerfanos.Count > 0 && estado == Estado.YaEsta) estado = Estado.AMedias;
 
-            // Con una sola historia no hay «a» que nombrar: o está o no está, y
-            // enseñar una letra donde no hay partes confunde más que informa.
-            veredictos.Add(new(entero, ep, estado, mejor,
-                historias > 1 ? faltan : vacio, huerfanos,
-                historias > 1 ? nombres : vacio));
+            veredictos.Add(new(entero, ep, estado, mejor, faltan, huerfanos, nombres));
         }
 
         return veredictos;

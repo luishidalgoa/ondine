@@ -34,6 +34,12 @@ public static class CausaDeConflicto
         TraeDosEpisodios,
         /// <summary>Hay candidatos y hay que elegir cuál.</summary>
         DudaDeCual,
+        /// <summary>
+        /// Un especial que casa con UNO del catálogo sin margen de duda. Nace en
+        /// «revisar» como todos los especiales, pero lo único que le falta es que
+        /// alguien diga que sí.
+        /// </summary>
+        EspecialSeguro,
     }
 
     /// <summary>De qué va esta fila.</summary>
@@ -47,6 +53,10 @@ public static class CausaDeConflicto
         // cualquier duda de identificación porque eso no se contesta: se parte.
         if (r.TraeDosEpisodios) return Causa.TraeDosEpisodios;
         if (r.EsDuplicado) return Causa.DosFicherosElMismoEpisodio;
+
+        // Un especial que casó sin margen de duda: lo único que le falta es un sí.
+        if (r.Estado == ReindexEstado.Especial && r.Episodio is not null && r.Score >= SinMargenDeDuda)
+            return Causa.EspecialSeguro;
 
         if (r.Episodio is null && r.Alternativas.Count == 0)
             return r.Archivo.IndiceEspecial is not null
@@ -69,6 +79,37 @@ public static class CausaDeConflicto
     /// </summary>
     public static bool SeDecideEnGrupo(Causa c) =>
         c is Causa.EspecialSinSitio or Causa.SinCandidatos;
+
+    /// <summary>
+    /// A partir de aquí el parecido no deja margen: es ese episodio o el catálogo
+    /// está mal escrito. Por debajo hay que mirar, y por eso no se agrupa.
+    /// </summary>
+    public const double SinMargenDeDuda = 0.95;
+
+    /// <summary>
+    /// ¿Se pueden confirmar de una?
+    ///
+    /// <para>
+    /// Es la acción CONTRARIA a <see cref="SeDecideEnGrupo"/>: allí la respuesta
+    /// común es «no toques esto» y aquí es «acepta lo que propones». Comparten
+    /// forma y no significado, así que no comparten botón — mezclarlas haría que
+    /// un clic hiciera lo opuesto de lo que se leyó.
+    /// </para>
+    /// <para>
+    /// Solo los especiales seguros. Una duda normal acaba en un episodio distinto
+    /// por fila, y aceptarlas todas de un clic sería firmar sin leer.
+    /// </para>
+    /// </summary>
+    public static bool SeConfirmaEnGrupo(Causa c) => c is Causa.EspecialSeguro;
+
+    /// <summary>Las otras filas que se pueden confirmar junto a esta.</summary>
+    public static List<ReindexResolution> CompanerasParaConfirmar(
+        IEnumerable<ReindexResolution> lote, ReindexResolution cual)
+    {
+        var causa = DeQueVa(cual);
+        if (!SeConfirmaEnGrupo(causa)) return new();
+        return lote.Where(r => !ReferenceEquals(r, cual) && DeQueVa(r) == causa).ToList();
+    }
 
     /// <summary>
     /// Las otras filas del lote que tienen la MISMA causa que <paramref name="cual"/>,

@@ -79,6 +79,9 @@ public static class Program
         Ondine.Reindex.Tests.DejarComoEstaLoteTests.Todas();
         Ondine.Reindex.Tests.VaraPorTemporadaTests.Todas();
         Ondine.Reindex.Tests.RelojYOmitirTests.Todas();
+        Ondine.Reindex.Tests.HistoriasQueCubreTests.Todas();
+        Ondine.Reindex.Tests.ConfirmarEspecialesTests.Todas();
+        Ondine.Reindex.Tests.CotejoDeDosEpisodiosTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;

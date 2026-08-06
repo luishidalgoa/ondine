@@ -50,6 +50,80 @@ public static class CoberturaCatalogo
                 SegmentosTotales, SegmentosPresentes, SegmentosQueFaltan);
     }
 
+    /// <summary>
+    /// Qué historias de <paramref name="ep"/> tapa de verdad este fichero.
+    ///
+    /// <para>
+    /// La regla de siempre —<b>sin letra de segmento, tapa el episodio entero</b>—
+    /// es la buena para una biblioteca sin partir, y sigue siendo el respaldo.
+    /// Pero se rompía en el caso más común: <c>S1986E985 - El controlador del
+    /// mar</c> cuando el 985 trae dos historias. Sin letra se daba por completo, y
+    /// entonces el cotejo de una lista de fuera contestaba «ya lo tienes» sobre un
+    /// vídeo que traía justo la historia que falta.
+    /// </para>
+    /// <para>
+    /// El nombre ya lo dice: nombra una de las dos. Así que <b>si el título del
+    /// fichero se parece a algunas de las historias y no al episodio entero, tapa
+    /// solo esas</b>. Y si no se parece a ninguna no se deduce nada: convertir un
+    /// fichero completo en «te falta la mitad» es el error contrario, y también
+    /// cuesta —te vuelves a bajar lo que ya tienes—.
+    /// </para>
+    /// <para>
+    /// Está aquí y no repartido porque la misma cuenta la hacían tres sitios: el
+    /// informe de «qué falta», el distintivo del explorador y el cotejo de listas.
+    /// Tres copias de una regla son tres criterios en cuanto alguien toca una.
+    /// </para>
+    /// </summary>
+    public static HashSet<int> HistoriasQueCubre(ReindexResolution r, CatalogEpisode ep)
+    {
+        int cuantas = Math.Max(1, ep.TitulosSalida.Count);
+        var todas = new HashSet<int>(Enumerable.Range(0, cuantas));
+
+        // La letra explícita manda: quien la escribió sabe más que cualquier
+        // deducción sacada del título.
+        var seg = r.Archivo.SubSegmento;
+        if (!string.IsNullOrEmpty(seg))
+        {
+            var suyas = new HashSet<int>();
+            foreach (var c in seg)
+            {
+                int i = char.ToLowerInvariant(c) - 'a';
+                if (i >= 0 && i < cuantas) suyas.Add(i);
+            }
+            return suyas.Count > 0 ? suyas : todas;
+        }
+
+        if (cuantas == 1) return todas;
+
+        var titulo = r.Archivo.TituloNombre;
+        if (string.IsNullOrWhiteSpace(titulo)) return todas;
+
+        // ¿A qué historias se parece el nombre? Se comparan sus trozos contra cada
+        // historia, así que «A + C» tapa la a y la c, y «A + B» las tapa las dos
+        // —que es como se resuelve solo el caso de la biblioteca sin partir—.
+        //
+        // Aquí NO se pregunta antes «¿se parece al episodio entero?». Se probó, y
+        // con historias de nombre parecido el conjunto pasaba el umbral por pura
+        // acumulación: «Uno de tres + Tres de tres» da 0,80 contra «Uno de tres +
+        // Dos de tres + Tres de tres», y un fichero con dos de las tres se daba por
+        // completo. Contar cuáles nombra es directo y no depende de esa suma.
+        var nombradas = new HashSet<int>();
+        for (int i = 0; i < cuantas && i < ep.TitulosSalida.Count; i++)
+            if (TitleMatch.SimRaw(titulo, ep.TitulosSalida[i]) >= TitleMatch.UmbralSegmento ||
+                Trozos(titulo).Any(t => TitleMatch.SimRaw(t, ep.TitulosSalida[i]) >= TitleMatch.UmbralSegmento))
+                nombradas.Add(i);
+
+        // Nada reconocible en el nombre: no se deduce, se respalda en la regla vieja.
+        return nombradas.Count > 0 ? nombradas : todas;
+    }
+
+    // El MISMO separador de historias que usan el motor y el cotejo de listas.
+    private static readonly System.Text.RegularExpressions.Regex RxTrozos =
+        new(@"\s*[┃|+]\s*|\s+[-–—]\s+");
+
+    private static IEnumerable<string> Trozos(string titulo) =>
+        RxTrozos.Split(titulo).Select(t => t.Trim()).Where(t => t.Length > 0);
+
     /// <summary>Qué hay de un episodio: nada, a medias o entero.</summary>
     public enum Tengo { Nada, AMedias, Entero }
 
@@ -90,16 +164,7 @@ public static class CoberturaCatalogo
                 ficheros[ep.Num] = new List<string>();
             }
 
-            int cuantos = Math.Max(1, ep.TitulosSalida.Count);
-            var seg = r.Archivo.SubSegmento;
-            if (string.IsNullOrEmpty(seg))
-                for (int i = 0; i < cuantos; i++) set.Add(i);
-            else
-                foreach (var c in seg)
-                {
-                    int i = char.ToLowerInvariant(c) - 'a';
-                    if (i >= 0 && i < cuantos) set.Add(i);
-                }
+            set.UnionWith(HistoriasQueCubre(r, ep));
 
             if (!string.IsNullOrEmpty(r.Archivo.Path)) ficheros[ep.Num].Add(r.Archivo.Path);
         }
@@ -157,16 +222,7 @@ public static class CoberturaCatalogo
             if (!cubierto.TryGetValue(ep.Num, out var set))
                 cubierto[ep.Num] = set = new HashSet<int>();
 
-            int cuantos = Math.Max(1, ep.TitulosSalida.Count);
-            var seg = r.Archivo.SubSegmento;
-            if (string.IsNullOrEmpty(seg))
-                for (int i = 0; i < cuantos; i++) set.Add(i);
-            else
-                foreach (var c in seg)
-                {
-                    int i = char.ToLowerInvariant(c) - 'a';
-                    if (i >= 0 && i < cuantos) set.Add(i);
-                }
+            set.UnionWith(HistoriasQueCubre(r, ep));
         }
 
         var temporadasConAlgo = resoluciones
