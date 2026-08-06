@@ -42,12 +42,19 @@ es un acuerdo de buena voluntad: está verificado.
   fichero de once minutos al que se le iba a poner el nombre de dos episodios deja de darse por
   bueno. Los especiales largos no se marcan.
 - **Complementos.** Ondine puede ampliarse con programas de fuera que traen o consultan
-  material: se instalan copiando una carpeta y se ven en *Complementos*, con su propia pantalla.
-  Cada uno declara dónde aplica —toda la app, o solo Organizar, Comprimir o Recortes— y los que
-  no valen aparecen igualmente con el motivo, en vez de desaparecer sin explicación. Se incluye
-  uno de YouTube que lee una lista de reproducción y **la coteja con tu catálogo**, diciendo de
-  cada episodio si ya lo tienes, si te falta o si le falta una de sus dos historias. Cómo
-  escribir uno: [`docs/complementos.md`](docs/complementos.md).
+  material. Se instalan copiando una carpeta y viven en un **panel lateral** que se abre junto a
+  lo que estés mirando —se estira, se encoge y se cierra— en vez de taparlo con otra ventana:
+  la lista se coteja contra el catálogo que tienes delante, así que esconderlo no tenía sentido.
+  Cada complemento declara dónde aplica —toda la app, o solo Organizar, Comprimir o Recortes— y
+  los que no valen aparecen igualmente con el motivo, en vez de desaparecer sin explicación.
+  Cómo escribir uno: [`docs/complementos.md`](docs/complementos.md).
+- **Un complemento de YouTube que dice qué te falta de una lista.** Lee una lista de
+  reproducción pública y la compara con tu catálogo, episodio por episodio: ya lo tienes, te
+  falta, o te falta una de sus dos historias. Y **encuentra la segunda historia que el título se
+  calla**: muchos vídeos se titulan con un episodio y en realidad traen dos, con el segundo solo
+  en la descripción. Sin eso, media cinta se daba por completa y la historia que faltaba no la
+  reclamaba nadie. No descarga: lee.
+- **El menú superior se recoge en una hamburguesa** cuando la ventana no da para los cuatro.
 
 ## [1.6.1] - 2026-08-05
 
