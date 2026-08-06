@@ -97,6 +97,7 @@ public partial class OrganizarView : UserControl
             new FaltantesWindow(_catalogoCargado, _filas.Select(f => f.Res).ToList())
             { Owner = Window.GetWindow(this) }.ShowDialog();
         };
+        btnReordenar.Click += (_, _) => Reordenar();
         btnDeshacer.Click += (_, _) => DeshacerUltimoLote();
         btnDeshacerBanda.Click += (_, _) => DeshacerUltimoLote();
         btnMemoria.Click += (_, _) => AbrirMemoria();
@@ -1084,6 +1085,10 @@ public partial class OrganizarView : UserControl
         // Comparar con el catálogo solo tiene sentido cuando hay algo analizado.
         btnQueFalta.IsEnabled = _catalogoCargado != null && _filas.Count > 0;
 
+        // Ordenar por temporadas pide lo mismo: sin catálogo no se sabe de qué
+        // temporada es cada fichero, y sin análisis no hay nada que ordenar.
+        btnReordenar.IsEnabled = _catalogoCargado != null && _filas.Count > 0;
+
         int partibles = FilasPartibles().Count;
         btnPartirSegmentos.IsEnabled = partibles > 0;
         btnPartirSegmentos.Content = partibles > 0
@@ -2001,6 +2006,32 @@ public partial class OrganizarView : UserControl
             : string.Format(Textos.Instancia.OrganizarAplicadoConFallos, hechos, extra, fallos);
         bannerAplicado.Visibility = Visibility.Visible;
         Escribir(lblBannerAplicado.Text);
+    }
+
+    /// <summary>
+    /// Lleva cada capítulo curado a la carpeta de su temporada.
+    ///
+    /// <para>
+    /// Se abre la simulación y se decide allí. Al volver, si algo se movió hay
+    /// que re-analizar: la tabla que hay en pantalla apunta a rutas que ya no
+    /// existen, y dejarla así convierte cada botón de la fila —reproducir,
+    /// abrir carpeta, aplicar— en un error a la espera.
+    /// </para>
+    /// </summary>
+    private void Reordenar()
+    {
+        var carpeta = txtCarpeta.Text?.Trim() ?? "";
+        if (_catalogoCargado == null || _filas.Count == 0 || !Directory.Exists(carpeta))
+        {
+            Escribir(Textos.Instancia.ReordenarSinCatalogo);
+            return;
+        }
+
+        var v = new ReordenarWindow(_filas.Select(f => f.Res).ToList(), carpeta, SettingsStore.Load())
+        { Owner = Window.GetWindow(this) };
+        v.ShowDialog();
+
+        if (v.MovioAlgo) Simular();
     }
 
     private void RefrescarUltimoLote()

@@ -797,6 +797,12 @@
                 Content="{i:T OrganizarQueFalta}"
                 ToolTip="{i:T OrganizarQueFaltaAyuda}"/>
 
+        <!-- Un capítulo descargado cae donde cae. Esto lo lleva a la carpeta de su temporada,
+             creándola si hace falta, y SOLO si ya está curado: un conflicto no se mueve. -->
+        <Button x:Name="btnReordenar" Style="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"
+                Content="{i:T OrganizarReordenar}"
+                ToolTip="{i:T OrganizarReordenarAyuda}"/>
+
         <!-- Un fichero con 2-3 mini-historias se puede dejar en un fichero por historia, con la
              numeración por segmento («1a», «1b», «1c»). El corte va sin recodificar. -->
         <Button x:Name="btnPartirSegmentos" Style="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"

@@ -28,6 +28,19 @@ public sealed class Settings
     /// </summary>
     public string Idioma { get; set; } = "";
 
+    /// <summary>
+    /// En qué idioma se nombran las carpetas de temporada al ordenar
+    /// (<c>en</c> → «Season 03», <c>es</c> → «Temporada 03»). Vacío = el mismo
+    /// que la interfaz.
+    ///
+    /// <para>
+    /// Va aparte de <see cref="Idioma"/> porque no es lo mismo: hay quien usa la
+    /// app en castellano y mantiene la biblioteca con los nombres en inglés que
+    /// espera encontrar el reproductor.
+    /// </para>
+    /// </summary>
+    public string CarpetaTemporadaIdioma { get; set; } = "";
+
     public string DefaultPreset { get; set; } = "";      // preset a aplicar al abrir ("" = ninguno)
     public string DefaultLang { get; set; } = "spa";     // idioma de audio por defecto
     public bool Recurse { get; set; } = true;            // analizar subcarpetas

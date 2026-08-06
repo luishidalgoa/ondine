@@ -71,6 +71,7 @@ public static class Program
         Ondine.Reindex.Tests.CarpetaDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.DestinoDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.PlanDeReordenadoTests.Todas();
+        Ondine.Reindex.Tests.MudanzaDeTemporadaTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;

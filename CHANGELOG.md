@@ -55,6 +55,13 @@ es un acuerdo de buena voluntad: está verificado.
   en la descripción. Sin eso, media cinta se daba por completa y la historia que faltaba no la
   reclamaba nadie. No descarga: lee.
 - **El menú superior se recoge en una hamburguesa** cuando la ventana no da para los cuatro.
+- **Ordenar por temporadas.** Un capítulo que descargaste donde cayó se va a la carpeta de su
+  temporada, y la carpeta se crea si no existe. Antes de mover se enseña la simulación entera:
+  qué se movería y, sobre todo, qué no y por qué. **Solo se mueve lo ya curado** — un fichero en
+  conflicto no se sabe de qué temporada es, así que se queda donde está. Los subtítulos y las
+  fichas viajan con su vídeo, nunca se sobrescribe nada, y se puede deshacer. El nombre de la
+  carpeta lo eliges tú: *Temporada 03* o *Season 03*, siga la app el idioma que siga —hay quien
+  la usa en castellano y mantiene la biblioteca en inglés porque es lo que espera el reproductor.
 
 ## [1.6.1] - 2026-08-05
 
