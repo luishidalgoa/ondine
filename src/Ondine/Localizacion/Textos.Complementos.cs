@@ -275,4 +275,46 @@ public sealed partial class Textos
     /// escribirla distinta por su cuenta.
     /// </summary>
     public string IaNoLoSe => Idioma.Elegir("I DO NOT KNOW", "NO LO SÉ");
+
+    // ═══ Gestionar lo instalado ══════════════════════════════════════════════
+
+    // {0} = el id del complemento.
+    public string InstaladorNoEstaba => Idioma.Elegir(
+        "«{0}» was not installed.",
+        "«{0}» no estaba instalado.");
+
+    // {0} = el id, {1} = el motivo del sistema.
+    public string InstaladorNoSePudoQuitar => Idioma.Elegir(
+        "«{0}» could not be removed: {1}",
+        "No se pudo quitar «{0}»: {1}");
+
+    public string ComplementosDesinstalar => Idioma.Elegir("Uninstall", "Desinstalar");
+
+    // {0} = el nombre del complemento.
+    public string ComplementosDesinstalarPregunta => Idioma.Elegir(
+        "Uninstall «{0}»?",
+        "¿Desinstalar «{0}»?");
+
+    public string ComplementosDesinstalarDetalle => Idioma.Elegir(
+        "Its folder is deleted. You can install it again from Available whenever you want.",
+        "Se borra su carpeta. Puedes volver a instalarlo desde Disponibles cuando quieras.");
+
+    // {0} = el nombre.
+    public string ComplementosDesinstalado => Idioma.Elegir(
+        "«{0}» uninstalled.",
+        "«{0}» desinstalado.");
+
+    // {0} = la version disponible.
+    public string ComplementosHayVersion => Idioma.Elegir(
+        "Update to {0}",
+        "Actualizar a {0}");
+
+    // {0} = el nombre, {1} = de que version, {2} = a cual.
+    public string ComplementosActualizado => Idioma.Elegir(
+        "«{0}» updated from {1} to {2}.",
+        "«{0}» actualizado de la {1} a la {2}.");
+
+    public string ComplementosFuenteRecordada => Idioma.Elegir(
+        "The list is remembered for this catalogue: opening it again brings it back.",
+        "La lista se recuerda para este catálogo: al volver a abrirlo, vuelve puesta.");
 }

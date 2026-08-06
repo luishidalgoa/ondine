@@ -34,10 +34,23 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Los complementos se pueden desinstalar y actualizar desde la propia app.** Antes solo se
+  podían instalar, así que quitar uno era ir a borrar su carpeta a mano — justo lo que la tienda
+  venía a evitar. Y si salía una versión nueva, lo instalado se quedaba viejo para siempre sin
+  que nada lo dijera: ahora el botón pasa a decir *Actualizar a X*.
+- **El complemento de YouTube recuerda la lista de cada catálogo.** Ya no hay que volver a pegar
+  el mismo enlace: al abrir el complemento con un catálogo, vuelve puesta la última lista que
+  cotejaste con él. Va por catálogo porque la lista de una serie no vale para otra.
 - **La tienda de complementos ya sirve algo.** El índice estaba montado pero vacío, así que
   «Disponibles» no enseñaba nada. Ahora trae el complemento de YouTube, y se instala desde la
   propia app sin copiar carpetas a mano. El paquete va con su `sha256`: si lo descargado no es
   exactamente lo que el índice promete, no se instala.
+
+### Eliminado
+
+- **El complemento de demostración.** Existía para probar la pantalla cuando no había ninguno de
+  verdad. Ya hay uno, y el de YouTube sirve mejor de ejemplo porque hace todo lo que el contrato
+  describe en vez de fingirlo.
 
 ## [1.7.0] - 2026-08-06
 

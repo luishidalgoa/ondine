@@ -1532,7 +1532,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var v = new ComplementosPanel(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual);
+        var v = new ComplementosPanel(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual,
+                                      pageOrganizar.RutaCatalogoAbierto);
         _complementos = v;
 
         v.Traido += carpeta =>

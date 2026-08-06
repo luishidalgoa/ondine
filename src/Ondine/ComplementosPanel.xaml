@@ -128,6 +128,14 @@
                        HorizontalAlignment="Left" TextWrapping="Wrap"
                        Foreground="{StaticResource Neutral400}"/>
 
+            <!-- Desinstalar va aquí, con la ficha, y en tono menor: es una acción del
+                 complemento que estás mirando, no del panel. Y no compite con lo que
+                 se viene a hacer aquí, que es usarlo. -->
+            <Button x:Name="btnDesinstalar" Style="{StaticResource BtnGhostMuted}" FontSize="11.5"
+                    Padding="10,4" Margin="0,12,0,0" HorizontalAlignment="Left"
+                    Visibility="Collapsed" Click="OnDesinstalar"
+                    Content="{i:T ComplementosDesinstalar}"/>
+
             <!-- El permiso del modelo. Solo sale si el complemento lo declara: ofrecer
                  un permiso que no hace falta es la forma más rápida de que se conceda
                  sin leerlo. Empieza apagado, siempre. -->

@@ -20,6 +20,46 @@ public static class Instalador
     public sealed record Resultado(bool Ok, string? Motivo);
 
     /// <summary>
+    /// Quita un complemento instalado: borra <c>{carpetaBase}/{id}</c> entera.
+    ///
+    /// <para>
+    /// El <paramref name="id"/> se valida con las MISMAS reglas que al instalar, y
+    /// se comprueba sobre la ruta ya resuelta. Es el mismo dato viniendo del mismo
+    /// sitio, y aquí lo que está en juego es un borrado recursivo: un id que en
+    /// realidad sea <c>..\..lgo</c> no borraría un complemento, borraría lo que
+    /// hubiera ahí.
+    /// </para>
+    /// <para>
+    /// Desinstalar lo que no está devuelve <c>false</c>. No es un error que haya
+    /// que gritar, pero tampoco un éxito: quien lo pidió esperaba que hubiera algo.
+    /// </para>
+    /// </summary>
+    public static Resultado Desinstalar(string id, string carpetaBase)
+    {
+        if (string.IsNullOrWhiteSpace(id) ||
+            id.Any(c => c is '/' or '\\' or ':') || id.Contains(".."))
+            return new(false, string.Format(Textos.Instancia.IndiceIdRaro, id));
+
+        var destino = Path.GetFullPath(Path.Combine(carpetaBase, id));
+        var raiz = Path.GetFullPath(carpetaBase) + Path.DirectorySeparatorChar;
+        if (!destino.StartsWith(raiz, StringComparison.OrdinalIgnoreCase))
+            return new(false, string.Format(Textos.Instancia.IndiceIdRaro, id));
+
+        if (!Directory.Exists(destino))
+            return new(false, string.Format(Textos.Instancia.InstaladorNoEstaba, id));
+
+        try
+        {
+            Directory.Delete(destino, recursive: true);
+            return new(true, null);
+        }
+        catch (Exception ex)
+        {
+            return new(false, string.Format(Textos.Instancia.InstaladorNoSePudoQuitar, id, ex.Message));
+        }
+    }
+
+    /// <summary>
     /// Instala en <c>{carpetaBase}/{entrada.Id}</c>.
     /// </summary>
     public static Resultado Instalar(Indice.Entrada entrada, byte[] paquete, string carpetaBase)

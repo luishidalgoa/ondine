@@ -324,6 +324,35 @@ public static class ReindexStore
         return mapa.TryGetValue("modo:" + catalogoRuta, out var m) ? m : "auto";
     }
 
+    /// <summary>
+    /// De qué fuente (una lista de reproducción, normalmente) salió lo que este
+    /// complemento coteja contra ESTE catálogo.
+    ///
+    /// <para>
+    /// Va por catálogo y por complemento, no global. La lista de Doraemon no vale
+    /// para Shin-chan, y proponerla ahí haría cotejar una serie contra la lista de
+    /// otra — que además saldría entera como «te falta».
+    /// </para>
+    /// </summary>
+    public static void GuardarFuente(string catalogoRuta, string complementoId, string? fuente)
+    {
+        if (string.IsNullOrWhiteSpace(catalogoRuta) || string.IsNullOrWhiteSpace(complementoId)) return;
+        var mapa = LeerMapa(RutaPreferencias);
+        var clave = $"fuente:{complementoId}:{catalogoRuta}";
+        // Vaciarla la BORRA. Guardar la cadena vacía la dejaría proponiéndose
+        // luego como si fuera una dirección.
+        if (string.IsNullOrWhiteSpace(fuente)) mapa.Remove(clave);
+        else mapa[clave] = fuente.Trim();
+        EscribirMapa(RutaPreferencias, mapa);
+    }
+
+    public static string CargarFuente(string catalogoRuta, string complementoId)
+    {
+        if (string.IsNullOrWhiteSpace(catalogoRuta) || string.IsNullOrWhiteSpace(complementoId)) return "";
+        var mapa = LeerMapa(RutaPreferencias);
+        return mapa.TryGetValue($"fuente:{complementoId}:{catalogoRuta}", out var f) ? f : "";
+    }
+
     // Carpetas ya analizadas con un catálogo: para no re-emparejar carpeta y catálogo cada vez.
     // La más reciente, la primera. Se guardan como líneas dentro del valor del mapa (el JSON
     // escapa los saltos de línea, y una ruta no lleva '\n').

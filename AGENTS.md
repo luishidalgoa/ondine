@@ -140,7 +140,8 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | `web/` | El sitio de [ondine.hdglabs.com](https://ondine.hdglabs.com), en Astro, también bilingüe. |
 | `spot/` | El spot de 44 s, en composiciones HTML. Hay versión castellana e inglesa. |
 | `src/Ondine/Complementos/` | El sistema de complementos: manifiesto, descubrimiento e invocación. |
-| `ejemplos/complemento-demo/` | Un complemento de ejemplo que no baja nada, para probar la pantalla. |
+| `ejemplos/complemento-youtube/` | El complemento de YouTube: el ejemplo de referencia y lo que sirve la tienda. |
+| `complementos/` | El índice que lee la tienda (`indice.json`). Los paquetes viven en el tag `complementos`. |
 | `installer/` | Script de Inno Setup. |
 | `legacy/` | La versión original en PowerShell con la que nació el proyecto. |
 

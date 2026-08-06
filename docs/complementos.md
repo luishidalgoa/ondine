@@ -12,7 +12,9 @@ y la lista empezará a mentir.
     lo-que-sea.exe
 ```
 
-Hay uno de ejemplo en [`ejemplos/complemento-demo`](../ejemplos/complemento-demo).
+Hay uno de verdad en [`ejemplos/complemento-youtube`](../ejemplos/complemento-youtube), que
+además es el que sirve la tienda: se lee entero en un rato y hace todo lo que
+describe este documento.
 No baja nada: escribe por la salida estándar lo mismo que escribiría uno de
 verdad, para poder probar la pantalla sin depender de nada.
 
