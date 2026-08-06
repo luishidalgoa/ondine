@@ -1093,6 +1093,8 @@ public partial class OrganizarView : UserControl
         // temporada es cada fichero, y sin análisis no hay nada que ordenar.
         btnReordenar.IsEnabled = _catalogoCargado != null && _filas.Count > 0;
 
+        ContarLasIguales();
+
         int partibles = FilasPartibles().Count;
         btnPartirSegmentos.IsEnabled = partibles > 0;
         btnPartirSegmentos.Content = partibles > 0
@@ -1775,32 +1777,130 @@ public partial class OrganizarView : UserControl
     private void OnDejarComoEsta(object sender, RoutedEventArgs e)
     {
         if (tabla.SelectedItem is not OrganizarRow fila) return;
+        DejarComoEsta(fila);
+        ActualizarContadores();
+        RecargarTrasDejar();
+    }
+
+    private void DejarComoEsta(OrganizarRow fila)
+    {
+        DejarComoEstaEnPantalla(fila);
+        Apuntar(new[] { Path.GetFileName(fila.RutaActual) });
+    }
+
+    /// <summary>
+    /// Pone la fila en verde. Solo toca lo que hay en pantalla: apuntarlo en el
+    /// catálogo es otra cosa y va aparte, para que un lote pueda hacerlo de una.
+    /// </summary>
+    private void DejarComoEstaEnPantalla(OrganizarRow fila)
+    {
         fila.Res.Estado = ReindexEstado.Limpio;
         fila.Res.Confianza = ReindexConfianza.Alta;
         fila.Res.Episodio = null;
         fila.Res.Motivo = Textos.Instancia.OrganizarMotivoDejadoComoEstaba;
         fila.Res.Alternativas = Array.Empty<ReindexCandidato>();
         fila.Recalcular();
-        ActualizarContadores();
+    }
 
-        // Sin catálogo elegido no hay dónde apuntarlo: la fila queda en verde para esta sesión y
-        // ya está. No es un error que merezca un aviso.
+    /// <summary>
+    /// Apunta en el catálogo los ficheros que no hay que volver a preguntar, con
+    /// UNA sola escritura. No recarga el catálogo: eso lo hace
+    /// <see cref="RecargarTrasDejar"/> una vez al final.
+    /// </summary>
+    private void Apuntar(IEnumerable<string> nombres)
+    {
+        // Sin catálogo elegido no hay dónde apuntarlo: las filas quedan en verde para esta
+        // sesión y ya está. No es un error que merezca un aviso.
         if (_catalogoElegido == null) return;
-        var nombre = Path.GetFileName(fila.RutaActual);
+
+        var lista = nombres.ToList();
         try
         {
-            if (ReindexCatalog.AnadirADejarComoEsta(_catalogoElegido.Ruta, nombre))
-            {
-                // El catálogo en memoria es otro objeto: se recarga para que valga ya.
-                CargarCatalogoElegido();
-                Escribir(string.Format(Textos.Instancia.OrganizarLogQuedaComoEsta, nombre));
-            }
+            int n = ReindexCatalog.AnadirADejarComoEsta(_catalogoElegido.Ruta, lista);
+            if (n == 0) return;
+            _hayQueRecargarCatalogo = true;
+            Escribir(lista.Count == 1
+                ? string.Format(Textos.Instancia.OrganizarLogQuedaComoEsta, lista[0])
+                : string.Format(Textos.Instancia.OrganizarLogQuedanComoEstan, n));
         }
         catch (Exception ex)
         {
             Escribir(string.Format(Textos.Instancia.OrganizarLogQuedaComoEstaSinApuntar,
-                                   nombre, ex.Message));
+                                   lista.Count == 1 ? lista[0] : $"{lista.Count}", ex.Message));
         }
+    }
+
+    /// <summary>
+    /// Cuántas filas están atascadas por lo mismo que cada una. Se cuenta de una
+    /// pasada por causa y no fila contra fila: con 1400 ficheros, preguntarle a
+    /// cada una por todas las demás son dos millones de comparaciones cada vez
+    /// que se refresca la tabla.
+    /// </summary>
+    private void ContarLasIguales()
+    {
+        var cuantas = new Dictionary<CausaDeConflicto.Causa, int>();
+        foreach (var f in _filas)
+        {
+            var c = CausaDeConflicto.DeQueVa(f.Res);
+            if (!CausaDeConflicto.SeDecideEnGrupo(c)) continue;
+            cuantas[c] = cuantas.TryGetValue(c, out var n) ? n + 1 : 1;
+        }
+
+        foreach (var f in _filas)
+        {
+            var c = CausaDeConflicto.DeQueVa(f.Res);
+            // Menos ella misma: el botón habla de «las OTRAS».
+            f.Iguales = CausaDeConflicto.SeDecideEnGrupo(c) && cuantas.TryGetValue(c, out var n)
+                ? n - 1 : 0;
+        }
+    }
+
+    private bool _hayQueRecargarCatalogo;
+
+    /// <summary>El catálogo en memoria es otro objeto: se recarga para que lo apuntado valga ya.</summary>
+    private void RecargarTrasDejar()
+    {
+        if (!_hayQueRecargarCatalogo) return;
+        _hayQueRecargarCatalogo = false;
+        CargarCatalogoElegido();
+    }
+
+    /// <summary>
+    /// La misma decisión —«déjalo como está»— para todas las filas atascadas por
+    /// exactamente la misma causa.
+    ///
+    /// <para>
+    /// Medido en una biblioteca de 1411 ficheros: de las 27 filas que pedían mano,
+    /// 16 eran la misma cosa dicha dieciséis veces. Contestar dieciséis veces lo
+    /// mismo no es revisar, es teclear — y lo que se teclea sin mirar deja de ser
+    /// una decisión.
+    /// </para>
+    /// <para>
+    /// Solo se ofrece para las causas con UNA respuesta buena para todas
+    /// (<see cref="CausaDeConflicto.SeDecideEnGrupo"/>). Dos ficheros peleando por
+    /// el mismo episodio comparten causa y NO comparten respuesta: ahí cada pareja
+    /// tiene su propio ganador y resolverlas juntas sería tirar una moneda.
+    /// </para>
+    /// </summary>
+    private void OnDejarTodasLasIguales(object sender, RoutedEventArgs e)
+    {
+        if (tabla.SelectedItem is not OrganizarRow fila) return;
+
+        // La de delante también: se decide para el grupo entero, ella incluida.
+        var grupo = CausaDeConflicto.Companeras(_filas.Select(f => f.Res), fila.Res).ToHashSet();
+        if (grupo.Count == 0) return;
+
+        var afectadas = _filas.Where(f => f.Res == fila.Res || grupo.Contains(f.Res)).ToList();
+        foreach (var f in afectadas) DejarComoEstaEnPantalla(f);
+
+        // El catálogo se escribe UNA vez para todo el lote. Apuntarlas de una en
+        // una eran tantos ciclos de leer-parsear-reescribir como filas: medido,
+        // 37 ms cada uno sobre un catálogo real, con la ventana muerta mientras.
+        Apuntar(afectadas.Select(f => Path.GetFileName(f.RutaActual)));
+
+        ActualizarContadores();
+        RecargarTrasDejar();
+        Escribir(string.Format(Textos.Instancia.OrganizarLogDejadasIguales, afectadas.Count));
     }
 
     private void RecordarDecision(OrganizarRow fila, CatalogEpisode ep, string? seg = null)

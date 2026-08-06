@@ -10,6 +10,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using Ondine.Reindex;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using Ondine.Localizacion;
@@ -398,6 +399,10 @@ public partial class MainWindow : Window
                 Path = fi.FullName,
                 Bytes = fi.Length,
                 SizeMB = $"{fi.Length / 1048576.0:n0} MB",
+                // También aquí: un fichero arrastrado desde el Explorador puede ser
+                // un marcador de la nube igual que uno encontrado al escanear, y
+                // sondearlo lo descargaría entero por la puerta de atrás.
+                EnLaNube = Nube.EsMarcador(fi.Attributes),
             };
             _rows.Add(row);
             nuevos.Add(row);
@@ -405,7 +410,8 @@ public partial class MainWindow : Window
         if (nuevos.Count == 0) return;
         foreach (var row in nuevos) lst.SelectedItems.Add(row);   // los recién añadidos entran seleccionados
         lblLangHint.Text = Textos.Instancia.MainDetectando;
-        await ProbeRowsAsync(nuevos);
+        int enNube = await ProbeRowsAsync(nuevos);
+        lblLangHint.Text = enNube > 0 ? string.Format(Textos.Instancia.MainSaltadosEnLaNube, enNube) : "";
     }
     // ---------- arrastrar y soltar desde el Explorador ----------
     private void OnDragOver(object sender, DragEventArgs e)
@@ -475,46 +481,115 @@ public partial class MainWindow : Window
             DialogWindow.Aviso(this, Textos.Instancia.MainOrigen, Textos.Instancia.MainOrigenInvalido);
             return;
         }
-        _rows.Clear(); pnlALang.Children.Clear(); pnlSLang.Children.Clear();
-        lblLangHint.Text = Textos.Instancia.MainDetectando;
+        // Un segundo clic mientras el primero corre apilaba OTRA tanda concurrente
+        // sobre la misma carpeta. Con 1411 ficheros eso son dos filas de ffprobe
+        // peleando por el mismo disco.
+        if (_escaneando) { _cortarEscaneo?.Cancel(); return; }
+        _cortarEscaneo?.Dispose();
+        _cortarEscaneo = new CancellationTokenSource();
+        var corte = _cortarEscaneo.Token;
 
-        var outDir = EffectiveOutput();
-        List<string> files;
-        if (Directory.Exists(src))
+        _escaneando = true;
+        btnScan.Content = Textos.Instancia.MainDetenerAnalisis;
+        try
         {
-            var opt = chkRec.IsChecked == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            files = Directory.EnumerateFiles(src, "*.*", opt)
-                .Where(f => Engine.VideoExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .Where(f => !string.Equals(Path.GetDirectoryName(f), outDir, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(f => f).ToList();
-        }
-        else files = new() { src };
+            _rows.Clear(); pnlALang.Children.Clear(); pnlSLang.Children.Clear();
+            lblLangHint.Text = Textos.Instancia.MainDetectando;
 
-        foreach (var f in files)
-        {
-            var fi = new FileInfo(f);
-            _rows.Add(new VideoRow
+            var outDir = EffectiveOutput();
+            bool recursivo = chkRec.IsChecked == true;
+
+            // Enumerar y leer el tamaño de 1411 ficheros son ~100 ms con la ventana
+            // tiesa. Fuera del hilo de interfaz, y con DirectoryInfo.EnumerateFiles,
+            // que devuelve los FileInfo YA poblados: con `new FileInfo(f)`, cada
+            // `.Length` disparaba una consulta al sistema de ficheros por vídeo.
+            var nuevas = await Task.Run(() =>
             {
-                Name = fi.Name,
-                Dir = fi.Directory?.Name ?? "",
-                Path = fi.FullName,
-                Bytes = fi.Length,
-                SizeMB = $"{fi.Length / 1048576.0:n0} MB",
-            });
-        }
-        lblProg.Text = string.Format(Textos.Instancia.MainVideosEncontrados, _rows.Count);
-        if (_rows.Count == 0) { lblLangHint.Text = Textos.Instancia.MainNadaQueAnalizar; return; }
-        lst.SelectAll();   // por defecto se procesan todos; el usuario acota con la selección
+                var opt = recursivo ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                IEnumerable<FileInfo> encontrados = Directory.Exists(src)
+                    ? new DirectoryInfo(src).EnumerateFiles("*.*", opt)
+                        .Where(fi => Engine.VideoExtensions.Contains(fi.Extension.ToLowerInvariant()))
+                        .Where(fi => !string.Equals(fi.DirectoryName, outDir, StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(fi => fi.FullName)
+                    : new[] { new FileInfo(src) };
 
-        await ProbeRowsAsync(_rows.ToList());
-        lblLangHint.Text = pnlSLang.Children.Count == 0 ? Textos.Instancia.MainSinSubtitulosDetectados : "";
+                return encontrados.Select(fi => new VideoRow
+                {
+                    Name = fi.Name,
+                    Dir = fi.Directory?.Name ?? "",
+                    Path = fi.FullName,
+                    Bytes = fi.Length,
+                    SizeMB = $"{fi.Length / 1048576.0:n0} MB",
+                    // Se pregunta AQUÍ, de paso, aprovechando que ya se han leído los
+                    // atributos: saber que un fichero solo está en la nube es lo que
+                    // evita descargarlo entero al sondearlo.
+                    EnLaNube = Nube.EsMarcador(fi.Attributes),
+                }).ToList();
+            }, corte);
+
+            if (corte.IsCancellationRequested) return;
+            foreach (var r in nuevas) _rows.Add(r);
+
+            lblProg.Text = string.Format(Textos.Instancia.MainVideosEncontrados, _rows.Count);
+            if (_rows.Count == 0) { lblLangHint.Text = Textos.Instancia.MainNadaQueAnalizar; return; }
+            lst.SelectAll();   // por defecto se procesan todos; el usuario acota con la selección
+
+            int enNube = await ProbeRowsAsync(_rows.ToList(), corte);
+            // Lo de la nube manda sobre el aviso de subtítulos: explica por qué hay
+            // filas sin códec ni duración, que si no se leen como un fallo de la app.
+            lblLangHint.Text = enNube > 0
+                ? string.Format(Textos.Instancia.MainSaltadosEnLaNube, enNube)
+                : pnlSLang.Children.Count == 0 ? Textos.Instancia.MainSinSubtitulosDetectados : "";
+        }
+        catch (OperationCanceledException) { lblLangHint.Text = Textos.Instancia.MainAnalisisDetenido; }
+        finally
+        {
+            _escaneando = false;
+            btnScan.Content = Textos.Instancia.MainAnalizar;
+        }
     }
 
-    /// <summary>Lee las pistas de cada fila con ffprobe y va poblando los idiomas detectados.</summary>
-    private async Task ProbeRowsAsync(IReadOnlyList<VideoRow> rows)
+    private bool _escaneando;
+    private CancellationTokenSource? _cortarEscaneo;
+
+    /// <summary>
+    /// Lee las pistas de cada fila con ffprobe y va poblando los idiomas detectados.
+    ///
+    /// <para>
+    /// <b>Los ficheros que solo están en la nube NO se sondean.</b> ffprobe abre el
+    /// fichero, y abrir un marcador de OneDrive obliga a Windows a <b>descargarlo
+    /// entero</b>. Sobre una biblioteca en la nube, pulsar «Analizar» se convertía
+    /// en bajar decenas de gigas sin haberlo pedido ni haber sido avisado. La
+    /// duración de esos se lee de la ficha que Windows ya guarda, que no los toca.
+    /// </para>
+    /// <para>
+    /// Y se dice por dónde va. Antes se ponía «Detectando…» una vez y no se
+    /// volvía a tocar en 1411 vueltas: una pantalla que no cambia en varios
+    /// minutos es indistinguible de una colgada.
+    /// </para>
+    /// </summary>
+    /// <returns>Cuántos se saltaron por estar solo en la nube.</returns>
+    private async Task<int> ProbeRowsAsync(IReadOnlyList<VideoRow> rows, CancellationToken corte = default)
     {
+        int hechos = 0, enNube = 0;
         foreach (var row in rows)
         {
+            corte.ThrowIfCancellationRequested();
+
+            hechos++;
+            // Cada 25, no en cada vuelta: refrescar un rótulo 1411 veces cuesta
+            // más pases de layout que información aporta.
+            if (hechos % 25 == 1 || hechos == rows.Count)
+                lblLangHint.Text = string.Format(Textos.Instancia.MainAnalizandoNde, hechos, rows.Count);
+
+            if (row.EnLaNube)
+            {
+                enNube++;
+                row.Estado = Textos.Instancia.MainEnLaNubeSinSondear;
+                row.Probed = false;
+                continue;
+            }
+
             var info = await _engine.ProbeAsync(row.Path);
             row.Codec = info.Codec;
             row.Dur = $"{info.DurationSec / 3600:D1}:{info.DurationSec % 3600 / 60:D2}:{info.DurationSec % 60:D2}";
@@ -550,6 +625,8 @@ public partial class MainWindow : Window
         else lblProg.Text = utiles == 0 && _rows.Count > 0
             ? string.Format(Textos.Instancia.MainResumenTodosComprimidos, _rows.Count)
             : string.Format(Textos.Instancia.MainResumenEnLista, _rows.Count);
+
+        return enNube;
     }
 
     /// <summary>Llena el combo de idioma principal con los idiomas de audio realmente detectados.</summary>

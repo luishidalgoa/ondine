@@ -892,7 +892,19 @@
     <Setter Property="Foreground" Value="{StaticResource Text}"/>
     <Setter Property="ItemContainerStyle" Value="{StaticResource RowStyle}"/>
     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-    <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
+    <!--
+      CanContentScroll="False" hacía scroll suave por píxel, sí — y de paso MATABA la
+      virtualización: con él, WPF mide el contenido con altura infinita, así que realiza
+      las 1411 filas de golpe y las deja vivas en el árbol visual. Y no es un coste de
+      una vez: se paga en cada scroll y en cada pase de layout de esa tabla.
+
+      Las tres líneas de abajo dan lo mismo que se quería —scroll por píxel— pero CON
+      virtualización: `ScrollUnit="Pixel"` es exactamente eso, y existe desde .NET 4.5.
+      `Recycling` además reutiliza los contenedores en vez de crear uno por fila.
+    -->
+    <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+    <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel"/>
+    <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
   </Style>
 
   <!-- ══ ScrollBar (oscuro, minimalista, vertical y horizontal) ══ -->

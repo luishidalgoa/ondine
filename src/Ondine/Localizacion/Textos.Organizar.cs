@@ -1195,4 +1195,25 @@ public sealed partial class Textos
     public string ReordenarSinCatalogo => Idioma.Elegir(
         "Analyse the folder against a catalogue first: without it there is no way to know which season each file belongs to.",
         "Analiza antes la carpeta contra un catálogo: sin él no hay forma de saber de qué temporada es cada fichero.");
+
+    // ═══ Decidir de una para todas las filas con la misma causa ══════════════
+
+    // {0} = cuántas OTRAS filas tienen exactamente la misma causa.
+    public string OrganizarDejarIguales => Idioma.Elegir(
+        "Leave the other {0} the same",
+        "Dejar igual las otras {0}");
+
+    public string OrganizarDejarIgualesAyuda => Idioma.Elegir(
+        "Applies this same decision to every row that is stuck for exactly the same reason. Only offered when that reason has one single right answer for all of them — never for two files fighting over the same episode, where each pair has its own winner.",
+        "Aplica esta misma decisión a todas las filas atascadas exactamente por lo mismo. Solo se ofrece cuando esa causa tiene una única respuesta buena para todas — nunca con dos ficheros peleando por el mismo episodio, donde cada pareja tiene su propio ganador.");
+
+    // {0} = cuántos ficheros quedaron apuntados en el catálogo de una vez.
+    public string OrganizarLogQuedanComoEstan => Idioma.Elegir(
+        "{0} files noted in the catalogue: they will not be asked about again.",
+        "{0} ficheros apuntados en el catálogo: no se volverá a preguntar por ellos.");
+
+    // {0} = cuántas se dejaron como estaban.
+    public string OrganizarLogDejadasIguales => Idioma.Elegir(
+        "{0} rows left as they were: the catalogue has no place for them.",
+        "{0} filas dejadas como estaban: el catálogo no tiene sitio para ellas.");
 }
