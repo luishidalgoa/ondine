@@ -155,4 +155,70 @@ public sealed partial class Textos
 
     /// <summary>Marca de los presets que ha guardado el usuario. {0} es el nombre.</summary>
     public string PresetSufijoGuardado => Idioma.Elegir("{0}  ·  saved", "{0}  ·  guardado");
+
+    // ═══ Modelo de lenguaje conectado (opcional) ═════════════════════════════
+
+    public string IaPestania => Idioma.Elegir("Model", "Modelo");
+
+    public string IaTitulo => Idioma.Elegir(
+        "Connect a language model (optional)",
+        "Conectar un modelo de lenguaje (opcional)");
+
+    public string IaIntro => Idioma.Elegir(
+        "Ondine works fully without this. It is an optional helper for the cases the rules do not resolve, and each add-on has to be given permission separately before it can use it.",
+        "Ondine funciona entera sin esto. Es un apoyo opcional para los casos que las reglas no resuelven, y cada complemento necesita permiso aparte para poder usarlo.");
+
+    public string IaActivo => Idioma.Elegir("Use a connected model", "Usar un modelo conectado");
+
+    public string IaBaseUrl => Idioma.Elegir("Address (OpenAI-compatible)", "Dirección (compatible con OpenAI)");
+
+    public string IaBaseUrlAyuda => Idioma.Elegir(
+        "The base of the API. Examples: https://api.openai.com/v1 · http://localhost:11434/v1 (Ollama) · whatever your provider gives you.",
+        "La base de la API. Ejemplos: https://api.openai.com/v1 · http://localhost:11434/v1 (Ollama) · la que te dé tu proveedor.");
+
+    public string IaClave => Idioma.Elegir("Key", "Clave");
+
+    public string IaClaveAyuda => Idioma.Elegir(
+        "Stored encrypted with Windows data protection, tied to your user account. It is never written in plain text. Leave it empty for a local model that does not ask for one.",
+        "Se guarda cifrada con la protección de datos de Windows, atada a tu cuenta de usuario. Nunca se escribe en claro. Déjala vacía para un modelo local que no pida ninguna.");
+
+    public string IaClaveGuardada => Idioma.Elegir(
+        "There is a key saved. Type a new one to replace it.",
+        "Hay una clave guardada. Escribe otra para reemplazarla.");
+
+    public string IaClaveBorrar => Idioma.Elegir("Forget the key", "Olvidar la clave");
+    public string IaClaveOlvidada => Idioma.Elegir("Key forgotten.", "Clave olvidada.");
+
+    public string IaModelo => Idioma.Elegir("Model", "Modelo");
+
+    public string IaModeloAyuda => Idioma.Elegir(
+        "The name that server gives it: gpt-4o-mini, llama3.1, qwen2.5:7b…",
+        "El nombre que le dé ese servidor: gpt-4o-mini, llama3.1, qwen2.5:7b…");
+
+    public string IaProbar => Idioma.Elegir("Test connection", "Probar conexión");
+    public string IaProbando => Idioma.Elegir("Testing…", "Probando…");
+    public string IaProbadoBien => Idioma.Elegir("It answers.", "Contesta.");
+
+    // {0} = lo que dijo el error.
+    public string IaProbadoMal => Idioma.Elegir("It does not answer: {0}", "No contesta: {0}");
+
+    public string IaDireccionInvalida => Idioma.Elegir(
+        "That address is not valid. It has to start with http:// or https://.",
+        "Esa dirección no vale. Tiene que empezar por http:// o https://.");
+
+    public string IaSinModelo => Idioma.Elegir(
+        "Missing the model name.",
+        "Falta el nombre del modelo.");
+
+    // La regla de seguridad, contada donde se topa uno con ella.
+    public string IaClavePorHttp => Idioma.Elegir(
+        "The key is not sent over http:// to a machine that is not this one: it would travel readable. Use https://, or a model running on this computer.",
+        "La clave no se manda por http:// a una máquina que no es esta: viajaría legible. Usa https://, o un modelo que corra en este ordenador.");
+
+    // {0} = el código HTTP, {1} = lo que devolvió el servidor.
+    public string IaRespondioMal => Idioma.Elegir("Answered {0}: {1}", "Contestó {0}: {1}");
+
+    public string IaRespuestaIlegible => Idioma.Elegir(
+        "The answer did not come in a shape that can be read.",
+        "La respuesta no vino en una forma que se pueda leer.");
 }

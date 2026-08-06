@@ -2,12 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:i="clr-namespace:Ondine.Localizacion"
-        Title="{i:T PreferenciasTitulo}" Width="580" Height="560" WindowStyle="None" ResizeMode="NoResize"
+        Title="{i:T PreferenciasTitulo}" Width="580" Height="620" WindowStyle="None" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
   <!-- El alto de la ventana es fijo y las pestañas no llevan barra de desplazamiento:
        cada línea que se añada a una pestaña hay que pagarla en el Height de arriba. Al
-       meter el selector de idioma se quedó fuera la última casilla de «General». -->
+       meter el selector de idioma se quedó fuera la última casilla de «General», y la
+       pestaña del modelo volvió a subirlo: es la más alta de las cuatro. -->
 
   <!-- 8 px: el mismo radio que Windows 11 recorta por fuera, para que el borde dibujado
        y el recorte del sistema coincidan en vez de pelearse en la esquina. -->
@@ -89,6 +90,48 @@
             <CheckBox x:Name="chkHw" Content="{i:T PreferenciasAceleracion}"/>
             <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,6,0,0"
                        Text="{i:T PreferenciasAceleracionAyuda}"/>
+          </StackPanel>
+        </TabItem>
+        <!-- ══ Modelo de lenguaje (opcional) ══ -->
+        <TabItem Header="{i:T IaPestania}">
+          <StackPanel>
+            <TextBlock Text="{i:T IaTitulo}" FontSize="12" Foreground="{StaticResource Neutral400}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T IaIntro}" TextWrapping="Wrap" FontSize="10.5"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+            <CheckBox x:Name="chkIa" Content="{i:T IaActivo}" Margin="0,0,0,14"/>
+
+            <TextBlock Text="{i:T IaBaseUrl}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtIaUrl" Margin="0,0,0,3"/>
+            <TextBlock Text="{i:T IaBaseUrlAyuda}" TextWrapping="Wrap" FontSize="10.5"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+            <TextBlock Text="{i:T IaModelo}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtIaModelo" Width="240" HorizontalAlignment="Left" Margin="0,0,0,3"/>
+            <TextBlock Text="{i:T IaModeloAyuda}" TextWrapping="Wrap" FontSize="10.5"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+            <TextBlock Text="{i:T IaClave}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <!-- PasswordBox y no TextBox: no se enseña en pantalla ni se puede
+                 copiar de ahí. Lo que ya está guardado no se rellena — se dice
+                 que lo hay, y escribir encima lo reemplaza. -->
+            <Grid Margin="0,0,0,3">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <PasswordBox x:Name="txtIaClave"/>
+              <Button x:Name="btnIaOlvidar" Grid.Column="1" Style="{StaticResource BtnGhostMuted}"
+                      Content="{i:T IaClaveBorrar}" FontSize="11" Padding="10,4" Margin="8,0,0,0"
+                      Visibility="Collapsed"/>
+            </Grid>
+            <TextBlock x:Name="lblIaClaveNota" Text="{i:T IaClaveAyuda}" TextWrapping="Wrap" FontSize="10.5"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,14"/>
+
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="btnIaProbar" Style="{StaticResource BtnSecondary}" Content="{i:T IaProbar}"
+                      FontSize="12" Padding="12,5"/>
+              <TextBlock x:Name="lblIaProbar" VerticalAlignment="Center" Margin="10,0,0,0"
+                         FontSize="11.5" TextWrapping="Wrap" MaxWidth="330"
+                         Foreground="{StaticResource Neutral500}"/>
+            </StackPanel>
           </StackPanel>
         </TabItem>
       </TabControl>

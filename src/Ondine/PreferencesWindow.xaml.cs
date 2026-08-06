@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using Ondine.Ia;
 using Ondine.Localizacion;
 
 namespace Ondine;
@@ -87,6 +88,63 @@ public partial class PreferencesWindow : Window
         // Rendimiento y disco
         txtMinFree.Text = current.MinFreeMb.ToString();
         chkHw.IsChecked = current.UseHardware;
+
+        // Modelo. Se trabaja sobre una COPIA: probar la conexión necesita la
+        // clave ya guardada, y si se cancela la ventana nada de esto se aplica.
+        _ia = current.Ia.Clone();
+        chkIa.IsChecked = _ia.Activo;
+        txtIaUrl.Text = _ia.BaseUrl;
+        txtIaModelo.Text = _ia.Modelo;
+        PintarClave();
+
+        btnIaOlvidar.Click += (_, _) =>
+        {
+            _ia.PonerClave(null);
+            txtIaClave.Clear();
+            lblIaProbar.Text = Textos.Instancia.IaClaveOlvidada;
+            PintarClave();
+        };
+        btnIaProbar.Click += async (_, _) => await ProbarIa();
+    }
+
+    // ── Modelo de lenguaje ──
+
+    private readonly AjustesDeModelo _ia;
+
+    /// <summary>
+    /// La clave guardada NO se rellena en el campo: no se saca a pantalla algo
+    /// que ya está a salvo. Se dice que la hay, y escribir encima la reemplaza.
+    /// </summary>
+    private void PintarClave()
+    {
+        bool hay = _ia.TieneClave;
+        btnIaOlvidar.Visibility = hay ? Visibility.Visible : Visibility.Collapsed;
+        lblIaClaveNota.Text = hay ? Textos.Instancia.IaClaveGuardada : Textos.Instancia.IaClaveAyuda;
+    }
+
+    /// <summary>
+    /// Prueba con lo que hay AHORA en los campos, no con lo guardado: probar y
+    /// que te conteste algo que no es lo que estás escribiendo es peor que no
+    /// tener el botón.
+    /// </summary>
+    private async Task ProbarIa()
+    {
+        var prueba = _ia.Clone();
+        prueba.Activo = true;
+        prueba.BaseUrl = txtIaUrl.Text.Trim();
+        prueba.Modelo = txtIaModelo.Text.Trim();
+        if (txtIaClave.Password.Length > 0) prueba.PonerClave(txtIaClave.Password);
+
+        btnIaProbar.IsEnabled = false;
+        lblIaProbar.Text = Textos.Instancia.IaProbando;
+        try
+        {
+            var r = await ModeloConectado.ProbarAsync(prueba);
+            lblIaProbar.Text = r.Texto != null
+                ? Textos.Instancia.IaProbadoBien
+                : string.Format(Textos.Instancia.IaProbadoMal, r.Error);
+        }
+        finally { btnIaProbar.IsEnabled = true; }
     }
 
     private void Save()
@@ -118,6 +176,14 @@ public partial class PreferencesWindow : Window
                         : AfterCompress.Ask;
         s.MinFreeMb = int.TryParse(txtMinFree.Text.Trim(), out var mb) ? Math.Clamp(mb, 50, 100_000) : 200;
         s.UseHardware = chkHw.IsChecked == true;
+
+        _ia.Activo = chkIa.IsChecked == true;
+        _ia.BaseUrl = txtIaUrl.Text.Trim();
+        _ia.Modelo = txtIaModelo.Text.Trim();
+        // Vacío = «no la cambies». Lo contrario haría que abrir preferencias para
+        // tocar cualquier otra cosa borrase la clave de paso.
+        if (txtIaClave.Password.Length > 0) _ia.PonerClave(txtIaClave.Password);
+        s.Ia = _ia;
 
         // Se aplica aquí y no al cerrar: los textos están enlazados, así que la
         // app entera cambia de idioma sola en cuanto se toca esto.
