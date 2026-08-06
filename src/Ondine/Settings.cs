@@ -64,6 +64,23 @@ public sealed class Settings
     /// </summary>
     public Ia.AjustesDeModelo Ia { get; set; } = new();
 
+    /// <summary>
+    /// Los complementos a los que se les ha dado permiso para preguntarle al
+    /// modelo, por su identificador.
+    ///
+    /// <para>
+    /// Es una lista de los que SÍ y no un ajuste por complemento con valor por
+    /// defecto: así lo que no está escrito es «no», y un complemento instalado
+    /// después no hereda un permiso que nadie le dio.
+    /// </para>
+    /// </summary>
+    public List<string> ComplementosConModelo { get; set; } = new();
+
+    /// <summary>¿Tiene permiso este complemento? Lo que no está en la lista, no.</summary>
+    public bool PuedeUsarModelo(string? idComplemento) =>
+        !string.IsNullOrEmpty(idComplemento) &&
+        ComplementosConModelo.Contains(idComplemento, StringComparer.OrdinalIgnoreCase);
+
     // --- Rendimiento y disco ---
     public int MinFreeMb { get; set; } = 200;            // margen mínimo de disco antes de pausar
     public bool UseHardware { get; set; } = true;        // usar aceleración por hardware si existe
@@ -76,6 +93,7 @@ public sealed class Settings
         // -que es justo lo que hace la ventana de preferencias- cambiaría los
         // ajustes de verdad aunque luego se cancele.
         c.Ia = Ia.Clone();
+        c.ComplementosConModelo = new List<string>(ComplementosConModelo);
         return c;
     }
 }

@@ -105,6 +105,85 @@ def titulo_completo(titulo, descripcion):
     return " + ".join(historias) if historias else corto
 
 
+def es_residuo(titulo, descripcion):
+    """La descripcion promete mas historias, pero la comprobacion no lo confirma.
+
+    Es EXACTAMENTE el hueco que deja `titulo_completo`, y el unico sitio donde
+    un modelo aporta algo: lo que se puede comprobar ya lo resuelven las reglas,
+    y preguntar por ello seria gastar dinero en algo que ya esta bien.
+
+    Ojo con lo que NO es residuo: una descripcion mas corta que el titulo, o sin
+    descripcion. Ahi no hay nada prometido, y preguntar por eso convierte cada
+    video de la lista en una llamada.
+    """
+    if not descripcion or not descripcion.strip():
+        return False
+
+    primera = descripcion.strip().splitlines()[0]
+    del_titulo = segmentos(titulo)
+    de_la_desc = segmentos(primera)
+
+    if len(de_la_desc) <= len(del_titulo):
+        return False
+
+    claves = {_clave(s) for s in de_la_desc}
+    return not all(_clave(s) in claves for s in del_titulo)
+
+
+# Un episodio de estos trae dos o tres historias. Seis es que el modelo ha
+# listado la temporada entera, y eso no es una respuesta: es otra pregunta.
+_MAX_HISTORIAS = 4
+
+# Se pidio breve y literal. Si contesta con un parrafo, no ha entendido la
+# pregunta y lo que traiga dentro no es una lista de titulos.
+_MAX_LARGO = 240
+
+
+def historias_del_modelo(respuesta, titulo):
+    """Lo que dijo el modelo, si se sostiene. `None` si no.
+
+    Un modelo acierta casi siempre y se inventa el resto con el mismo aplomo, asi
+    que lo que conteste NO se cree a ciegas. La comprobacion que se puede hacer
+    aqui es una: **tiene que incluir el titulo del video**, que es lo unico que se
+    sabe seguro. Una respuesta que se lo salta esta hablando de otra cosa.
+
+    La comprobacion de verdad viene despues y gratis: lo que salga de aqui lo
+    coteja Ondine contra el catalogo, historia por historia. Un titulo inventado
+    no casa con nada y sale como que falta, en vez de darse por bueno.
+    """
+    if not respuesta:
+        return None
+
+    texto = respuesta.strip()
+    if not texto or len(texto) > _MAX_LARGO:
+        return None
+
+    # Las tres formas en que el contrato le pide decir que no lo sabe -las dos
+    # del castellano y la del ingles-, sin acentos para que den igual.
+    plano = " ".join(texto.split()).casefold().replace("é", "e")
+    if plano in ("no lo se", "i do not know", "no lo se."):
+        return None
+
+    # Una por linea o separadas por barras: se aceptan las dos porque un modelo
+    # hace una u otra segun el dia, y rechazar la que no toque seria tirar una
+    # respuesta buena por su formato.
+    if "\n" in texto:
+        trozos = [t.strip(" -*•\t") for t in texto.splitlines()]
+    else:
+        trozos = texto.split("|")
+
+    historias = [" ".join(t.split()) for t in trozos if t.strip()]
+    if len(historias) < 2 or len(historias) > _MAX_HISTORIAS:
+        return None
+
+    # La comprobacion que sostiene todo lo demas.
+    corto = _clave(limpiar(titulo))
+    if not any(_clave(h) == corto for h in historias):
+        return None
+
+    return " + ".join(historias)
+
+
 def decir(**campos):
     """Una linea, un mensaje. Se vacia en el acto para que Ondine lo pinte segun llega."""
     print(json.dumps(campos, ensure_ascii=False), flush=True)
@@ -113,6 +192,36 @@ def decir(**campos):
 def error(mensaje):
     decir(tipo="error", mensaje=mensaje)
     sys.exit(1)
+
+
+# El contador de las preguntas al modelo. Ondine tiene su propio cupo -40 por
+# ejecucion-, pero el complemento lleva el suyo tambien: agotarlo y que las
+# ultimas veinte vuelvan con «cupo agotado» es gastar el tiempo de quien mira.
+_preguntas = 0
+_MAX_PREGUNTAS = 20
+
+
+def preguntar(texto):
+    """Le pregunta al modelo conectado, si Ondine deja. `None` si no.
+
+    Ondine responde por la ENTRADA estandar, una linea, con el mismo id. La
+    clave no llega hasta aqui y no tiene por que: se pregunta y se recibe.
+    """
+    global _preguntas
+    if _preguntas >= _MAX_PREGUNTAS:
+        return None
+    _preguntas += 1
+
+    decir(tipo="preguntar", id=str(_preguntas), texto=texto)
+
+    linea = sys.stdin.readline()
+    if not linea:
+        return None   # Ondine cerro la tuberia: se sigue sin modelo
+    try:
+        r = json.loads(linea)
+    except json.JSONDecodeError:
+        return None
+    return r.get("texto")
 
 
 def listar(fuente):
@@ -180,10 +289,30 @@ def listar(fuente):
                 miniatura = t["url"]
 
         titulo = e.get("title") or ""
+        descripcion = descripciones.get(e.get("id"))
+        final = titulo_completo(titulo, descripcion)
+
+        # El modelo SOLO para el residuo: los casos en que la descripcion promete
+        # mas historias y las reglas no lo pueden confirmar. Lo que las reglas
+        # resuelven no se pregunta -saldria lo mismo y costaria dinero-, y por eso
+        # esto son unas pocas llamadas de una lista de cientos y no una por video.
+        if es_residuo(titulo, descripcion):
+            dijo = preguntar(
+                "De este video de una serie de dibujos, dime los titulos de las "
+                "historias que contiene, uno por linea y nada mas.\n"
+                f"Titulo del video: {titulo}\n"
+                f"Primera linea de su descripcion: "
+                f"{descripcion.strip().splitlines()[0]}"
+            )
+            # Lo que conteste se comprueba; y lo que pase la comprobacion lo vuelve
+            # a comprobar Ondine contra el catalogo, historia por historia. Un
+            # titulo inventado no casa con nada y sale como que falta.
+            final = historias_del_modelo(dijo, titulo) or final
+
         decir(
             tipo="elemento",
             id=e.get("id") or "",
-            titulo=titulo_completo(titulo, descripciones.get(e.get("id"))),
+            titulo=final,
             miniatura=miniatura,
             duracion=e.get("duration"),
         )

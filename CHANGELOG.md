@@ -55,6 +55,13 @@ es un acuerdo de buena voluntad: está verificado.
   en la descripción. Sin eso, media cinta se daba por completa y la historia que faltaba no la
   reclamaba nadie. No descarga: lee.
 - **El menú superior se recoge en una hamburguesa** cuando la ventana no da para los cuatro.
+- **Un complemento puede pedirle ayuda al modelo, con tu permiso y sin ver tu clave.** El permiso
+  se da en la ficha del complemento, uno a uno, y empieza apagado. El complemento **nunca recibe
+  la clave ni la dirección**: él pregunta, Ondine llama, y solo le vuelve la respuesta. Hay cupo
+  —40 preguntas por ejecución— porque esto cuesta dinero de verdad. El complemento de YouTube ya
+  lo usa: solo para los vídeos en los que la descripción promete más historias y sus reglas no lo
+  pueden confirmar, unas pocas de una lista de cientos. Y lo que conteste se coteja con tu
+  catálogo como todo lo demás, así que un título inventado sale como que falta, no como bueno.
 - **Se puede conectar un modelo de lenguaje, y es opcional.** Está en *Preferencias › Modelo*:
   dirección, clave y nombre del modelo, con un botón para probar la conexión antes de guardar.
   Usa el estándar de OpenAI, que es el que hablan casi todos —OpenAI, Groq, OpenRouter, LM Studio
