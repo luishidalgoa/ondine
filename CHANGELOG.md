@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-06
+
 ### Añadido
 
 - **Confirmar de una todos los especiales que la app da por seguros.** Un especial nace pidiendo
@@ -40,29 +42,6 @@ es un acuerdo de buena voluntad: está verificado.
   fuera y siguen pidiendo mano: esos son justo los que hay que mirar.
 - **El título entero al pasar por encima**, en la lista de un complemento. Con el panel estrecho
   se recortaba, y ahí se pierde lo único que identifica el vídeo.
-
-### Corregido
-
-- **El cotejo decía «ya lo tienes» de vídeos que traen dos episodios y solo tienes uno.** Un vídeo
-  de una lista puede juntar dos entradas del catálogo —«El controlador del mar + Alquiler estilo
-  futurista» son los episodios 985 y 1237—, y solo se miraba la que mejor casaba. La otra no
-  aparecía en ninguna cuenta: ni entre lo que tienes ni entre lo que falta. Ahora se pregunta por
-  cada cosa que trae el vídeo, en su episodio.
-- **Un fichero cuyo nombre solo dice una de las historias del episodio ya no se da por completo.**
-  La regla «sin letra de segmento, tapa el episodio entero» sigue siendo el respaldo, pero si el
-  nombre nombra solo una de las dos, tapa solo esa. La cuenta vive ahora en un sitio y no en tres.
-- **La tarjeta del resolutor decía un nombre y se escribía otro** cuando el fichero juntaba dos
-  episodios: enseñaba «quedaría como …E1260 - El invento para hacer bonsáis» mientras el
-  renombrado ponía «…E1260+1261 - … + La rueda auxiliar invisible». El nombre se componía en dos
-  sitios y uno se olvidaba de las historias añadidas. El renombrado siempre fue el correcto.
-- **El distintivo de la lista de complementos era una píldora entera** y desentonaba con el resto
-  del panel.
-
-
-## [1.7.0] - 2026-08-06
-
-### Añadido
-
 - **La duración de cada vídeo, en Organizar y en el reproductor.** Sale también en los ficheros
   que tienes en la nube sin descargar: se lee de la ficha que Windows ya guarda, así que verla
   no obliga a bajarlos.
@@ -119,6 +98,20 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **El cotejo decía «ya lo tienes» de vídeos que traen dos episodios y solo tienes uno.** Un vídeo
+  de una lista puede juntar dos entradas del catálogo —«El controlador del mar + Alquiler estilo
+  futurista» son los episodios 985 y 1237—, y solo se miraba la que mejor casaba. La otra no
+  aparecía en ninguna cuenta: ni entre lo que tienes ni entre lo que falta. Ahora se pregunta por
+  cada cosa que trae el vídeo, en su episodio.
+- **Un fichero cuyo nombre solo dice una de las historias del episodio ya no se da por completo.**
+  La regla «sin letra de segmento, tapa el episodio entero» sigue siendo el respaldo, pero si el
+  nombre nombra solo una de las dos, tapa solo esa. La cuenta vive ahora en un sitio y no en tres.
+- **La tarjeta del resolutor decía un nombre y se escribía otro** cuando el fichero juntaba dos
+  episodios: enseñaba «quedaría como …E1260 - El invento para hacer bonsáis» mientras el
+  renombrado ponía «…E1260+1261 - … + La rueda auxiliar invisible». El nombre se componía en dos
+  sitios y uno se olvidaba de las historias añadidas. El renombrado siempre fue el correcto.
+- **El distintivo de la lista de complementos era una píldora entera** y desentonaba con el resto
+  del panel.
 - **El aviso de duración ya no marca capítulos normales.** Aprendía cuánto dura una historia con
   UNA sola medida para toda la serie, y las series largas cambian de formato: en Doraemon (1979)
   una historia dura ~6:12 en 1979, ~12:12 en 1986 y ~23:35 en 1991. Con una vara única se medía
@@ -126,7 +119,6 @@ es un acuerdo de buena voluntad: está verificado.
   su año. Ahora cada temporada se mide con la suya, y la global solo se usa donde no hay muestras
   suficientes. El aviso sigue saltando donde importa: un fichero del doble de largo que su año se
   marca igual.
-
 - **«Analizar» ya no descarga tu biblioteca de la nube sin avisar.** Leía las pistas de cada
   vídeo con ffprobe, y abrir un fichero que solo está en OneDrive obliga a Windows a
   **descargarlo entero**. Sobre una carpeta en la nube, pulsar Analizar se convertía en bajar
