@@ -18,6 +18,11 @@ import sys
 # con nada del catalogo.
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
+# Y la ENTRADA igual, que es por donde llegan las respuestas del modelo. Sin
+# esto se decodifica con la pagina de codigos de la consola y un titulo con
+# acentos vuelve roto: el mismo fallo que el de la salida, al reves.
+sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
+
 
 # El titulo tal cual viene trae el nombre del canal delante y la coletilla del
 # episodio detras: «Doraemon | El controlador del mar | Episodio 426 en español».
