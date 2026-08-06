@@ -755,6 +755,14 @@
                             Margin="16,0,0,0" Click="OnElegirAMano"/>
                     <Button Content="{i:T OrganizarDejarComoEsta}" Style="{StaticResource BtnGhost}" FontSize="12"
                             Margin="8,0,0,0" Click="OnDejarComoEsta"/>
+                    <!-- Solo aparece cuando hay OTRAS filas con la misma causa Y esa causa
+                         tiene una única respuesta buena para todas. Contestar dieciséis
+                         veces «esto no está en este catálogo» no es revisar, es teclear. -->
+                    <Button x:Name="btnDejarTodasIguales" Style="{StaticResource BtnGhost}" FontSize="12"
+                            Margin="8,0,0,0" Click="OnDejarTodasLasIguales"
+                            Content="{Binding DejarIgualesTexto}"
+                            ToolTip="{i:T OrganizarDejarIgualesAyuda}"
+                            Visibility="{Binding VerDejarIguales}"/>
                   </StackPanel>
                 </StackPanel>
               </Border>

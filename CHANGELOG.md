@@ -55,6 +55,12 @@ es un acuerdo de buena voluntad: está verificado.
   en la descripción. Sin eso, media cinta se daba por completa y la historia que faltaba no la
   reclamaba nadie. No descarga: lee.
 - **El menú superior se recoge en una hamburguesa** cuando la ventana no da para los cuatro.
+- **Decidir de una para todas las filas atascadas por lo mismo.** Cuando varias filas piden
+  decisión exactamente por la misma causa, el resolutor ofrece *«Dejar igual las otras N»*. En una
+  biblioteca de 1411 ficheros, 16 de las 27 filas que pedían mano eran la misma cosa dicha
+  dieciséis veces —especiales que ese catálogo no contempla—: ahora es un clic. Solo se ofrece
+  cuando esa causa tiene **una única respuesta buena para todas**; con dos ficheros peleando por
+  el mismo episodio no aparece, porque ahí cada pareja tiene su propio ganador.
 - **Un complemento puede pedirle ayuda al modelo, con tu permiso y sin ver tu clave.** El permiso
   se da en la ficha del complemento, uno a uno, y empieza apagado. El complemento **nunca recibe
   la clave ni la dirección**: él pregunta, Ondine llama, y solo le vuelve la respuesta. Hay cupo

@@ -81,6 +81,34 @@ public sealed class OrganizarRow : INotifyPropertyChanged
         set { _grupoConteo = value; N(); }
     }
 
+    private int _iguales;
+    /// <summary>
+    /// Cuántas OTRAS filas están atascadas exactamente por lo mismo que esta.
+    /// Lo pone la vista, que es la única que ve el lote entero.
+    ///
+    /// <para>
+    /// A cero no se ofrece nada: un botón que dice «y las otras 0» es ruido, y
+    /// uno que aparece siempre acaba pulsándose sin leerlo.
+    /// </para>
+    /// </summary>
+    public int Iguales
+    {
+        get => _iguales;
+        set
+        {
+            if (_iguales == value) return;
+            _iguales = value;
+            N(); N(nameof(DejarIgualesTexto)); N(nameof(VerDejarIguales));
+        }
+    }
+
+    public string DejarIgualesTexto =>
+        string.Format(Textos.Instancia.OrganizarDejarIguales, Iguales);
+
+    public System.Windows.Visibility VerDejarIguales => Iguales > 0
+        ? System.Windows.Visibility.Visible
+        : System.Windows.Visibility.Collapsed;
+
     private bool _apartada;
     /// <summary>
     /// Está en la cola. No cambia lo que la app propone: solo la señala, para poder volver
