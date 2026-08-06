@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- net9.0-windows y UseWPF: esto SÍ depende de WPF, al contrario que Reindex.Tests.
+         Por eso vive en su propio proyecto y no dentro del arnés del motor. -->
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ui-smoke</AssemblyName>
+    <RootNamespace>Ondine.Ui.Smoke</RootNamespace>
+    <!-- WinExe para que WPF tenga bucle de mensajes, pero se quiere la salida por
+         consola: sin esto los ✓ y los ✗ no se ven en ningún sitio. -->
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ondine\Ondine.csproj"/>
+  </ItemGroup>
+
+</Project>
