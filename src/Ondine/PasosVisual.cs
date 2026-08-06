@@ -167,6 +167,18 @@ public sealed class PasosVisual
     public void EnCurso(int i) => _pasos[i].EnCurso();
 
     /// <summary>
+    /// Qué está haciendo AHORA el paso que corre, debajo de su rótulo.
+    ///
+    /// <para>
+    /// El detalle solo aparecía al terminar cada paso, así que el que estaba en
+    /// marcha —el que de verdad se mira— era el único mudo. Con 1411 ficheros,
+    /// «Identificándolos contra el catálogo» tarda lo suyo, y un rótulo fijo con
+    /// una ruedecita no distingue avanzar de estar colgado.
+    /// </para>
+    /// </summary>
+    public void Detalle(int i, string texto) => _pasos[i].Marcha(texto);
+
+    /// <summary>
     /// Un paso queda hecho: check, y el testigo baja hacia el siguiente.
     /// </summary>
     public void Hecha(int i, string? detalle = null)
@@ -327,6 +339,14 @@ public sealed class PasosVisual
             _detalle.Visibility = Visibility.Collapsed;
             Raiz.Opacity = 0.45;
             Textos.Opacity = 0.45;
+        }
+
+        /// <summary>Lo que está pasando dentro de este paso, mientras pasa.</summary>
+        public void Marcha(string texto)
+        {
+            _detalle.Text = texto;
+            _detalle.Visibility = string.IsNullOrEmpty(texto)
+                ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public void EnCurso()

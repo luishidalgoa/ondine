@@ -122,6 +122,11 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 - **Nunca se tocan los originales** salvo petición explícita, y entonces van a la
   papelera, no a borrado. Todo ocurre en la máquina del usuario.
 - **Rama y PR por tarea.** Nunca empujar directo a `main`.
+- **Los complementos son PROCESOS, no ensamblados cargados dentro.** El contrato
+  y las razones están en [`docs/complementos.md`](docs/complementos.md), que es
+  también lo que se le da a quien quiera escribir uno. Si se toca el contrato,
+  se toca ese documento en el mismo cambio: un contrato documentado a medias es
+  peor que uno sin documentar, porque el de fuera se lo cree.
 
 ## Estructura
 
@@ -133,6 +138,8 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | `tests/Reindex.Tests/` | Todas las pruebas, sin dependencias externas. |
 | `web/` | El sitio de [ondine.hdglabs.com](https://ondine.hdglabs.com), en Astro, también bilingüe. |
 | `spot/` | El spot de 44 s, en composiciones HTML. Hay versión castellana e inglesa. |
+| `src/Ondine/Complementos/` | El sistema de complementos: manifiesto, descubrimiento e invocación. |
+| `ejemplos/complemento-demo/` | Un complemento de ejemplo que no baja nada, para probar la pantalla. |
 | `installer/` | Script de Inno Setup. |
 | `legacy/` | La versión original en PowerShell con la que nació el proyecto. |
 

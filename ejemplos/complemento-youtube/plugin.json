@@ -1,0 +1,11 @@
+{
+  "nombre": "YouTube",
+  "descripcion": "Lee una lista de reproducción pública y coteja lo que hay en ella con tu catálogo. Pega el enlace de la lista en la casilla de fuente.",
+  "version": "1.0.0",
+  "autor": "Ondine",
+  "ejecutable": "youtube.cmd",
+  "capacidades": ["importar"],
+  "ambito": ["organizar"],
+  "integracion": "propia",
+  "contrato": 1
+}

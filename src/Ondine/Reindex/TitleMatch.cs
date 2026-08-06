@@ -29,9 +29,29 @@ public static partial class TitleMatch
     /// norm(s): quita sufijos de doblaje → minúsculas → sin diacríticos (á→a, ñ→n) →
     /// todo lo que no sea [a-z0-9] pasa a espacio, colapsado y recortado.
     /// </summary>
-    // «1.ª», «2ª», «3.º»… — número + marcador ordinal, con o sin punto
-    [GeneratedRegex(@"\b([1-4])\.?\s*[ªº]", RegexOptions.IgnoreCase)]
-    private static partial Regex RxOrdinal();
+    /// <summary>
+    /// «primera parte», «parte segunda», «2 parte»… — todas las formas de numerar una
+    /// parte, en cualquiera de los dos órdenes. Se aplica sobre el texto YA limpio
+    /// (minúsculas, sin diacríticos, espacios simples), así que aquí «2.ª parte» ya
+    /// llega como «2 parte» y no hace falta un patrón para el marcador ordinal.
+    /// </summary>
+    [GeneratedRegex(@"\b(?:(\w+) (parte|part)|(parte|part) (\w+))\b", RegexOptions.CultureInvariant)]
+    private static partial Regex RxParte();
+
+    /// <summary>
+    /// Cómo se dice cada número cuando acompaña a «parte». Solo hasta cinco: por encima
+    /// de eso ya nadie escribe la palabra, y cuanto más larga la lista más probable es
+    /// pisar una palabra normal del título.
+    /// </summary>
+    private static readonly Dictionary<string, string> OrdinalesDeParte = new(StringComparer.Ordinal)
+    {
+        ["1"] = "1", ["2"] = "2", ["3"] = "3", ["4"] = "4", ["5"] = "5",
+        ["primera"] = "1", ["segunda"] = "2", ["tercera"] = "3", ["cuarta"] = "4", ["quinta"] = "5",
+        ["primero"] = "1", ["segundo"] = "2", ["tercero"] = "3", ["cuarto"] = "4", ["quinto"] = "5",
+        ["first"] = "1", ["second"] = "2", ["third"] = "3", ["fourth"] = "4", ["fifth"] = "5",
+        ["one"] = "1", ["two"] = "2", ["three"] = "3", ["four"] = "4", ["five"] = "5",
+        ["i"] = "1", ["ii"] = "2", ["iii"] = "3", ["iv"] = "4", ["v"] = "5",
+    };
 
     public static string Norm(string? s)
     {
@@ -40,16 +60,6 @@ public static partial class TitleMatch
         // 1. sufijos de doblaje (antes de tocar mayúsculas: el patrón ya es insensible)
         s = RxDoblajePais().Replace(s, " ");
         s = RxDoblaje().Replace(s, " ");
-
-        // 1b. ordinales abreviados → escritos: el fichero dice «(2.ª parte)» donde el
-        //     catálogo dice «(segunda parte)», y si se quedan en «2 parte» vs «segunda
-        //     parte» el parecido baja justo lo que descalifica. Solo con marcador ordinal
-        //     (ª/º): un «Parte 2» a secas se conserva tal cual, y hay tests de ambos.
-        s = RxOrdinal().Replace(s, m => m.Groups[1].Value switch
-        {
-            "1" => "primera", "2" => "segunda", "3" => "tercera", "4" => "cuarta",
-            _ => m.Value,
-        });
 
         // 2. minúsculas + 3. descomponer y tirar diacríticos
         var descompuesto = s.ToLowerInvariant().Normalize(NormalizationForm.FormD);
@@ -70,8 +80,43 @@ public static partial class TitleMatch
             }
             else espaciopendiente = true;   // trim implícito: no se emite si no viene nada detrás
         }
-        return sb.ToString();
+
+        return CanonizarPartes(sb.ToString());
     }
+
+    /// <summary>
+    /// Deja todas las formas de numerar una parte en una sola: <c>parte 2</c>.
+    ///
+    /// <para>
+    /// «segunda parte», «parte segunda», «2.ª parte» y «parte 2» son lo mismo dicho de
+    /// cuatro maneras, y hasta ahora no lo eran para la comparación. El caso que lo
+    /// destapó: un catálogo que escribe «Hola, marciano (primera parte)» y «(segunda
+    /// parte)» frente a unos ficheros que dicen «(parte 1)» y «(parte 2)». El dígito
+    /// competía contra la palabra, así que no aportaba nada y los DOS ficheros puntuaban
+    /// 0,792 contra los DOS episodios. Empate perfecto: ganaba siempre el primero y el
+    /// otro caía en conflicto como si fuera un duplicado.
+    /// </para>
+    /// <para>
+    /// Se canoniza al dígito y no a la palabra porque el dígito no tiene género -«parte
+    /// segunda» y «segundo capítulo» no comparten forma- ni idioma.
+    /// </para>
+    /// <para>
+    /// Solo se toca la palabra que va PEGADA a «parte»: «La primera vez» es un título,
+    /// no una numeración, y ahí «primera» se queda como está.
+    /// </para>
+    /// </summary>
+    private static string CanonizarPartes(string limpio) =>
+        RxParte().Replace(limpio, m =>
+        {
+            // Dos formas: «<numero> parte» o «parte <numero>». Solo una de las dos casa.
+            var (numero, palabra) = m.Groups[1].Success
+                ? (m.Groups[1].Value, m.Groups[2].Value)
+                : (m.Groups[4].Value, m.Groups[3].Value);
+
+            return OrdinalesDeParte.TryGetValue(numero, out var digito)
+                ? $"{palabra} {digito}"
+                : m.Value;   // no es un número: era una palabra normal del título
+        });
 
     /// <summary>
     /// Similitud 0..1 entre dos cadenas YA normalizadas, equivalente a

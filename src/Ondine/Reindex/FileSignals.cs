@@ -36,6 +36,21 @@ public sealed class FileSignals
     /// </summary>
     public IReadOnlyList<string> Segmentos { get; init; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Lo que dura el vídeo, si se ha podido saber.
+    ///
+    /// <para>
+    /// No sale de abrir el fichero: la aporta quien escanea, leyéndola de la ficha que
+    /// Windows guarda aparte del contenido. Por eso vale también para los que están en
+    /// la nube, que es donde más falta hace -ahí abrirlos los descargaría enteros-.
+    /// </para>
+    /// <para>
+    /// <c>null</c> cuando no se sabe, y eso NO es lo mismo que cero: quien la use tiene
+    /// que callarse, no concluir.
+    /// </para>
+    /// </summary>
+    public TimeSpan? Duracion { get; init; }
+
     /// <summary>Identidad estable del fichero para recordar decisiones (§4 de la epic).</summary>
     public string Fingerprint { get; init; } = "";
 
@@ -52,7 +67,7 @@ public sealed class FileSignals
         Path = Path, NombreArchivo = NombreArchivo, Extension = Extension, Carpeta = Carpeta,
         Fecha = Fecha, Indice = Indice, SubSegmento = seg, Especial = Especial,
         IndiceEspecial = IndiceEspecial, Temporada = Temporada, TituloNombre = TituloNombre,
-        TituloMeta = TituloMeta, Segmentos = Segmentos, Fingerprint = Fingerprint, Error = Error,
+        TituloMeta = TituloMeta, Segmentos = Segmentos, Duracion = Duracion, Fingerprint = Fingerprint, Error = Error,
     };
 
     /// <summary>¿Hay algo con lo que identificar? Si no, es ERROR de entrada.</summary>
@@ -133,7 +148,7 @@ public static partial class SignalExtractor
     /// lo aporta quien haya leído el contenedor, para que esta función siga siendo testeable.
     /// </summary>
     public static FileSignals Extract(string rutaCompleta, string? carpeta = null, string? tituloMeta = null,
-                                      string? fingerprint = null)
+                                      string? fingerprint = null, TimeSpan? duracion = null)
     {
         var nombreArchivo = System.IO.Path.GetFileName(rutaCompleta);
         var ext = System.IO.Path.GetExtension(rutaCompleta);
@@ -257,6 +272,7 @@ public static partial class SignalExtractor
             TituloMeta = string.IsNullOrWhiteSpace(tituloMeta) ? null : tituloMeta.Trim(),
             Segmentos = segmentos,
             Fingerprint = fingerprint ?? rutaCompleta,
+            Duracion = duracion,
         };
     }
 

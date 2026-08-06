@@ -34,6 +34,17 @@ public sealed class CatalogoCard
 public partial class OrganizarView : UserControl
 {
     private readonly ObservableCollection<OrganizarRow> _filas = new();
+
+    /// <summary>
+    /// El catálogo que hay abierto ahora mismo, para quien lo necesite desde
+    /// fuera. Lo pide la pantalla de complementos: sin él puede enseñar la lista
+    /// de una fuente, pero no decir qué de eso te falta -que es su gracia-.
+    /// </summary>
+    public Reindex.ReindexCatalog? CatalogoAbierto => _catalogoCargado;
+
+    /// <summary>Lo ya resuelto de la carpeta, por lo mismo: de ahí sale qué está cubierto.</summary>
+    public IReadOnlyList<Reindex.ReindexResolution> LoQueHay =>
+        _filas.Select(f => f.Res).ToList();
     private bool _ordenManual;   // hay un orden por cabecera activo (oculta las bandas de temporada)
     private readonly List<CatalogoGuardado> _catalogos = new();
     private CatalogoGuardado? _catalogoElegido;
@@ -526,6 +537,18 @@ public partial class OrganizarView : UserControl
         RevisarCarpeta();
     }
 
+    /// <summary>
+    /// Apunta la vista a una carpeta desde fuera y la revisa, como si la hubieras
+    /// escrito tú. Lo usa la entrega de los complementos: traer unos ficheros y
+    /// dejar a quien los trajo buscando dónde han caído es dejar el trabajo a
+    /// medias justo en el paso que costaba.
+    /// </summary>
+    public void ApuntarA(string carpeta)
+    {
+        txtCarpeta.Text = carpeta;
+        RevisarCarpeta();
+    }
+
     private void RevisarCarpeta()
     {
         var carpeta = txtCarpeta.Text?.Trim() ?? "";
@@ -784,7 +807,18 @@ public partial class OrganizarView : UserControl
                 // Exigiría un ffprobe por fichero y «Simular» dejaría de ser inmediato en
                 // bibliotecas de cientos. El motor ya lo admite cuando se enganche.
                 ficheros
-                    .Select(f => SignalExtractor.Extract(f, new DirectoryInfo(Path.GetDirectoryName(f)!).Name))
+                    .AsParallel()
+                    .AsOrdered()
+                    // La duración NO sale de abrir el fichero: se lee de la ficha que
+                    // Windows guarda aparte del contenido, así que los que están en la
+                    // nube siguen sin descargarse. Medido: ~60 ms cada uno, y por eso va
+                    // en paralelo -en una carpeta de 300 serían veinte segundos seguidos-.
+                    // Si no se sabe, se queda en null y el motor se calla; nunca se cae
+                    // en abrirlo como respaldo.
+                    .Select(f => SignalExtractor.Extract(
+                        f,
+                        new DirectoryInfo(Path.GetDirectoryName(f)!).Name,
+                        duracion: FichaDeWindows.Duracion(f)))
                     .ToList()), animar);
             if (animar)
                 _pasos.Hecha(0, señales.Count == 1
@@ -792,7 +826,12 @@ public partial class OrganizarView : UserControl
                     : string.Format(Textos.Instancia.OrganizarPasoNombres, señales.Count));
 
             // ── Etapa 2: el motor, fuera del hilo de interfaz ──
-            if (animar) _pasos.EnCurso(1);
+            if (animar)
+            {
+                _pasos.EnCurso(1);
+                _pasos.Detalle(1, string.Format(Textos.Instancia.OrganizarPasoCotejando,
+                    señales.Count, catalogo.Serie));
+            }
             var resoluciones = await ConTiempoDeVerse(
                 Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo)), animar);
 
@@ -810,6 +849,12 @@ public partial class OrganizarView : UserControl
                 .ToList();
             if (dudosos.Count > 0)
             {
+                // Esta es la parte LENTA de verdad -abre ficheros, uno a uno- y la que
+                // mas se parecia a un cuelgue: el rotulo seguia diciendo «identificando»
+                // mientras por debajo se sondeaban ochenta videos.
+                if (animar)
+                    _pasos.Detalle(1, string.Format(
+                        Textos.Instancia.OrganizarPasoTitulosGrabados, dudosos.Count));
                 Escribir(string.Format(Textos.Instancia.OrganizarLogBuscandoTitulos, dudosos.Count));
                 var metadatos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 int enNube = 0;
@@ -857,7 +902,15 @@ public partial class OrganizarView : UserControl
                     // deduplicación miran al conjunto y parchear filas sueltas las esquivaría.
                     for (int i = 0; i < señales.Count; i++)
                         if (metadatos.TryGetValue(señales[i].Path, out var titulo))
-                            señales[i] = SignalExtractor.Extract(señales[i].Path, señales[i].Carpeta, titulo);
+                            // La duración se ARRASTRA. Este segundo pase existe para reidentificar con el
+                            // título que trajo el .nfo o el contenedor, y volver a extraer desde cero
+                            // se la llevaba por delante: los ficheros que TENÍAN .nfo -justo los mejor
+                            // documentados- salían sin duración y el reloj se quedaba sin datos con
+                            // los que aprender. Volver a leerla aquí costaría otros 60 ms por fichero
+                            // para obtener exactamente lo mismo.
+                            señales[i] = SignalExtractor.Extract(
+                                señales[i].Path, señales[i].Carpeta, titulo,
+                                duracion: señales[i].Duracion);
                     resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
                     Escribir(string.Format(Textos.Instancia.OrganizarLogTitulosMetadatos, metadatos.Count));
                 }
@@ -868,7 +921,12 @@ public partial class OrganizarView : UserControl
             // ── Etapa 3: montar la tabla ──
             // El respiro de antes deja al arco pintarse: montar filas bloquea el hilo de
             // interfaz y sin él esta etapa pasaría de pendiente a hecha sin verse en curso.
-            if (animar) { _pasos.EnCurso(2); await Task.Delay(220); }
+            if (animar)
+            {
+                _pasos.EnCurso(2);
+                _pasos.Detalle(2, Textos.Instancia.OrganizarPasoOrdenando);
+                await Task.Delay(220);
+            }
 
             var raiz = txtCarpeta.Text?.Trim() ?? "";
             _filas.Clear();

@@ -127,6 +127,28 @@ public sealed partial class Textos
         "This file brings two catalogue episodes: {0} and {1} (\"{2}\"). Giving it the number of one would lose the other",
         "Este fichero trae dos episodios del catálogo: el {0} y el {1} («{2}»). Ponerle el número de uno perdería el otro");
 
+    // {0} = número del episodio, {1} = cuántas historias tiene según el catálogo.
+    // Al revés que el de arriba: allí el fichero trae DOS y se le quiere dar UN
+    // número; aquí trae UNA y se le quiere dar el nombre de un episodio de dos.
+    public string ReindexMotivoNombreDeMas => Idioma.Elegir(
+        "The name declares one story, but episode {0} has {1} in the catalogue. Renaming it as the whole episode would claim it holds stories it does not - say which ones it brings",
+        "El nombre declara una historia, pero el episodio {0} tiene {1} en el catálogo. Renombrarlo como el episodio entero afirmaría que trae historias que no trae - di cuáles trae");
+
+    // {0} = número del episodio, {1} = la letra de la historia, {2} = lo que dura.
+    // Da los tres datos por lo mismo que el de abajo: quien lee tiene que poder
+    // juzgar sin ir a comprobarlo a mano.
+    public string ReindexMotivoHistoriaSuelta => Idioma.Elegir(
+        "It only holds one story of episode {0}, the \"{1}\" one: it runs {2}, about what a single story runs here. Confirm before applying",
+        "Solo trae una historia del episodio {0}, la «{1}»: dura {2}, que es lo que dura una historia aquí. Confírmalo antes de aplicar");
+
+    // {0} = lo que dura el fichero, {1} = número del episodio, {2} = cuántas
+    // historias tiene, {3} = lo que suele durar ese número de historias aquí.
+    // El aviso da los cuatro datos porque sin ellos no se puede juzgar: «no cuadra»
+    // a secas obliga a ir a comprobarlo a mano, que es el trabajo que sobra.
+    public string ReindexMotivoRelojNoCuadra => Idioma.Elegir(
+        "This file runs {0}, but episode {1} has {2} stories, which in this folder run about {3}. Check whether it really holds the whole episode",
+        "Este fichero dura {0}, pero el episodio {1} tiene {2} historias, que en esta carpeta duran unos {3}. Comprueba si de verdad trae el episodio entero");
+
     // {0} = número del episodio, {1} = su título, {2} = el nombre del otro
     // fichero. «Papelera» es la del sistema operativo: en inglés, «Recycle Bin».
     public string ReindexMotivoRepetido => Idioma.Elegir(

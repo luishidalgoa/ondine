@@ -109,6 +109,13 @@ public sealed class ReindexResolution
     public bool TraeDosEpisodios { get; set; }
 
     /// <summary>
+    /// Lo que dura una historia en la carpeta de la que salió esta fila, aprendido de ella
+    /// misma. Se guarda para poder EXPLICARLO en la interfaz: un aviso que dice «no cuadra»
+    /// sin decir contra qué obliga a ir a comprobarlo a mano.
+    /// </summary>
+    public TimeSpan? UnidadDeHistoria { get; set; }
+
+    /// <summary>
     /// ¿Se puede aplicar sin más intervención? «Verdes + confirmados»: los especiales entran
     /// solo cuando alguien los ha confirmado, porque nacen en Revisar y únicamente una
     /// decisión humana (o un override guardado) los sube a Alta.
@@ -195,7 +202,7 @@ public static class ReindexEngine
         // que la app identificó con confianza no hay nada que elegir, y ofrecer candidatos
         // peores solo mete ruido e invita a un clic equivocado. Se hace al final, después de
         // la deduplicación, porque esa puede degradar una fila que hasta entonces iba verde.
-        MarcarLosQueTraenDosEpisodios(resoluciones, catalogo, indice);
+        MarcarLosQueTraenDosEpisodios(resoluciones, catalogo, overrides, indice, modo);
 
         foreach (var r in resoluciones)
             if (r.Confianza == ReindexConfianza.Alta)
@@ -582,7 +589,8 @@ public static class ReindexEngine
     /// remake viejo y en el moderno, y eso es lo normal, no una ambigüedad.
     /// </summary>
     private static void MarcarLosQueTraenDosEpisodios(List<ReindexResolution> resoluciones,
-        ReindexCatalog cat, IndiceTitulos indice)
+        ReindexCatalog cat, IReadOnlyDictionary<string, ReindexOverride> overrides,
+        IndiceTitulos indice, ModoPrioridad modo)
     {
         foreach (var r in resoluciones)
         {
@@ -618,6 +626,191 @@ public static class ReindexEngine
                     r.Episodio.Num, otro.Num, trozo);
                 break;
             }
+        }
+
+        MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones, cat, overrides, indice, modo);
+        MarcarLosQueNoCuadranConElReloj(resoluciones);
+    }
+
+    /// <summary>
+    /// La segunda opinión: cuánto mide el fichero frente a cuántas historias promete el
+    /// episodio que le ha tocado.
+    ///
+    /// <para>
+    /// La comprobación del nombre no llega a todo. Un fichero puede traer los dos títulos
+    /// en el nombre y contener solo una historia -media descarga, un corte mal hecho, una
+    /// copia parcial-, y ahí el nombre no delata nada. El reloj sí.
+    /// </para>
+    /// <para>
+    /// <b>Esto es de SERIES.</b> Vive en el reindexado, que solo trata episodios contra un
+    /// catálogo. Una película no tiene «historias dentro» ni un número típico con el que
+    /// comparar, así que cuando llegue esa parte no debe reutilizar nada de aquí: la idea
+    /// entera -«cuántas unidades caben en esta duración»- no significa nada para un largo.
+    /// </para>
+    /// <para>
+    /// Y se calla ante lo raro. Un especial que dura hora y media sale a nueve historias
+    /// de las de esta carpeta, y eso no es «te faltan siete»: es que no se sabe qué es.
+    /// Decir algo falso con seguridad es peor que no decir nada, así que solo se avisa
+    /// cuando el reloj apunta a un número CREÍBLE de historias.
+    /// </para>
+    /// </summary>
+    private static void MarcarLosQueNoCuadranConElReloj(List<ReindexResolution> resoluciones)
+    {
+        // Se aprende SOLO de las filas de confianza alta: aprender de las dudas es
+        // aprender del error, y bastaría un lote malo para mover la vara y callar los
+        // avisos justo cuando más falta hacen.
+        var observaciones = resoluciones
+            .Where(r => r.Confianza == ReindexConfianza.Alta && r.Episodio != null)
+            .Where(r => r.Archivo.Duracion is { } d && d > TimeSpan.Zero)
+            .Select(r => (r.Archivo.Duracion!.Value, Math.Max(1, r.Episodio!.TitulosSalida.Count)))
+            .ToList();
+
+        var unidad = MedidaDelCapitulo.Unidad(observaciones);
+        if (unidad is null) return;   // carpeta pequeña: no hay vara de la que fiarse
+
+        // Se reparte a TODAS las filas, no solo a las que se marcan: la columna de
+        // duración la enseña para que se pueda juzgar cualquier fila, no solo las malas.
+        foreach (var r in resoluciones) r.UnidadDeHistoria = unidad;
+
+        foreach (var r in resoluciones)
+        {
+            if (r.Episodio == null || r.Confianza != ReindexConfianza.Alta) continue;
+            if (r.Archivo.SubSegmento != null) continue;   // ya se dijo qué trozo es
+            if (r.Archivo.Duracion is not { } dura) continue;
+
+            int promete = Math.Max(1, r.Episodio.TitulosSalida.Count);
+            if (MedidaDelCapitulo.Cuadra(dura, promete, unidad)) continue;
+
+            // La guarda de los especiales. Si el reloj no apunta a un número creíble de
+            // historias, no hay nada que decir: no se sabe qué es ese fichero.
+            var sugiere = MedidaDelCapitulo.HistoriasQueSugiere(dura, unidad);
+            if (sugiere is not (>= 1 and <= MaxHistoriasCreibles)) continue;
+            if (sugiere == promete) continue;
+
+            r.Confianza = ReindexConfianza.Revisar;
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoRelojNoCuadra,
+                Reloj(dura), r.Episodio.Num, promete, Reloj(unidad.Value * promete));
+        }
+    }
+
+    /// <summary>
+    /// Por encima de esto el reloj deja de opinar. Un episodio con cinco historias ya es
+    /// raro; lo que mide diez veces la unidad no es un episodio mal contado, es otra cosa
+    /// -un especial, una película, un recopilatorio- y no se puede juzgar con esta vara.
+    /// </summary>
+    private const int MaxHistoriasCreibles = 5;
+
+    private static string Reloj(TimeSpan t) =>
+        t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}" : $"{t.Minutes}:{t.Seconds:00}";
+
+    /// <summary>
+    /// El caso contrario: el nombre declara UNA historia y el episodio al que se le
+    /// quiere renombrar tiene DOS.
+    ///
+    /// <para>
+    /// «Doraemon (1979) S1981E618 [618] - Doraemon, te odio.avi» anuncia una sola, y la
+    /// app lo daba por bueno -en verde, listo para aplicar- como el episodio 629, que el
+    /// catálogo cuenta con dos historias. El nombre resultante afirmaría que el fichero
+    /// trae las dos. Después de eso ya no hay forma de saber que falta una: el nombre
+    /// miente y nadie lo sabe. Es el mismo daño que renombrar un fichero de dos con el
+    /// número de uno, solo que al revés.
+    /// </para>
+    /// <para>
+    /// No hace falta abrir el fichero ni medir nada. Lo decide una comparación: ¿el título
+    /// del fichero se parece más a UNA historia suelta que a las dos juntas? Si sí, el
+    /// nombre está hablando de una sola.
+    /// </para>
+    /// <para>
+    /// Contar separadores NO vale, y costó dos pruebas rotas averiguarlo: hay ficheros que
+    /// traen las dos historias pegadas sin separador ninguno («Miedo a una Burger
+    /// Cangreburger La concha de un hombre»), y ahí «no hay separador» no significa «una
+    /// sola historia». Con la comparación esos salen bien solos, porque casan con el
+    /// conjunto y no con una suelta.
+    /// </para>
+    /// <para>
+    /// Lo que se decide no puede decidirlo el programa -si el fichero trae el episodio
+    /// entero mal nombrado o solo una historia, eso solo lo sabe quien lo vea-, así que se
+    /// pregunta en vez de aplicarse.
+    /// </para>
+    /// </summary>
+    private static void MarcarLosQueDeclaranMenosDeLoQuePromete(List<ReindexResolution> resoluciones,
+        ReindexCatalog cat, IReadOnlyDictionary<string, ReindexOverride> overrides,
+        IndiceTitulos indice, ModoPrioridad modo)
+    {
+        // La vara de esta carpeta, para confirmar con el reloj lo que sospecha el nombre.
+        var unidad = MedidaDelCapitulo.Unidad(resoluciones
+            .Where(x => x.Confianza == ReindexConfianza.Alta && x.Episodio != null)
+            .Where(x => x.Archivo.Duracion is { } d && d > TimeSpan.Zero)
+            .Select(x => (x.Archivo.Duracion!.Value, Math.Max(1, x.Episodio!.TitulosSalida.Count))));
+
+        var aElegir = new List<(ReindexResolution Fila, string Letra)>();
+
+        foreach (var r in resoluciones)
+        {
+            if (r.Episodio == null) continue;
+            if (r.Confianza != ReindexConfianza.Alta) continue;
+            // Ya se decidió qué trozo es: el nombre no promete de más.
+            if (r.Archivo.SubSegmento != null) continue;
+
+            // Los del idioma de SALIDA, no `TitulosNorm`: aquellos juntan todos los
+            // idiomas para poder comparar, así que un episodio con título en castellano y
+            // en inglés parecía tener dos historias. Son el mismo título dicho dos veces.
+            var historias = r.Episodio.TitulosSalida.Select(TitleMatch.Norm).ToList();
+            if (historias.Count <= 1) continue;
+
+            // Si el nombre no aporta título, no hay nada que lo contradiga. El episodio
+            // pudo identificarse por el número o por el metadato del contenedor, y de
+            // ninguno de los dos se deduce cuántas historias trae el fichero.
+            var suyo = TitleMatch.Norm(r.Archivo.TituloNombre);
+            if (suyo.Length < 4) continue;
+
+            double conElConjunto = TitleMatch.Sim(suyo, string.Join(" ", historias));
+            double conLaMejorSuelta = historias.Max(h => TitleMatch.Sim(suyo, h));
+
+            // El margen evita disparar en los empates: si casa parecido con las dos
+            // lecturas, no hay nada claro que objetar y se deja pasar.
+            if (conLaMejorSuelta <= conElConjunto + 0.08) continue;
+
+            r.Confianza = ReindexConfianza.Revisar;
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoNombreDeMas,
+                r.Episodio.Num, historias.Count);
+
+            // ¿Y CUÁL de las historias es? Cuando se sabe, no hay que preguntarlo: se
+            // propone. Avisar y dejar que la persona la elija a mano es pedirle que repita
+            // una cuenta que el programa ya ha hecho.
+            //
+            // Pero solo cuando el RELOJ lo confirma. Si el fichero mide lo que miden las
+            // dos historias, lo que trae es el episodio entero con un nombre pobre, y
+            // proponer «a» perdería la otra sin que nadie se entere. Sin duración tampoco
+            // se elige: la sospecha del nombre basta para preguntar, no para decidir.
+            int cual = historias
+                .Select((h, i) => (i, sim: TitleMatch.Sim(suyo, h)))
+                .OrderByDescending(x => x.sim)
+                .First().i;
+
+            if (unidad is not { } u) continue;
+            if (r.Archivo.Duracion is not { } dura) continue;
+            if (!MedidaDelCapitulo.Cuadra(dura, 1, u)) continue;
+
+            aElegir.Add((r, ((char)('a' + cual)).ToString()));
+        }
+
+        // Se rehace FUERA del bucle y re-resolviendo, no tocando la fila: las señales son
+        // inmutables a propósito -la decisión crea una variante, no reescribe la evidencia-
+        // y aquí se está decidiendo algo, así que le toca una variante.
+        foreach (var (fila, letra) in aElegir)
+        {
+            int i = resoluciones.IndexOf(fila);
+            if (i < 0) continue;
+
+            var rehecha = ResolverUno(fila.Archivo.ConSegmento(letra), cat, overrides, indice, modo);
+
+            // Acertar no lo vuelve automático. Lo que hay debajo es un fichero que no
+            // contiene lo que su nombre decía, y eso lo confirma quien lo tenga delante.
+            rehecha.Confianza = ReindexConfianza.Revisar;
+            rehecha.Motivo = string.Format(Textos.Instancia.ReindexMotivoHistoriaSuelta,
+                fila.Episodio!.Num, letra, Reloj(fila.Archivo.Duracion!.Value));
+            resoluciones[i] = rehecha;
         }
     }
 

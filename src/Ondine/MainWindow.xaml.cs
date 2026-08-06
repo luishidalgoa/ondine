@@ -132,6 +132,11 @@ public partial class MainWindow : Window
         miDelSel.Click += (_, _) => DeleteSelected();
         miRename.Click += (_, _) => OpenRenameDialog();
         btnRename.Click += (_, _) => OpenRenameDialog();
+        // El catálogo y lo resuelto se le pasan a la ventana en vez de que ella
+        // los busque: así la pantalla de complementos no sabe nada de Organizar,
+        // solo recibe dos datos, y se puede abrir desde otro sitio mañana.
+        miComplementos.Click += (_, _) => AbrirComplementos(null);
+
         miPrefs.Click += (_, _) => OpenPreferences();
         miCheckUpd.Click += async (_, _) => await CheckUpdateAsync(manual: true);
         miAbout.Click += (_, _) => ShowAbout();
@@ -1337,6 +1342,13 @@ public partial class MainWindow : Window
     /// </summary>
     private void AjustarAAncho()
     {
+        AjustarMenu();
+
+        // El panel se recorta con la ventana: si no, al estrechar se queda con su
+        // ancho y es el contenido el que desaparece.
+        if (panelLateral.Visibility == Visibility.Visible)
+            colPanel.Width = new GridLength(AnchoQueCabe(colPanel.Width.Value));
+
         bool cabeElLateral = ActualWidth >= AnchoMinimoConLateral;
 
         colLateral.Width = cabeElLateral ? new GridLength(262) : new GridLength(0);
@@ -1364,6 +1376,173 @@ public partial class MainWindow : Window
     /// </summary>
     private enum Pagina { Comprimir, Organizar, Recortes }
 
+    /// <summary>El nombre del modo tal y como lo declaran los complementos.</summary>
+    private static string ModoDe(Pagina p) => p switch
+    {
+        Pagina.Organizar => "organizar",
+        Pagina.Recortes => "recortes",
+        _ => "comprimir",
+    };
+
+    /// <summary>
+    /// Pone el botón de complementos al día para la página en la que estés.
+    ///
+    /// <para>
+    /// Se recuenta en cada cambio de página y no una vez al arrancar: uno
+    /// instalado con la aplicación abierta tiene que aparecer sin reiniciar, y
+    /// además cada página enseña un conjunto distinto.
+    /// </para>
+    /// <para>
+    /// Si no hay ninguno para esta página, el botón se esconde. Uno que solo
+    /// sirve para decir «aquí no hay nada» ocupa sitio y no informa de nada.
+    /// </para>
+    /// </summary>
+    private void RefrescarComplementos()
+    {
+        var modo = ModoDe(_paginaActual);
+        var suyos = Complementos.Descubridor.Buscar().Bueno.Where(c => c.SaleEn(modo)).ToList();
+
+        btnComplementos.Visibility = suyos.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        lblCuantosComplementos.Text = suyos.Count.ToString();
+        btnComplementos.Tag = suyos;
+    }
+
+    /// <summary>
+    /// El menú del botón. Cada complemento abre SU panel; abajo, la gestión.
+    ///
+    /// <para>
+    /// Se arma al pulsarlo y no al arrancar, por lo mismo que el recuento: lo
+    /// instalado puede cambiar mientras la aplicación está abierta.
+    /// </para>
+    /// </summary>
+    private void OnBotonComplementos(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = btnComplementos, Placement = PlacementMode.Bottom };
+
+        foreach (var c in (btnComplementos.Tag as List<Complementos.Complemento>) ?? new())
+        {
+            var it = new MenuItem { Header = c.Nombre, ToolTip = c.Descripcion };
+            var suyo = c;
+            it.Click += (_, _) => AbrirComplementos(suyo);
+            menu.Items.Add(it);
+        }
+
+        if (menu.Items.Count > 0) menu.Items.Add(new Separator());
+        var gestionar = new MenuItem { Header = Textos.Instancia.MainComplementosGestionar };
+        gestionar.Click += (_, _) => AbrirComplementos(null);
+        menu.Items.Add(gestionar);
+
+        menu.IsOpen = true;
+    }
+
+    private ComplementosPanel? _complementos;
+
+    /// <summary>
+    /// Lo que ocupa el panel al abrirse, y lo que recupera al volver de estar
+    /// encogido. Se guarda porque el tirador lo cambia y sería tonto olvidarlo
+    /// cada vez que se cierra.
+    /// </summary>
+    private double _anchoPanel = 460;
+
+    private void AbrirComplementos(Complementos.Complemento? cual)
+    {
+        // Ya estaba puesto: no se rehace. Volver a montarlo tiraría la lista que
+        // se acabase de traer, que es justo lo que costó minutos.
+        if (_complementos is not null)
+        {
+            if (panelLateral.Visibility != Visibility.Visible) MostrarPanel(true);
+            _complementos.Enfocar(cual);
+            return;
+        }
+
+        var v = new ComplementosPanel(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual);
+        _complementos = v;
+
+        v.Traido += carpeta =>
+        {
+            CambiarPagina(Pagina.Organizar);
+            pageOrganizar.ApuntarA(carpeta);
+        };
+        v.Cerrar += () => MostrarPanel(false);
+
+        huecoPanel.Content = v;
+        MostrarPanel(true);
+    }
+
+    /// <summary>
+    /// Recoge los menús en la hamburguesa cuando la barra se queda sin sitio.
+    ///
+    /// <para>
+    /// Se MUEVEN los mismos objetos, no se duplican. Dos copias del menú son dos
+    /// sitios donde añadir la próxima entrada, y siempre se olvida una: el fallo
+    /// no sería que se vea raro, sería que una opción exista solo en una anchura
+    /// de ventana.
+    /// </para>
+    /// </summary>
+    private void AjustarMenu()
+    {
+        // El umbral no es un número redondo: es el ancho a partir del cual la
+        // marca, los cuatro menús y el conmutador de página dejan de caber sin
+        // pisarse. Con el panel abierto la barra no cambia -cruza entera-, así
+        // que solo depende de la ventana.
+        var estrecho = ActualWidth > 0 && ActualWidth < 1000;
+        if (estrecho == _menuRecogido) return;
+        _menuRecogido = estrecho;
+
+        var suyos = new[] { miArchivo, miSeleccion, miHerramientas, miAyuda };
+        var de = estrecho ? menuBar.Items : miHamburguesa.Items;
+        var a = estrecho ? miHamburguesa.Items : menuBar.Items;
+
+        foreach (var m in suyos)
+        {
+            de.Remove(m);
+            a.Add(m);
+        }
+
+        miHamburguesa.Visibility = estrecho ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private bool _menuRecogido;
+
+    private void MostrarPanel(bool abierto)
+    {
+        if (!abierto)
+        {
+            // Se guarda lo ancho que estaba antes de cerrarlo: quien lo estiró
+            // lo estiró por algo, y devolvérselo estrecho la próxima vez es
+            // hacerle repetir el ajuste.
+            if (colPanel.Width.Value > 0) _anchoPanel = colPanel.Width.Value;
+            colPanel.Width = new GridLength(0);
+            panelLateral.Visibility = Visibility.Collapsed;
+            tirador.Visibility = Visibility.Collapsed;
+            RefrescarComplementos();
+            return;
+        }
+
+        panelLateral.Visibility = Visibility.Visible;
+        tirador.Visibility = Visibility.Visible;
+        colPanel.Width = new GridLength(AnchoQueCabe(_anchoPanel));
+    }
+
+    /// <summary>
+    /// El ancho pedido, recortado a lo que la ventana puede dar sin comerse la
+    /// tabla. En una ventana pequeña un panel de 460 px deja la tabla en un
+    /// canalón donde no se lee ni la columna de fichero.
+    /// </summary>
+    private double AnchoQueCabe(double pedido)
+    {
+        var disponible = ActualWidth > 0 ? ActualWidth : Width;
+        if (double.IsNaN(disponible) || disponible <= 0) return pedido;
+
+        // El contenido manda: lo que quede para la tabla no puede bajar de su
+        // minimo, o la rejilla se desborda y RECORTA por la izquierda en vez de
+        // encogerse -se pierde el desplegable de catalogo y media barra-.
+        // Antes de dejar que eso pase, el panel cede.
+        const double MinimoDelContenido = 320;
+        var techo = Math.Max(0, disponible - MinimoDelContenido);
+        return Math.Max(0, Math.Min(Math.Min(pedido, disponible * 0.5), techo));
+    }
+
     private void CambiarPagina(Pagina pagina)
     {
         _paginaActual = pagina;
@@ -1374,6 +1553,8 @@ public partial class MainWindow : Window
             Pagina.Organizar => Textos.Instancia.MainPaginaOrganizar,
             _ => Textos.Instancia.MainPaginaRecortes,
         };
+
+        RefrescarComplementos();
 
         var comprimir = pagina == Pagina.Comprimir ? Visibility.Visible : Visibility.Collapsed;
         rowOrigen.Visibility = comprimir;

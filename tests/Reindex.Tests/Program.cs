@@ -62,6 +62,12 @@ public static class Program
         // es un arnés, es una intención.
         TraduccionTests.Todas();
         Ondine.Reindex.Tests.IdiomaElegidoTests.Todas();
+        Ondine.Reindex.Tests.FichaDeWindowsTests.Todas();
+        Ondine.Reindex.Tests.MedidaDelCapituloTests.Todas();
+        Ondine.Reindex.Tests.ComplementoTests.Todas();
+        Ondine.Reindex.Tests.CotejoDeListaTests.Todas();
+        Ondine.Reindex.Tests.DescubridorTests.Todas();
+        Ondine.Reindex.Tests.IndiceTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -85,13 +91,38 @@ public static class Program
         Eq("", TitleMatch.Norm(null), "null → vacío");
         // Los dígitos sobreviven: distinguen «Parte 1» de «Parte 2»
         Eq("parte 2", TitleMatch.Norm("Parte 2"), "los números se conservan");
-        // Los ordinales abreviados tienen que igualar a los escritos: el fichero dice
-        // «(2.ª parte)» donde el catálogo dice «(segunda parte)», y sin esto se quedan
-        // en «2 parte» vs «segunda parte» y el parecido baja justo lo que descalifica.
-        Eq("segunda parte", TitleMatch.Norm("2.ª parte"), "«2.ª» = «segunda»");
-        Eq("primera parte", TitleMatch.Norm("(1.ª parte)"), "«1.ª» = «primera»");
-        Eq("tercera parte", TitleMatch.Norm("3ª parte"), "también sin punto");
-        Eq("parte 2", TitleMatch.Norm("Parte 2"), "un 2 sin ordinal se queda como está");
+
+        // TODAS las formas de decir «la segunda parte» caen en la MISMA cadena. Antes se
+        // convertía al revés -dígito a palabra- y solo con marcador ordinal, así que
+        // «parte 2» se quedaba tal cual: contra un catálogo que dice «segunda parte» el
+        // dígito no aportaba nada y los dos ficheros de una historia partida en dos
+        // puntuaban IDÉNTICO (0,792 los dos, medido) contra los dos episodios. Ganaba
+        // siempre el primero y salían como duplicado en conflicto.
+        Eq("parte 2", TitleMatch.Norm("2.ª parte"), "«2.ª parte» = «parte 2»");
+        Eq("parte 1", TitleMatch.Norm("(1.ª parte)"), "«1.ª parte» = «parte 1»");
+        Eq("parte 3", TitleMatch.Norm("3ª parte"), "también sin punto");
+        Eq("parte 2", TitleMatch.Norm("segunda parte"), "la palabra también: «segunda parte»");
+        Eq("parte 1", TitleMatch.Norm("Primera parte"), "«primera parte»");
+        Eq("parte 2", TitleMatch.Norm("parte segunda"), "y con el orden al revés");
+        Eq("parte 2", TitleMatch.Norm("2 parte"), "un dígito suelto delante de «parte»");
+        Eq("part 2", TitleMatch.Norm("second part"), "en inglés, igual");
+
+        // Una palabra ordinal que NO acompaña a «parte» no se toca: es parte del título.
+        Eq("la primera vez", TitleMatch.Norm("La primera vez"), "«primera» sin «parte» se conserva");
+        Eq("segunda oportunidad", TitleMatch.Norm("Segunda oportunidad"), "y «segunda» tampoco");
+
+        // El caso real que lo destapó: dos ficheros de una historia partida en dos, con el
+        // catálogo escribiéndolo con palabras y el fichero con dígitos. Cada uno tiene que
+        // irse con SU episodio, no los dos al mismo.
+        var conPalabras = new[] { "Hola, marciano (primera parte)", "Hola, marciano (segunda parte)" };
+        Assert(
+            TitleMatch.SimRaw("Hola, marciano (parte 2)", conPalabras[1]) >
+            TitleMatch.SimRaw("Hola, marciano (parte 2)", conPalabras[0]),
+            "«parte 2» se parece más a «segunda parte» que a «primera parte»");
+        Assert(
+            TitleMatch.SimRaw("Hola, marciano (parte 1)", conPalabras[0]) >
+            TitleMatch.SimRaw("Hola, marciano (parte 1)", conPalabras[1]),
+            "y «parte 1» al revés");
     }
 
     // ─────────────────── Fase B: sim() == difflib de Python ───────────────────
@@ -1356,6 +1387,154 @@ public static class Program
             "aunque el empate lo deje en Revisar, sigue siendo un fichero de dos episodios → partir");
         Eq(true, (empate.Motivo ?? "").Contains("588") && (empate.Motivo ?? "").Contains("589"),
             "y el motivo nombra los dos episodios, no ofrece elegir uno");
+
+        // Con un rival por el mismo número: el que trae dos historias tiene que seguir
+        // marcado para partir, no acabar tratado como una copia sobrante. Aquí gana la
+        // deduplicación, así que conserva la marca -pero el detector corre DESPUÉS de
+        // deduplicar y arranca con «si no es Alta o Revisar, siguiente», así que a un
+        // fichero al que la deduplicación deje en Ninguna no llega a mirarle dentro. Este
+        // caso no cae en esa grieta; queda anotado que la grieta existe.
+        var conRival = ReindexEngine.Resolve(new[] {
+            SignalExtractor.Extract(
+                F("Doraemon (2005) - S2020E615 - El robot pruebarreacciones + A por la marca perfecta.mkv"),
+                "Season 2020"),
+            SignalExtractor.Extract(
+                F("Doraemon (2005) - S2020E615 - El robot pruebarreacciones.mkv"),
+                "Season 2020"),
+        }, cat);
+
+        var elQueTraeDos = conRival.First(r =>
+            r.Archivo.NombreArchivo.Contains("A por la marca perfecta"));
+
+
+        Eq(true, elQueTraeDos.TraeDosEpisodios,
+            "traer dos episodios se detecta AUNQUE otro fichero reclame el mismo número");
+        Eq(false, elQueTraeDos.EsDuplicado,
+            "y no se le llama duplicado: no sobra, hay que partirlo");
+        Eq(true, (elQueTraeDos.Motivo ?? "").Contains("662"),
+            "el motivo sigue nombrando el episodio de la otra historia, no al fichero rival");
+
+        // El caso al revés, y el que se aplicaba SOLO: el fichero declara UNA historia y el
+        // episodio al que se le quiere renombrar tiene DOS. Salía en verde, listo para
+        // aplicar, y el nombre resultante afirmaría que el fichero trae las dos. Después de
+        // eso ya no hay forma de saber que falta una: el nombre miente y nadie lo sabe.
+        //
+        // Es contable sin abrir el fichero: cuántos títulos declara el nombre frente a
+        // cuántos tiene el episodio en el catálogo.
+        var mediaVerdad = ReindexEngine.Resolve(new[] {
+            SignalExtractor.Extract(
+                F("Doraemon (2005) - S2021E662 - A por la marca perfecta.mkv"),
+                "Season 2021"),
+        }, cat)[0];
+
+        Eq(662, mediaVerdad.Episodio?.Num, "identifica el episodio por su primera historia");
+        Eq(true, mediaVerdad.Confianza != ReindexConfianza.Alta,
+            "un fichero de UNA historia no se renombra solo a un episodio de DOS");
+
+        ElRelojComoSegundaOpinion(cat);
+        ProponerLaHistoriaSuelta(cat);
+    }
+
+    /// <summary>
+    /// Cuando esta claro que el fichero trae UNA de las historias, la app deja de avisar y
+    /// PROPONE esa: «S2021E662a - A por la marca perfecta» en vez del episodio entero.
+    ///
+    /// Avisar estaba bien pero dejaba el trabajo hecho a medias: sabiendo cual es -el titulo
+    /// casa con una sola y el reloj lo confirma-, obligar a abrir el desplegable y elegirla a
+    /// mano es pedirle a la persona que repita una cuenta que el programa ya hizo.
+    /// </summary>
+    private static void ProponerLaHistoriaSuelta(ReindexCatalog cat)
+    {
+        Seccion("Proponer la historia suelta");
+
+        static FileSignals Con(string nombre, string carpeta, double minutos) =>
+            SignalExtractor.Extract(F(nombre), carpeta, duracion: TimeSpan.FromMinutes(minutos));
+
+        // La carpeta da la vara: una historia son ~11 min.
+        FileSignals[] Carpeta(params FileSignals[] extra) => new[]
+        {
+            Con("Doraemon (2005) - S2020E615 - El robot pruebarreacciones.mkv", "Season 2020", 11.0),
+            Con("Doraemon (2005) - S2020E588 - La lanza de la consideracion que va directa al corazon.mkv", "Season 2020", 10.7),
+            Con("Doraemon (2005) - S2020E589 - Cuidado con los estornudos.mkv", "Season 2020", 11.2),
+            Con("Doraemon (2005) - S2014E364 - El gorro de la suerte + El cazamariposas.mkv", "Season 2014", 22.1),
+            Con("Doraemon (2005) - S2005E02 - El gorro de la suerte.mkv", "Season 2005", 10.9),
+        }.Concat(extra).ToArray();
+
+        // El caso: el fichero trae la PRIMERA historia del 662 y dura once minutos.
+        var primera = ReindexEngine.Resolve(
+            Carpeta(Con("Doraemon (2005) - S2021E662 - A por la marca perfecta.mkv", "Season 2021", 11.1)), cat);
+        var a = primera.First(r => r.Archivo.NombreArchivo.Contains("A por la marca"));
+        Eq(662, a.Episodio?.Num, "sigue siendo el episodio 662");
+        Eq("a", a.Archivo.SubSegmento, "y se propone su PRIMERA historia, no el episodio entero");
+        Eq(true, a.Confianza != ReindexConfianza.Alta,
+            "acertar no lo hace automatico: el fichero no contiene lo que su nombre decia");
+
+        // La segunda historia saca la letra que le toca.
+        var segunda = ReindexEngine.Resolve(
+            Carpeta(Con("Doraemon (2005) - S2021E662 - El escaparate para recoger.mkv", "Season 2021", 10.8)), cat);
+        var b = segunda.First(r => r.Archivo.NombreArchivo.Contains("escaparate"));
+        Eq("b", b.Archivo.SubSegmento, "la segunda historia es la «b»");
+
+        // Y lo que NO debe pasar: si el reloj dice que ahi caben las DOS, el fichero
+        // probablemente trae el episodio entero con un nombre pobre. Ahi no se elige por
+        // nadie -se avisa y ya-, porque proponer «a» perderia la otra historia.
+        var entero = ReindexEngine.Resolve(
+            Carpeta(Con("Doraemon (2005) - S2021E662 - A por la marca perfecta.mkv", "Season 2021", 22.0)), cat);
+        var dos = entero.First(r => r.Archivo.NombreArchivo.Contains("A por la marca"));
+        Eq(null, dos.Archivo.SubSegmento,
+            "con duracion de DOS historias no se elige una: se avisa y decide la persona");
+        Eq(true, dos.Confianza != ReindexConfianza.Alta, "pero sigue sin aplicarse solo");
+    }
+
+    /// <summary>
+    /// El reloj, ya conectado al motor. La comprobación del nombre no llega a todo: hay
+    /// ficheros cuyo nombre no dice cuántas historias trae, y ahí lo único que queda es
+    /// cuánto miden.
+    /// </summary>
+    private static void ElRelojComoSegundaOpinion(ReindexCatalog cat)
+    {
+        Seccion("El reloj, conectado");
+
+        // Una carpeta con su ritmo: los de una historia rondan los 11 min y los de dos,
+        // los 22. Nada de esto está escrito en el programa; sale de la propia carpeta.
+        static FileSignals Con(string nombre, string carpeta, double minutos) =>
+            SignalExtractor.Extract(F(nombre), carpeta, duracion: TimeSpan.FromMinutes(minutos));
+
+        var lote = new[]
+        {
+            Con("Doraemon (2005) - S2020E615 - El robot pruebarreacciones.mkv", "Season 2020", 11.0),
+            Con("Doraemon (2005) - S2020E588 - La lanza de la consideracion que va directa al corazon.mkv", "Season 2020", 10.7),
+            Con("Doraemon (2005) - S2020E589 - Cuidado con los estornudos.mkv", "Season 2020", 11.2),
+            Con("Doraemon (2005) - S2014E364 - El gorro de la suerte + El cazamariposas.mkv", "Season 2014", 22.1),
+            Con("Doraemon (2005) - S2021E662 - A por la marca perfecta + El escaparate para recoger.mkv", "Season 2021", 21.8),
+            Con("Doraemon (2005) - S2005E02 - El gorro de la suerte.mkv", "Season 2005", 10.9),
+        };
+
+        var normal = ReindexEngine.Resolve(lote, cat);
+        Assert(normal.All(r => r.Motivo?.Contains("dura") != true),
+            "en una carpeta que cuadra, el reloj no dice nada");
+
+        // El caso que lo justifica: un fichero que MIDE once minutos al que se le quiere
+        // dar un episodio de dos historias. El nombre no lo delata -trae los dos títulos-,
+        // así que la comprobación del nombre lo deja pasar. El reloj no.
+        var corto = lote.Append(
+            Con("Doraemon (2005) - S2014E364 - El gorro de la suerte + El cazamariposas (1).mkv",
+                "Season 2014", 11.0)).ToArray();
+        var conCorto = ReindexEngine.Resolve(corto, cat);
+        var sospechoso = conCorto.First(r => r.Archivo.NombreArchivo.Contains("(1)"));
+        Eq(true, sospechoso.Confianza != ReindexConfianza.Alta,
+            "un fichero que mide la mitad de lo que promete no se aplica solo");
+
+        // Y el aviso que TÚ señalaste: un especial que dura como una película. No hay que
+        // marcarlo como «te falta una historia» — no se sabe qué es, y decir algo falso es
+        // peor que callarse.
+        var especial = lote.Append(
+            Con("Doraemon (2005) - S2020E615 - El robot pruebarreacciones (especial).mkv",
+                "Season 2020", 95.0)).ToArray();
+        var conEspecial = ReindexEngine.Resolve(especial, cat);
+        var largo = conEspecial.First(r => r.Archivo.NombreArchivo.Contains("especial"));
+        Assert(largo.Motivo?.Contains("dura") != true,
+            "un especial de hora y media no recibe un aviso inventado sobre sus historias");
     }
 
     // ─────────────── La app tiene que saber leer lo que ella misma escribe ───────────────

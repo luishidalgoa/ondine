@@ -1,0 +1,11 @@
+{
+  "nombre": "Demo",
+  "descripcion": "Una fuente de mentira para probar la pantalla sin depender de nada de fuera",
+  "version": "1.0.0",
+  "autor": "Ondine",
+  "ejecutable": "demo.cmd",
+  "capacidades": ["importar"],
+  "ambito": ["organizar"],
+  "integracion": "propia",
+  "contrato": 1
+}

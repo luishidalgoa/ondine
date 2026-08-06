@@ -590,6 +590,22 @@
             </DataGridTemplateColumn>
 
             <!-- POR QUÉ — evidencia corta; la prosa completa, en el tooltip -->
+            <!-- La duración. Se lee de la ficha de Windows, no del contenido, así que
+                 los ficheros que están en la nube también la traen sin descargarse.
+                 Va ANTES del «por qué» porque es un dato, y el «por qué» es la
+                 conclusión que a veces se saca de él. -->
+            <DataGridTemplateColumn Header="{i:T OrganizarColDuracion}" Width="74"
+                                    SortMemberPath="DuracionOrden">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding DuracionVisible}" FontFamily="{StaticResource FontMono}"
+                             FontSize="11.5" Foreground="{StaticResource Neutral500}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center"
+                             ToolTip="{Binding DuracionTooltip}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
             <DataGridTemplateColumn Header="{i:T OrganizarColPorQue}" Width="0.7*" MinWidth="90" SortMemberPath="PorQue">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>

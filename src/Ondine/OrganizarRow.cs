@@ -217,6 +217,7 @@ public sealed class OrganizarRow : INotifyPropertyChanged
             nameof(RecomiendaRecortar), nameof(VerRecortar), nameof(TituloDetalle), nameof(VerSelector),
             nameof(EsRepetido), nameof(VerBorrarCopia),
             nameof(SegmentoPildora), nameof(VerSegmento), nameof(SegmentoTooltip),
+            nameof(DuracionVisible), nameof(DuracionOrden), nameof(DuracionTooltip),
             nameof(NombrePropio), nameof(CarpetaPropia), nameof(NombrePareja), nameof(CarpetaPareja),
         }) N(p);
     }
@@ -409,7 +410,40 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     public string Explicacion => Res.Motivo;
 
     /// <summary>¿Merece la pena desplegar el resolutor bajo esta fila?</summary>
-    public bool TieneDetalle => Res.Alternativas.Count > 0 || Res.EsDuda;
+    /// <summary>
+    /// Si la fila se puede desplegar.
+    ///
+    /// <para>
+    /// También las verdes. El motor les vacía las alternativas a propósito -ofrecer
+    /// candidatos peores en una fila ya resuelta es ruido que invita a un clic
+    /// equivocado-, y de rebote se quedaban sin poder abrirse: si la app acertaba pero
+    /// no era lo que tú querías, no había por dónde cambiarlo. Se abren igual; lo que
+    /// no traen es la lista de candidatos ni el botón de confirmar uno, que ahí no
+    /// significa nada. Quedan las dos salidas que sí valen: elegir otro episodio a mano
+    /// y dejarlo como está.
+    /// </para>
+    /// </summary>
+    // ───────────────────────── columna DURACIÓN ─────────────────────────
+
+    /// <summary>
+    /// Lo que dura, tal cual se enseña. Un guion cuando no se sabe: dejarlo en blanco se
+    /// confunde con «cero» y con «todavía cargando», y aquí no saber es un estado normal
+    /// -Windows no tiene apuntada la ficha de todos los ficheros-.
+    /// </summary>
+    public string DuracionVisible => Res.Archivo.Duracion is { } d
+        ? (d.TotalHours >= 1 ? $"{(int)d.TotalHours}:{d.Minutes:00}:{d.Seconds:00}" : $"{d.Minutes}:{d.Seconds:00}")
+        : "-";
+
+    /// <summary>Para ordenar. Las desconocidas al final, no confundidas con las cortas.</summary>
+    public double DuracionOrden => Res.Archivo.Duracion?.TotalSeconds ?? double.MaxValue;
+
+    public string DuracionTooltip => Res.Archivo.Duracion is null
+        ? Textos.Instancia.OrganizarDuracionDesconocida
+        : string.Format(Textos.Instancia.OrganizarDuracionTip, Res.UnidadDeHistoria is { } u
+            ? (u.TotalHours >= 1 ? $"{(int)u.TotalHours}:{u.Minutes:00}:{u.Seconds:00}" : $"{u.Minutes}:{u.Seconds:00}")
+            : "?");
+
+    public bool TieneDetalle => Res.Alternativas.Count > 0 || Res.EsDuda || Res.Episodio != null;
 
     /// <summary>
     /// Las opciones del resolvedor: primero la que la app propone, después las descartadas.
@@ -521,6 +555,10 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     public string TituloDetalle => RecomiendaRecortar
         ? Textos.Instancia.OrganizarDetalleDosEpisodios
         : EsRepetido ? Textos.Instancia.OrganizarDetalleRepetido
+        // En una fila que la app resolvió sola no hay conflicto ninguno, y llamarlo asi
+        // seria mentirle a quien solo queria cambiar la propuesta.
+        : !Res.EsDuda && Res.Alternativas.Count == 0
+            ? Textos.Instancia.OrganizarDetalleCambiar
         : Textos.Instancia.OrganizarDetalleConflicto;
 
     /// <summary>

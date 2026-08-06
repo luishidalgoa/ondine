@@ -312,6 +312,17 @@ public sealed partial class Textos
 
     public string OrganizarIdentificando => Idioma.Elegir("Identifying…", "Identificando…");
 
+    // Lo que se está haciendo DENTRO de cada paso, mientras se hace.
+    public string OrganizarPasoMirando => Idioma.Elegir(
+        "Reading {0} folders", "Mirando {0} carpetas");
+    public string OrganizarPasoCotejando => Idioma.Elegir(
+        "Matching {0} names against «{1}»", "Cotejando {0} nombres contra «{1}»");
+    public string OrganizarPasoTitulosGrabados => Idioma.Elegir(
+        "Reading the title recorded inside {0} unclear files",
+        "Leyendo el título grabado dentro de {0} ficheros que no quedan claros");
+    public string OrganizarPasoOrdenando => Idioma.Elegir(
+        "Sorting and grouping the proposals", "Ordenando y agrupando las propuestas");
+
     // ═══ Menú contextual de la fila ═════════════════════════════════════════
 
     public string OrganizarReproducir => Idioma.Elegir("Play", "Reproducir");
@@ -842,7 +853,23 @@ public sealed partial class Textos
         "DOS EPISODIOS EN UN MISMO FICHERO");
 
     public string OrganizarDetalleRepetido => Idioma.Elegir("DUPLICATE FILE", "FICHERO REPETIDO");
+    public string OrganizarColDuracion => Idioma.Elegir("LENGTH", "DURACIÓN");
+
+    public string OrganizarDuracionDesconocida => Idioma.Elegir(
+        "Windows has no length on file for this one. It is not an error: nothing is deduced from it either",
+        "Windows no tiene apuntada la duración de este. No es un error: tampoco se deduce nada de él");
+
+    // {0} = cuánto dura una historia en esta carpeta, aprendido de ella misma.
+    public string OrganizarDuracionTip => Idioma.Elegir(
+        "Read from the file record, without downloading it. Here one story runs about {0}",
+        "Leída de la ficha del fichero, sin descargarlo. Aquí una historia dura unos {0}");
+
     public string OrganizarDetalleConflicto => Idioma.Elegir("RESOLVE CONFLICT", "RESOLVER CONFLICTO");
+
+    // La cabecera del desplegable cuando la app ya resolvio la fila y solo se abre para
+    // cambiar la propuesta a mano. No es un conflicto: no hay nada que resolver.
+    public string OrganizarDetalleCambiar =>
+        Idioma.Elegir("CHANGE THE PROPOSAL", "CAMBIAR LA PROPUESTA");
 
     public string OrganizarDesconocido => Idioma.Elegir("(unknown)", "(desconocido)");
 

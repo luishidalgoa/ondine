@@ -23,6 +23,16 @@
            título quedaba fuera. Resultado: no se podía mover la ventana de ninguna de
            las dos formas. Con la barra siempre arriba, el arrastre, el doble clic para
            maximizar y el Aero Snap siguen siendo los del sistema, sin parches. -->
+      <!-- El panel lateral vive en una SEGUNDA COLUMNA, no encima. Empuja el
+           contenido en vez de taparlo: lo que se está mirando en Organizar es
+           justo contra lo que se coteja la lista, y esconderlo para enseñar la
+           lista obliga a cerrarla para mirar. Todo lo demás se queda en la
+           columna 0 sin tocar nada, que es la de por defecto. -->
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" MinWidth="320"/>
+        <ColumnDefinition x:Name="colPanel" Width="0"/>
+      </Grid.ColumnDefinitions>
+
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/><!-- titlebar -->
         <RowDefinition Height="Auto"/><!-- banner -->
@@ -43,7 +53,7 @@
            El BitmapCache pinta los degradados una sola vez; el DesiredFrameRate del
            latido (abajo) es el que de verdad importa — la historia completa está en
            el comentario de la animación. -->
-      <Grid x:Name="ambiente" Grid.Row="0" Grid.RowSpan="8" IsHitTestVisible="False" Panel.ZIndex="-1">
+      <Grid x:Name="ambiente" Grid.Row="0" Grid.RowSpan="8" Grid.ColumnSpan="2" IsHitTestVisible="False" Panel.ZIndex="-1">
         <Grid.CacheMode>
           <BitmapCache/>
         </Grid.CacheMode>
@@ -96,7 +106,13 @@
            nunca pise ni el menú (izq., Auto) ni los botones de ventana (der., Auto): así el
            conmutador escala a muchas más páginas —se desplaza y ofrece un menú «▾»— sin
            romper la cabecera. -->
-      <Grid Grid.Row="0" Height="40">
+      <!-- ColumnSpan="2": la barra cruza la ventana ENTERA, tambien por debajo del
+           panel lateral. Sin esto vivia solo en la columna del contenido, asi que
+           al abrir el panel se encogia y se llevaba por delante los botones de
+           minimizar, maximizar y cerrar: un panel no puede mover los mandos de la
+           ventana. Ademas es lo que fija el borde superior del panel, que empieza
+           justo donde acaba esta franja. -->
+      <Grid Grid.Row="0" Grid.ColumnSpan="2" Height="40" Panel.ZIndex="20">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>
@@ -130,28 +146,44 @@
           <TextBlock x:Name="lblVersion" Text="v0.3.0" FontSize="11" Foreground="{StaticResource Neutral600}" VerticalAlignment="Center" Margin="8,2,0,0"/>
           <Menu x:Name="menuBar" VerticalAlignment="Center" Margin="20,0,0,0" Background="Transparent"
                 WindowChrome.IsHitTestVisibleInChrome="True">
-            <MenuItem Header="{i:T MainMenuArchivo}">
+            <!-- La hamburguesa recoge los cuatro menús cuando no caben. Los mismos
+                 objetos se mueven de sitio, no se duplican: dos copias del menú son
+                 dos sitios donde añadir la próxima entrada, y una se olvida. -->
+            <MenuItem x:Name="miHamburguesa" Visibility="Collapsed" Padding="8,4">
+              <MenuItem.Header>
+                <Viewbox Width="15" Height="12">
+                  <Canvas Width="16" Height="12">
+                    <Path Data="M0,1 H16 M0,6 H16 M0,11 H16"
+                          Stroke="{StaticResource Text}" StrokeThickness="1.6"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                  </Canvas>
+                </Viewbox>
+              </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="miArchivo" Header="{i:T MainMenuArchivo}">
               <MenuItem x:Name="miPickSrc" Header="{i:T MainMenuElegirOrigen}"/>
               <MenuItem x:Name="miAddFiles" Header="{i:T MainMenuAnadirArchivos}"/>
               <MenuItem x:Name="miOpenDest" Header="{i:T MainMenuAbrirDestino}"/>
               <Separator/>
               <MenuItem x:Name="miExit" Header="{i:T MainMenuSalir}"/>
             </MenuItem>
-            <MenuItem Header="{i:T MainMenuSeleccion}">
+            <MenuItem x:Name="miSeleccion" Header="{i:T MainMenuSeleccion}">
               <MenuItem x:Name="miSelAll" Header="{i:T MainSeleccionarTodo}"/>
               <MenuItem x:Name="miSelNone" Header="{i:T MainQuitarSeleccion}"/>
               <MenuItem x:Name="miSelInvert" Header="{i:T MainInvertirSeleccion}"/>
               <Separator/>
               <MenuItem x:Name="miDelSel" Header="{i:T MainEnviarSeleccionPapelera}"/>
             </MenuItem>
-            <MenuItem Header="{i:T MainMenuHerramientas}">
+            <MenuItem x:Name="miHerramientas" Header="{i:T MainMenuHerramientas}">
               <MenuItem x:Name="miRename" Header="{i:T MainMenuRenombrarSalida}"/>
+              <Separator/>
+              <MenuItem x:Name="miComplementos" Header="{i:T MainMenuComplementos}"/>
               <Separator/>
               <MenuItem x:Name="miPrefs" Header="{i:T MainMenuPreferencias}"/>
               <Separator/>
               <MenuItem x:Name="miCheckUpd" Header="{i:T MainBuscarActualizaciones}"/>
             </MenuItem>
-            <MenuItem Header="{i:T MainMenuAyuda}">
+            <MenuItem x:Name="miAyuda" Header="{i:T MainMenuAyuda}">
               <MenuItem x:Name="miTutoriales" Header="{i:T MainMenuTutoriales}"/>
               <Separator/>
               <MenuItem x:Name="miAbout" Header="{i:T MainMenuAcercaDe}"/>
@@ -176,6 +208,30 @@
             <RadioButton x:Name="tabRecortes" Style="{StaticResource PageTab}" GroupName="pagina" Content="{i:T MainPaginaRecortes}"/>
           </StackPanel>
 
+          <!-- En fila. El Grid de fuera NO tiene columnas, así que apila a sus hijos
+               en la misma celda: el botón de complementos quedaba DEBAJO del
+               conmutador y no se veía. Un contenedor que coloca en capas no sirve
+               para poner dos cosas al lado. -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
+          <!-- El botón de complementos, al estilo de las extensiones de un navegador:
+               una pieza, y detrás los que sirvan AQUÍ. Va pegado al conmutador de
+               página porque lo que enseña depende de en qué página estés, y ponerlo
+               lejos rompería esa relación. Se esconde cuando no hay ninguno: un botón
+               que solo dice «no hay nada» es un botón que estorba. -->
+          <Button x:Name="btnComplementos" Style="{StaticResource PageSelector}"
+                  Margin="0,0,4,0" Visibility="Collapsed" Click="OnBotonComplementos"
+                  ToolTip="{i:T MainComplementosTip}">
+            <StackPanel Orientation="Horizontal">
+              <!-- Una pieza de puzle dibujada con la geometría mínima: no hay
+                   librería de iconos en el proyecto y no se va a traer una por esto. -->
+              <Path Data="M4,4 h3 a1.6,1.6 0 1 1 3,0 h3 v3 a1.6,1.6 0 1 0 0,3 v3 h-3 a1.6,1.6 0 1 0 -3,0 h-3 v-3 a1.6,1.6 0 1 1 0,-3 z"
+                    Fill="{StaticResource Neutral400}" Width="17" Height="17" Stretch="Uniform"
+                    VerticalAlignment="Center"/>
+              <TextBlock x:Name="lblCuantosComplementos" Margin="7,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+
           <!-- Desplegable compacto: página actual + «▾». Al pulsarlo se despliega la lista. -->
           <Button x:Name="btnPagina" Style="{StaticResource PageSelector}" Click="OnMasTabs"
                   Margin="0,0,4,0" ToolTip="{i:T MainCambiarPagina}">
@@ -186,6 +242,7 @@
                     StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
             </StackPanel>
           </Button>
+          </StackPanel>
         </Grid>
 
         <!-- ══ Grupo derecho: píldora de proceso + botones de ventana ══ -->
@@ -671,6 +728,53 @@
                    Padding="10,8" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
         </Border>
       </StackPanel>
+
+      <!-- ══ Panel lateral de complementos ══
+           Desde la fila 1: la barra de título sigue cruzando entera, porque es
+           la franja que WindowChrome reserva para arrastrar la ventana y
+           partirla deja media ventana sin agarre. -->
+      <Grid x:Name="panelLateral" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
+            Visibility="Collapsed">
+        <ContentControl x:Name="huecoPanel" Margin="9,0,0,0"/>
+      </Grid>
+
+      <!-- El tirador va AQUÍ, hermano del panel y no dentro de él: un
+           GridSplitter solo mueve las columnas de SU Grid padre. Metido dentro
+           estiraba las columnas interiores del panel -que no son la que manda- y
+           por fuera no se movía nada. Se dibuja sobre el borde izquierdo de la
+           columna del panel, que es donde se busca con el ratón. -->
+      <!-- El tirador SE VE. Transparente cumplía como zona de arrastre y no
+           existía como pista: un borde que se puede mover y no lo parece no lo
+           mueve nadie. Lleva la línea divisoria dentro -es la misma cosa, no dos-
+           y al pasar por encima se enciende, que es lo que dice «esto se agarra». -->
+      <GridSplitter x:Name="tirador" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
+                    Width="9" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                    ResizeDirection="Columns" ResizeBehavior="PreviousAndCurrent"
+                    Cursor="SizeWE" Panel.ZIndex="10" Visibility="Collapsed">
+        <GridSplitter.Template>
+          <ControlTemplate TargetType="GridSplitter">
+            <Grid Background="Transparent">
+              <Border x:Name="linea" Width="1" HorizontalAlignment="Center"
+                      Background="{StaticResource Divider}"/>
+              <!-- Tres puntos en el centro: la señal de agarre de toda la vida,
+                   y no cuesta ni una línea de altura. -->
+              <StackPanel x:Name="puntos" VerticalAlignment="Center" HorizontalAlignment="Center"
+                          Opacity="0.55">
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+              </StackPanel>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="linea" Property="Background" Value="{StaticResource Accent300}"/>
+                <Setter TargetName="linea" Property="Width" Value="2"/>
+                <Setter TargetName="puntos" Property="Opacity" Value="1"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </GridSplitter.Template>
+      </GridSplitter>
     </Grid>
   </Border>
 </Window>
