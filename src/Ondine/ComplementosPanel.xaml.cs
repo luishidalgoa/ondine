@@ -143,6 +143,8 @@ public partial class ComplementosPanel : UserControl
         listaTienda.ItemsSource = _tienda;
 
         listaInstalados.SelectionChanged += (_, _) => MostrarElElegido();
+        chkPermisoModelo.Checked += (_, _) => GuardarPermisoModelo();
+        chkPermisoModelo.Unchecked += (_, _) => GuardarPermisoModelo();
         btnListar.Click += async (_, _) => await ListarAsync();
         btnSoloFaltan.Click += (_, _) => { foreach (var f in _filas) f.Marcado = f.Falta; };
         btnNinguno.Click += (_, _) => { foreach (var f in _filas) f.Marcado = false; };
@@ -196,6 +198,23 @@ public partial class ComplementosPanel : UserControl
 
     private Complemento? Elegido => (listaInstalados.SelectedItem as Puesto)?.Cual;
 
+    /// <summary>
+    /// El puente al modelo para este complemento, o <c>null</c> si no lo pide.
+    ///
+    /// <para>
+    /// Los ajustes se leen AQUÍ, en cada ejecución, y no se guardan al abrir el
+    /// panel: quitar el permiso tiene que surtir efecto en la siguiente llamada y
+    /// no en la próxima vez que se abra la app. Quitar un permiso y que siga
+    /// concedido es peor que no poder quitarlo.
+    /// </para>
+    /// </summary>
+    private static PuenteDelModelo? Puente(Complemento c)
+    {
+        if (!c.PideModelo) return null;
+        var s = SettingsStore.Load();
+        return new PuenteDelModelo(s.Ia, s.PuedeUsarModelo(c.Id));
+    }
+
     private void CargarInstalados()
     {
         _puestos.Clear();
@@ -246,8 +265,50 @@ public partial class ComplementosPanel : UserControl
         lblVersion.Text = string.IsNullOrWhiteSpace(c.Version) ? "" : "  " + c.Version;
         lblDescripcion.Text = c.Descripcion;
         txtFuente.Text = "";
+        PintarPermisoModelo(c);
 
         Estado(Textos.Instancia.ComplementosListoTitulo, Textos.Instancia.ComplementosVacio);
+    }
+
+    /// <summary>
+    /// El interruptor del permiso, solo para los complementos que lo declaran.
+    ///
+    /// <para>
+    /// Si no hay ningún modelo conectado se enseña igualmente, pero apagado y
+    /// diciendo dónde se conecta. Esconderlo dejaría al complemento anunciando
+    /// una capacidad que no se ve por ninguna parte.
+    /// </para>
+    /// </summary>
+    private void PintarPermisoModelo(Complemento c)
+    {
+        cajaPermisoModelo.Visibility = c.PideModelo ? Visibility.Visible : Visibility.Collapsed;
+        if (!c.PideModelo) return;
+
+        var s = SettingsStore.Load();
+        bool hayModelo = s.Ia.Listo;
+
+        // Sin la bandera, poner IsChecked dispararía el manejador y guardaría el
+        // permiso al simple hecho de mirar el complemento.
+        _pintandoPermiso = true;
+        chkPermisoModelo.IsChecked = s.PuedeUsarModelo(c.Id);
+        _pintandoPermiso = false;
+
+        chkPermisoModelo.IsEnabled = hayModelo;
+        lblPermisoModelo.Text = hayModelo
+            ? Textos.Instancia.ComplementoPermisoModeloAyuda
+            : Textos.Instancia.ComplementoPermisoModeloSinConfigurar;
+    }
+
+    private bool _pintandoPermiso;
+
+    private void GuardarPermisoModelo()
+    {
+        if (_pintandoPermiso || Elegido is not { } c) return;
+
+        var s = SettingsStore.Load();
+        s.ComplementosConModelo.RemoveAll(x => string.Equals(x, c.Id, StringComparison.OrdinalIgnoreCase));
+        if (chkPermisoModelo.IsChecked == true) s.ComplementosConModelo.Add(c.Id);
+        SettingsStore.Save(s);
     }
 
     /// <summary>El estado de la zona central: título, explicación y, si aplica, una salida.</summary>
@@ -293,7 +354,8 @@ public partial class ComplementosPanel : UserControl
         {
             await foreach (var m in Invocador.CorrerAsync(
                 c, Invocador.ComandoListar,
-                fuente.Length > 0 ? new[] { fuente } : Array.Empty<string>(), _corte.Token))
+                fuente.Length > 0 ? new[] { fuente } : Array.Empty<string>(), _corte.Token,
+                Puente(c)))
             {
                 if (m.Tipo == Mensaje.TipoError) { error = m.MensajeError; continue; }
 
@@ -524,7 +586,8 @@ public partial class ComplementosPanel : UserControl
         {
             await foreach (var m in Invocador.CorrerAsync(
                 c, Invocador.ComandoTraer,
-                marcados.Concat(new[] { "--destino", destino }), _corte.Token))
+                marcados.Concat(new[] { "--destino", destino }), _corte.Token,
+                Puente(c)))
             {
                 switch (m.Tipo)
                 {

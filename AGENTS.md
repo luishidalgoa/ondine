@@ -135,7 +135,8 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | `src/Ondine/` | App WPF. `Engine.cs` es el motor; el resto es interfaz y autoactualización. |
 | `src/Ondine/Localizacion/` | La espina de la traducción y los textos por pantalla. |
 | `src/Ondine.Cli/` | Terminal multiplataforma. Enlaza el motor. |
-| `tests/Reindex.Tests/` | Todas las pruebas, sin dependencias externas. |
+| `tests/Reindex.Tests/` | Las pruebas del motor y de los textos. Sin dependencias externas ni WPF: corren en Linux. |
+| `tests/Ui.Smoke/` | Que cada pantalla se construya y se mida sin reventar. Necesita Windows (WPF), así que va aparte. |
 | `web/` | El sitio de [ondine.hdglabs.com](https://ondine.hdglabs.com), en Astro, también bilingüe. |
 | `spot/` | El spot de 44 s, en composiciones HTML. Hay versión castellana e inglesa. |
 | `src/Ondine/Complementos/` | El sistema de complementos: manifiesto, descubrimiento e invocación. |
@@ -150,6 +151,7 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | Ejecutar la app | `dotnet run --project src/Ondine` |
 | Ejecutar la CLI | `dotnet run --project src/Ondine.Cli -- --help` |
 | Pruebas | `dotnet run --project tests/Reindex.Tests` |
+| Humo de la interfaz (Windows) | `dotnet run --project tests/Ui.Smoke` |
 | Instalador completo | `pwsh -File build.ps1` |
 | Sitio web | `cd web && npm run dev` |
 | Renderizar el spot | `cd spot/videos/<proyecto> && npx hyperframes render -q high` |

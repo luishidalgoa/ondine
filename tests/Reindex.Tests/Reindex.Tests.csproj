@@ -29,6 +29,10 @@
     <Compile Include="..\..\src\Ondine\RenameRule.cs" LinkBase="Ajustes" />
     <Compile Include="..\..\src\Ondine\Preset.cs" LinkBase="Ajustes" />
     <Compile Include="..\..\src\Ondine\Complementos\*.cs" LinkBase="Complementos" />
+    <!-- La conexión a un modelo por API: HttpClient y JSON, nada de WPF. Sus reglas
+         -la URL, la respuesta, a dónde puede ir la clave- son justo lo que hay que
+         probar sin hablar con ningún servidor. -->
+    <Compile Include="..\..\src\Ondine\Ia\*.cs" LinkBase="Ia" />
     <Compile Include="..\..\src\Ondine\Localizacion\Textos.*.cs" LinkBase="Localizacion" />
     <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
          ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->

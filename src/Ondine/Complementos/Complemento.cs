@@ -92,6 +92,21 @@ public sealed class Complemento
     /// </summary>
     [JsonPropertyName("integracion")] public string Integracion { get; set; } = IntegracionPropia;
 
+    /// <summary>
+    /// Declara que <b>sabe</b> preguntarle al modelo de lenguaje cuando sus
+    /// propias reglas no resuelven algo. Declararlo no da permiso: solo hace que
+    /// Ondine ofrezca dárselo. El permiso lo da a mano quien lo instaló, uno a
+    /// uno, y empieza apagado.
+    ///
+    /// <para>
+    /// Se declara para no tener que preguntar por si acaso: sin este campo,
+    /// enseñar el interruptor en todos los complementos daría a entender que
+    /// cualquiera de ellos va a usarlo, y ofrecer un permiso que no hace falta es
+    /// la forma más rápida de que se conceda sin leerlo.
+    /// </para>
+    /// </summary>
+    [JsonPropertyName("modelo")] public bool PideModelo { get; set; }
+
     /// <summary>Su propio panel detrás del botón de complementos.</summary>
     public const string IntegracionPropia = "propia";
 

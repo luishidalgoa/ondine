@@ -50,6 +50,72 @@ public static class CoberturaCatalogo
                 SegmentosTotales, SegmentosPresentes, SegmentosQueFaltan);
     }
 
+    /// <summary>Qué hay de un episodio: nada, a medias o entero.</summary>
+    public enum Tengo { Nada, AMedias, Entero }
+
+    /// <summary>Lo que hay de un episodio, y en qué ficheros está.</summary>
+    public sealed record Tenencia(Tengo Que, IReadOnlyList<string> Ficheros);
+
+    /// <summary>
+    /// La cobertura mirada del derecho: <b>una respuesta por episodio</b>, y con la
+    /// ruta de los ficheros que la sostienen.
+    ///
+    /// <para>
+    /// <see cref="Calcular"/> devuelve la lista de huecos, que es lo que hace falta
+    /// para enseñar «qué me falta». Pero en el explorador del catálogo se está
+    /// mirando UN episodio y la pregunta es la contraria —«¿este lo tengo, y
+    /// dónde?»—, así que buscar en una lista de huecos sería contestar por
+    /// ausencia: no saldría el fichero.
+    /// </para>
+    /// <para>
+    /// Todos los episodios del catálogo salen en el resultado, también los que no
+    /// están. Una clave ausente obligaría a quien pinta a decidir qué significa, y
+    /// «no lo encuentro» y «no lo tienes» no son lo mismo.
+    /// </para>
+    /// </summary>
+    public static Dictionary<int, Tenencia> PorEpisodio(
+        ReindexCatalog catalogo, IReadOnlyList<ReindexResolution> resoluciones)
+    {
+        // Qué segmentos cubre cada episodio, y con qué ficheros. Mismo criterio que
+        // en Calcular: sin letra, el fichero es el episodio entero.
+        var cubierto = new Dictionary<int, HashSet<int>>();
+        var ficheros = new Dictionary<int, List<string>>();
+
+        foreach (var r in resoluciones)
+        {
+            if (r.Episodio is not { } ep) continue;
+            if (!cubierto.TryGetValue(ep.Num, out var set))
+            {
+                cubierto[ep.Num] = set = new HashSet<int>();
+                ficheros[ep.Num] = new List<string>();
+            }
+
+            int cuantos = Math.Max(1, ep.TitulosSalida.Count);
+            var seg = r.Archivo.SubSegmento;
+            if (string.IsNullOrEmpty(seg))
+                for (int i = 0; i < cuantos; i++) set.Add(i);
+            else
+                foreach (var c in seg)
+                {
+                    int i = char.ToLowerInvariant(c) - 'a';
+                    if (i >= 0 && i < cuantos) set.Add(i);
+                }
+
+            if (!string.IsNullOrEmpty(r.Archivo.Path)) ficheros[ep.Num].Add(r.Archivo.Path);
+        }
+
+        var mapa = new Dictionary<int, Tenencia>();
+        foreach (var ep in catalogo.Regulares.Concat(catalogo.Especiales))
+        {
+            int cuantos = Math.Max(1, ep.TitulosSalida.Count);
+            int tiene = cubierto.TryGetValue(ep.Num, out var set) ? set.Count : 0;
+            mapa[ep.Num] = new Tenencia(
+                tiene == 0 ? Tengo.Nada : tiene >= cuantos ? Tengo.Entero : Tengo.AMedias,
+                ficheros.TryGetValue(ep.Num, out var f) ? f : Array.Empty<string>());
+        }
+        return mapa;
+    }
+
     /// <summary>
     /// Compara el catálogo con lo identificado.
     ///

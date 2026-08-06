@@ -128,6 +128,14 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      # Que cada pantalla se construya y se mida sin reventar. Vive aquí y no en
+      # el flujo de tests porque necesita Windows —WPF solo existe ahí— y los
+      # ejecutores de Windows cuestan el doble de minutos: correrlo en cada push
+      # se comería la cuota. Aquí se paga una vez, justo antes de publicar, que
+      # es cuando de verdad importa que ninguna pantalla esté rota.
+      - name: Humo de la interfaz (WPF)
+        run: dotnet run --project tests/Ui.Smoke/Ui.Smoke.csproj -c Release
+
       - name: Instalar Inno Setup
         run: choco install innosetup --no-progress -y
 

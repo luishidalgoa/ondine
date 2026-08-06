@@ -30,6 +30,25 @@ public sealed class Mensaje
     /// <summary>Algo salió mal, con su explicación.</summary>
     public const string TipoError = "error";
 
+    /// <summary>
+    /// El complemento le pregunta al modelo de lenguaje, si es que quien lo
+    /// instaló le ha dado permiso. La pregunta va en <see cref="Texto"/> y el
+    /// <see cref="Id"/> sirve para casar la respuesta.
+    ///
+    /// <para>
+    /// Va por aquí y no dándole la clave al complemento a propósito: el
+    /// complemento es un programa de fuera. Ver <c>PuenteDelModelo</c>.
+    /// </para>
+    /// </summary>
+    public const string TipoPreguntar = "preguntar";
+
+    /// <summary>
+    /// La contestación de Ondine, que se le escribe al complemento por su
+    /// ENTRADA estándar. Trae <see cref="Texto"/> o
+    /// <see cref="MensajeError"/> —el motivo de que no—, nunca los dos.
+    /// </summary>
+    public const string TipoRespuesta = "respuesta";
+
     [JsonPropertyName("tipo")] public string Tipo { get; set; } = "";
 
     // ── elemento ────────────────────────────────────────────────────────────

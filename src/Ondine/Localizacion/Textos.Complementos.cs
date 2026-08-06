@@ -213,4 +213,66 @@ public sealed partial class Textos
     public string ComplementoEjecutableNoEsta => Idioma.Elegir(
         "Its program is not there: \"{0}\"",
         "Su programa no está: «{0}»");
+
+    // ═══ El puente al modelo de lenguaje ═════════════════════════════════════
+
+    public string IaComplementoSinPermiso => Idioma.Elegir(
+        "This add-on does not have permission to use the connected model.",
+        "Este complemento no tiene permiso para usar el modelo conectado.");
+
+    public string IaComplementoSinModelo => Idioma.Elegir(
+        "There is no model connected.",
+        "No hay ningún modelo conectado.");
+
+    public string IaComplementoPreguntaVacia => Idioma.Elegir(
+        "Empty question.",
+        "Pregunta vacía.");
+
+    // {0} = el máximo de caracteres.
+    public string IaComplementoPreguntaLarga => Idioma.Elegir(
+        "Question too long (limit {0} characters).",
+        "Pregunta demasiado larga (el límite son {0} caracteres).");
+
+    // {0} = cuántas preguntas caben por ejecución.
+    public string IaComplementoCupo => Idioma.Elegir(
+        "Quota used up: {0} questions per run.",
+        "Cupo agotado: {0} preguntas por ejecución.");
+
+    public string ComplementoPermisoModelo => Idioma.Elegir(
+        "Let it ask the connected model",
+        "Dejar que le pregunte al modelo conectado");
+
+    public string ComplementoPermisoModeloAyuda => Idioma.Elegir(
+        "Only when its own rules do not resolve something. The add-on never sees your key or your address: it asks, Ondine calls, and it only gets the answer back. It is off until you turn it on.",
+        "Solo cuando sus propias reglas no resuelven algo. El complemento no ve nunca tu clave ni tu dirección: él pregunta, Ondine llama, y solo le vuelve la respuesta. Está apagado hasta que lo enciendas.");
+
+    public string ComplementoPermisoModeloSinConfigurar => Idioma.Elegir(
+        "Connect a model first in Preferences › Model.",
+        "Conecta antes un modelo en Preferencias › Modelo.");
+
+    /// <summary>
+    /// Lo que se le dice al modelo antes de la pregunta del complemento. Lo pone
+    /// Ondine y no el complemento: es lo que evita que un manifiesto convierta el
+    /// modelo en otra cosa.
+    ///
+    /// <para>
+    /// Va traducido porque el idioma de esta instrucción es el idioma en el que
+    /// contesta el modelo. Con la app en inglés y esto en castellano, las
+    /// respuestas volverían en castellano y no casarían con nada.
+    /// </para>
+    /// </summary>
+    public string IaSistemaComplemento => Idioma.Elegir(
+        "You are an assistant to an application that tidies up video libraries. " +
+        "Answer briefly and literally, with no explanations and no filler. " +
+        "If you do not know, answer exactly: I DO NOT KNOW.",
+        "Eres un ayudante de una aplicación que ordena bibliotecas de vídeo. " +
+        "Responde de forma breve y literal, sin explicaciones ni texto de relleno. " +
+        "Si no lo sabes, responde exactamente: NO LO SÉ.");
+
+    /// <summary>
+    /// La contestación exacta con la que el modelo dice que no lo sabe. Es la
+    /// MISMA cadena que se le pide arriba, así que quien la compare no puede
+    /// escribirla distinta por su cuenta.
+    /// </summary>
+    public string IaNoLoSe => Idioma.Elegir("I DO NOT KNOW", "NO LO SÉ");
 }

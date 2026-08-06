@@ -55,6 +55,32 @@ es un acuerdo de buena voluntad: está verificado.
   en la descripción. Sin eso, media cinta se daba por completa y la historia que faltaba no la
   reclamaba nadie. No descarga: lee.
 - **El menú superior se recoge en una hamburguesa** cuando la ventana no da para los cuatro.
+- **Un complemento puede pedirle ayuda al modelo, con tu permiso y sin ver tu clave.** El permiso
+  se da en la ficha del complemento, uno a uno, y empieza apagado. El complemento **nunca recibe
+  la clave ni la dirección**: él pregunta, Ondine llama, y solo le vuelve la respuesta. Hay cupo
+  —40 preguntas por ejecución— porque esto cuesta dinero de verdad. El complemento de YouTube ya
+  lo usa: solo para los vídeos en los que la descripción promete más historias y sus reglas no lo
+  pueden confirmar, unas pocas de una lista de cientos. Y lo que conteste se coteja con tu
+  catálogo como todo lo demás, así que un título inventado sale como que falta, no como bueno.
+- **Se puede conectar un modelo de lenguaje, y es opcional.** Está en *Preferencias › Modelo*:
+  dirección, clave y nombre del modelo, con un botón para probar la conexión antes de guardar.
+  Usa el estándar de OpenAI, que es el que hablan casi todos —OpenAI, Groq, OpenRouter, LM Studio
+  y Ollama—, así que vale igual uno de pago que uno corriendo en tu propio ordenador. La clave
+  **se guarda cifrada** con la protección de datos de Windows y atada a tu cuenta: nunca se
+  escribe en claro, y no se manda por `http://` a una máquina que no sea la tuya. Ondine funciona
+  entera sin esto; quien no lo configure no nota que existe.
+- **En «Explorar el catálogo», cada episodio dice si lo tienes.** Un distintivo por fila —*lo
+  tienes*, *a medias*, *te falta*— con los mismos colores del semáforo de Organizar, y **pulsarlo
+  te lleva al fichero** en el explorador de Windows. Hay además una casilla para quedarte solo
+  con los que faltan, que se combina con el buscador. Si abres el catálogo sin haber analizado
+  ninguna carpeta, no aparece nada: sin haber mirado un disco, decir «te falta» sería inventarlo.
+- **Ordenar por temporadas.** Un capítulo que descargaste donde cayó se va a la carpeta de su
+  temporada, y la carpeta se crea si no existe. Antes de mover se enseña la simulación entera:
+  qué se movería y, sobre todo, qué no y por qué. **Solo se mueve lo ya curado** — un fichero en
+  conflicto no se sabe de qué temporada es, así que se queda donde está. Los subtítulos y las
+  fichas viajan con su vídeo, nunca se sobrescribe nada, y se puede deshacer. El nombre de la
+  carpeta lo eliges tú: *Temporada 03* o *Season 03*, siga la app el idioma que siga —hay quien
+  la usa en castellano y mantiene la biblioteca en inglés porque es lo que espera el reproductor.
 
 ## [1.6.1] - 2026-08-05
 

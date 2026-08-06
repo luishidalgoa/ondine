@@ -61,6 +61,7 @@ puede escribir en lo que sea. Lo que se paga: hay que hablar por texto.
 | `ambito` | Dónde aplica. Vacío o `["global"]` = toda la aplicación. Si no, los modos: `organizar`, `comprimir`, `recortes`. Se pueden declarar varios. |
 | `integracion` | `propia` (lo normal) o `nativa`. |
 | `contrato` | La versión del contrato. Hoy `1`. |
+| `modelo` | Opcional, `false` por defecto. Declara que **sabe** preguntarle a un modelo de lenguaje cuando sus reglas no resuelven algo. Declararlo **no da permiso**: solo hace que Ondine ofrezca dárselo. |
 
 ### Ámbito
 
@@ -149,6 +150,53 @@ saber si avanza o se ha colgado.
 
 ---
 
+## Preguntarle a un modelo de lenguaje
+
+Si tu complemento declara `"modelo": true`, puede preguntarle a un modelo cuando
+sus propias reglas no bastan. **Tú no ves la clave.** Preguntas por tu salida,
+Ondine llama, y te devuelve **solo la respuesta** por tu **entrada estándar**.
+
+```json
+{"tipo":"preguntar","id":"7","texto":"¿Qué episodio es «El gorro de la suerte»?"}
+```
+
+Ondine te escribe una línea por tu entrada, con el mismo `id`:
+
+```json
+{"tipo":"respuesta","id":"7","texto":"El 413"}
+{"tipo":"respuesta","id":"7","mensaje":"Este complemento no tiene permiso para usar el modelo conectado."}
+```
+
+**Siempre llega una respuesta**, también cuando es que no. Nunca te quedas
+esperando una línea que no viene.
+
+### Por qué así y no dándote la clave
+
+Sería más simple pasarte la dirección y la clave por una variable de entorno y
+que llamaras tú. Pero eso es entregarle a un programa de fuera la cuenta de quien
+te instaló. El puente cuesta veinte líneas y hace que el peor caso —un
+complemento con mala idea— sea «gasta cuarenta preguntas» y no «se lleva tu
+clave».
+
+### Lo que hay que saber
+
+- **El permiso se da a mano, uno a uno, y empieza apagado.** Está en tu ficha
+  dentro del panel de complementos. Quitarlo surte efecto en la siguiente
+  llamada.
+- **Cupo: 40 preguntas por ejecución.** Esto cuesta dinero de verdad; sin cupo,
+  un bucle mal escrito vacía el saldo de alguien mientras mira una barra de
+  progreso. Pregunta solo por lo que tus reglas no resuelvan, no por cada
+  elemento.
+- **Límite de 8000 caracteres por pregunta**, por lo mismo.
+- **La instrucción de sistema la pone Ondine**, no tú, y va en el idioma de la
+  app. Pide respuestas breves y literales, y `NO LO SÉ` cuando no lo sepa.
+- **Comprueba lo que te conteste.** Un modelo acierta casi siempre y se inventa
+  el resto con el mismo aplomo. Si la respuesta se puede contrastar con algo que
+  ya tienes —el catálogo, la duración, la fecha—, contrástala antes de usarla; y
+  si no casa, mejor no proponer nada que proponer algo inventado.
+
+---
+
 ## Qué pasa después de traer
 
 Cuando devuelves `hecho`, Ondine ofrece **llevar la carpeta a Organizar** para
@@ -209,3 +257,6 @@ parte del proyecto.
 
 Traer contenido propio, con licencia abierta, o por las vías que el propio
 servicio ofrece: eso sí.
+
+Y lo mismo con el modelo: se te da para resolver dudas de identificación, no para
+que le mandes lo que haya en el disco de quien te instaló.

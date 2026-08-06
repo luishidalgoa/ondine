@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Threading;
 using Ondine.Localizacion;
 
@@ -21,6 +22,16 @@ public static class Invocador
 
     /// <summary>Traer los elementos elegidos a una carpeta.</summary>
     public const string ComandoTraer = "traer";
+
+    // Sin escapar los no-ASCII: la respuesta del modelo lleva acentos, y por
+    // omisión el serializador los manda como «á». Es JSON válido, pero
+    // obliga a que el complemento lo deshaga —y el de Python que lo lea con
+    // json.loads lo hace, pero uno escrito a mano no tiene por qué—.
+    private static readonly JsonSerializerOptions SinEscapar = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+    };
 
     private static bool EsPorLotes(string ruta) =>
         ruta.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
@@ -51,16 +62,27 @@ public static class Invocador
     /// <param name="comando">«listar» o «traer».</param>
     /// <param name="argumentos">Lo que le toque al comando.</param>
     /// <param name="corte">Para poder parar: una descarga larga tiene que poder cancelarse.</param>
+    /// <param name="modelo">
+    /// El puente al modelo de lenguaje, si este complemento lo declara. Con
+    /// <c>null</c>, una pregunta suya se contesta con un no y sigue todo igual:
+    /// preguntar sin que nadie escuche dejaría al complemento esperando.
+    /// </param>
     public static async IAsyncEnumerable<Mensaje> CorrerAsync(
         Complemento quien,
         string comando,
         IEnumerable<string> argumentos,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken corte = default)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken corte = default,
+        PuenteDelModelo? modelo = null)
     {
         var psi = new ProcessStartInfo(quien.RutaEjecutable)
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            // La ENTRADA se redirige siempre, la use o no. Si solo se redirigiera
+            // para los que declaran el modelo, un complemento que lo declarase
+            // por error se comportaría distinto en las dos ramas y el fallo solo
+            // saldría en una de ellas.
+            RedirectStandardInput = true,
             UseShellExecute = false,
             CreateNoWindow = true,
             // Se arranca EN su carpeta: un complemento trae sus cosas al lado y
@@ -74,6 +96,10 @@ public static class Invocador
             // no se queda en lo feo — se lleva por delante el cotejo.
             StandardOutputEncoding = System.Text.Encoding.UTF8,
             StandardErrorEncoding = System.Text.Encoding.UTF8,
+            // Y la entrada también, por lo mismo pero al revés: la respuesta del
+            // modelo lleva acentos, y sin esto llegaría al complemento rota por
+            // la página de códigos de la consola.
+            StandardInputEncoding = new System.Text.UTF8Encoding(false),
         };
 
         var todos = quien.Argumentos.Append(comando).Concat(argumentos);
@@ -120,6 +146,31 @@ public static class Invocador
             {
                 var m = Mensaje.Interpretar(linea);
                 if (m is null) continue;
+
+                // Una pregunta al modelo no es un suceso que enseñar: se atiende
+                // y se le contesta por su entrada. Nunca se deja sin respuesta
+                // -ni siquiera si no hay puente-, porque el complemento está
+                // esperando una línea y sin ella se queda parado para siempre.
+                if (m.Tipo == Mensaje.TipoPreguntar)
+                {
+                    var r = modelo is not null
+                        ? await modelo.ResponderAsync(m, corte).ConfigureAwait(false)
+                        : new Mensaje
+                        {
+                            Tipo = Mensaje.TipoRespuesta, Id = m.Id,
+                            MensajeError = Textos.Instancia.IaComplementoSinPermiso,
+                        };
+                    try
+                    {
+                        await proceso.StandardInput
+                            .WriteLineAsync(JsonSerializer.Serialize(r, SinEscapar))
+                            .ConfigureAwait(false);
+                        await proceso.StandardInput.FlushAsync(corte).ConfigureAwait(false);
+                    }
+                    catch { /* se murió mientras esperaba: el bucle lo verá al leer */ }
+                    continue;
+                }
+
                 if (m.Tipo == Mensaje.TipoError) seExplico = true;
                 yield return m;
             }

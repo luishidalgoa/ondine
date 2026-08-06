@@ -1127,4 +1127,72 @@ public sealed partial class Textos
     public string OrganizarLogMemoriaVaciada => Idioma.Elegir(
         "Decision memory emptied.",
         "Memoria de decisiones vaciada.");
+
+    // ═══ Reordenar por temporadas ════════════════════════════════════════════
+
+    public string OrganizarReordenar => Idioma.Elegir("Sort into seasons…", "Ordenar por temporadas…");
+
+    public string OrganizarReordenarAyuda => Idioma.Elegir(
+        "Moves each episode into its season folder, creating it if it is not there. Only touches what is already sorted out: never a file in conflict.",
+        "Mueve cada capítulo a la carpeta de su temporada, creándola si no está. Solo toca lo ya curado: nunca un fichero en conflicto.");
+
+    public string ReordenarTitulo => Idioma.Elegir("Sort into seasons", "Ordenar por temporadas");
+
+    public string ReordenarIdiomaCarpeta => Idioma.Elegir("Folder name:", "Nombre de la carpeta:");
+    public string ReordenarIdiomaApp => Idioma.Elegir("As the app", "Como la app");
+
+    // {0} = cuántos se moverían.
+    public string ReordenarResumen => Idioma.Elegir(
+        "{0} files would move to their season folder.",
+        "{0} ficheros se moverían a la carpeta de su temporada.");
+
+    public string ReordenarResumenNinguno => Idioma.Elegir(
+        "Nothing to move: everything is already in its season folder.",
+        "No hay nada que mover: todo está ya en la carpeta de su temporada.");
+
+    // {0} = cuántos NO se mueven, por el motivo que sea.
+    public string ReordenarResumenQuietos => Idioma.Elegir(
+        " {0} stay where they are.",
+        " {0} se quedan donde están.");
+
+    // Los motivos, tal y como se le cuentan a quien mira la lista.
+    public string ReordenarPorqueVa => Idioma.Elegir("moves", "se mueve");
+    public string ReordenarPorqueYaEsta => Idioma.Elegir("already there", "ya está en su sitio");
+    public string ReordenarPorqueSinCurar => Idioma.Elegir("not sorted out yet", "sin curar");
+    public string ReordenarPorqueSinTemporada => Idioma.Elegir("no season in the catalogue", "sin temporada en el catálogo");
+    public string ReordenarPorqueOcupado => Idioma.Elegir("name already taken there", "ese nombre ya está ocupado");
+
+    public string ReordenarVerSoloLosQueVan => Idioma.Elegir(
+        "Show only the ones that move",
+        "Enseñar solo los que se mueven");
+
+    // {0} = cuántos se van a mover.
+    public string ReordenarBoton => Idioma.Elegir("Move {0}", "Mover {0}");
+    public string ReordenarBotonNada => Idioma.Elegir("Move", "Mover");
+
+    // Es una simulación hasta que se pulsa: hay que decirlo donde se lee.
+    public string ReordenarPie => Idioma.Elegir(
+        "Nothing has been moved yet. This is what would happen.",
+        "Todavía no se ha movido nada. Esto es lo que pasaría.");
+
+    // {0} = cuántos se movieron.
+    public string ReordenarHecho => Idioma.Elegir(
+        "{0} files moved.",
+        "{0} ficheros movidos.");
+
+    // {0} = movidos, {1} = los que no se pudieron.
+    public string ReordenarHechoConFallos => Idioma.Elegir(
+        "{0} moved · {1} could not be done.",
+        "{0} movidos · {1} no se pudieron.");
+
+    public string ReordenarDeshacer => Idioma.Elegir("Undo the move", "Deshacer el movimiento");
+
+    // {0} = cuántos volvieron a su sitio.
+    public string ReordenarDeshecho => Idioma.Elegir(
+        "{0} files returned to where they were.",
+        "{0} ficheros devueltos a donde estaban.");
+
+    public string ReordenarSinCatalogo => Idioma.Elegir(
+        "Analyse the folder against a catalogue first: without it there is no way to know which season each file belongs to.",
+        "Analiza antes la carpeta contra un catálogo: sin él no hay forma de saber de qué temporada es cada fichero.");
 }
