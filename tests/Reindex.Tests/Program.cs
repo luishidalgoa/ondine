@@ -69,6 +69,7 @@ public static class Program
         Ondine.Reindex.Tests.DescubridorTests.Todas();
         Ondine.Reindex.Tests.IndiceTests.Todas();
         Ondine.Reindex.Tests.CarpetaDeTemporadaTests.Todas();
+        Ondine.Reindex.Tests.DestinoDeTemporadaTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
