@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-06
+
 ### Añadido
 
 - **Los complementos se pueden desinstalar y actualizar desde la propia app.** Antes solo se
@@ -48,17 +50,6 @@ es un acuerdo de buena voluntad: está verificado.
   «Disponibles» no enseñaba nada. Ahora trae el complemento de YouTube, y se instala desde la
   propia app sin copiar carpetas a mano. El paquete va con su `sha256`: si lo descargado no es
   exactamente lo que el índice promete, no se instala.
-
-### Eliminado
-
-- **El complemento de demostración.** Existía para probar la pantalla cuando no había ninguno de
-  verdad. Ya hay uno, y el de YouTube sirve mejor de ejemplo porque hace todo lo que el contrato
-  describe en vez de fingirlo.
-
-## [1.7.0] - 2026-08-06
-
-### Añadido
-
 - **Confirmar de una todos los especiales que la app da por seguros.** Un especial nace pidiendo
   confirmación a propósito, pero cuando dieciséis casan sin margen de duda contra dieciséis
   entradas distintas, contestar dieciséis veces no es revisar. Los que casaron flojo se quedan
@@ -118,6 +109,12 @@ es un acuerdo de buena voluntad: está verificado.
   fichas viajan con su vídeo, nunca se sobrescribe nada, y se puede deshacer. El nombre de la
   carpeta lo eliges tú: *Temporada 03* o *Season 03*, siga la app el idioma que siga —hay quien
   la usa en castellano y mantiene la biblioteca en inglés porque es lo que espera el reproductor.
+
+### Eliminado
+
+- **El complemento de demostración.** Existía para probar la pantalla cuando no había ninguno de
+  verdad. Ya hay uno, y el de YouTube sirve mejor de ejemplo porque hace todo lo que el contrato
+  describe en vez de fingirlo.
 
 ### Corregido
 
