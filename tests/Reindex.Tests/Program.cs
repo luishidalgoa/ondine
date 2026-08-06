@@ -73,6 +73,7 @@ public static class Program
         Ondine.Reindex.Tests.PlanDeReordenadoTests.Todas();
         Ondine.Reindex.Tests.MudanzaDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.TenenciaTests.Todas();
+        Ondine.Reindex.Tests.ModeloConectadoTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
@@ -2417,7 +2418,7 @@ public static class Program
         }
     }
 
-    private static void Eq<T>(T esperado, T real, string descripcion)
+    internal static void Eq<T>(T esperado, T real, string descripcion)
     {
         bool igual = EqualityComparer<T>.Default.Equals(esperado, real);
         if (igual) { _ok++; Console.WriteLine($"  ✓ {descripcion}"); }

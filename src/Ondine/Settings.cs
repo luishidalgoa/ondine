@@ -58,11 +58,26 @@ public sealed class Settings
     /// <summary>Complejidad del contenido aprendida al medir una muestra (1 = imagen real típica).</summary>
     public double ComplexityFactor { get; set; } = 1.0;
 
+    /// <summary>
+    /// El modelo de lenguaje conectado, si se ha configurado alguno. Opcional:
+    /// la app funciona entera sin él.
+    /// </summary>
+    public Ia.AjustesDeModelo Ia { get; set; } = new();
+
     // --- Rendimiento y disco ---
     public int MinFreeMb { get; set; } = 200;            // margen mínimo de disco antes de pausar
     public bool UseHardware { get; set; } = true;        // usar aceleración por hardware si existe
 
-    public Settings Clone() => (Settings)MemberwiseClone();
+    public Settings Clone()
+    {
+        var c = (Settings)MemberwiseClone();
+        // MemberwiseClone es superficial: sin esto, la copia y el original
+        // comparten el MISMO objeto de ajustes del modelo, y editar la copia
+        // -que es justo lo que hace la ventana de preferencias- cambiaría los
+        // ajustes de verdad aunque luego se cancele.
+        c.Ia = Ia.Clone();
+        return c;
+    }
 }
 
 /// <summary>Carga/guarda las preferencias (junto a los presets).</summary>

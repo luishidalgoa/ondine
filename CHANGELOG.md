@@ -55,6 +55,13 @@ es un acuerdo de buena voluntad: está verificado.
   en la descripción. Sin eso, media cinta se daba por completa y la historia que faltaba no la
   reclamaba nadie. No descarga: lee.
 - **El menú superior se recoge en una hamburguesa** cuando la ventana no da para los cuatro.
+- **Se puede conectar un modelo de lenguaje, y es opcional.** Está en *Preferencias › Modelo*:
+  dirección, clave y nombre del modelo, con un botón para probar la conexión antes de guardar.
+  Usa el estándar de OpenAI, que es el que hablan casi todos —OpenAI, Groq, OpenRouter, LM Studio
+  y Ollama—, así que vale igual uno de pago que uno corriendo en tu propio ordenador. La clave
+  **se guarda cifrada** con la protección de datos de Windows y atada a tu cuenta: nunca se
+  escribe en claro, y no se manda por `http://` a una máquina que no sea la tuya. Ondine funciona
+  entera sin esto; quien no lo configure no nota que existe.
 - **En «Explorar el catálogo», cada episodio dice si lo tienes.** Un distintivo por fila —*lo
   tienes*, *a medias*, *te falta*— con los mismos colores del semáforo de Organizar, y **pulsarlo
   te lleva al fichero** en el explorador de Windows. Hay además una casilla para quedarte solo
