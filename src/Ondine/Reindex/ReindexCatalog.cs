@@ -172,7 +172,72 @@ public sealed class ReindexCatalog
     /// Reescribirlo desde el modelo se llevaría por delante sus notas y sus añadidos sin avisar.
     /// </summary>
     public static bool AnadirADejarComoEsta(string rutaCatalogo, string nombreFichero) =>
-        TocarDejarComoEsta(rutaCatalogo, nombreFichero, quitar: false);
+        AnadirADejarComoEsta(rutaCatalogo, new[] { nombreFichero }) > 0;
+
+    /// <summary>
+    /// Los apunta TODOS con una sola pasada de leer, parsear y escribir. Devuelve
+    /// cuántos entraron de verdad (los que ya estaban no cuentan).
+    ///
+    /// <para>
+    /// Existe porque llamar a la versión de uno en uno dentro de un bucle salía
+    /// carísimo: medido sobre un catálogo real de 329 KB, cada vuelta son unos
+    /// 37 ms de leer + parsear + reescribir, y un lote de dieciséis dejaba la
+    /// ventana muerta más de medio segundo.
+    /// </para>
+    /// <para>
+    /// Si no hay nada que apuntar, <b>no se toca el fichero</b>. Escribirlo
+    /// igualmente reindentaría el catálogo entero del usuario para nada.
+    /// </para>
+    /// </summary>
+    public static int AnadirADejarComoEsta(string rutaCatalogo, IEnumerable<string> nombres)
+    {
+        var pedidos = nombres
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(SoloNombre)
+            .ToList();
+        if (pedidos.Count == 0) return 0;
+
+        var raiz = System.Text.Json.Nodes.JsonNode.Parse(System.IO.File.ReadAllText(rutaCatalogo))
+                   as System.Text.Json.Nodes.JsonObject
+                   ?? throw new ReindexCatalogException(Textos.Instancia.ReindexCatalogoNoEsObjeto);
+
+        var lista = raiz["dejar_como_esta"] as System.Text.Json.Nodes.JsonArray;
+        var actuales = lista?.Select(n => n?.GetValue<string>() ?? "").ToList() ?? new List<string>();
+        var yaEstan = actuales.Select(SoloNombre).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        int entraron = 0;
+        foreach (var n in pedidos)
+            if (yaEstan.Add(n)) { actuales.Add(n); entraron++; }
+
+        // Ni una escritura si no cambió nada: la pasada de dieciséis en la que
+        // quince ya estaban apuntados no tiene por qué tocar el disco.
+        if (entraron == 0) return 0;
+
+        GuardarDejarComoEsta(rutaCatalogo, raiz, actuales);
+        return entraron;
+    }
+
+    private static void GuardarDejarComoEsta(
+        string rutaCatalogo, System.Text.Json.Nodes.JsonObject raiz, List<string> actuales)
+    {
+        var nueva = new System.Text.Json.Nodes.JsonArray();
+        foreach (var x in actuales.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)) nueva.Add(x);
+        raiz["dejar_como_esta"] = nueva;
+
+        System.IO.File.WriteAllText(rutaCatalogo,
+            raiz.ToJsonString(EscrituraDelCatalogo), System.Text.Encoding.UTF8);
+    }
+
+    /// <summary>
+    /// Cómo se reescribe el catálogo del usuario. Sin escapar los no-ASCII: por
+    /// omisión el serializador convierte «Adiós» en «Adiós», y eso deja el
+    /// fichero del usuario ilegible para él con solo haber pulsado un botón.
+    /// </summary>
+    private static readonly System.Text.Json.JsonSerializerOptions EscrituraDelCatalogo = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
 
     /// <summary>Lo saca de la lista, por si te arrepientes. Devuelve false si no estaba.</summary>
     public static bool QuitarDeDejarComoEsta(string rutaCatalogo, string nombreFichero) =>
@@ -197,13 +262,7 @@ public sealed class ReindexCatalog
         else
             actuales.Add(nombre);
 
-        var nueva = new System.Text.Json.Nodes.JsonArray();
-        foreach (var x in actuales.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)) nueva.Add(x);
-        raiz["dejar_como_esta"] = nueva;
-
-        System.IO.File.WriteAllText(rutaCatalogo,
-            raiz.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }),
-            System.Text.Encoding.UTF8);
+        GuardarDejarComoEsta(rutaCatalogo, raiz, actuales);
         return true;
     }
 

@@ -1782,13 +1782,17 @@ public partial class OrganizarView : UserControl
         RecargarTrasDejar();
     }
 
-    /// <summary>
-    /// Deja una fila como está y lo apunta en el catálogo, para que no vuelva a
-    /// preguntar. NO recarga el catálogo: eso lo hace <see cref="RecargarTrasDejar"/>
-    /// una sola vez, porque recargarlo por cada fila convertiría un lote de
-    /// dieciséis en dieciséis lecturas de disco.
-    /// </summary>
     private void DejarComoEsta(OrganizarRow fila)
+    {
+        DejarComoEstaEnPantalla(fila);
+        Apuntar(new[] { Path.GetFileName(fila.RutaActual) });
+    }
+
+    /// <summary>
+    /// Pone la fila en verde. Solo toca lo que hay en pantalla: apuntarlo en el
+    /// catálogo es otra cosa y va aparte, para que un lote pueda hacerlo de una.
+    /// </summary>
+    private void DejarComoEstaEnPantalla(OrganizarRow fila)
     {
         fila.Res.Estado = ReindexEstado.Limpio;
         fila.Res.Confianza = ReindexConfianza.Alta;
@@ -1796,23 +1800,33 @@ public partial class OrganizarView : UserControl
         fila.Res.Motivo = Textos.Instancia.OrganizarMotivoDejadoComoEstaba;
         fila.Res.Alternativas = Array.Empty<ReindexCandidato>();
         fila.Recalcular();
+    }
 
-        // Sin catálogo elegido no hay dónde apuntarlo: la fila queda en verde para esta sesión y
-        // ya está. No es un error que merezca un aviso.
+    /// <summary>
+    /// Apunta en el catálogo los ficheros que no hay que volver a preguntar, con
+    /// UNA sola escritura. No recarga el catálogo: eso lo hace
+    /// <see cref="RecargarTrasDejar"/> una vez al final.
+    /// </summary>
+    private void Apuntar(IEnumerable<string> nombres)
+    {
+        // Sin catálogo elegido no hay dónde apuntarlo: las filas quedan en verde para esta
+        // sesión y ya está. No es un error que merezca un aviso.
         if (_catalogoElegido == null) return;
-        var nombre = Path.GetFileName(fila.RutaActual);
+
+        var lista = nombres.ToList();
         try
         {
-            if (ReindexCatalog.AnadirADejarComoEsta(_catalogoElegido.Ruta, nombre))
-            {
-                _hayQueRecargarCatalogo = true;
-                Escribir(string.Format(Textos.Instancia.OrganizarLogQuedaComoEsta, nombre));
-            }
+            int n = ReindexCatalog.AnadirADejarComoEsta(_catalogoElegido.Ruta, lista);
+            if (n == 0) return;
+            _hayQueRecargarCatalogo = true;
+            Escribir(lista.Count == 1
+                ? string.Format(Textos.Instancia.OrganizarLogQuedaComoEsta, lista[0])
+                : string.Format(Textos.Instancia.OrganizarLogQuedanComoEstan, n));
         }
         catch (Exception ex)
         {
             Escribir(string.Format(Textos.Instancia.OrganizarLogQuedaComoEstaSinApuntar,
-                                   nombre, ex.Message));
+                                   lista.Count == 1 ? lista[0] : $"{lista.Count}", ex.Message));
         }
     }
 
@@ -1876,16 +1890,17 @@ public partial class OrganizarView : UserControl
         var grupo = CausaDeConflicto.Companeras(_filas.Select(f => f.Res), fila.Res).ToHashSet();
         if (grupo.Count == 0) return;
 
-        int hechas = 0;
-        foreach (var f in _filas.Where(f => f.Res == fila.Res || grupo.Contains(f.Res)).ToList())
-        {
-            DejarComoEsta(f);
-            hechas++;
-        }
+        var afectadas = _filas.Where(f => f.Res == fila.Res || grupo.Contains(f.Res)).ToList();
+        foreach (var f in afectadas) DejarComoEstaEnPantalla(f);
+
+        // El catálogo se escribe UNA vez para todo el lote. Apuntarlas de una en
+        // una eran tantos ciclos de leer-parsear-reescribir como filas: medido,
+        // 37 ms cada uno sobre un catálogo real, con la ventana muerta mientras.
+        Apuntar(afectadas.Select(f => Path.GetFileName(f.RutaActual)));
 
         ActualizarContadores();
         RecargarTrasDejar();
-        Escribir(string.Format(Textos.Instancia.OrganizarLogDejadasIguales, hechas));
+        Escribir(string.Format(Textos.Instancia.OrganizarLogDejadasIguales, afectadas.Count));
     }
 
     private void RecordarDecision(OrganizarRow fila, CatalogEpisode ep, string? seg = null)

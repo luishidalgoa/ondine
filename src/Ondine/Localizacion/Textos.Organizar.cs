@@ -1207,6 +1207,11 @@ public sealed partial class Textos
         "Applies this same decision to every row that is stuck for exactly the same reason. Only offered when that reason has one single right answer for all of them — never for two files fighting over the same episode, where each pair has its own winner.",
         "Aplica esta misma decisión a todas las filas atascadas exactamente por lo mismo. Solo se ofrece cuando esa causa tiene una única respuesta buena para todas — nunca con dos ficheros peleando por el mismo episodio, donde cada pareja tiene su propio ganador.");
 
+    // {0} = cuántos ficheros quedaron apuntados en el catálogo de una vez.
+    public string OrganizarLogQuedanComoEstan => Idioma.Elegir(
+        "{0} files noted in the catalogue: they will not be asked about again.",
+        "{0} ficheros apuntados en el catálogo: no se volverá a preguntar por ellos.");
+
     // {0} = cuántas se dejaron como estaban.
     public string OrganizarLogDejadasIguales => Idioma.Elegir(
         "{0} rows left as they were: the catalogue has no place for them.",

@@ -42,6 +42,18 @@ public sealed class VideoRow : INotifyPropertyChanged
 
     // Datos del análisis, para la estimación de ahorro
     public bool Probed { get; set; }
+
+    /// <summary>
+    /// El fichero es un marcador de la nube: está en el índice pero no en el disco.
+    ///
+    /// <para>
+    /// Se pregunta una sola vez, al enumerar, aprovechando que ahí ya se leen sus
+    /// atributos. Importa porque <b>abrirlo lo descarga entero</b>: sondear con
+    /// ffprobe una biblioteca que vive en OneDrive se traía decenas de gigas sin
+    /// que nadie lo hubiera pedido.
+    /// </para>
+    /// </summary>
+    public bool EnLaNube { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }
     public double Fps { get; set; }

@@ -810,4 +810,23 @@ public sealed partial class Textos
     public string MainDescargaFalloDetalle => Idioma.Elegir(
         "The update could not be downloaded:\n{0}",
         "No se pudo descargar la actualización:\n{0}");
+
+    // ═══ Analizar: progreso, parada y ficheros que solo están en la nube ═════
+
+    public string MainDetenerAnalisis => Idioma.Elegir("Stop", "Detener");
+    public string MainAnalisisDetenido => Idioma.Elegir("Scan stopped.", "Análisis detenido.");
+
+    // {0} = por cuál va, {1} = cuántos hay.
+    public string MainAnalizandoNde => Idioma.Elegir(
+        "Reading track info: {0} of {1}",
+        "Leyendo las pistas: {0} de {1}");
+
+    public string MainEnLaNubeSinSondear => Idioma.Elegir(
+        "In the cloud — not opened",
+        "En la nube — sin abrir");
+
+    // {0} = cuántos se saltaron.
+    public string MainSaltadosEnLaNube => Idioma.Elegir(
+        "{0} files are only in the cloud and were not opened: reading them would download them whole. Make them available offline first if you want to compress them.",
+        "{0} ficheros están solo en la nube y no se han abierto: leerlos los descargaría enteros. Ponlos disponibles sin conexión si quieres comprimirlos.");
 }

@@ -88,6 +88,28 @@ es un acuerdo de buena voluntad: está verificado.
   carpeta lo eliges tú: *Temporada 03* o *Season 03*, siga la app el idioma que siga —hay quien
   la usa en castellano y mantiene la biblioteca en inglés porque es lo que espera el reproductor.
 
+### Corregido
+
+- **«Analizar» ya no descarga tu biblioteca de la nube sin avisar.** Leía las pistas de cada
+  vídeo con ffprobe, y abrir un fichero que solo está en OneDrive obliga a Windows a
+  **descargarlo entero**. Sobre una carpeta en la nube, pulsar Analizar se convertía en bajar
+  decenas de gigas sin haberlo pedido. Ahora esos ficheros se saltan, se dicen cuántos son y por
+  qué, y se explica cómo incluirlos si los quieres comprimir.
+- **«Analizar» dice por dónde va, y se puede parar.** Antes ponía «Detectando…» una vez y no se
+  volvía a mover en más de mil ficheros: una pantalla quieta durante minutos no se distingue de
+  una colgada. Ahora cuenta por cuál va, el botón pasa a *Detener*, y un segundo clic ya no
+  apila otra tanda encima de la primera.
+- **La tabla de Comprimir vuelve a ir suave.** Un ajuste del tema anulaba la virtualización sin
+  querer: con mil filas, la lista se construía entera y volvía a medirse en cada scroll. Se
+  conserva el desplazamiento suave por píxel, que era lo que ese ajuste buscaba. Arregla de paso
+  la vista previa del renombrado, que usa el mismo estilo.
+- **Dejar varias filas como están ya no reescribe el catálogo una vez por fila.** Medido sobre un
+  catálogo real: un grupo de 16 pasaba de **539 ms de ventana muerta a 25 ms**. Y al escribirlo
+  ya no se escapan los acentos, que dejaban el fichero incómodo de leer.
+- **El escaneo de la carpeta ya no congela la ventana.** Se hace fuera del hilo de la interfaz y
+  se lee el tamaño de cada fichero de la propia enumeración, en vez de preguntarlo otra vez uno
+  a uno.
+
 ## [1.6.1] - 2026-08-05
 
 ### Añadido
