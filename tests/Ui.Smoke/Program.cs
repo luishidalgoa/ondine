@@ -75,6 +75,8 @@ public static class Program
         Probar("ReordenarWindow", () => new ReordenarWindow(res, Path.Combine("C:", "tv"), new Settings()));
         Probar("ComplementosPanel", () => new ComplementosPanel(cat, res));
 
+        LaTarjetaDiceLoQueSeVaAEscribir(cat);
+
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
         //   · PistasWindow      — necesita un Engine y un vídeo de verdad.
@@ -85,6 +87,51 @@ public static class Program
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         app.Shutdown();
         return _fallos == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// La tarjeta del resolutor tiene que decir EXACTAMENTE el nombre que se va a
+    /// escribir.
+    ///
+    /// <para>
+    /// Vive aquí y no en el arnés del motor porque <c>OrganizarRow</c> es de WPF y
+    /// aquel no compila con WPF. Y no se puede dejar sin prueba: con un fichero
+    /// que junta dos episodios, la tarjeta decía «quedaría como S1993E1260 - El
+    /// invento para hacer bonsáis» mientras el renombrado de verdad ponía
+    /// «S1993E1260+1261 - … + La rueda auxiliar invisible». El nombre se componía
+    /// en dos sitios, y uno se olvidaba de las historias añadidas.
+    /// </para>
+    /// </summary>
+    private static void LaTarjetaDiceLoQueSeVaAEscribir(ReindexCatalog cat)
+    {
+        try
+        {
+            var res = new ReindexResolution
+            {
+                Archivo = SignalExtractor.Extract(
+                    Path.Combine("C:", "tv", "Serie - S1986E1 - Uno a.mkv"), "Season 1986"),
+                Estado = ReindexEstado.Corregido,
+                Confianza = ReindexConfianza.Alta,
+                Episodio = cat.PorNum(1),
+                Score = 1.0,
+            };
+
+            var fila = new OrganizarRow(res, cat, new LibraryTemplate());
+            fila.AnadirHistoria(cat.PorNum(2)!, null);   // el fichero junta el 1 y el 2
+
+            var elegido = fila.Candidatos.FirstOrDefault(c => c.EsElegido);
+            if (elegido is null) { Mal("tarjeta = nombre real", new Exception("no hay candidato elegido")); return; }
+
+            if (elegido.NombreResultante != fila.NombreNuevo)
+            {
+                Mal("tarjeta = nombre real", new Exception(
+                    $"la tarjeta dice «{elegido.NombreResultante}» y se escribiría «{fila.NombreNuevo}»"));
+                return;
+            }
+
+            Bien("la tarjeta dice el nombre que se va a escribir (con dos episodios dentro)");
+        }
+        catch (Exception ex) { Mal("tarjeta = nombre real", ex); }
     }
 
     /// <summary>
