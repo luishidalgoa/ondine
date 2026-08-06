@@ -32,6 +32,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **La tienda de complementos ya sirve algo.** El índice estaba montado pero vacío, así que
+  «Disponibles» no enseñaba nada. Ahora trae el complemento de YouTube, y se instala desde la
+  propia app sin copiar carpetas a mano. El paquete va con su `sha256`: si lo descargado no es
+  exactamente lo que el índice promete, no se instala.
+
 ## [1.7.0] - 2026-08-06
 
 ### Añadido

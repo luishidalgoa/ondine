@@ -1,4 +1,22 @@
 {
   "contrato": 1,
-  "complementos": []
+  "complementos": [
+    {
+      "id": "youtube",
+      "nombre": "YouTube",
+      "descripcion": "Lee una lista de reproducción pública y coteja lo que hay en ella con tu catálogo, episodio por episodio. Pega el enlace de la lista en la casilla de fuente. No descarga: lee.",
+      "version": "1.0.1",
+      "autor": "Ondine",
+      "paquete": "https://github.com/luishidalgoa/ondine/releases/download/complementos/youtube-1.0.1.zip",
+      "sha256": "a8d2b0443d795f176e50f615d22ddcacb15991c8d4027c9aa38c35b4e2b3d2a4",
+      "bytes": 9627,
+      "capacidades": [
+        "importar"
+      ],
+      "ambito": [
+        "organizar"
+      ],
+      "integracion": "propia"
+    }
+  ]
 }
