@@ -474,4 +474,9 @@ public sealed partial class Textos
     public string ReindexSinCorteClaro => Idioma.Elegir(
         "No clear cut was found near minute {0}. Open it in {1} and mark the cut by hand.",
         "No se ha encontrado un corte claro cerca del minuto {0}. Ábrelo en {1} y marca el corte a mano.");
+
+    // {0} = el parecido del título, en porcentaje.
+    public string ReindexMotivoLoteLoSostiene => Idioma.Elegir(
+        "The title matches {0} and the rest of the folder backs it: the files around it point to consecutive episodes in the same order",
+        "El título coincide al {0} y el resto de la carpeta lo respalda: los ficheros de alrededor apuntan a episodios consecutivos en el mismo orden");
 }

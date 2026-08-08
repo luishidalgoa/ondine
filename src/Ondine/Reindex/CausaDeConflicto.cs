@@ -40,6 +40,13 @@ public static class CausaDeConflicto
         /// alguien diga que sí.
         /// </summary>
         EspecialSeguro,
+        /// <summary>
+        /// El nombre solo dice una de las historias del episodio, pero el fichero
+        /// dura lo que TODAS. El aviso es correcto —renombrarlo entero afirma algo
+        /// que el nombre no decía— y la respuesta es la misma para todos: sí, es el
+        /// episodio entero con un nombre corto.
+        /// </summary>
+        NombreCortoEpisodioEntero,
     }
 
     /// <summary>De qué va esta fila.</summary>
@@ -57,6 +64,11 @@ public static class CausaDeConflicto
         // Un especial que casó sin margen de duda: lo único que le falta es un sí.
         if (r.Estado == ReindexEstado.Especial && r.Episodio is not null && r.Score >= SinMargenDeDuda)
             return Causa.EspecialSeguro;
+
+        // El nombre nombra una historia y el fichero dura lo que todas. Medido en
+        // una carpeta real de Crayon Shin-Chan: 34 de 48 decisiones eran esta, la
+        // misma pregunta repetida con la misma respuesta.
+        if (r.NombreCortoParaEpisodioEntero) return Causa.NombreCortoEpisodioEntero;
 
         if (r.Episodio is null && r.Alternativas.Count == 0)
             return r.Archivo.IndiceEspecial is not null
@@ -100,7 +112,8 @@ public static class CausaDeConflicto
     /// por fila, y aceptarlas todas de un clic sería firmar sin leer.
     /// </para>
     /// </summary>
-    public static bool SeConfirmaEnGrupo(Causa c) => c is Causa.EspecialSeguro;
+    public static bool SeConfirmaEnGrupo(Causa c) =>
+        c is Causa.EspecialSeguro or Causa.NombreCortoEpisodioEntero;
 
     /// <summary>Las otras filas que se pueden confirmar junto a esta.</summary>
     public static List<ReindexResolution> CompanerasParaConfirmar(

@@ -32,6 +32,21 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **La carpeta se corrobora a sí misma.** Ondine daba confianza alta cuando dos señales
+  coincidían —normalmente el título y la fecha—, así que **un catálogo sin fechas dejaba todo
+  pidiendo decisión** por bien que casara. Ahora la segunda señal puede ser el propio lote: si
+  varios ficheros ordenados por su número apuntan a episodios distintos y en el mismo orden, eso
+  los respalda. Y funciona con la carpeta a medio arreglar, donde conviven los ya renombrados y
+  los pendientes. Lo que rompe la serie se queda pidiendo mano — que es justo lo que hay que
+  mirar.
+- **«El nombre solo dice una historia» ya se contesta de una vez.** Cuando el fichero dura lo que
+  todas las historias del episodio, lo corto es el nombre y no el contenido, y la respuesta es la
+  misma para todos los que estén igual. El aviso se mantiene —renombrarlo entero afirma algo que
+  el nombre no decía— pero se puede confirmar en bloque. Medido en una carpeta real de
+  Crayon Shin-Chan: de **53 decisiones a 21**, y 27 de las que quedan van en un clic.
+
 ## [1.7.0] - 2026-08-06
 
 ### Añadido
