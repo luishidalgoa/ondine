@@ -32,6 +32,17 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **La protección contra las carpetas numeradas por otro se apagaba sola según ibas
+  arreglándolas.** Para decidir si los números de una carpeta son los del catálogo se miran los
+  ficheros identificados por su título — pero uno **ya renombrado** trae el título del episodio
+  en su propio nombre y su número lo escribió Ondine a partir del catálogo, así que vota
+  «cuadra» por construcción. Cuantos más arreglabas, más votos falsos: en una carpeta a mitad
+  de arreglar la regla se cayó por 1,3 votos y volvieron las propuestas inventadas — trece
+  ficheros con un episodio propuesto que ni siquiera existía en el catálogo. Los ya renombrados
+  ya no votan.
+
 ## [1.8.0] - 2026-08-08
 
 ### Añadido

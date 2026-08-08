@@ -65,6 +65,27 @@ public static class NumeracionDeLaCarpetaTests
         Program.Assert(!NumeracionDeLaCarpeta.NoCuadra(new List<ReindexResolution>()),
             "ni con una carpeta vacía");
 
+        // ── La trampa que se comió la regla en una carpeta real ──
+        //
+        // Un fichero YA RENOMBRADO trae el título del episodio en su propio nombre,
+        // y su número lo escribió el renombrador a partir del catálogo. Así que
+        // vota «desfase 0» siempre, por construcción — no porque el origen lo
+        // numerara así.
+        //
+        // Medido en la carpeta de Crayon Shin-Chan a mitad de arreglar: 44 votos,
+        // 28 desviados y 16 a cero, y los DIECISÉIS a cero eran ficheros ya
+        // renombrados. Hacían falta 29,3 para declarar: la regla se apagó por 1,3
+        // votos y volvieron las propuestas inventadas.
+        //
+        // Lo grave es el sentido: cuantos más arreglas, más «pruebas» acumula la
+        // app de que la numeración estaba bien. La protección se apagaba sola justo
+        // según ibas avanzando.
+        var aMedioArreglar = new List<ReindexResolution>();
+        for (int i = 0; i < 28; i++) aMedioArreglar.Add(PorTitulo(indice: 500 + i, ep: 468 + i));
+        for (int i = 0; i < 16; i++) aMedioArreglar.Add(YaRenombrado(indice: 100 + i, ep: 100 + i));
+        Program.Assert(NumeracionDeLaCarpeta.NoCuadra(aMedioArreglar),
+            "los ya renombrados no diluyen el voto: la regla sigue puesta");
+
         // Y los identificados por NÚMERO no votan: son justo los que están en
         // duda. Dejarlos votar seria preguntarle al acusado.
         var soloNumeros = new List<ReindexResolution>();
@@ -76,11 +97,34 @@ public static class NumeracionDeLaCarpetaTests
     private static ReindexResolution PorTitulo(int indice, int ep) => Fila(indice, ep, ReindexHint.Titulo);
     private static ReindexResolution PorNumero(int indice, int ep) => Fila(indice, ep, ReindexHint.IndiceFechaAprox);
 
+    /// <summary>
+    /// Uno ya arreglado: su nombre trae el título del episodio, porque lo escribió
+    /// el renombrador a partir del catálogo.
+    /// </summary>
+    private static ReindexResolution YaRenombrado(int indice, int ep) => new()
+    {
+        Archivo = SignalExtractor.Extract(
+            $@"C:\x\Season 01\Serie - S2004E{indice} - Un titulo cualquiera.mp4", "Season 01"),
+        Episodio = Episodio(ep, "Un titulo cualquiera"),
+        Hint = ReindexHint.Titulo,
+        Score = 1.0,
+    };
+
     private static ReindexResolution Fila(int indice, int ep, ReindexHint hint) => new()
     {
         Archivo = SignalExtractor.Extract($@"C:\x\Season 01\Serie S01E{indice}.mp4", "Season 01"),
-        Episodio = new CatalogEpisode { Num = ep },
+        Episodio = Episodio(ep, "Titulo que el nombre no dice"),
         Hint = hint,
         Score = 1.0,
     };
+
+    /// <summary>
+    /// Por el JSON, que es como el catálogo calcula sus listas de comparación: un
+    /// episodio armado a mano las trae vacías y no se parecería a nada.
+    /// </summary>
+    private static CatalogEpisode Episodio(int num, string titulo) =>
+        ReindexCatalog.Parse(
+            $"{{\"esquema\":\"reindex/1.0\",\"serie\":\"Serie\",\"salida\":\"es\"," +
+            $"\"episodios\":[{{\"num\":{num},\"titulos\":{{\"es\":[\"{titulo}\"]}}}}]}}")
+        .Episodios[0];
 }
