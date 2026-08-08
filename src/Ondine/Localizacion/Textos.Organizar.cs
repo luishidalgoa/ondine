@@ -1247,4 +1247,11 @@ public sealed partial class Textos
     public string OrganizarDescargarYVer => Idioma.Elegir("Download and play", "Descargar y reproducir");
 
     public string OrganizarVerloEnLaNube => Idioma.Elegir("Show me the file", "Enséñame el fichero");
+
+    /// <summary>
+    /// Cuando su nube SÍ sabe abrirlo en la web. Se dice «verlo», no «abrir el
+    /// enlace», porque lo que se ofrece es responder la pregunta —de qué episodio
+    /// es— sin bajarse nada.
+    /// </summary>
+    public string OrganizarVerloEnLaWeb => Idioma.Elegir("Watch it on the web", "Verlo en la web");
 }
