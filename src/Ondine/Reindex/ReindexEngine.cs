@@ -891,6 +891,13 @@ public static class ReindexEngine
 
             if (unidad is not { } u) continue;
             if (r.Archivo.Duracion is not { } dura) continue;
+
+            // Y solo si el reloj sabe distinguir historias. En una serie donde lo
+            // constante es el EPISODIO, todos los ficheros duran lo mismo lleven
+            // dos historias o tres: preguntar «¿dura lo que una sola?» contesta que
+            // sí para cualquier episodio entero, y proponer una letra ahí renombra
+            // el episodio completo como si fuera un trozo suyo.
+            if (!u.DistingueHistorias) continue;
             if (!MedidaDelCapitulo.Cuadra(dura, 1, u)) continue;
 
             aElegir.Add((r, ((char)('a' + cual)).ToString()));

@@ -34,6 +34,17 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **El reloj aprende qué es lo constante en cada serie.** Comparaba siempre contra «lo que dura
+  una historia × cuántas trae», y hay series al revés: **el episodio dura siempre lo mismo** y
+  dentro caben dos historias o tres según el día. En una carpeta real de Crayon Shin-Chan, con
+  ficheros de 24 minutos y episodios de 2 y de 3 mezclados, medir por historia daba 8:03 en unos
+  y 13:01 en otros — y con esa vara un episodio de 2 historias salía sospechoso sin serlo. Ahora
+  la serie lo dice sola: se compara la estabilidad de las dos lecturas y gana la que menos varíe.
+  Con el episodio por molde, el reloj además **deja de opinar sobre cuántas historias trae un
+  fichero**, porque ahí la duración no lo distingue.
+
+### Añadido
+
 - **Reproducir un fichero que solo está en la nube ya avisa antes.** Abrirlo se lo bajaba entero
   sin decir nada: Windows recupera el fichero al abrirlo y no hay forma de leer solo un trozo
   —medido, leer **un mega** de uno de 65 MB bloquea más de cinco minutos sin terminar—. Así que

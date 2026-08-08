@@ -60,6 +60,8 @@ public static class MedidaDelCapitulo
     {
         /// <summary>Lo constante es la HISTORIA: el episodio dura lo que sumen las suyas.</summary>
         PorHistoria,
+        /// <summary>Lo constante es el EPISODIO: dura lo mismo lleve dos historias o tres.</summary>
+        PorEpisodio,
     }
 
     /// <summary>
@@ -75,15 +77,97 @@ public static class MedidaDelCapitulo
     public sealed record Vara(Molde Molde, TimeSpan Unidad)
     {
         /// <summary>Lo que debería durar un fichero con <paramref name="historias"/> historias.</summary>
-        public TimeSpan Espera(int historias) => Unidad * Math.Max(1, historias);
+        public TimeSpan Espera(int historias) =>
+            Molde == Molde.PorEpisodio ? Unidad : Unidad * Math.Max(1, historias);
+
+        /// <summary>
+        /// ¿Sirve el reloj para saber CUÁNTAS historias trae un fichero?
+        ///
+        /// <para>
+        /// Solo si la unidad es la historia. Con el episodio por molde todos los
+        /// ficheros duran lo mismo lleven dos historias o tres, así que la duración
+        /// no distingue nada — y quien pregunte tiene que saberlo antes de sacar
+        /// conclusiones. Sin esto, «¿dura lo que UNA historia?» contestaba que sí
+        /// para cualquier episodio entero, y la app estuvo a punto de renombrar 33
+        /// episodios completos como si fueran un trozo suyo.
+        /// </para>
+        /// </summary>
+        public bool DistingueHistorias => Molde == Molde.PorHistoria;
     }
 
     /// <summary>
-    /// Aprende la vara de esta carpeta. Hoy siempre por historia — es lo mismo que
-    /// hacía <see cref="Unidad"/>, dicho con el tipo nuevo.
+    /// Aprende la vara de esta carpeta: cuánto mide y, sobre todo, QUÉ es lo
+    /// constante en esta serie.
+    ///
+    /// <para>
+    /// El reloj comparaba siempre contra «lo que dura una historia × cuántas
+    /// trae». Eso vale para las series donde la historia es la unidad y el
+    /// episodio dura lo que sumen sus trozos. Pero hay series al revés: <b>el
+    /// episodio dura siempre lo mismo</b> y dentro caben dos historias o tres
+    /// según el día.
+    /// </para>
+    /// <para>
+    /// Medido en una carpeta real de Crayon Shin-Chan: ficheros de 23:51 a 26:02,
+    /// todos de unos 24 minutos, con episodios de 2 y de 3 historias mezclados.
+    /// Dividiendo por historias salía 8:03 en unos y 13:01 en otros, y con la vara
+    /// de 8:03 un episodio de 2 historias de 24 minutos se marcaba como sospechoso
+    /// sin serlo.
+    /// </para>
+    /// <para>
+    /// No hace falta configurarlo: <b>la serie lo dice sola</b>. Se mide cuánto
+    /// varía cada lectura y gana la que menos. Con episodios de una sola historia
+    /// las dos son la misma cuenta —dividir por uno no cambia nada— así que
+    /// empatan y manda la de siempre.
+    /// </para>
     /// </summary>
-    public static Vara? Aprender(IEnumerable<(TimeSpan Duracion, int Historias)> observaciones) =>
-        Unidad(observaciones) is { } u ? new Vara(Molde.PorHistoria, u) : null;
+    public static Vara? Aprender(IEnumerable<(TimeSpan Duracion, int Historias)> observaciones)
+    {
+        var buenas = observaciones
+            .Where(o => o.Historias > 0 && o.Duracion > TimeSpan.Zero)
+            .ToList();
+        if (buenas.Count < MinimoParaFiarse) return null;
+
+        var porHistoria = buenas.Select(o => o.Duracion.TotalSeconds / o.Historias).ToList();
+        var porEpisodio = buenas.Select(o => o.Duracion.TotalSeconds).ToList();
+
+        // Dispersión RELATIVA, con mediana y desviación absoluta mediana: la media
+        // y la desviación típica se van detrás de un tráiler de dos minutos o de un
+        // especial, que es justo lo que hay suelto en una carpeta de verdad.
+        //
+        // Cambiar de molde tiene que EXIGIR evidencia, no ganar por un pelo. Si
+        // todos los episodios tienen el mismo número de historias, una lectura es
+        // la otra dividida por una constante y las dos dispersiones son la misma:
+        // con un «menor que» a secas, quién gana lo decidía el ruido de la coma
+        // flotante, y una serie normal acababa midiéndose por episodio sin motivo.
+        //
+        // Pedir la mitad deja pasar el caso real -en Shin-Chan la lectura por
+        // historia se va al doble entre unos episodios y otros- y no el empate.
+        return Dispersion(porEpisodio) < Dispersion(porHistoria) * MargenParaCambiarDeMolde
+            ? new Vara(Molde.PorEpisodio, TimeSpan.FromSeconds(Mediana(porEpisodio)))
+            : new Vara(Molde.PorHistoria, TimeSpan.FromSeconds(Mediana(porHistoria)));
+    }
+
+    private static double Mediana(List<double> xs)
+    {
+        var o = xs.OrderBy(x => x).ToList();
+        int m = o.Count / 2;
+        return o.Count % 2 == 1 ? o[m] : (o[m - 1] + o[m]) / 2.0;
+    }
+
+    /// <summary>
+    /// Cuánto más estable tiene que ser la lectura por episodio para que se
+    /// prefiera a la de siempre. La mitad: una diferencia clara, no un empate
+    /// resuelto por decimales.
+    /// </summary>
+    private const double MargenParaCambiarDeMolde = 0.5;
+
+    /// <summary>Desviación absoluta mediana partida por la mediana. Sin unidades, para poder comparar.</summary>
+    private static double Dispersion(List<double> xs)
+    {
+        double med = Mediana(xs);
+        if (med <= 0) return double.MaxValue;
+        return Mediana(xs.Select(x => Math.Abs(x - med)).ToList()) / med;
+    }
 
     /// <summary>¿Cuadra esta duración con este número de historias?</summary>
     public static bool Cuadra(TimeSpan? duracion, int historias, Vara? vara)
@@ -97,8 +181,20 @@ public static class MedidaDelCapitulo
     }
 
     /// <summary>Cuántas historias dice el reloj que trae este fichero. Null si no se sabe.</summary>
+    /// <summary>
+    /// Cuántas historias dice el reloj que trae este fichero.
+    ///
+    /// <para>
+    /// Con el episodio por molde devuelve <c>null</c>: ahí el reloj no sabe cuántas
+    /// historias hay, sabe cuántos EPISODIOS caben. Un fichero de 48 minutos en una
+    /// serie de 24 son dos episodios, no seis historias, y decir lo segundo sería
+    /// inventarse un número con cara de dato.
+    /// </para>
+    /// </summary>
     public static int? HistoriasQueSugiere(TimeSpan? duracion, Vara? vara) =>
-        HistoriasQueSugiere(duracion, vara?.Unidad);
+        vara is null || vara.Molde == Molde.PorEpisodio
+            ? null
+            : HistoriasQueSugiere(duracion, vara.Unidad);
 
     public static TimeSpan? Unidad(IEnumerable<(TimeSpan Duracion, int Historias)> observaciones)
     {
