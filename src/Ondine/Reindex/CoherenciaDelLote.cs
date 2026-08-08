@@ -63,12 +63,27 @@ public static class CoherenciaDelLote
     {
         foreach (var r in lote) r.CorroboradoPorElLote = false;
 
-        // Solo entran las que YA tienen un episodio decente por título. Esto
-        // confirma; no rescata.
+        // Solo entran las identificadas POR EL TÍTULO, y con un parecido decente.
+        //
+        // Lo del título no es un detalle: es lo único que hace de esto una segunda
+        // señal. La serie se construye con los NÚMEROS de los ficheros, así que
+        // corroborar con ella un episodio que también salió del número es mirar la
+        // misma señal dos veces y presentarla como dos.
+        //
+        // Se coló, y salió caro: un «S01E534.mp4» sin título se identificó por su
+        // número contra el episodio 534, la serie cuadró -por construcción- y se
+        // pintó en verde diciendo «el título coincide al 100 % y el resto de la
+        // carpeta lo respalda». Era el episodio 497. Ni había título ni había
+        // respaldo. Un error con cara de certeza es peor que la duda que esto
+        // venía a quitar.
+        //
+        // Y no vale mirar el Score: en un match por número también vale 1,00.
+        // Lo que distingue de dónde vino la identificación es el Hint.
         var utiles = lote
             .Where(r => r.Episodio is not null
                      && r.Archivo.Indice is not null
                      && r.Archivo.SubSegmento is null
+                     && r.Hint == ReindexHint.Titulo
                      && r.Score >= TitleMatch.UmbralTitulo)
             .OrderBy(r => r.Archivo.Indice!.Value)
             .ToList();

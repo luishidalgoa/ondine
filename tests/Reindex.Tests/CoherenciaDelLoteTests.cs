@@ -51,6 +51,10 @@ public static class CoherenciaDelLoteTests
             Confianza = ReindexConfianza.Revisar,
             Episodio = Cat.PorNum(propone),
             Score = score,
+            // Identificadas por el TÍTULO: es la única procedencia que la
+            // coherencia corrobora, porque es la única independiente del número
+            // con el que se construye la serie.
+            Hint = ReindexHint.Titulo,
         };
     }
 
@@ -266,5 +270,85 @@ public static class NombrePobreNoEsPromesaTests
             "y se le propone la historia que su nombre dice");
         Program.Assert(!uno.NombreCortoParaEpisodioEntero,
             "y NO se agrupa con los otros: ese sí trae menos, y su respuesta es otra");
+    }
+}
+
+/// <summary>
+/// La coherencia del lote NO corrobora lo que vino del número.
+///
+/// <para>
+/// Es el fallo que se coló y que hay que impedir para siempre. Un fichero
+/// llamado <c>S01E534.mp4</c>, sin título en el nombre, se identifica por su
+/// número contra el episodio 534. Y la coherencia del lote <b>se calcula a
+/// partir de los números</b>: que el orden cuadre no aporta nada nuevo — es la
+/// misma señal mirada dos veces, presentada como dos.
+/// </para>
+/// <para>
+/// Pasó de verdad: ese fichero era en realidad el episodio 497, «Kasukabetti
+/// Western», y salió en verde diciendo «el título coincide al 100 % y el resto
+/// de la carpeta lo respalda». Ni había título ni había respaldo independiente.
+/// Un error así, con cara de certeza, es peor que la duda que venía a evitar.
+/// </para>
+/// </summary>
+public static class CoherenciaSoloCorroboraTitulosTests
+{
+    private static readonly ReindexCatalog Cat = ReindexCatalog.Parse($$"""
+    { "esquema": "reindex/1.0", "serie": "Serie", "episodios": [
+      {{string.Join(",", Enumerable.Range(1, 200).Select(i => $$"""{ "num": {{i}}, "titulos": { "es": ["Titulo {{i}}"] } }"""))}} ] }
+    """);
+
+    private static ReindexResolution R(int dice, int propone, ReindexHint hint, double score = 1.0) => new()
+    {
+        Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", $"Serie S01E{dice}.mkv"), "Season 01"),
+        Estado = ReindexEstado.Limpio,
+        Confianza = ReindexConfianza.Revisar,
+        Episodio = Cat.PorNum(propone),
+        Score = score,
+        Hint = hint,
+    };
+
+    public static void Todas()
+    {
+        Program.Seccion("La coherencia solo corrobora títulos");
+
+        // Un lote entero identificado POR EL NÚMERO. El orden cuadra por
+        // construcción -los números son los números- y eso no prueba nada.
+        var porNumero = Enumerable.Range(0, 8)
+            .Select(i => R(100 + i, 100 + i, ReindexHint.IndiceFechaAprox)).ToArray();
+        CoherenciaDelLote.Marcar(porNumero);
+        Program.Assert(porNumero.All(r => !r.CorroboradoPorElLote),
+            "lo que vino del número no se corrobora con el orden de los números");
+
+        // Con la fecha exacta, igual: sigue siendo la misma señal.
+        var conFecha = Enumerable.Range(0, 8)
+            .Select(i => R(100 + i, 100 + i, ReindexHint.IndiceFecha)).ToArray();
+        CoherenciaDelLote.Marcar(conFecha);
+        Program.Assert(conFecha.All(r => !r.CorroboradoPorElLote),
+            "ni lo que vino del número con fecha exacta");
+
+        // Lo que SÍ: identificado por TÍTULO, que es una señal distinta de la
+        // que forma la serie.
+        var porTitulo = Enumerable.Range(0, 8)
+            .Select(i => R(100 + i, 70 + i, ReindexHint.Titulo, 0.90)).ToArray();
+        CoherenciaDelLote.Marcar(porTitulo);
+        Program.Assert(porTitulo.All(r => r.CorroboradoPorElLote),
+            "lo identificado por título sí se corrobora con el orden");
+
+        // Un título flojo tampoco, como ya estaba.
+        var flojo = Enumerable.Range(0, 8)
+            .Select(i => R(100 + i, 70 + i, ReindexHint.TituloDebil, 0.50)).ToArray();
+        CoherenciaDelLote.Marcar(flojo);
+        Program.Assert(flojo.All(r => !r.CorroboradoPorElLote), "ni un título flojo");
+
+        // Y mezclados: los de título se corroboran entre ellos; los de número no
+        // entran ni de pasada.
+        var mezcla = new List<ReindexResolution>();
+        for (int i = 0; i < 6; i++) mezcla.Add(R(200 + i, 170 + i, ReindexHint.Titulo, 0.90));
+        for (int i = 0; i < 6; i++) mezcla.Add(R(150 + i, 150 + i, ReindexHint.IndiceFechaAprox));
+        CoherenciaDelLote.Marcar(mezcla);
+        Program.Assert(mezcla.Where(r => r.Hint == ReindexHint.Titulo).All(r => r.CorroboradoPorElLote),
+            "los de título, corroborados");
+        Program.Assert(mezcla.Where(r => r.Hint != ReindexHint.Titulo).All(r => !r.CorroboradoPorElLote),
+            "los de número, no — aunque compartan carpeta con una serie buena");
     }
 }
