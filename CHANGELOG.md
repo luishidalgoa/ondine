@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-08-08
+
 ### Añadido
 
 - **Un fichero que solo está en la nube se puede ver en su web, sin bajárselo.** El aviso ofrecía
