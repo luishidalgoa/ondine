@@ -2247,9 +2247,49 @@ public partial class OrganizarView : UserControl
     /// Reproductor INTEGRADO en modo focus, no una ventana del sistema: la pregunta es
     /// «¿qué capítulo es?» y la respuesta debe estar a un Esc de distancia.
     /// </summary>
+    /// <summary>
+    /// Abre el reproductor, avisando antes si el fichero solo está en la nube.
+    ///
+    /// <para>
+    /// Medido: leer <b>un mega</b> de un fichero de 65 MB que solo está en
+    /// OneDrive bloquea más de cinco minutos y no termina. Windows lo recupera al
+    /// abrirlo y no hay forma de asomarse — así que abrir el reproductor para
+    /// comprobar de qué episodio es se lo bajaba entero, sin avisar y con el disco
+    /// justo. Verificar cincuenta ficheros así es bajarse la temporada.
+    /// </para>
+    /// <para>
+    /// No se prohíbe: se dice el tamaño y de qué nube es, y se ofrece la salida
+    /// —verlo en su web, que todas la traen—. Prohibirlo sería decidir por quien
+    /// a lo mejor sí quiere el fichero aquí.
+    /// </para>
+    /// </summary>
     private void ReproducirFila(OrganizarRow? fila)
     {
         if (fila == null || !File.Exists(fila.RutaActual)) return;
+
+        if (Nube.EsMarcador(fila.RutaActual))
+        {
+            var duena = Rutas.NubesDelEquipo.DuenaDe(fila.RutaActual);
+            long bytes = 0;
+            try { bytes = new FileInfo(fila.RutaActual).Length; } catch { }
+
+            var mensaje = string.Format(Textos.Instancia.OrganizarSoloEnLaNubeDetalle,
+                duena?.Proveedor ?? Textos.Instancia.OrganizarSoloEnLaNubeGenerica,
+                $"{bytes / 1048576.0:n0} MB");
+
+            if (!DialogWindow.Confirmar(Window.GetWindow(this),
+                    Textos.Instancia.OrganizarSoloEnLaNubeTitulo, mensaje,
+                    Textos.Instancia.OrganizarDescargarYVer,
+                    Textos.Instancia.OrganizarVerloEnLaNube))
+            {
+                // Al explorador con el fichero ya seleccionado: ahí es donde cada
+                // proveedor pone su «Ver en línea» / «Abrir en navegador», y
+                // seleccionarlo no descarga nada.
+                AbrirCarpetaDe(fila.RutaActual);
+                return;
+            }
+        }
+
         new ReproductorWindow(fila.RutaActual) { Owner = Window.GetWindow(this) }.ShowDialog();
     }
 

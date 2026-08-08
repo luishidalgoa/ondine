@@ -34,6 +34,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Reproducir un fichero que solo está en la nube ya avisa antes.** Abrirlo se lo bajaba entero
+  sin decir nada: Windows recupera el fichero al abrirlo y no hay forma de leer solo un trozo
+  —medido, leer **un mega** de uno de 65 MB bloquea más de cinco minutos sin terminar—. Así que
+  comprobar de qué episodio es cada uno acababa siendo bajarse la temporada. Ahora se dice el
+  tamaño y de qué nube es, y se ofrece la salida. Funciona con **cualquier** proveedor que use la
+  API de nube de Windows —OneDrive, Nextcloud y los demás—, porque el nombre y la carpeta se los
+  pregunta al propio sistema en vez de llevar una lista.
+
+### Añadido
+
 - **La carpeta se corrobora a sí misma.** Ondine daba confianza alta cuando dos señales
   coincidían —normalmente el título y la fecha—, así que **un catálogo sin fechas dejaba todo
   pidiendo decisión** por bien que casara. Ahora la segunda señal puede ser el propio lote: si
