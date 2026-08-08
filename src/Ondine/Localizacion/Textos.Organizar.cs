@@ -1230,4 +1230,21 @@ public sealed partial class Textos
     public string OrganizarLogDejadasIguales => Idioma.Elegir(
         "{0} rows left as they were: the catalogue has no place for them.",
         "{0} filas dejadas como estaban: el catálogo no tiene sitio para ellas.");
+
+    // ═══ Un fichero que solo está en la nube ═════════════════════════════════
+
+    public string OrganizarSoloEnLaNubeTitulo => Idioma.Elegir(
+        "This one is only in the cloud",
+        "Este solo está en la nube");
+
+    // {0} = el nombre del proveedor, {1} = el tamaño.
+    public string OrganizarSoloEnLaNubeDetalle => Idioma.Elegir(
+        "Playing it downloads all {1} from {0} first — there is no way to peek at part of it. If you only want to check which episode it is, it is quicker to watch it on {0} itself.",
+        "Reproducirlo se baja antes los {1} enteros de {0} — no hay forma de asomarse a un trozo. Si solo quieres comprobar de qué episodio es, sale más rápido verlo en {0} mismo.");
+
+    public string OrganizarSoloEnLaNubeGenerica => Idioma.Elegir("the cloud", "la nube");
+
+    public string OrganizarDescargarYVer => Idioma.Elegir("Download and play", "Descargar y reproducir");
+
+    public string OrganizarVerloEnLaNube => Idioma.Elegir("Show me the file", "Enséñame el fichero");
 }

@@ -47,4 +47,49 @@ public static class Nube
     /// documentada de liberar espacio sin borrar nada.
     /// </summary>
     public static int AtributosParaLiberar(int actuales) => (actuales & ~Anclado) | Soltado;
+
+    /// <summary>Una nube sincronizada en este equipo: quién es y dónde tiene su carpeta.</summary>
+    public sealed record Sincronizacion(string Proveedor, string Raiz);
+
+    /// <summary>
+    /// De qué nube es este fichero, o <c>null</c> si de ninguna.
+    ///
+    /// <para>
+    /// Medido: abrir un fichero de 65 MB que solo está en OneDrive y leer <b>un
+    /// mega</b> bloquea más de cinco minutos sin terminar. Windows recupera el
+    /// fichero al abrirlo y no hay forma de asomarse a él, así que reproducirlo
+    /// para comprobar de qué episodio es sale carísimo y encima llena el disco.
+    /// </para>
+    /// <para>
+    /// La salida es no abrirlo y mandar a su web, que es lo que ya ofrecen todos
+    /// —«Ver en línea» en OneDrive, «Abrir en navegador» en Nextcloud—. Para eso
+    /// basta saber qué raíz lo posee, y eso Windows lo publica igual para
+    /// cualquier proveedor: no hace falta saber nada de ninguna nube concreta.
+    /// </para>
+    /// </summary>
+    public static Sincronizacion? Duena(string? ruta, IEnumerable<Sincronizacion> raices)
+    {
+        if (string.IsNullOrWhiteSpace(ruta)) return null;
+
+        string plena;
+        try { plena = Path.GetFullPath(ruta); } catch { return null; }
+
+        Sincronizacion? mejor = null;
+        foreach (var r in raices)
+        {
+            if (string.IsNullOrWhiteSpace(r.Raiz)) continue;
+
+            // Con el separador al final. Sin él, «C:\OneDriveViejo» empezaría por
+            // «C:\OneDrive» y un fichero de fuera se atribuiría a la nube — y se
+            // acabaría abriendo la web equivocada.
+            var raiz = Path.GetFullPath(r.Raiz).TrimEnd(Path.DirectorySeparatorChar)
+                       + Path.DirectorySeparatorChar;
+            if (!plena.StartsWith(raiz, StringComparison.OrdinalIgnoreCase)) continue;
+
+            // Con nubes anidadas gana la MÁS específica: si no, lo de dentro se
+            // atribuiría a la de fuera.
+            if (mejor is null || raiz.Length > mejor.Raiz.Length + 1) mejor = new(r.Proveedor, raiz.TrimEnd(Path.DirectorySeparatorChar));
+        }
+        return mejor;
+    }
 }
