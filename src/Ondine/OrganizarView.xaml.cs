@@ -2277,15 +2277,22 @@ public partial class OrganizarView : UserControl
                 duena?.Proveedor ?? Textos.Instancia.OrganizarSoloEnLaNubeGenerica,
                 $"{bytes / 1048576.0:n0} MB");
 
+            // Llevar a la WEB si su nube lo ofrece; y si no, al explorador, que es
+            // donde está esa misma opción. Enseñar el fichero no responde la
+            // pregunta —de qué episodio es— y desde el explorador aún quedan dos
+            // pasos; la web lo abre y ahí se ve.
+            bool hayWeb = Rutas.VerEnLaNube.SePuede(fila.RutaActual);
+
             if (!DialogWindow.Confirmar(Window.GetWindow(this),
                     Textos.Instancia.OrganizarSoloEnLaNubeTitulo, mensaje,
                     Textos.Instancia.OrganizarDescargarYVer,
-                    Textos.Instancia.OrganizarVerloEnLaNube))
+                    hayWeb ? Textos.Instancia.OrganizarVerloEnLaWeb
+                           : Textos.Instancia.OrganizarVerloEnLaNube))
             {
-                // Al explorador con el fichero ya seleccionado: ahí es donde cada
-                // proveedor pone su «Ver en línea» / «Abrir en navegador», y
-                // seleccionarlo no descarga nada.
-                AbrirCarpetaDe(fila.RutaActual);
+                // Si el verbo falla al invocarse -el sincronizador puede estar caído-
+                // no se queda en nada: el explorador sigue siendo una respuesta.
+                if (!hayWeb || !Rutas.VerEnLaNube.Abrir(fila.RutaActual))
+                    AbrirCarpetaDe(fila.RutaActual);
                 return;
             }
         }

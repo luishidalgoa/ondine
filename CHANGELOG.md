@@ -32,19 +32,15 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
-### Corregido
-
-- **CRÍTICO: un fichero podía salir en verde apuntando al episodio equivocado.** Cuando el nombre
-  no trae título, la app lo identifica por su número; y el respaldo que da la carpeta se calcula
-  **también con los números**, así que confirmaba lo que ya había dicho el número — la misma
-  señal contada dos veces. Un `S01E534.mp4` que en realidad era el episodio 497 salía en verde
-  diciendo «el título coincide al 100 % y el resto de la carpeta lo respalda»: ni había título ni
-  había respaldo independiente. Ahora la carpeta solo respalda lo identificado **por el título**,
-  que es la única señal distinta de la que forma la serie. Ese fichero pasa a ámbar, la app lee su
-  `.nfo` —cosa que solo hace con lo que duda— y acaba en el episodio correcto.
-
 ### Añadido
 
+- **Un fichero que solo está en la nube se puede ver en su web, sin bajárselo.** El aviso ofrecía
+  «enséñame el fichero», que abre el explorador — pero eso no contesta la pregunta que lo motiva,
+  que es de qué episodio se trata, y desde ahí aún quedaban dos pasos. Ahora, cuando la nube
+  ofrece verlo en línea, el aviso lleva **directo a su web**. Sin credenciales y sin saber de
+  ningún proveedor: Ondine invoca la misma opción que pulsarías tú en el menú de Windows, así que
+  vale para OneDrive y para cualquier otro que la ponga ahí. Si el proveedor no la ofrece, se
+  sigue abriendo el explorador.
 - **El reloj aprende qué es lo constante en cada serie.** Comparaba siempre contra «lo que dura
   una historia × cuántas trae», y hay series al revés: **el episodio dura siempre lo mismo** y
   dentro caben dos historias o tres según el día. En una carpeta real de Crayon Shin-Chan, con
@@ -53,9 +49,6 @@ es un acuerdo de buena voluntad: está verificado.
   la serie lo dice sola: se compara la estabilidad de las dos lecturas y gana la que menos varíe.
   Con el episodio por molde, el reloj además **deja de opinar sobre cuántas historias trae un
   fichero**, porque ahí la duración no lo distingue.
-
-### Añadido
-
 - **Reproducir un fichero que solo está en la nube ya avisa antes.** Abrirlo se lo bajaba entero
   sin decir nada: Windows recupera el fichero al abrirlo y no hay forma de leer solo un trozo
   —medido, leer **un mega** de uno de 65 MB bloquea más de cinco minutos sin terminar—. Así que
@@ -63,9 +56,6 @@ es un acuerdo de buena voluntad: está verificado.
   tamaño y de qué nube es, y se ofrece la salida. Funciona con **cualquier** proveedor que use la
   API de nube de Windows —OneDrive, Nextcloud y los demás—, porque el nombre y la carpeta se los
   pregunta al propio sistema en vez de llevar una lista.
-
-### Añadido
-
 - **La carpeta se corrobora a sí misma.** Ondine daba confianza alta cuando dos señales
   coincidían —normalmente el título y la fecha—, así que **un catálogo sin fechas dejaba todo
   pidiendo decisión** por bien que casara. Ahora la segunda señal puede ser el propio lote: si
@@ -76,8 +66,19 @@ es un acuerdo de buena voluntad: está verificado.
 - **«El nombre solo dice una historia» ya se contesta de una vez.** Cuando el fichero dura lo que
   todas las historias del episodio, lo corto es el nombre y no el contenido, y la respuesta es la
   misma para todos los que estén igual. El aviso se mantiene —renombrarlo entero afirma algo que
-  el nombre no decía— pero se puede confirmar en bloque. Medido en una carpeta real de
-  Crayon Shin-Chan: de **53 decisiones a 21**, y 27 de las que quedan van en un clic.
+  el nombre no decía— pero se puede confirmar en bloque. En una carpeta real de Crayon Shin-Chan,
+  la mayoría de las decisiones que quedan se resuelven en un clic en vez de una a una.
+
+### Corregido
+
+- **CRÍTICO: un fichero podía salir en verde apuntando al episodio equivocado.** Cuando el nombre
+  no trae título, la app lo identifica por su número; y el respaldo que da la carpeta se calcula
+  **también con los números**, así que confirmaba lo que ya había dicho el número — la misma
+  señal contada dos veces. Un `S01E534.mp4` que en realidad era el episodio 497 salía en verde
+  diciendo «el título coincide al 100 % y el resto de la carpeta lo respalda»: ni había título ni
+  había respaldo independiente. Ahora la carpeta solo respalda lo identificado **por el título**,
+  que es la única señal distinta de la que forma la serie. Ese fichero pasa a ámbar, la app lee su
+  `.nfo` —cosa que solo hace con lo que duda— y acaba en el episodio correcto.
 
 ## [1.7.0] - 2026-08-06
 
