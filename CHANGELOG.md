@@ -66,8 +66,9 @@ es un acuerdo de buena voluntad: está verificado.
 - **«El nombre solo dice una historia» ya se contesta de una vez.** Cuando el fichero dura lo que
   todas las historias del episodio, lo corto es el nombre y no el contenido, y la respuesta es la
   misma para todos los que estén igual. El aviso se mantiene —renombrarlo entero afirma algo que
-  el nombre no decía— pero se puede confirmar en bloque. En una carpeta real de Crayon Shin-Chan,
-  la mayoría de las decisiones que quedan se resuelven en un clic en vez de una a una.
+  el nombre no decía— pero se puede confirmar en bloque. Medido en una carpeta real de
+  Crayon Shin-Chan —59 ficheros contra un catálogo de 1342 episodios **sin una sola fecha**—:
+  de **53 decisiones una a una a 25**, porque 26 de las que quedan se contestan de golpe.
 
 ### Corregido
 
