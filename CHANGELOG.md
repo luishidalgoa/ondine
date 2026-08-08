@@ -74,6 +74,20 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Cuando la carpeta va numerada por otro, la app deja de proponer el episodio que dice el
+  número.** El número del fichero valía como pista cuando no había fecha con la que
+  confirmarlo — y eso, en una carpeta numerada por un canal o una lista de reproducción, da
+  una propuesta con toda la cara de válida: el número existe en el catálogo, así que sale un
+  episodio y un nombre nuevo, y es el que no es. Ahora la carpeta se pregunta a sí misma: de
+  los ficheros identificados **por su título**, ¿sus números cuadran con el catálogo? Si no
+  cuadran, los que solo se sostenían en el número dejan de proponer nada y lo dicen. Medido en
+  una carpeta real de Crayon Shin-Chan: 36 de 42 títulos caían a desfase −30..−40 y los 17 que
+  salían del número asumían desfase 0. Se decide en bloque, así que son **un clic, no doce**.
+- **El título del metadato también se parte por tandas de espacios.** Dos `.nfo` de la misma
+  carpeta y del mismo sitio: el que separaba con `|` acertaba el episodio y el que separaba con
+  tres espacios no acertaba ninguno, porque se comparaba el churro entero —nombre de la serie,
+  título y «Episodio N en español»— contra el título del catálogo. El título correcto estaba
+  leído y en memoria, y la app proponía otro episodio igualmente.
 - **El `.nfo` que acompaña al vídeo se lee siempre, no solo cuando la app ya dudaba.** Leerlo
   tarde dejaba fuera justo el caso peligroso: un fichero puede quedar **seguro y equivocado** —
   identificado por su número contra el episodio que no era— y entonces nadie llega a mirar el

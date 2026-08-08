@@ -86,6 +86,16 @@ public sealed partial class Textos
         "The number exists in the series, but there is no date to confirm it",
         "El número existe en la serie, pero no hay fecha que lo confirme");
 
+    /// <summary>
+    /// Lo que se dice cuando el fichero solo se sostenía en su número y la carpeta
+    /// ha demostrado que sus números no son los del catálogo. Se dice de dónde sale
+    /// la conclusión —del resto de la carpeta— porque sin eso suena a que la app se
+    /// rinde, y lo que hace es lo contrario: sabe algo y por eso se calla.
+    /// </summary>
+    public string ReindexMotivoNumeracionAjena => Idioma.Elegir(
+        "This folder is numbered by someone other than the catalogue — the rest of it proves the numbers do not line up, so this one's number says nothing",
+        "Esta carpeta va numerada por otro, no por el catálogo — el resto lo demuestra, así que el número de este no dice nada");
+
     // {0} = el porcentaje ya montado.
     public string ReindexMotivoTituloDebil => Idioma.Elegir(
         "Only {0} alike, below what counts as reliable",
