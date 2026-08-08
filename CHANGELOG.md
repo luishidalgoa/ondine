@@ -39,8 +39,10 @@ es un acuerdo de buena voluntad: está verificado.
   que es de qué episodio se trata, y desde ahí aún quedaban dos pasos. Ahora, cuando la nube
   ofrece verlo en línea, el aviso lleva **directo a su web**. Sin credenciales y sin saber de
   ningún proveedor: Ondine invoca la misma opción que pulsarías tú en el menú de Windows, así que
-  vale para OneDrive y para cualquier otro que la ponga ahí. Si el proveedor no la ofrece, se
-  sigue abriendo el explorador.
+  vale para OneDrive y para cualquier otro que la ponga ahí. **También con Nextcloud**, que no
+  pone sus opciones en ese menú: a su cliente se le pregunta por el mismo canal que usa su
+  propia integración con el explorador. Si el proveedor no ofrece nada, se sigue abriendo el
+  explorador.
 - **El reloj aprende qué es lo constante en cada serie.** Comparaba siempre contra «lo que dura
   una historia × cuántas trae», y hay series al revés: **el episodio dura siempre lo mismo** y
   dentro caben dos historias o tres según el día. En una carpeta real de Crayon Shin-Chan, con
@@ -72,6 +74,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **El `.nfo` que acompaña al vídeo se lee siempre, no solo cuando la app ya dudaba.** Leerlo
+  tarde dejaba fuera justo el caso peligroso: un fichero puede quedar **seguro y equivocado** —
+  identificado por su número contra el episodio que no era— y entonces nadie llega a mirar el
+  `.nfo` que lo habría desmentido. Ahora informa la identificación desde el principio. El
+  `S01E534.mp4` que dio origen a esto pasa de señalar el episodio 534 en ámbar a señalar el 497
+  «Kasukabetti Western» en verde, a la primera. El motivo para no hacerlo antes era el coste, y
+  medido no existe: **91 ms los 59 ficheros** de una carpeta real, 12 KB en total. De propina,
+  la segunda pasada —que abría vídeos uno a uno— deja de hacer falta cuando hay `.nfo`.
 - **CRÍTICO: un fichero podía salir en verde apuntando al episodio equivocado.** Cuando el nombre
   no trae título, la app lo identifica por su número; y el respaldo que da la carpeta se calcula
   **también con los números**, así que confirmaba lo que ya había dicho el número — la misma

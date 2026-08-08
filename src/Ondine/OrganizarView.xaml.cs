@@ -815,9 +815,15 @@ public partial class OrganizarView : UserControl
             // ── Etapa 1: leer las señales de los nombres ──
             if (animar) _pasos.EnCurso(0);
             var señales = await ConTiempoDeVerse(Task.Run(() =>
-                // Nota: el título del metadato del contenedor (titulo_meta) todavía no se lee.
-                // Exigiría un ffprobe por fichero y «Simular» dejaría de ser inmediato en
-                // bibliotecas de cientos. El motor ya lo admite cuando se enganche.
+                // El título del CONTENEDOR sigue sin leerse aquí: exigiría un ffprobe por
+                // fichero y «Simular» dejaría de ser inmediato en bibliotecas de cientos.
+                // Eso se hace luego, y solo con lo que quede en duda.
+                //
+                // El del .nfo SÍ, y de todos. Leerlo solo de los dudosos dejaba fuera el
+                // caso que costó caro: un fichero identificado por su número puede quedar
+                // seguro Y equivocado, y entonces nadie llega a mirar el .nfo que lo
+                // habría desmentido. Medido, el motivo para no hacerlo no existe: 91 ms
+                // los 59 ficheros de una carpeta real, 12 KB en total.
                 ficheros
                     .AsParallel()
                     .AsOrdered()
@@ -830,6 +836,7 @@ public partial class OrganizarView : UserControl
                     .Select(f => SignalExtractor.Extract(
                         f,
                         new DirectoryInfo(Path.GetDirectoryName(f)!).Name,
+                        TituloCompanero.Leer(f),
                         duracion: FichaDeWindows.Duracion(f)))
                     .ToList()), animar);
             if (animar)
