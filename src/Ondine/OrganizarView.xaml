@@ -427,7 +427,14 @@
 
     <!-- ══════════════ REVISIÓN: la tabla de triaje ══════════════ -->
     <Grid x:Name="vistaRevision" Grid.Row="2" Margin="16,0,16,0" Visibility="Collapsed">
-      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <!-- Tres filas y no dos: los DOS avisos pueden estar puestos a la vez -uno dice
+           cuántas filas piden decisión y el otro cuántas se acaban de renombrar- y
+           compartiendo fila se pintaban uno encima del otro, ilegibles los dos. -->
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
 
       <!-- Banner de aviso cuando el lote viene mayoritariamente dudoso -->
       <Border x:Name="bannerAviso" Grid.Row="0" Background="{StaticResource OrgWarnBg}"
@@ -441,7 +448,7 @@
       </Border>
 
       <!-- Banda de resultado tras aplicar -->
-      <Border x:Name="bannerAplicado" Grid.Row="0" Background="{StaticResource OrgOkBg}"
+      <Border x:Name="bannerAplicado" Grid.Row="1" Background="{StaticResource OrgOkBg}"
               BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1" CornerRadius="8"
               Padding="12,9" Margin="0,0,0,10" Visibility="Collapsed">
         <Grid>
@@ -455,7 +462,7 @@
         </Grid>
       </Border>
 
-      <Border Grid.Row="1" Background="{StaticResource SurfaceGlass}" CornerRadius="8" ClipToBounds="True">
+      <Border Grid.Row="2" Background="{StaticResource SurfaceGlass}" CornerRadius="8" ClipToBounds="True">
         <!-- El resolutor se despliega al seleccionar la fila; el propio detalle se oculta
              para las filas que no tienen nada que resolver. -->
         <!-- La separación por temporada la pinta cada fila (ver «banda» en OrgRow), no
