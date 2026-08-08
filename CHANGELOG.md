@@ -32,6 +32,17 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **CRÍTICO: un fichero podía salir en verde apuntando al episodio equivocado.** Cuando el nombre
+  no trae título, la app lo identifica por su número; y el respaldo que da la carpeta se calcula
+  **también con los números**, así que confirmaba lo que ya había dicho el número — la misma
+  señal contada dos veces. Un `S01E534.mp4` que en realidad era el episodio 497 salía en verde
+  diciendo «el título coincide al 100 % y el resto de la carpeta lo respalda»: ni había título ni
+  había respaldo independiente. Ahora la carpeta solo respalda lo identificado **por el título**,
+  que es la única señal distinta de la que forma la serie. Ese fichero pasa a ámbar, la app lee su
+  `.nfo` —cosa que solo hace con lo que duda— y acaba en el episodio correcto.
+
 ### Añadido
 
 - **El reloj aprende qué es lo constante en cada serie.** Comparaba siempre contra «lo que dura

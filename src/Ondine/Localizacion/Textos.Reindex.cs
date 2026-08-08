@@ -477,6 +477,6 @@ public sealed partial class Textos
 
     // {0} = el parecido del título, en porcentaje.
     public string ReindexMotivoLoteLoSostiene => Idioma.Elegir(
-        "The title matches {0} and the rest of the folder backs it: the files around it point to consecutive episodes in the same order",
-        "El título coincide al {0} y el resto de la carpeta lo respalda: los ficheros de alrededor apuntan a episodios consecutivos en el mismo orden");
+        "The title matches {0}, and the rest of the folder backs it: the files around it point to consecutive episodes in the same order",
+        "El título coincide al {0}, y el resto de la carpeta lo respalda: los ficheros de alrededor apuntan a episodios consecutivos en el mismo orden");
 }
