@@ -55,6 +55,51 @@ public static class MedidaDelCapitulo
     /// Solo deben entrar los identificados con confianza: aprender de las dudas es
     /// aprender del error.
     /// </param>
+    /// <summary>Contra qué se compara la duración de un fichero en esta serie.</summary>
+    public enum Molde
+    {
+        /// <summary>Lo constante es la HISTORIA: el episodio dura lo que sumen las suyas.</summary>
+        PorHistoria,
+    }
+
+    /// <summary>
+    /// Cómo se mide esta serie, y cuánto.
+    ///
+    /// <para>
+    /// Existe para que «la vara» sea UNA cosa. Antes andaba repartida entre un
+    /// <c>TimeSpan?</c> suelto y las reglas que sabían qué hacer con él, y cada
+    /// sitio que la usaba tenía que recordar la fórmula. Con un objeto, la fórmula
+    /// vive donde vive la vara.
+    /// </para>
+    /// </summary>
+    public sealed record Vara(Molde Molde, TimeSpan Unidad)
+    {
+        /// <summary>Lo que debería durar un fichero con <paramref name="historias"/> historias.</summary>
+        public TimeSpan Espera(int historias) => Unidad * Math.Max(1, historias);
+    }
+
+    /// <summary>
+    /// Aprende la vara de esta carpeta. Hoy siempre por historia — es lo mismo que
+    /// hacía <see cref="Unidad"/>, dicho con el tipo nuevo.
+    /// </summary>
+    public static Vara? Aprender(IEnumerable<(TimeSpan Duracion, int Historias)> observaciones) =>
+        Unidad(observaciones) is { } u ? new Vara(Molde.PorHistoria, u) : null;
+
+    /// <summary>¿Cuadra esta duración con este número de historias?</summary>
+    public static bool Cuadra(TimeSpan? duracion, int historias, Vara? vara)
+    {
+        if (duracion is not { } d || vara is null || historias <= 0) return true;
+        if (d <= TimeSpan.Zero || vara.Unidad <= TimeSpan.Zero) return true;
+
+        double esperado = vara.Espera(historias).TotalSeconds;
+        return d.TotalSeconds >= esperado * (1 - Margen)
+            && d.TotalSeconds <= esperado * (1 + Margen);
+    }
+
+    /// <summary>Cuántas historias dice el reloj que trae este fichero. Null si no se sabe.</summary>
+    public static int? HistoriasQueSugiere(TimeSpan? duracion, Vara? vara) =>
+        HistoriasQueSugiere(duracion, vara?.Unidad);
+
     public static TimeSpan? Unidad(IEnumerable<(TimeSpan Duracion, int Historias)> observaciones)
     {
         var porHistoria = observaciones
@@ -78,12 +123,12 @@ public static class MedidaDelCapitulo
     /// <summary>Las varas de una serie: la de cada temporada, y la de respaldo.</summary>
     public sealed class Varas
     {
-        public TimeSpan? Global { get; init; }
-        public IReadOnlyDictionary<int, TimeSpan> PorTemporada { get; init; } =
-            new Dictionary<int, TimeSpan>();
+        public Vara? Global { get; init; }
+        public IReadOnlyDictionary<int, Vara> PorTemporada { get; init; } =
+            new Dictionary<int, Vara>();
 
         /// <summary>La vara con la que medir esta temporada. Cae a la global si no tiene la suya.</summary>
-        public TimeSpan? De(int? temporada) =>
+        public Vara? De(int? temporada) =>
             temporada is { } t && PorTemporada.TryGetValue(t, out var u) ? u : Global;
     }
 
@@ -113,30 +158,15 @@ public static class MedidaDelCapitulo
         var porTemporada = todas
             .Where(o => o.Temporada is not null)
             .GroupBy(o => o.Temporada!.Value)
-            .Select(g => (Temporada: g.Key, Vara: Unidad(g.Select(o => (o.Duracion, o.Historias)))))
+            .Select(g => (Temporada: g.Key, Vara: Aprender(g.Select(o => (o.Duracion, o.Historias)))))
             .Where(x => x.Vara is not null)
-            .ToDictionary(x => x.Temporada, x => x.Vara!.Value);
+            .ToDictionary(x => x.Temporada, x => x.Vara!);
 
         return new Varas
         {
-            Global = Unidad(todas.Select(o => (o.Duracion, o.Historias))),
+            Global = Aprender(todas.Select(o => (o.Duracion, o.Historias))),
             PorTemporada = porTemporada,
         };
-    }
-
-    /// <summary>
-    /// ¿Cuadra que un fichero de esta duración sean <paramref name="historias"/>
-    /// historias? Con <c>null</c> en cualquiera de los dos datos no se opina: no
-    /// saber no es lo mismo que sospechar.
-    /// </summary>
-    public static bool Cuadra(TimeSpan? duracion, int historias, TimeSpan? unidad)
-    {
-        if (duracion is not { } d || unidad is not { } u || historias <= 0) return true;
-        if (d <= TimeSpan.Zero || u <= TimeSpan.Zero) return true;
-
-        double esperado = u.TotalSeconds * historias;
-        return d.TotalSeconds >= esperado * (1 - Margen)
-            && d.TotalSeconds <= esperado * (1 + Margen);
     }
 
     /// <summary>
@@ -144,7 +174,7 @@ public static class MedidaDelCapitulo
     /// puede saber. Sirve para redactar el aviso: «mide once minutos, y un episodio
     /// de dos historias dura veintidós».
     /// </summary>
-    public static int? HistoriasQueSugiere(TimeSpan? duracion, TimeSpan? unidad)
+    private static int? HistoriasQueSugiere(TimeSpan? duracion, TimeSpan? unidad)
     {
         if (duracion is not { } d || unidad is not { } u) return null;
         if (d <= TimeSpan.Zero || u <= TimeSpan.Zero) return null;

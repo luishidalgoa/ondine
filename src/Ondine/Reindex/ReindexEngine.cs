@@ -706,7 +706,7 @@ public static class ReindexEngine
 
         // Se reparte a TODAS las filas, no solo a las que se marcan: la columna de
         // duración la enseña para que se pueda juzgar cualquier fila, no solo las malas.
-        foreach (var r in resoluciones) r.UnidadDeHistoria = varas.De(Temporada(r));
+        foreach (var r in resoluciones) r.UnidadDeHistoria = varas.De(Temporada(r))?.Unidad;
 
         foreach (var r in resoluciones)
         {
@@ -728,7 +728,7 @@ public static class ReindexEngine
 
             r.Confianza = ReindexConfianza.Revisar;
             r.Motivo = string.Format(Textos.Instancia.ReindexMotivoRelojNoCuadra,
-                Reloj(dura), r.Episodio.Num, promete, Reloj(unidad.Value * promete));
+                Reloj(dura), r.Episodio.Num, promete, Reloj(unidad.Espera(promete)));
         }
     }
 
@@ -828,7 +828,7 @@ public static class ReindexEngine
         IndiceTitulos indice, ModoPrioridad modo)
     {
         // La vara de esta carpeta, para confirmar con el reloj lo que sospecha el nombre.
-        var unidad = MedidaDelCapitulo.Unidad(resoluciones
+        var unidad = MedidaDelCapitulo.Aprender(resoluciones
             .Where(x => x.Confianza == ReindexConfianza.Alta && x.Episodio != null)
             .Where(x => x.Archivo.Duracion is { } d && d > TimeSpan.Zero)
             .Select(x => (x.Archivo.Duracion!.Value, Math.Max(1, x.Episodio!.TitulosSalida.Count))));

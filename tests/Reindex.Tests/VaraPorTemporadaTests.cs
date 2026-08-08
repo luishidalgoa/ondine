@@ -29,8 +29,8 @@ public static class VaraPorTemporadaTests
         var varas = MedidaDelCapitulo.UnidadPorTemporada(obs);
 
         Program.Assert(varas.Global is not null, "hay vara global");
-        Program.Eq(new TimeSpan(0, 6, 10), varas.De(1979), "1979 se mide con su propia vara");
-        Program.Eq(new TimeSpan(0, 12, 12), varas.De(1986), "y 1986 con la suya");
+        Program.Eq(new TimeSpan(0, 6, 10), varas.De(1979)?.Unidad, "1979 se mide con su propia vara");
+        Program.Eq(new TimeSpan(0, 12, 12), varas.De(1986)?.Unidad, "y 1986 con la suya");
 
         // ESTE es el caso que fallaba: 13:23 en 1986 es normal, y con la vara
         // global de la serie entera salía como «esto son dos historias».
@@ -47,24 +47,24 @@ public static class VaraPorTemporadaTests
         pocas.Add(O(25, 0, 1, 1991));
         pocas.Add(O(24, 0, 1, 1991));
         var v2 = MedidaDelCapitulo.UnidadPorTemporada(pocas);
-        Program.Eq(v2.Global, v2.De(1991),
+        Program.Eq(v2.Global?.Unidad, v2.De(1991)?.Unidad,
             "con menos muestras de las que hacen falta, se cae a la vara global");
 
         // Sin temporada tampoco se inventa nada.
-        Program.Eq(v2.Global, v2.De(null), "y sin temporada, la global");
+        Program.Eq(v2.Global?.Unidad, v2.De(null)?.Unidad, "y sin temporada, la global");
 
         // Y si no hay ni para la global, no se opina de nada: no saber no es
         // sospechar.
         var casiNada = new List<(TimeSpan, int, int?)> { O(6, 10, 1, 1979), O(6, 12, 1, 1979) };
         var v3 = MedidaDelCapitulo.UnidadPorTemporada(casiNada);
-        Program.Eq(null, v3.Global, "sin muestras suficientes no hay vara");
-        Program.Eq(null, v3.De(1979), "ni por temporada");
+        Program.Eq(null, v3.Global?.Unidad, "sin muestras suficientes no hay vara");
+        Program.Eq(null, v3.De(1979)?.Unidad, "ni por temporada");
         Program.Assert(MedidaDelCapitulo.Cuadra(trece, 1, v3.De(1979)),
             "y sin vara, todo cuadra: callarse es la respuesta correcta");
 
         // La vara global sigue siendo la de siempre, para que nada de lo que ya
         // funcionaba cambie de comportamiento.
-        Program.Eq(MedidaDelCapitulo.Unidad(obs.Select(o => (o.Item1, o.Item2))),
-            varas.Global, "la global es exactamente la de antes");
+        Program.Eq(MedidaDelCapitulo.Aprender(obs.Select(o => (o.Item1, o.Item2)))?.Unidad,
+            varas.Global?.Unidad, "la global es exactamente la de antes");
     }
 }
