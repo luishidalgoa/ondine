@@ -57,7 +57,8 @@ public static class NumeracionDeLaCarpeta
             .Where(r => r.Hint == ReindexHint.Titulo
                      && r.Episodio is not null
                      && r.Archivo.Indice is not null
-                     && r.Score >= TitleMatch.UmbralTitulo)
+                     && r.Score >= TitleMatch.UmbralTitulo
+                     && !YaLoRenombramos(r))
             .Select(r => r.Episodio!.Num - r.Archivo.Indice!.Value)
             .ToList();
 
@@ -65,5 +66,34 @@ public static class NumeracionDeLaCarpeta
 
         int desviados = desfases.Count(d => d != 0);
         return desviados >= desfases.Count * ParteQueTieneQueEstarDesviada;
+    }
+
+    /// <summary>
+    /// ¿Es este un fichero que ya lleva el nombre puesto por el catálogo?
+    ///
+    /// <para>
+    /// Se reconoce en que su <b>propio nombre</b> ya trae el título del episodio.
+    /// Quien escribió ese nombre sabía de qué episodio era, así que el número que
+    /// puso salió del catálogo y no del origen: vota «desfase cero» por
+    /// construcción, diga lo que diga el origen.
+    /// </para>
+    /// <para>
+    /// Dejarlos votar tenía un efecto al revés del que hace falta: <b>cuantos más
+    /// ficheros arreglabas, más votos a cero</b>, hasta que la regla se apagaba y
+    /// volvían las propuestas inventadas. Medido en una carpeta a mitad de
+    /// arreglar: 44 votos, 28 desviados, 16 a cero — y los dieciséis a cero eran
+    /// ficheros ya renombrados. Hacían falta 29,3 y la protección se cayó por 1,3.
+    /// </para>
+    /// <para>
+    /// Es la misma trampa de siempre con otra cara: contar como prueba algo que se
+    /// deduce de la conclusión.
+    /// </para>
+    /// </summary>
+    private static bool YaLoRenombramos(ReindexResolution r)
+    {
+        var delNombre = TitleMatch.Norm(r.Archivo.TituloNombre ?? "");
+        if (delNombre.Length == 0) return false;
+
+        return r.Episodio!.TitulosNorm.Any(t => TitleMatch.Sim(delNombre, t) >= TitleMatch.UmbralTitulo);
     }
 }
