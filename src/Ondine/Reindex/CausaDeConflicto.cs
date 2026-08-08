@@ -47,6 +47,12 @@ public static class CausaDeConflicto
         /// episodio entero con un nombre corto.
         /// </summary>
         NombreCortoEpisodioEntero,
+        /// <summary>
+        /// Solo se sostenía en su número, y la carpeta ha demostrado que sus
+        /// números no son los del catálogo. No hay episodio que proponer, y no
+        /// porque nada se le parezca: porque la única pista que había no vale.
+        /// </summary>
+        NumeracionAjena,
     }
 
     /// <summary>De qué va esta fila.</summary>
@@ -70,6 +76,12 @@ public static class CausaDeConflicto
         // misma pregunta repetida con la misma respuesta.
         if (r.NombreCortoParaEpisodioEntero) return Causa.NombreCortoEpisodioEntero;
 
+        // Antes que «no encontré nada», porque no es lo mismo y la respuesta es
+        // otra: aquí la app SÍ sabe algo -que los números de esta carpeta no son
+        // los del catálogo- y por eso se calla. Confundirlo con «nada se le
+        // parece» dejaría a alguien buscando un parecido que no era el problema.
+        if (r.NumeroQueNoManda) return Causa.NumeracionAjena;
+
         if (r.Episodio is null && r.Alternativas.Count == 0)
             return r.Archivo.IndiceEspecial is not null
                 ? Causa.EspecialSinSitio
@@ -90,7 +102,7 @@ public static class CausaDeConflicto
     /// </para>
     /// </summary>
     public static bool SeDecideEnGrupo(Causa c) =>
-        c is Causa.EspecialSinSitio or Causa.SinCandidatos;
+        c is Causa.EspecialSinSitio or Causa.SinCandidatos or Causa.NumeracionAjena;
 
     /// <summary>
     /// A partir de aquí el parecido no deja margen: es ese episodio o el catálogo

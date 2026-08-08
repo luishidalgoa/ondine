@@ -111,6 +111,18 @@ public sealed class ReindexResolution
     public bool NombreCortoParaEpisodioEntero { get; set; }
 
     /// <summary>
+    /// Este fichero solo se sostenía en su número, y la carpeta ha demostrado que
+    /// su numeración no es la del catálogo. No hay episodio que proponer.
+    ///
+    /// <para>
+    /// Se distingue de «no encontré nada» porque la respuesta es distinta: aquí sí
+    /// hay un camino —dar el título, a mano o desde un complemento—, mientras que
+    /// «nada se le parece» suele acabar en dejarlo como está.
+    /// </para>
+    /// </summary>
+    public bool NumeroQueNoManda { get; set; }
+
+    /// <summary>
     /// El conflicto viene de que otro fichero reclama el mismo episodio, no de una duda de
     /// identificación. Es una marca y no una comparación de textos: depender de cómo está
     /// redactado el motivo se rompe en cuanto se reescribe el mensaje.
@@ -658,8 +670,42 @@ public static class ReindexEngine
         // historia y dura dos no se vuelve seguro porque las cuentas de la carpeta
         // cuadren.
         SubirLasQueSostieneElLote(resoluciones);
+        RetirarLoQueSoloSostieneUnNumeroQueNoManda(resoluciones);
         MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones, cat, overrides, indice, modo);
         MarcarLosQueNoCuadranConElReloj(resoluciones);
+    }
+
+    /// <summary>
+    /// En una carpeta cuya numeración no es la del catálogo, un episodio sacado
+    /// <b>solo del número</b> deja de proponerse.
+    ///
+    /// <para>
+    /// El número se usa como pista cuando no hay fecha con la que confirmarlo, y
+    /// eso da una propuesta con toda la cara de válida: el número existe en el
+    /// catálogo, así que sale un episodio y un nombre nuevo. Pero si los ficheros
+    /// los numeró otro, ese episodio es sencillamente el que no es.
+    /// </para>
+    /// <para>
+    /// No se propone el episodio corregido por el desfase, aunque se sepa: el
+    /// desfase <b>se desliza</b> —de −30 a −40 en la carpeta medida— así que
+    /// corregir sería cambiar un número inventado por otro. Con lo que hay solo se
+    /// puede afirmar que el número no vale, y eso es lo que se dice.
+    /// </para>
+    /// </summary>
+    private static void RetirarLoQueSoloSostieneUnNumeroQueNoManda(List<ReindexResolution> resoluciones)
+    {
+        if (!NumeracionDeLaCarpeta.NoCuadra(resoluciones)) return;
+
+        foreach (var r in resoluciones)
+        {
+            if (r.Hint != ReindexHint.IndiceFechaAprox || r.Episodio is null) continue;
+
+            r.Episodio = null;
+            r.Score = 0;
+            r.Confianza = ReindexConfianza.Revisar;
+            r.NumeroQueNoManda = true;
+            r.Motivo = Textos.Instancia.ReindexMotivoNumeracionAjena;
+        }
     }
 
     /// <summary>
