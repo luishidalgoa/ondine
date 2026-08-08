@@ -1017,6 +1017,13 @@ public static class ReindexEngine
     {
         var serie = TitleMatch.Norm(cat.Serie);
         var lista = new List<TitleBag>();
+        // Barras, barras anchas o una tanda de dos espacios o más.
+        static IEnumerable<string> Trozos(string s) =>
+            System.Text.RegularExpressions.Regex
+                .Split(s, @"[┃|]|\s{2,}")
+                .Select(t => t.Trim())
+                .Where(t => t.Length > 0);
+
         void Add(string? s)
         {
             if (string.IsNullOrWhiteSpace(s)) return;
@@ -1033,11 +1040,20 @@ public static class ReindexEngine
         }
         Add(f.TituloNombre);
         Add(f.TituloMeta);
-        // El metadato tambien puede venir multi-historia («A ┃ B»): se compara ademas cada
-        // trozo por separado, igual que se hace con el nombre del fichero.
+        // El metadato tambien puede venir multi-historia («A ┃ B») o con el titulo de
+        // verdad entre relleno («Serie   TITULO   Episodio N en español»): se compara
+        // ademas cada trozo por separado, igual que se hace con el nombre del fichero.
+        //
+        // La TANDA DE ESPACIOS cuenta como separador porque quien genera estos ficheros
+        // usa las dos formas indistintamente. Medido en dos .nfo de la misma carpeta y
+        // del mismo sitio: el que traia barras acertaba al 0,95 y el que traia tres
+        // espacios no acertaba nada -se comparaba el churro entero- y el motor se caia
+        // al numero del nombre. El titulo bueno estaba leido y en memoria.
+        //
+        // DOS espacios o mas, nunca uno: partir por un espacio suelto trocearia
+        // cualquier titulo normal en palabras, y «Me voy» casaria con medio catalogo.
         if (f.TituloMeta != null)
-            foreach (var parte in f.TituloMeta.Split(new[] { '┃', '|' },
-                         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            foreach (var parte in Trozos(f.TituloMeta))
                 Add(parte);
         foreach (var seg in f.Segmentos) Add(seg);
         return lista;
