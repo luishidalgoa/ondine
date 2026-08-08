@@ -1,5 +1,7 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Ondine;
 using Ondine.Reindex;
@@ -76,6 +78,7 @@ public static class Program
         Probar("ComplementosPanel", () => new ComplementosPanel(cat, res));
 
         LaTarjetaDiceLoQueSeVaAEscribir(cat);
+        LosAvisosNoSePisan();
 
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
@@ -132,6 +135,58 @@ public static class Program
             Bien("la tarjeta dice el nombre que se va a escribir (con dos episodios dentro)");
         }
         catch (Exception ex) { Mal("tarjeta = nombre real", ex); }
+    }
+
+    /// <summary>
+    /// Los dos avisos de la revisión pueden estar puestos a la vez, así que no
+    /// pueden compartir sitio.
+    ///
+    /// <para>
+    /// Uno dice cuántas filas piden decisión y el otro cuántas se acaban de
+    /// renombrar, con el botón de deshacer. Son cosas distintas y las dos pueden
+    /// ser ciertas —aplicas siete y quedan cuarenta y seis por decidir—, pero
+    /// estaban los dos en la misma fila de la rejilla y se pintaban encima:
+    /// «46 de 59 ficheros necesitan que decidas tú» tachado por «7 ficheros
+    /// renombrados», ilegibles los dos.
+    /// </para>
+    /// <para>
+    /// Se mide con los dos VISIBLES y con la vista ya medida, porque colapsado no
+    /// ocupa y el solape no aparece. Comparar la fila declarada no bastaría: dos
+    /// hermanos en filas distintas de rejillas distintas también se pisarían.
+    /// Aquí se miran los rectángulos de verdad.
+    /// </para>
+    /// </summary>
+    private static void LosAvisosNoSePisan()
+    {
+        const string nombre = "los dos avisos de la revisión no se pisan";
+        try
+        {
+            var vista = new OrganizarView();
+            var revision = (Grid)vista.FindName("vistaRevision")!;
+            var aviso = (Border)vista.FindName("bannerAviso")!;
+            var aplicado = (Border)vista.FindName("bannerAplicado")!;
+
+            revision.Visibility = Visibility.Visible;
+            aviso.Visibility = Visibility.Visible;
+            aplicado.Visibility = Visibility.Visible;
+
+            vista.Measure(new Size(1280, 800));
+            vista.Arrange(new Rect(0, 0, 1280, 800));
+            vista.UpdateLayout();
+
+            var a = aviso.TransformToAncestor(vista).TransformBounds(new Rect(aviso.RenderSize));
+            var b = aplicado.TransformToAncestor(vista).TransformBounds(new Rect(aplicado.RenderSize));
+
+            if (a.Height == 0 || b.Height == 0)
+                throw new Exception("uno de los avisos no llegó a ocupar sitio; la prueba no medía nada");
+
+            a.Intersect(b);
+            if (a.Height > 0.5)
+                throw new Exception($"se solapan {a.Height:n0} px en vertical: se pintan uno encima del otro");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
     }
 
     /// <summary>
