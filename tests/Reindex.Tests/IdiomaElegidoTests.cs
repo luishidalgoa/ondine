@@ -162,11 +162,11 @@ public static class MedidaDelCapituloTests
             (Min(11.0), 1), (Min(22.4), 2), (Min(10.6), 1),
             (Min(21.8), 2), (Min(11.3), 1), (Min(22.0), 2),
         };
-        var unidad = MedidaDelCapitulo.Unidad(carpeta);
+        var unidad = MedidaDelCapitulo.Aprender(carpeta);
         Program.Assert(unidad is not null, "con bastantes ficheros se aprende cuánto dura una historia");
         Program.Assert(
-            unidad!.Value.TotalMinutes is > 10.4 and < 11.4,
-            $"y sale del orden de once minutos ({unidad.Value.TotalMinutes:F1})");
+            unidad!.Unidad.TotalMinutes is > 10.4 and < 11.4,
+            $"y sale del orden de once minutos ({unidad!.Unidad.TotalMinutes:F1})");
 
         // El caso del usuario: once minutos que alguien quiere dar por episodio de dos.
         Program.Assert(
@@ -201,7 +201,7 @@ public static class MedidaDelCapituloTests
             MedidaDelCapitulo.Cuadra(Min(11), historias: 2, null),
             "sin unidad aprendida tampoco");
         Program.Assert(
-            MedidaDelCapitulo.Unidad(new[] { (Min(11), 1), (Min(22), 2) }) is null,
+            MedidaDelCapitulo.Aprender(new[] { (Min(11), 1), (Min(22), 2) }) is null,
             "con cuatro ficheros no hay mediana de la que fiarse");
 
         // La mediana y no la media: un tráiler suelto no puede mover la vara.
@@ -211,7 +211,7 @@ public static class MedidaDelCapituloTests
             (Min(11.2), 1), (Min(10.8), 1), (Min(0.5), 1),
         };
         Program.Assert(
-            MedidaDelCapitulo.Unidad(conBasura)!.Value.TotalMinutes > 10.5,
+            MedidaDelCapitulo.Aprender(conBasura)!.Unidad.TotalMinutes > 10.5,
             "un fichero de medio minuto no arrastra la medida");
 
         // Y lo que hace falta para redactar el aviso.
@@ -228,7 +228,7 @@ public static class MedidaDelCapituloTests
             (Min(44), 1), (Min(46), 1), (Min(45), 1),
             (Min(43), 1), (Min(47), 1), (Min(45), 1),
         };
-        var unidadLarga = MedidaDelCapitulo.Unidad(larga);
+        var unidadLarga = MedidaDelCapitulo.Aprender(larga);
         Program.Assert(
             MedidaDelCapitulo.Cuadra(Min(45), historias: 1, unidadLarga),
             "en una serie de 45 min, 45 min es UNA historia");
