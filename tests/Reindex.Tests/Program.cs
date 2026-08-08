@@ -85,6 +85,7 @@ public static class Program
         Ondine.Reindex.Tests.TiendaGestionTests.Todas();
         Ondine.Reindex.Tests.CoherenciaDelLoteTests.Todas();
         Ondine.Reindex.Tests.NubeSincronizadaTests.Todas();
+        Ondine.Reindex.Tests.MoldeDeLaVaraTests.Todas();
         Ondine.Reindex.Tests.NombrePobreNoEsPromesaTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
