@@ -83,6 +83,8 @@ public static class Program
         Ondine.Reindex.Tests.ConfirmarEspecialesTests.Todas();
         Ondine.Reindex.Tests.CotejoDeDosEpisodiosTests.Todas();
         Ondine.Reindex.Tests.TiendaGestionTests.Todas();
+        Ondine.Reindex.Tests.CoherenciaDelLoteTests.Todas();
+        Ondine.Reindex.Tests.NombrePobreNoEsPromesaTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;

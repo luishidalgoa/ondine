@@ -88,6 +88,29 @@ public sealed class ReindexResolution
     public IReadOnlyList<ReindexCandidato> Alternativas { get; set; } = Array.Empty<ReindexCandidato>();
 
     /// <summary>
+    /// El resto del lote sostiene esta fila: hay más ficheros que, ordenados por su
+    /// número, apuntan a episodios distintos y en el mismo orden.
+    ///
+    /// <para>
+    /// Es la segunda señal cuando el catálogo no trae fechas. Ver
+    /// <see cref="CoherenciaDelLote"/>.
+    /// </para>
+    /// </summary>
+    public bool CorroboradoPorElLote { get; set; }
+
+    /// <summary>
+    /// El nombre solo nombra una de las historias del episodio, pero el fichero dura
+    /// lo que TODAS: el nombre es corto, no el contenido.
+    ///
+    /// <para>
+    /// Es una marca y no una comparación de textos, por lo mismo que las de abajo.
+    /// Sirve para poder contestar una vez por todas las que están igual, en vez de
+    /// repetir la misma respuesta una vez por fichero.
+    /// </para>
+    /// </summary>
+    public bool NombreCortoParaEpisodioEntero { get; set; }
+
+    /// <summary>
     /// El conflicto viene de que otro fichero reclama el mismo episodio, no de una duda de
     /// identificación. Es una marca y no una comparación de textos: depender de cómo está
     /// redactado el motivo se rompe en cuanto se reescribe el mensaje.
@@ -628,6 +651,13 @@ public static class ReindexEngine
             }
         }
 
+        // Primero se SUBE lo que el lote sostiene, y después corren los avisos.
+        // Así cada regla que baja la confianza -el nombre que promete menos de lo
+        // que trae, el reloj- se aplica encima y su veto manda. Al revés, subir al
+        // final borraría un aviso puesto a propósito: un fichero que declara una
+        // historia y dura dos no se vuelve seguro porque las cuentas de la carpeta
+        // cuadren.
+        SubirLasQueSostieneElLote(resoluciones);
         MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones, cat, overrides, indice, modo);
         MarcarLosQueNoCuadranConElReloj(resoluciones);
     }
@@ -699,6 +729,49 @@ public static class ReindexEngine
             r.Confianza = ReindexConfianza.Revisar;
             r.Motivo = string.Format(Textos.Instancia.ReindexMotivoRelojNoCuadra,
                 Reloj(dura), r.Episodio.Num, promete, Reloj(unidad.Value * promete));
+        }
+    }
+
+    /// <summary>
+    /// Sube a confianza alta lo que el resto del lote sostiene.
+    ///
+    /// <para>
+    /// La confianza alta pide DOS señales que coincidan. Con un catálogo sin
+    /// fechas solo hay el título, así que nada llegaba a alta por bien que casara
+    /// y cada fichero acababa pidiendo una decisión — medido en una carpeta real:
+    /// 53 de 59, con aciertos de 0,82 a 0,95. Ninguno era dudoso; faltaba con qué
+    /// confirmarlos.
+    /// </para>
+    /// <para>
+    /// La segunda señal es el propio lote: que veinte títulos coincidan por
+    /// casualidad <b>y además en orden</b> no pasa. Lo que encaja sube; lo que
+    /// rompe la serie se queda pidiendo mano, que es justo lo que hay que mirar.
+    /// </para>
+    /// <para>
+    /// Corre ANTES que todos los avisos, a propósito. Así el que promete menos de
+    /// lo que trae y el del reloj se aplican encima y pueden volver a bajarla: sus
+    /// vetos se conservan enteros. Ponerlo al final borraba uno de ellos, y lo
+    /// cazó una prueba que ya existía.
+    /// </para>
+    /// </summary>
+    private static void SubirLasQueSostieneElLote(List<ReindexResolution> resoluciones)
+    {
+        CoherenciaDelLote.Marcar(resoluciones);
+
+        foreach (var r in resoluciones)
+        {
+            if (!r.CorroboradoPorElLote) continue;
+
+            // Solo se sube lo que estaba a UN paso: una duda de identificación.
+            // Un conflicto -dos ficheros peleando, un fichero con dos episodios-
+            // no se resuelve porque las cuentas cuadren, y subirlo sería colar
+            // una decisión humana por la puerta de atrás.
+            if (r.Confianza != ReindexConfianza.Revisar) continue;
+            if (r.Estado is not (ReindexEstado.Limpio or ReindexEstado.Corregido)) continue;
+            if (r.EsDuplicado || r.TraeDosEpisodios) continue;
+
+            r.Confianza = ReindexConfianza.Alta;
+            r.Motivo = string.Format(Textos.Instancia.ReindexMotivoLoteLoSostiene, Pct(r.Score));
         }
     }
 
@@ -788,9 +861,20 @@ public static class ReindexEngine
             // lecturas, no hay nada claro que objetar y se deja pasar.
             if (conLaMejorSuelta <= conElConjunto + 0.08) continue;
 
+
             r.Confianza = ReindexConfianza.Revisar;
             r.Motivo = string.Format(Textos.Instancia.ReindexMotivoNombreDeMas,
                 r.Episodio.Num, historias.Count);
+
+            // ¿Y el reloj qué dice? Si en el fichero caben TODAS las historias, lo
+            // corto es el nombre y no el contenido. El aviso se queda -renombrarlo
+            // entero afirma algo que el nombre no decía- pero se marca, porque
+            // entonces la respuesta es la misma para todos los que estén igual y se
+            // puede contestar una vez. Sin duración no se marca: la sospecha del
+            // nombre basta para preguntar, no para agrupar.
+            if (unidad is { } vara && r.Archivo.Duracion is { } dur &&
+                MedidaDelCapitulo.Cuadra(dur, historias.Count, vara))
+                r.NombreCortoParaEpisodioEntero = true;
 
             // ¿Y CUÁL de las historias es? Cuando se sabe, no hay que preguntarlo: se
             // propone. Avisar y dejar que la persona la elija a mano es pedirle que repita
