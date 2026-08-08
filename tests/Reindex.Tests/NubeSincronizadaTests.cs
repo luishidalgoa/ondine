@@ -27,6 +27,22 @@ public static class NubeSincronizadaTests
     {
         Program.Seccion("De qué nube es este fichero");
 
+        // Rutas de Windows comparadas con las reglas de Windows: «C:\…» y la barra
+        // invertida como separador. En Linux —que es donde corre el arnés en la
+        // integración continua— «C:\Nube\Otra\x.mkv» no es una ruta absoluta sino
+        // UN NOMBRE de fichero con barras dentro, así que la comparación no falla
+        // por estar mal, falla por no significar nada allí.
+        //
+        // Se salta en vez de traducirse a rutas neutras porque lo que se prueba es
+        // precisamente el trato de las rutas de Windows: la API de nube que hay
+        // detrás no existe en ningún otro sitio. Y se dice en voz alta, que un
+        // salto silencioso se lee como cobertura.
+        if (!OperatingSystem.IsWindows())
+        {
+            Console.WriteLine("  · saltado: son rutas de Windows y esto no es Windows");
+            return;
+        }
+
         var raices = new[]
         {
             S("OneDrive - Personal", @"C:\Users\luis\OneDrive"),
