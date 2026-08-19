@@ -32,6 +32,26 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Ondine no sabía leer los nombres que ella misma escribe.** Cuando un fichero junta historias de
+  episodios distintos, la app lo nombra `[1262+1264]`. Al releerlo solo veía el **1262**: el
+  corchete con «+» no casaba con su propia expresión, y además se borraba antes de mirarlo. La
+  consecuencia se veía en el cotejo de una lista y en «qué falta»: decía **«te falta Autobús
+  intergaláctico»** de un episodio que estaba dentro del fichero que tenía delante, con el título
+  escrito en el nombre. Ahora los episodios añadidos se leen y **cuentan como cubiertos**. El
+  cálculo vive en un solo sitio, para que el informe y el cotejo no puedan volver a responder cosas
+  distintas.
+
+
+- **Al elegir «Películas» seguía viéndose media pantalla de series.** Se ocultaban el desplegable
+  de serie y la plantilla, pero quedaban a la vista el panel de catálogos, «Partir en segmentos» y
+  «Ordenar por temporadas» — cosas que a una película no le aplican, porque no hay catálogo del que
+  sacarla ni temporadas que ordenar. Ahora las películas tienen **su propia pantalla**: la carpeta,
+  cuántas hay, y una sola acción. Una pantalla llena de huecos enseña a desconfiar de lo que queda,
+  y esconder trozos sueltos no es lo mismo que cambiar de flujo.
+
+
 ## [1.9.1] - 2026-08-19
 
 ### Añadido

@@ -279,8 +279,12 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                  <!-- Envuelve en vez de recortar: aquí acaban los mensajes de
+                       error del complemento, y un error a medias no sirve de
+                       nada. «Este complemento solo lee la lista y la co…» era
+                       exactamente lo que se leía. -->
                   <TextBlock x:Name="lblEstado" VerticalAlignment="Center" FontSize="11.5"
-                             TextTrimming="CharacterEllipsis"
+                             TextWrapping="Wrap" MaxWidth="420"
                              Foreground="{StaticResource Neutral600}"/>
                 </StackPanel>
 

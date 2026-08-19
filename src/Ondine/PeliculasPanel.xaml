@@ -1,0 +1,73 @@
+<UserControl x:Class="Ondine.PeliculasPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ondine"
+             xmlns:i="clr-namespace:Ondine.Localizacion"
+             FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}">
+
+  <!-- El flujo de películas es OTRO, no el de series con piezas escondidas.
+       Aquí no hay catálogo, ni plantilla, ni temporadas, ni segmentos: solo la
+       carpeta y una acción. Compartir la pantalla de series obligaba a ocultar
+       media interfaz, y una pantalla llena de huecos enseña a desconfiar. -->
+  <Grid Margin="16,0,16,0">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0" Background="{StaticResource SurfaceGlass}" CornerRadius="8" Padding="14,12">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{i:T OrganizarFicheros}" FontSize="11" FontWeight="Medium"
+                   Foreground="{StaticResource Neutral500}" Margin="0,0,0,12"/>
+
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    MaxWidth="520">
+          <TextBlock Text="{i:T PeliculasCarpeta}" FontSize="11" FontWeight="Medium"
+                     Foreground="{StaticResource Neutral500}" Margin="0,0,0,6"/>
+
+          <Grid Margin="0,0,0,14">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <local:CampoTexto x:Name="txtCarpeta" Icono="M1.5 3.5h4l1.5 2h7.5v7h-13z"
+                              HorizontalAlignment="Stretch"/>
+            <Button x:Name="btnCarpeta" Grid.Column="1" Style="{StaticResource BtnSecondary}"
+                    Width="34" Height="34" Padding="0" Margin="6,0,0,0"
+                    ToolTip="{i:T OrganizarCarpetaAyuda}">
+              <Viewbox Width="15" Height="15">
+                <Path Data="M1.5 3.5h4l1.5 2h7.5v7h-13z" Stroke="{StaticResource Text}"
+                      StrokeThickness="1.3" StrokeLineJoin="Round"/>
+              </Viewbox>
+            </Button>
+          </Grid>
+
+          <TextBlock x:Name="lblFicheros" FontSize="13.5" TextWrapping="Wrap"
+                     TextAlignment="Center" Foreground="{StaticResource Text}"/>
+
+          <TextBlock Text="{i:T PeliculasNadaSinAprobar}" FontSize="11.5" TextWrapping="Wrap"
+                     TextAlignment="Center" Margin="0,10,0,0"
+                     Foreground="{StaticResource Neutral500}"/>
+
+          <!-- Lo que esta pantalla NO sabe hacer, dicho donde se decide usarla y
+               no después de haberla usado. -->
+          <Border Margin="0,14,0,0" Padding="10,7" CornerRadius="8"
+                  Background="{StaticResource OrgWarnBg}"
+                  BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
+            <TextBlock Text="{i:T PeliculasSinBaseDeDatos}" FontSize="11.5" TextWrapping="Wrap"
+                       Foreground="{StaticResource OrgWarn}"/>
+          </Border>
+
+          <Button x:Name="btnOrdenar" Style="{StaticResource BtnPrimary}" Margin="0,18,0,0"
+                  Padding="16,8" HorizontalAlignment="Center" IsEnabled="False"
+                  Content="{i:T PeliculasAbrir}"
+                  ToolTip="{i:T PeliculasAbrirAyuda}"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <TextBlock x:Name="lblPie" Grid.Row="1" Margin="0,10,0,8" FontSize="11"
+               Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>
+  </Grid>
+</UserControl>

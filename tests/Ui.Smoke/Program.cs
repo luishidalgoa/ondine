@@ -75,6 +75,7 @@ public static class Program
         Probar("CatalogoWindow", () => new CatalogoWindow(cat, loQueHay: res));
         Probar("FaltantesWindow", () => new FaltantesWindow(cat, res));
         Probar("ReordenarWindow", () => new ReordenarWindow(res, Path.Combine("C:", "tv"), new Settings()));
+        Probar("PeliculasPanel", () => new PeliculasPanel());
         Probar("PeliculasWindow", () => new PeliculasWindow(
             new[]
             {

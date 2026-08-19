@@ -563,7 +563,15 @@ public partial class ComplementosPanel : UserControl
     private void RefrescarPie()
     {
         int marcados = _filas.Count(f => f.Marcado);
-        btnTraer.IsEnabled = marcados > 0;
+
+        // El botón solo existe si el complemento DECLARA que baja ficheros. Uno
+        // que solo lee una fuente y la coteja no puede ofrecer una descarga: el
+        // de YouTube dice de sí mismo «no descarga: lee», y aun así se le pintaba
+        // el botón. Pulsarlo devolvía un error que además salía recortado, así
+        // que por fuera parecía que la app no hacía nada.
+        var baja = Elegido?.PuedeDescargar == true;
+        btnTraer.Visibility = baja ? Visibility.Visible : Visibility.Collapsed;
+        btnTraer.IsEnabled = baja && marcados > 0;
         lblEstado.Text = _filas.Count == 0
             ? ""
             : string.Format(Textos.Instancia.ComplementosResumen, marcados, _filas.Count,

@@ -126,6 +126,10 @@ public partial class OrganizarView : UserControl
         // se entienda qué produce cada marca.
         txtPlantilla.TextChanged += (_, _) => RefrescarVistaPrevia();
 
+        vistaPeliculas.PidenOtraCarpeta += () => btnCarpeta.RaiseEvent(
+            new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        vistaPeliculas.MovioAlgo += RevisarCarpeta;
+
         cboTipo.SelectionChanged += (_, _) =>
         {
             // Al cargar la carpeta el desplegable se coloca solo; eso no es una
@@ -587,34 +591,32 @@ public partial class OrganizarView : UserControl
     }
 
     /// <summary>
-    /// Enseña u oculta lo que solo tiene sentido en una serie. No se deshabilita:
-    /// un catálogo en gris al lado de una carpeta de películas sigue invitando a
-    /// preguntarse qué catálogo hace falta, y la respuesta es ninguno.
+    /// Cambia de vista según el tipo de biblioteca. No se esconden trozos sueltos:
+    /// se cambia de pantalla.
+    ///
+    /// <para>
+    /// La primera versión ocultaba el desplegable de serie y la plantilla, y
+    /// dejaba a la vista el panel de catálogos, «Partir en segmentos» y «Ordenar
+    /// por temporadas» — cosas que a una película no le aplican. Una pantalla
+    /// llena de huecos enseña a desconfiar de lo que queda.
+    /// </para>
     /// </summary>
     private void AplicarTipo()
     {
         var esSerie = TipoActual() == TipoDeBiblioteca.Serie;
-        panelSerie.Visibility = esSerie ? Visibility.Visible : Visibility.Collapsed;
-        panelPlantilla.Visibility = esSerie ? Visibility.Visible : Visibility.Collapsed;
-    }
+        var deSerie = esSerie ? Visibility.Visible : Visibility.Collapsed;
+        var dePelis = esSerie ? Visibility.Collapsed : Visibility.Visible;
 
-    /// <summary>
-    /// Abre la ventana de películas con lo que hay en la carpeta. Es una
-    /// simulación: no toca nada hasta que se acepta dentro.
-    /// </summary>
-    private void AbrirPeliculas(string carpeta)
-    {
-        if (_ficheros.Length == 0)
-        {
-            Aviso(Textos.Instancia.OrganizarSinVideos);
-            return;
-        }
+        panelSerie.Visibility = deSerie;
+        panelPlantilla.Visibility = deSerie;
+        vistaInicio.Visibility = esSerie && vistaRevision.Visibility != Visibility.Visible
+            ? Visibility.Visible : Visibility.Collapsed;
+        if (!esSerie) vistaRevision.Visibility = Visibility.Collapsed;
+        filaChips.Visibility = Visibility.Collapsed;
+        filaAcciones.Visibility = deSerie;
 
-        var v = new PeliculasWindow(_ficheros, carpeta) { Owner = Window.GetWindow(this) };
-        v.ShowDialog();
-
-        // Si movió algo, las rutas de esta pantalla han dejado de existir.
-        if (v.MovioAlgo) RevisarCarpeta();
+        vistaPeliculas.Visibility = dePelis;
+        if (!esSerie) vistaPeliculas.Poner(txtCarpeta.Text?.Trim() ?? "", _ficheros);
     }
 
     private void RevisarCarpeta()
@@ -625,6 +627,8 @@ public partial class OrganizarView : UserControl
 
         try { _ficheros = LibraryScan.Escanear(carpeta, Engine.VideoExtensions); }
         catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSeLeyoCarpeta, ex.Message)); }
+
+        if (TipoActual() == TipoDeBiblioteca.Pelicula) vistaPeliculas.Poner(carpeta, _ficheros);
 
         int carpetas = _ficheros.Select(f => LibraryScan.Grupo(carpeta, f)).Distinct().Count();
 
@@ -837,16 +841,6 @@ public partial class OrganizarView : UserControl
         // compararse. Se dice y se para, en vez de no hacer nada en silencio —que
         // es lo que pasaba antes, porque abajo hay un guard que pedía catálogo y
         // una carpeta de películas nunca lo tiene.
-        // Una carpeta de películas no se identifica con la cascada de episodios
-        // —no hay número, ni temporada, ni catálogo—, así que va por su propia
-        // ventana: la misma forma que el reordenado de temporadas, que propone
-        // entero y espera.
-        if (TipoActual() == TipoDeBiblioteca.Pelicula)
-        {
-            AbrirPeliculas(carpetaActual);
-            return;
-        }
-
         if (_catalogoCargado == null || _ficheros.Length == 0) return;
 
         // Los que el catálogo marca como «déjalo como está» NO se filtran: siguen en la tabla,

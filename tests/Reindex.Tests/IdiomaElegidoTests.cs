@@ -283,6 +283,17 @@ public static class ComplementoTests
             Program.Assert(bueno.Puede("importar"), "declara que sabe importar");
             Program.Assert(!bueno.Puede("comprimir"), "y solo lo que declara");
 
+            // Importar y descargar son capacidades DISTINTAS. El complemento de
+            // YouTube declara «importar» —lee una lista y la coteja— y no
+            // descarga nada: lo dice su propia descripción. La app le ofrecía el
+            // botón «Descargar» igualmente, y al pulsarlo no pasaba nada visible.
+            Program.Assert(!bueno.PuedeDescargar,
+                "declarar «importar» NO autoriza a ofrecer la descarga: son cosas distintas");
+
+            var bajador = new Complemento { Capacidades = { "importar", "descargar" } };
+            Program.Assert(bajador.PuedeDescargar,
+                "un complemento que sí baja ficheros lo declara, y entonces sí se le ofrece");
+
             // Lo que se rechaza, que es lo que importa.
             var fuera = Complemento.Leer(Manifiesto("""
             {"nombre":"Malo","ejecutable":"../../Windows/System32/cmd.exe","capacidades":["importar"],"contrato":1}
