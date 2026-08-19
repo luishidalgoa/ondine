@@ -28,6 +28,16 @@ public static class RiesgoDelReordenadoTests
             "una mudanza dentro del mismo disco y sin nubes no avisa de nada");
 
         // ── Cruzar volumen ────────────────────────────────────────────────────
+        // Solo en Windows: «volumen» aquí es la letra de unidad, y fuera de
+        // Windows «C:lgo» no tiene raíz que comparar —hay una sola, «/»—. Se
+        // salta en voz alta en vez de inventar un caso neutro: un salto
+        // silencioso se lee como cobertura.
+        if (!OperatingSystem.IsWindows())
+        {
+            Console.WriteLine("  · saltado: cruzar volumen son letras de unidad y esto no es Windows");
+        }
+        else
+        {
         // No es un detalle: dentro del mismo volumen mover es reetiquetar, y entre
         // volúmenes es copiar entero y borrar. Con 200 capítulos, la diferencia
         // entre un segundo y media hora.
@@ -43,6 +53,7 @@ public static class RiesgoDelReordenadoTests
             "mover a otro volumen se avisa");
         Program.Assert(cruza[0].Cuantos == 2,
             "y se dice cuántos: los dos que cruzan, no el que se queda en su disco");
+        }
 
         // ── Lo que no se mueve, no cuenta ─────────────────────────────────────
         // Un aviso que suma los que se quedan quietos asusta por trabajo que
