@@ -216,6 +216,22 @@ public sealed partial class Textos
         "Choose the folder whose files you want to organise",
         "Elegir la carpeta cuyos ficheros quieres organizar");
 
+    // De qué es la carpeta. Va lo primero de la fila porque condiciona todo lo
+    // demás: una película no tiene catálogo, ni temporada, ni número.
+    public string OrganizarTipoBiblioteca => Idioma.Elegir("Library", "Biblioteca");
+    public string OrganizarTipoSerie => Idioma.Elegir("TV series", "Serie");
+    public string OrganizarTipoPelicula => Idioma.Elegir("Films", "Películas");
+
+    public string OrganizarTipoBibliotecaAyuda => Idioma.Elegir(
+        "What this folder holds. A series is identified against a catalogue, with seasons and episode numbers; a film has none of that — its name is built from the title and the year read from the file itself. Remembered per folder.",
+        "Qué hay en esta carpeta. Una serie se identifica contra un catálogo, con temporadas y números de episodio; una película no tiene nada de eso — su nombre se compone con el título y el año leídos del propio fichero. Se recuerda por carpeta.");
+
+    // Se dice y se para. Antes esto no hacía nada en silencio, porque el análisis
+    // pedía catálogo y una carpeta de películas nunca lo tiene.
+    public string OrganizarPeliculasTodavia => Idioma.Elegir(
+        "This folder is set to Films. Ondine can already read the title and the year from each filename, but identifying films against a public database is not in yet — that is what will let it tell one «Blade Runner» from another. For now it only renames series.",
+        "Esta carpeta está marcada como Películas. Ondine ya sabe leer el título y el año de cada nombre de fichero, pero identificarlas contra una base de datos pública todavía no está — es lo que permitirá distinguir un «Blade Runner» de otro. De momento solo renombra series.");
+
     public string OrganizarVinculosAyuda => Idioma.Elegir(
         "Folders linked to this catalogue: pick one, link the current one or remove the link",
         "Carpetas vinculadas a este catálogo: elegir una, vincular la actual o quitarla");

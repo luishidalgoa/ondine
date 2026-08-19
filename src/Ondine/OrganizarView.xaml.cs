@@ -66,6 +66,9 @@ public partial class OrganizarView : UserControl
     private string[] _ficheros = Array.Empty<string>();
     private bool _cargando;
 
+    /// <summary>El desplegable del tipo se esta colocando solo: no es una elección.</summary>
+    private bool _cargandoTipo;
+
     /// <summary>Se avisa al anfitrión para que lo escriba en el registro compartido.</summary>
     public event Action<string>? Log;
 
@@ -123,6 +126,15 @@ public partial class OrganizarView : UserControl
         // se entienda qué produce cada marca.
         txtPlantilla.TextChanged += (_, _) => RefrescarVistaPrevia();
 
+        cboTipo.SelectionChanged += (_, _) =>
+        {
+            // Al cargar la carpeta el desplegable se coloca solo; eso no es una
+            // eleccion del usuario y no debe reescribir lo guardado.
+            if (_cargandoTipo) return;
+            var carpeta = txtCarpeta.Text?.Trim() ?? "";
+            if (carpeta.Length > 0) ReindexStore.GuardarTipoDeCarpeta(carpeta, TipoActual());
+            AplicarTipo();
+        };
         cboSerie.SelectionChanged += (_, _) => ElegirCatalogo(cboSerie.SelectedItem as CatalogoGuardado);
         cboModo.SelectionChanged += (_, _) =>
         {
@@ -557,9 +569,39 @@ public partial class OrganizarView : UserControl
         RevisarCarpeta();
     }
 
+    /// <summary>El tipo elegido ahora mismo en el desplegable.</summary>
+    private TipoDeBiblioteca TipoActual() =>
+        cboTipo.SelectedIndex == 1 ? TipoDeBiblioteca.Pelicula : TipoDeBiblioteca.Serie;
+
+    /// <summary>
+    /// Trae de vuelta lo que se eligió para esta carpeta. Sin esto habría que
+    /// decirle en cada análisis que la carpeta de pelis es de pelis, que es la
+    /// clase de pregunta repetida que la app ya se ahorra con el catálogo.
+    /// </summary>
+    private void CargarTipoDeCarpeta(string carpeta)
+    {
+        _cargandoTipo = true;
+        cboTipo.SelectedIndex = ReindexStore.TipoDeCarpeta(carpeta) == TipoDeBiblioteca.Pelicula ? 1 : 0;
+        _cargandoTipo = false;
+        AplicarTipo();
+    }
+
+    /// <summary>
+    /// Enseña u oculta lo que solo tiene sentido en una serie. No se deshabilita:
+    /// un catálogo en gris al lado de una carpeta de películas sigue invitando a
+    /// preguntarse qué catálogo hace falta, y la respuesta es ninguno.
+    /// </summary>
+    private void AplicarTipo()
+    {
+        var esSerie = TipoActual() == TipoDeBiblioteca.Serie;
+        panelSerie.Visibility = esSerie ? Visibility.Visible : Visibility.Collapsed;
+        panelPlantilla.Visibility = esSerie ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void RevisarCarpeta()
     {
         var carpeta = txtCarpeta.Text?.Trim() ?? "";
+        CargarTipoDeCarpeta(carpeta);
         _ficheros = Array.Empty<string>();
 
         try { _ficheros = LibraryScan.Escanear(carpeta, Engine.VideoExtensions); }
@@ -770,6 +812,17 @@ public partial class OrganizarView : UserControl
         // por carpeta, y hecho en el hilo de interfaz congelaba el clic de «Analizar».
         try { _ficheros = await Task.Run(() => LibraryScan.Escanear(carpetaActual, Engine.VideoExtensions)); }
         catch { /* la carpeta puede haber desaparecido; el guard de abajo lo dice */ }
+
+        // Una carpeta de películas no se identifica con la cascada de episodios:
+        // no hay número, ni temporada, ni catálogo de hermanas con las que
+        // compararse. Se dice y se para, en vez de no hacer nada en silencio —que
+        // es lo que pasaba antes, porque abajo hay un guard que pedía catálogo y
+        // una carpeta de películas nunca lo tiene.
+        if (TipoActual() == TipoDeBiblioteca.Pelicula)
+        {
+            Aviso(Textos.Instancia.OrganizarPeliculasTodavia);
+            return;
+        }
 
         if (_catalogoCargado == null || _ficheros.Length == 0) return;
 

@@ -34,6 +34,21 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Organizar ya sabe que una carpeta puede ser de películas.** Hasta ahora todo asumía episodios:
+  la identificación entera gira alrededor de «número + temporada + título del catálogo», y a una
+  película no le aplica nada de eso. Ahora se elige **qué hay en la carpeta** —serie o películas—,
+  se recuerda por carpeta, y lo que no aplica desaparece en vez de quedarse en gris: sin catálogo
+  y sin plantilla de episodios, porque la respuesta a «qué catálogo pongo» es **ninguno**. Para las
+  películas el nombre sale del propio fichero —título y año— y el destino es
+  `Título (Año)/Título (Año).ext`, que es lo que esperan Plex y Jellyfin; la carpeta propia es lo
+  que les deja meter dentro carátula y subtítulos sin confundirlos con los de la película de al
+  lado. Leer el año tiene más trampa de la que parece, porque **hay títulos que son un año**: manda
+  el que va entre paréntesis, uno al principio del nombre es título —«1917», «2001 A Space
+  Odyssey»— y uno que aún no ha pasado tampoco es un estreno, que es lo único que salva a «Blade
+  Runner 2049» cuando viene sin paréntesis. **Identificarlas contra una base de datos pública
+  todavía no está**: por ahora, marcar la carpeta como de películas y darle a analizar lo dice y se
+  para, en vez de no hacer nada en silencio.
+
 - **Ordenar por temporadas avisa de lo que va a costar antes de que pulses.** Un movimiento se
   ve siempre igual —una flecha de una carpeta a otra— y por debajo puede ser gratis o puede ser
   una tarde. Dentro del mismo disco mover es reetiquetar; **a otro disco es copiar entero y

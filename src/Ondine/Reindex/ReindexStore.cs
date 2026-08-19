@@ -392,6 +392,43 @@ public static class ReindexStore
         return true;
     }
 
+    // ── de qué es cada carpeta: serie o películas ──
+    // Va por CARPETA y no por catálogo, que es donde se guarda el enganche de las
+    // series: una carpeta de películas no tiene catálogo del que colgar nada.
+    // Preguntarlo en cada análisis sería la clase de pregunta repetida que la app
+    // ya se ahorra con el catálogo y con el modo de prioridad.
+
+    public static void GuardarTipoDeCarpeta(string carpeta, TipoDeBiblioteca tipo)
+    {
+        if (string.IsNullOrWhiteSpace(carpeta)) return;
+        var mapa = LeerMapa(RutaPreferencias);
+        mapa[ClaveTipo(carpeta)] = tipo == TipoDeBiblioteca.Pelicula ? "pelicula" : "serie";
+        EscribirMapa(RutaPreferencias, mapa);
+    }
+
+    /// <summary>
+    /// De qué es esta carpeta. Por defecto, <b>serie</b>: es lo que la app ha
+    /// hecho siempre, y quien nunca haya tocado el ajuste no debe notar el cambio.
+    /// </summary>
+    public static TipoDeBiblioteca TipoDeCarpeta(string carpeta)
+    {
+        if (string.IsNullOrWhiteSpace(carpeta)) return TipoDeBiblioteca.Serie;
+        var mapa = LeerMapa(RutaPreferencias);
+        return mapa.TryGetValue(ClaveTipo(carpeta), out var v) && v == "pelicula"
+            ? TipoDeBiblioteca.Pelicula
+            : TipoDeBiblioteca.Serie;
+    }
+
+    /// <summary>
+    /// La clave, en minúsculas y sin la barra final: Windows no distingue
+    /// mayúsculas en las rutas, y «D:\Pelis» y «d:\pelis\» son la misma carpeta.
+    /// Guardarlas como distintas haría que el ajuste se perdiera según cómo
+    /// hubieras llegado a ella.
+    /// </summary>
+    private static string ClaveTipo(string carpeta)
+        => "tipo:" + carpeta.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                            .ToLowerInvariant();
+
     // ── mapas de texto sueltos (procedencia, preferencias) ──
     // Ficheros minusculos y de forma libre; un fallo de lectura se traga y se sigue: son
     // comodidades, no datos que valga la pena defender con un error en pantalla.
