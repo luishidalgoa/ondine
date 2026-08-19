@@ -59,7 +59,13 @@ puede escribir en lo que sea. Lo que se paga: hay que hablar por texto.
 |---|---|
 | `ejecutable` | **Relativo a su carpeta.** Una ruta absoluta deja de funcionar en cuanto la carpeta se copia a otro equipo, que es lo que se hace para compartirla. |
 | `argumentos` | Opcional. Van siempre delante del subcomando. |
-| `capacidades` | Qué sabe hacer. Hoy: `importar`. Se **declara** en vez de deducirse llamándolo: abrir el menú no puede lanzar un proceso por cada complemento instalado. |
+| `capacidades` | Qué sabe hacer. Hoy: `importar` (leer una fuente y cotejarla con el catálogo) y `descargar` (traer ficheros al disco). Se **declara** en vez de deducirse llamándolo: abrir el menú no puede lanzar un proceso por cada complemento instalado. |
+
+> **`importar` y `descargar` son cosas distintas, y hay que declararlas por separado.**
+> Un complemento puede leer una lista y cotejarla sin bajar nada — el de YouTube hace
+> exactamente eso, y lo dice en su descripción. Cuando la app deducía una de la otra, le
+> pintaba un botón «Descargar» que ese complemento rechaza por diseño: al pulsarlo no
+> pasaba nada que se viera. **Sin `descargar` declarado, el botón no existe.**
 | `ambito` | Dónde aplica. Vacío o `["global"]` = toda la aplicación. Si no, los modos: `organizar`, `comprimir`, `recortes`. Se pueden declarar varios. |
 | `integracion` | `propia` (lo normal) o `nativa`. |
 | `contrato` | La versión del contrato. Hoy `1`. |

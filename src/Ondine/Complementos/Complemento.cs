@@ -126,6 +126,20 @@ public sealed class Complemento
     public const string CapacidadImportar = "importar";
 
     /// <summary>
+    /// Traer ficheros al disco. Es una capacidad <b>aparte</b> de
+    /// <see cref="CapacidadImportar"/>, y a propósito.
+    ///
+    /// <para>
+    /// Un complemento puede leer una fuente y cotejarla con el catálogo sin bajar
+    /// nada —eso es importar—, y eso no autoriza a ofrecerle al usuario un botón
+    /// de descarga. Cuando se dedujo una cosa de la otra, la app enseñaba
+    /// «Descargar» en un complemento que dice de sí mismo «no descarga: lee», y
+    /// al pulsarlo no pasaba nada que se viera.
+    /// </para>
+    /// </summary>
+    public const string CapacidadDescargar = "descargar";
+
+    /// <summary>
     /// Qué le pasa a este complemento, si es que le pasa algo. <c>null</c> si
     /// está en condiciones de usarse.
     ///
@@ -179,6 +193,9 @@ public sealed class Complemento
 
     public bool Puede(string capacidad) =>
         Capacidades.Contains(capacidad, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Si se le puede ofrecer traer ficheros. Hay que declararlo.</summary>
+    public bool PuedeDescargar => Puede(CapacidadDescargar);
 
     /// <summary>Vale en toda la aplicación, no solo en un modo.</summary>
     public bool EsGlobal =>
