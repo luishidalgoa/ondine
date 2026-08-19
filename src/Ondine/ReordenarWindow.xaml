@@ -41,6 +41,19 @@
 
         <TextBlock x:Name="lblResumen" FontSize="13" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
 
+        <!-- Lo que va a costar el movimiento. Va aquí arriba y no en el pie
+             porque es lo que puede hacerte cerrar la ventana sin mover nada, y
+             una advertencia que se lee despues de pulsar no es una advertencia.
+             Colapsado cuando no hay nada que avisar: un hueco vacio permanente
+             ensena a no mirar ahi. -->
+        <Border x:Name="cajaRiesgo" Margin="0,8,0,0" Padding="10,7" CornerRadius="8"
+                Visibility="Collapsed"
+                Background="{StaticResource OrgWarnBg}"
+                BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
+          <TextBlock x:Name="lblRiesgo" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{StaticResource OrgWarn}"/>
+        </Border>
+
         <CheckBox x:Name="chkSoloLosQueVan" Margin="0,8,0,0" FontSize="12" IsChecked="True"
                   Foreground="{StaticResource Neutral400}"
                   Content="{i:T ReordenarVerSoloLosQueVan}"/>
