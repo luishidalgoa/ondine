@@ -311,6 +311,14 @@ public static partial class SignalExtractor
         return despues.Length > 0 ? despues : resto.Remove(indice, largo);
     }
 
+    /// <summary>
+    /// Lo mismo que se le hace al título de un episodio: fuera la morralla de
+    /// descarga y las etiquetas de fuente. Se abre en público porque las
+    /// películas necesitan exactamente esta limpieza, y tener dos listas de
+    /// marcadores garantiza que un día una sepa de un formato que la otra no.
+    /// </summary>
+    public static string SinMorralla(string s) => LimpiarTitulo(s);
+
     private static string LimpiarTitulo(string s)
     {
         // La morralla de descarga («…_AMZN_WEB_DLtrialeng…», «…x265_1080p») se corta desde su

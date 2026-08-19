@@ -13,6 +13,10 @@ public static class Program
     public static int Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+        // ARNÉS TEMPORAL: informe sobre una biblioteca de verdad. Solo lee.
+        if (args.Length >= 2 && args[0] == "--informe") { InformeBiblioteca.Correr(args[1]); return 0; }
+
         Console.WriteLine("── Motor de reindexado ─────────────────────────────\n");
 
         Normalizacion();
@@ -72,6 +76,9 @@ public static class Program
         Ondine.Reindex.Tests.DestinoDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.PlanDeReordenadoTests.Todas();
         Ondine.Reindex.Tests.RiesgoDelReordenadoTests.Todas();
+        Ondine.Reindex.Tests.TituloDePeliculaTests.Todas();
+        Ondine.Reindex.Tests.BibliotecaDePeliculasTests.Todas();
+        Ondine.Reindex.Tests.PlanDePeliculasTests.Todas();
         Ondine.Reindex.Tests.MudanzaDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.TenenciaTests.Todas();
         Ondine.Reindex.Tests.ModeloConectadoTests.Todas();

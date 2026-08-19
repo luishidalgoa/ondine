@@ -23,12 +23,26 @@
     <Grid Grid.Row="0" Margin="16,4,16,10">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="14"/>
         <ColumnDefinition Width="*" MinWidth="120"/>
       </Grid.ColumnDefinitions>
 
+      <!-- De qué es esta carpeta. Va lo PRIMERO y no como una casilla más porque
+           condiciona todo lo que hay a su derecha: una película no tiene catálogo,
+           ni temporada, ni número, así que el resto de la fila sobra cuando se
+           elige «Películas». Se recuerda por carpeta. -->
+      <StackPanel Grid.Column="0" Margin="0,0,14,0">
+        <TextBlock Text="{i:T OrganizarTipoBiblioteca}" Style="{StaticResource OrgLabel}"/>
+        <ComboBox x:Name="cboTipo" Height="34" MinWidth="128" VerticalContentAlignment="Center"
+                  ToolTip="{i:T OrganizarTipoBibliotecaAyuda}">
+          <ComboBoxItem Content="{i:T OrganizarTipoSerie}" IsSelected="True"/>
+          <ComboBoxItem Content="{i:T OrganizarTipoPelicula}"/>
+        </ComboBox>
+      </StackPanel>
+
       <!-- Serie (catálogo de referencia) -->
-      <StackPanel Grid.Column="0">
+      <StackPanel x:Name="panelSerie" Grid.Column="1">
         <TextBlock Text="{i:T OrganizarSerie}" Style="{StaticResource OrgLabel}"/>
         <StackPanel Orientation="Horizontal">
           <!-- ItemTemplate explícito y no DisplayMemberPath: la plantilla propia del tema
@@ -63,7 +77,7 @@
       </StackPanel>
 
       <!-- Plantilla de biblioteca -->
-      <StackPanel Grid.Column="2">
+      <StackPanel x:Name="panelPlantilla" Grid.Column="3">
         <TextBlock Text="{i:T OrganizarPlantilla}" Style="{StaticResource OrgLabel}"/>
         <Grid>
           <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
