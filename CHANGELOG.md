@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-08-20
+
 ### Corregido
 
 - **El complemento cotejaba contra el primer catálogo que hubieras cargado, no contra el de ahora.**
