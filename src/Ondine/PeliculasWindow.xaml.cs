@@ -47,6 +47,7 @@ public sealed class PeliculaVista
         PlanDePeliculas.Porque.EnColeccion => Textos.Instancia.PeliculasPorqueEnColeccion,
         PlanDePeliculas.Porque.YaEsta => Textos.Instancia.PeliculasPorqueYaEsta,
         PlanDePeliculas.Porque.SinTitulo => Textos.Instancia.PeliculasPorqueSinTitulo,
+        PlanDePeliculas.Porque.EsExtra => Textos.Instancia.PeliculasPorqueEsExtra,
         _ => Textos.Instancia.PeliculasPorqueOcupado,
     };
 
@@ -55,6 +56,7 @@ public sealed class PeliculaVista
         PlanDePeliculas.Porque.Va => "OrgOk",
         PlanDePeliculas.Porque.EnColeccion => "OrgOk",
         PlanDePeliculas.Porque.YaEsta => "Neutral500",
+        PlanDePeliculas.Porque.EsExtra => "Neutral500",
         PlanDePeliculas.Porque.Ocupado => "OrgDanger",
         _ => "OrgWarn",
     });
@@ -117,8 +119,12 @@ public partial class PeliculasWindow : Window
 
         PintarRiesgos();
 
+        // «Solo las que tienen trabajo» esconde lo que ya está bien y los extras,
+        // NO los problemas. Un fichero marcado «ocupado» o «sin título» es
+        // exactamente lo que hay que mirar, y esconderlo por defecto deja fuera
+        // de la vista lo único que puede salir mal.
         var visibles = chkSoloLosQueVan.IsChecked == true
-            ? _plan.Where(p => p.Motivo is PlanDePeliculas.Porque.Va or PlanDePeliculas.Porque.EnColeccion)
+            ? _plan.Where(p => p.Motivo is not (PlanDePeliculas.Porque.YaEsta or PlanDePeliculas.Porque.EsExtra))
             : _plan;
         lista.ItemsSource = visibles.Select(p => new PeliculaVista { Paso = p, Raiz = _raiz }).ToList();
 

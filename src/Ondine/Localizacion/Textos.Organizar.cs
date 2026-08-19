@@ -237,11 +237,12 @@ public sealed partial class Textos
     public string PeliculasPorqueEnColeccion => Idioma.Elegir("renamed in place", "se renombra donde está");
     public string PeliculasPorqueYaEsta => Idioma.Elegir("already right", "ya está bien");
     public string PeliculasPorqueSinTitulo => Idioma.Elegir("no title in the name", "sin título en el nombre");
+    public string PeliculasPorqueEsExtra => Idioma.Elegir("an extra, left alone", "un extra, no se toca");
     public string PeliculasPorqueOcupado => Idioma.Elegir("name already taken there", "ese nombre ya está ocupado");
 
     public string PeliculasVerSoloLosQueVan => Idioma.Elegir(
-        "Show only the ones with work to do",
-        "Enseñar solo las que tienen trabajo");
+        "Hide the ones already right",
+        "Esconder las que ya están bien");
 
     // {0} = cuántas se van a tocar.
     public string PeliculasBoton => Idioma.Elegir("Apply to {0}", "Aplicar a {0}");

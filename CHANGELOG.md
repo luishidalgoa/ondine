@@ -41,8 +41,32 @@ es un acuerdo de buena voluntad: está verificado.
   reordenado por temporadas. Los subtítulos y las fichas viajan con su vídeo, nunca se sobrescribe
   nada, y se puede deshacer. Avisa igual de lo que va a costar: cambiar de disco, entrar en una
   carpeta sincronizada, o mover ficheros que solo están en la nube.
+- **Los extras se reconocen y no se tocan.** Un `-trailer.mp4` o un `-behindthescenes.mp4` junto a
+  la película se renombraba a «Título (Año).mp4», y el servidor lo leía como una **segunda versión
+  de la película**: el extra desaparecía de donde debía estar. Ahora se quedan quietos, y tampoco
+  cuentan para decidir si una carpeta es una colección — una película con tres extras al lado
+  seguía siendo una película.
+- **Una película partida en dos deja de pelearse consigo misma.** «… cd1» y «… cd2» daban el mismo
+  nombre canónico: la primera perdía el «cd1» y la segunda se quedaba sin sitio. Ahora cada mitad
+  conserva su parte, escrita como la documenta Plex: «Título (Año) - part1».
+- **El año de una reedición ya no se toma por el del estreno.** En «Alien 1979 REMASTERED (2003)»
+  el de los paréntesis es el del remaster. Se exige la marca de reedición para preferir el otro:
+  sin ella, un número anterior suele ser parte del título —«The 1900 House (1999)»— y preferirlo
+  rompería más de lo que arregla.
 - **Una carpeta con varias películas dentro no se desmonta.** Se trata como colección: se limpia el
   nombre de cada fichero, que es lo que lee el escáner, y nada sale de su sitio.
+
+### Corregido
+
+- **Un vídeo podía viajar como si fuera el subtítulo de otro, y acabar en la carpeta de otra
+  película.** Al mover un fichero se llevan con él sus compañeros —el `.srt`, la ficha—, y para
+  decidir quién era compañero se miraba solo el nombre: cualquier cosa que empezara por
+  «`<nombre>.`» se movía detrás. Hay nombres muy normales donde el nombre base de un vídeo es
+  prefijo del de otro —«Up.mkv» y «Up.2009.mkv» en la misma carpeta— y ahí el segundo viajaba como
+  si fuera un subtítulo. Lo grave no es que se moviera: es que se movía **a espaldas del plan**, de
+  modo que una fila marcada «no lo toco» acababa movida igualmente, y el pie de la ventana promete
+  que nada se ha tocado. Ahora un compañero **nunca** puede ser un vídeo. Afecta también al
+  reordenado por temporadas, que comparte el mismo motor.
 
 ### Cambiado
 

@@ -43,6 +43,9 @@ public static class PlanDePeliculas
 
         /// <summary>En el destino ya hay algo con ese nombre.</summary>
         Ocupado,
+
+        /// <summary>Un tráiler, una escena eliminada… no es la película.</summary>
+        EsExtra,
     }
 
     public sealed record Paso(string Origen, string? Destino, Porque Motivo);
@@ -61,9 +64,12 @@ public static class PlanDePeliculas
 
         // Cuántas películas hay en cada carpeta. Es lo que distingue una colección
         // de una película que ya tiene su carpeta propia.
+        // Los extras NO cuentan: si contaran, una carpeta con una película y tres
+        // tráileres pasaría por colección y la película dejaría de colocarse.
         var cuantasPorCarpeta = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var f in todos)
         {
+            if (TituloDePelicula.EsExtra(Path.GetFileName(f))) continue;
             var dir = Path.GetDirectoryName(Path.GetFullPath(f)) ?? "";
             cuantasPorCarpeta[dir] = cuantasPorCarpeta.GetValueOrDefault(dir) + 1;
         }
@@ -74,6 +80,14 @@ public static class PlanDePeliculas
 
         foreach (var origen in todos)
         {
+            // Un extra se queda donde está. Renombrarlo a «Título (Año).ext» lo
+            // convierte, a ojos del servidor, en otra versión de la película.
+            if (TituloDePelicula.EsExtra(Path.GetFileName(origen)))
+            {
+                plan.Add(new(origen, null, Porque.EsExtra));
+                continue;
+            }
+
             // Para AGRUPAR y COMPARAR se usa la ruta expandida; para CONSTRUIR el
             // destino, la que entró tal cual. Mezclarlas cambia la forma de la
             // ruta —fuera de Windows, «C:lgo» se expande contra el directorio
@@ -95,7 +109,10 @@ public static class PlanDePeliculas
                 continue;
             }
 
-            var nombre = DestinoDePelicula.Nombre(ficha, Path.GetExtension(origen));
+            // Una película partida conserva su parte en el nombre: sin eso las
+            // dos mitades dan el mismo canónico y la segunda se queda sin sitio.
+            var parte = TituloDePelicula.Parte(Path.GetFileName(origen));
+            var nombre = DestinoDePelicula.Nombre(ficha, Path.GetExtension(origen), parte);
 
             // En una colección el destino es la MISMA carpeta: solo cambia el
             // nombre. Fuera de ella, la carpeta canónica bajo la raíz.
