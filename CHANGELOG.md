@@ -30,7 +30,7 @@ es un acuerdo de buena voluntad: está verificado.
 7. **Sin secciones vacías** ni versiones repetidas, y las versiones van de más nueva a
    más antigua.
 
-## [Unreleased]
+## [1.9.0] - 2026-08-19
 
 ### Añadido
 
