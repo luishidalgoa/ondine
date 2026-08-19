@@ -4,14 +4,15 @@
     {
       "id": "youtube",
       "nombre": "YouTube",
-      "descripcion": "Lee una lista de reproducción pública y coteja lo que hay en ella con tu catálogo, episodio por episodio. Pega el enlace de la lista en la casilla de fuente. No descarga: lee.",
-      "version": "1.0.2",
+      "descripcion": "Lee una lista de reproducción pública, la coteja con tu catálogo y descarga los vídeos accesibles que elijas, hasta 480p.",
+      "version": "1.1.0",
       "autor": "Ondine",
-      "paquete": "https://github.com/luishidalgoa/ondine/releases/download/complementos/youtube-1.0.2.zip",
-      "sha256": "732f54072b7400046884b8c3a96f428319bd848fcca563d796fafd3f719e94a9",
-      "bytes": 10744,
+      "paquete": "https://github.com/luishidalgoa/ondine/releases/download/complementos/youtube-1.1.0.zip",
+      "sha256": "422460147f532efbcc7cb19f0b3d5f40d17060181c587a152667ac6b2bae297f",
+      "bytes": 12340,
       "capacidades": [
-        "importar"
+        "importar",
+        "descargar"
       ],
       "ambito": [
         "organizar"

@@ -1,13 +1,16 @@
-"""Complemento de YouTube para Ondine: LISTAR una lista de reproduccion.
+"""Complemento de YouTube para Ondine: listar y traer videos accesibles.
 
 Lee los metadatos publicos de una lista -titulo, miniatura, duracion- y los
-entrega a Ondine para que los coteje con el catalogo abierto. No descarga nada.
+entrega a Ondine para que los coteje con el catalogo abierto. Tambien descarga
+los videos publicos elegidos, hasta 480p, en la carpeta indicada por Ondine.
 
-Se apoya en yt-dlp, que tiene que estar en el PATH. Se usa `--flat-playlist`, que
-pide la ficha de la lista y NO toca los videos: es una peticion, no cuarenta.
+Se apoya en yt-dlp, que tiene que estar en el PATH. Para listar se usa
+`--flat-playlist`, que pide la ficha de la lista y NO toca los videos: es una
+peticion, no cuarenta.
 """
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -451,6 +454,85 @@ def _descripciones(exe, fuente, cuantos):
     return fuera
 
 
+_ID_VIDEO = re.compile(r"^[A-Za-z0-9_-]{11}$")
+_MARCA_FICHERO = "@@ONDINE_FILE@@"
+
+
+def _peticion_de_descarga(argumentos):
+    """Los ids y el destino del contrato `traer`, o el motivo del rechazo."""
+    try:
+        separador = argumentos.index("--destino")
+    except ValueError:
+        return None, None, "No se ha indicado la carpeta de destino."
+
+    ids = argumentos[:separador]
+    resto = argumentos[separador + 1:]
+    if len(resto) != 1 or not resto[0]:
+        return None, None, "La carpeta de destino no es valida."
+    if not ids:
+        return None, None, "No se ha elegido ningun video."
+    if any(not _ID_VIDEO.fullmatch(ident) for ident in ids):
+        return None, None, "La seleccion contiene un identificador de video no valido."
+    if not os.path.isdir(resto[0]):
+        return None, None, "La carpeta de destino no existe."
+    return ids, os.path.abspath(resto[0]), None
+
+
+def traer(argumentos):
+    """Descarga los videos publicos elegidos, como maximo a 480p."""
+    ids, destino, reparo = _peticion_de_descarga(argumentos)
+    if reparo:
+        error(reparo)
+
+    exe = shutil.which("yt-dlp") or shutil.which("yt-dlp.exe")
+    if not exe:
+        error("Hace falta yt-dlp y no esta en el PATH. Instalalo y vuelve a probar.")
+
+    ficheros = []
+    fallos = []
+    total = len(ids)
+    for i, ident in enumerate(ids, 1):
+        decir(tipo="progreso", avance=(i - 1) / total,
+              texto=f"Descargando video {i} de {total}")
+        orden = [
+            exe, "--no-playlist", "--no-warnings", "--no-progress",
+            # Primero se intenta un formato completo: no necesita ffmpeg. Si no
+            # existe, yt-dlp puede juntar video y audio. Nunca se elige mas de
+            # 480p: es suficiente para este uso y evita bajar un original enorme.
+            "--format", "best[height<=480]/bestvideo[height<=480]+bestaudio/best",
+            "--merge-output-format", "mp4",
+            "--output", os.path.join(destino, "%(title)s [%(id)s].%(ext)s"),
+            "--print", "after_move:" + _MARCA_FICHERO + "%(filepath)s",
+            "https://www.youtube.com/watch?v=" + ident,
+        ]
+        try:
+            salida = subprocess.run(
+                orden, capture_output=True, text=True, encoding="utf-8",
+                errors="replace", timeout=7200,
+            )
+        except subprocess.TimeoutExpired:
+            fallos.append(f"{ident}: ha tardado demasiado")
+            continue
+
+        rutas = [linea[len(_MARCA_FICHERO):].strip()
+                 for linea in (salida.stdout or "").splitlines()
+                 if linea.startswith(_MARCA_FICHERO)]
+        if salida.returncode == 0 and rutas:
+            ficheros.extend(rutas)
+            continue
+
+        detalle = (salida.stderr or "").strip().splitlines()
+        fallos.append(f"{ident}: {detalle[-1] if detalle else 'no disponible'}")
+
+    if not ficheros:
+        error("No se ha podido descargar ningun video. " + "; ".join(fallos))
+    if fallos:
+        decir(tipo="progreso", avance=1.0,
+              texto=f"Descarga terminada: {len(ficheros)} correctos y "
+                    f"{len(fallos)} no disponibles")
+    decir(tipo="hecho", ficheros=ficheros)
+
+
 def main():
     if len(sys.argv) < 2:
         error("No se ha dicho que hacer.")
@@ -459,10 +541,7 @@ def main():
     if orden == "listar":
         listar(sys.argv[2] if len(sys.argv) > 2 else "")
     elif orden == "traer":
-        # Listar y cotejar es leer metadatos publicos. Descargar es otra cosa, y
-        # esta lista en concreto la tiene restringida su titular de derechos.
-        error("Este complemento solo lee la lista y la coteja con tu catalogo. "
-              "No descarga.")
+        traer(sys.argv[2:])
     else:
         error(f"No se que hacer con la orden '{orden}'.")
 
