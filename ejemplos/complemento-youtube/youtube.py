@@ -199,6 +199,52 @@ def error(mensaje):
     sys.exit(1)
 
 
+_NO_ACCESIBLE = {"private", "premium_only", "subscriber_only", "needs_auth"}
+
+
+def es_accesible(entrada):
+    """Si yt-dlp ha entregado metadatos suficientes para cotejar el video."""
+    if not entrada or not (entrada.get("title") or "").strip():
+        return False
+    return (entrada.get("availability") or "").casefold() not in _NO_ACCESIBLE
+
+
+def diagnostico_no_disponibles(entradas):
+    """Resume los huecos sin afirmar una causa que YouTube no haya revelado."""
+    fuera = [e for e in entradas if not es_accesible(e)]
+    if not fuera:
+        return ""
+
+    causas = {}
+    for e in fuera:
+        causa = (e.get("availability") or "").casefold()
+        etiqueta = {
+            "private": "privados",
+            "premium_only": "solo Premium",
+            "subscriber_only": "solo para miembros",
+            "needs_auth": "requieren iniciar sesion",
+        }.get(causa, "sin detalle (eliminados, privados o bloqueados)")
+        causas[etiqueta] = causas.get(etiqueta, 0) + 1
+
+    detalle = ", ".join(f"{n} {causa}" for causa, n in causas.items())
+    ids = [e.get("id") for e in fuera if e.get("id")]
+    muestra = f". IDs: {', '.join(ids[:5])}" if ids else ""
+    if len(ids) > 5:
+        muestra += f" y {len(ids) - 5} mas"
+    return f"{len(fuera)} videos no disponibles: {detalle}{muestra}"
+
+
+def ficha_aprovechable(salida):
+    """El JSON valido, incluso si yt-dlp marco como fallida alguna entrada."""
+    try:
+        if (salida.stdout or "").strip():
+            ficha = json.loads(salida.stdout)
+            return ficha if isinstance(ficha, dict) else None
+    except json.JSONDecodeError:
+        pass
+    return None
+
+
 # El contador de las preguntas al modelo. Ondine tiene su propio cupo -40 por
 # ejecucion-, pero el complemento lleva el suyo tambien: agotarlo y que las
 # ultimas veinte vuelvan con «cupo agotado» es gastar el tiempo de quien mira.
@@ -248,14 +294,15 @@ def listar(fuente):
     except subprocess.TimeoutExpired:
         error("yt-dlp ha tardado demasiado en contestar.")
 
-    if salida.returncode != 0:
-        # Su ultima linea suele ser la util; el resto es ruido de progreso.
-        detalle = (salida.stderr or "").strip().splitlines()
-        error(detalle[-1] if detalle else "yt-dlp no ha podido leer esa lista.")
+    # yt-dlp puede devolver un error por una entrada bloqueada y, aun asi,
+    # entregar un JSON valido con el resto de la lista. Se intenta aprovechar
+    # esa respuesta antes de tirar todos los videos accesibles.
+    ficha = ficha_aprovechable(salida)
 
-    try:
-        ficha = json.loads(salida.stdout)
-    except json.JSONDecodeError:
+    if ficha is None:
+        detalle = (salida.stderr or "").strip().splitlines()
+        if salida.returncode != 0:
+            error(detalle[-1] if detalle else "yt-dlp no ha podido leer esa lista.")
         error("yt-dlp ha contestado algo que no es JSON.")
 
     # Sin titulo no hay nada que cotejar. Son los borrados y los privados: yt-dlp
@@ -263,19 +310,20 @@ def listar(fuente):
     # pinta como un episodio mas llamado «NA», y un hueco disfrazado de episodio
     # es peor que un hueco.
     todas = [e for e in (ficha.get("entries") or []) if e]
-    entradas = [e for e in todas if (e.get("title") or "").strip()]
+    entradas = [e for e in todas if es_accesible(e)]
     if not entradas:
-        error("Esa lista no tiene videos, o no es publica.")
+        diagnostico = diagnostico_no_disponibles(todas)
+        error(diagnostico or "Esa lista no tiene videos, o no es publica.")
 
-    perdidos = len(todas) - len(entradas)
-    aviso = f", {perdidos} ya no disponibles" if perdidos else ""
+    diagnostico = diagnostico_no_disponibles(todas)
+    aviso = f". {diagnostico}" if diagnostico else ""
 
     # Se dice QUE va a tardar y POR QUE antes de empezar, no despues. Lo que
     # viene es una peticion por episodio y son decenas de segundos sin nada que
     # pintar: una pantalla quieta que no explica el silencio es indistinguible
     # de una colgada, y quien mira acaba cortando algo que iba bien.
     decir(tipo="progreso", avance=0.0,
-          texto=f"Lista leida: {len(entradas)} videos{aviso}")
+          texto=f"Lista leida: {len(entradas)} videos accesibles{aviso}")
     decir(tipo="progreso", avance=0.02,
           texto=f"Consultando la ficha de cada video para ver si alguno trae dos "
                 f"historias ({len(entradas)} consultas, puede tardar un minuto)")

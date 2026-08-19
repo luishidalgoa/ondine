@@ -5,8 +5,10 @@ complemento de ejemplo que pide instalar pytest para leerlo es un complemento
 que nadie lee.
 """
 import unittest
+from types import SimpleNamespace
 
-from youtube import (es_residuo, historias_del_modelo, limpiar, segmentos,
+from youtube import (diagnostico_no_disponibles, es_accesible, es_residuo,
+                     ficha_aprovechable, historias_del_modelo, limpiar, segmentos,
                      titulo_completo)
 
 
@@ -25,6 +27,40 @@ class SegmentosDelTitulo(unittest.TestCase):
         self.assertEqual(
             segmentos("Doraemon | El controlador del mar | Alquiler estilo futurista | Episodio 426"),
             ["Doraemon", "El controlador del mar", "Alquiler estilo futurista"])
+
+
+class DisponibilidadDeLaLista(unittest.TestCase):
+    def test_un_error_parcial_de_yt_dlp_conserva_el_json_valido(self):
+        salida = SimpleNamespace(returncode=1, stderr="video bloqueado",
+                                 stdout='{"entries": [{"id": "bueno"}]}')
+
+        self.assertEqual(ficha_aprovechable(salida)["entries"][0]["id"], "bueno")
+
+    def test_una_respuesta_que_no_es_json_no_se_aprovecha(self):
+        salida = SimpleNamespace(returncode=1, stderr="fallo", stdout="ruido")
+
+        self.assertIsNone(ficha_aprovechable(salida))
+
+    def test_un_hueco_sin_titulo_no_impide_procesar_los_accesibles(self):
+        accesible = {"id": "bueno", "title": "Un episodio"}
+        bloqueado = {"id": "cerrado", "title": None}
+
+        self.assertTrue(es_accesible(accesible))
+        self.assertFalse(es_accesible(bloqueado))
+        self.assertIn("1 videos no disponibles",
+                      diagnostico_no_disponibles([accesible, bloqueado]))
+        self.assertIn("cerrado", diagnostico_no_disponibles([accesible, bloqueado]))
+
+    def test_explica_la_causa_si_youtube_la_entrega(self):
+        privado = {"id": "p", "title": "Private video", "availability": "private"}
+        miembros = {"id": "m", "title": "Members only",
+                    "availability": "subscriber_only"}
+
+        self.assertFalse(es_accesible(privado))
+        self.assertFalse(es_accesible(miembros))
+        diagnostico = diagnostico_no_disponibles([privado, miembros])
+        self.assertIn("1 privados", diagnostico)
+        self.assertIn("1 solo para miembros", diagnostico)
 
 
 class TituloConLaDescripcion(unittest.TestCase):
