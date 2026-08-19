@@ -9,12 +9,13 @@
 |---|---|
 | **r/selfhosted**, New Project Megathread | ✅ **publicado** — [comentario](https://old.reddit.com/r/selfhosted/comments/1vnoqxf/new_project_megathread_week_of_13_aug_2026/) |
 | **Discussions de Jellyfin**, *Show and tell* | ✅ **publicado** — [#17675](https://github.com/orgs/jellyfin/discussions/17675) |
-| **r/jellyfin** | listo para publicar, sin traba ninguna |
-| **r/PleX** | hay que pedir permiso por modmail **antes**; el texto está escrito |
+| **r/jellyfin** | ✅ **publicado** — [hilo](https://old.reddit.com/r/jellyfin/comments/1vsk2mx/fixing_the_unknown_episode_case_jellyfin_cannot/), con *flair* «Other» |
+| **r/PleX** | 📨 **modmail enviado**, esperando respuesta. No se publica hasta que contesten |
 | **Lemmy `selfhosted`** | hace falta cuenta |
 | **Show HN** | ⛔ bloqueado por antigüedad de cuenta. Semanas |
 | **r/DataHoarder** | ⛔ **descartado**, va contra dos reglas suyas |
-| **LinkedIn** y **X** | esperando a que el spot esté en YouTube |
+| **LinkedIn** | listo: el spot ya está en YouTube — https://www.youtube.com/watch?v=L8F6kxHy2z8 |
+| **X** y **Mastodon** | listos, con una salvedad: el vídeo subido es el de **castellano**. Para un texto en inglés, o se sube el spot EN o se enlaza la web |
 | Hilo propio en **r/selfhosted** | 20 de octubre, cuando el proyecto cumpla 3 meses |
 
 ## Qué hay publicado del producto
@@ -24,7 +25,8 @@
 | Repositorio `luishidalgoa/ondine` | público, con imagen social propia | — |
 | Release **v1.8.0** con instalador y 5 binarios de CLI | publicada, no borrador | 8 ago 2026 |
 | Landing `ondine.hdglabs.com` (EN por defecto + ES) | viva, con el spot embebido | 19 ago |
-| Spot 16:9 ES, 16:9 EN y vertical | renderizados; **sin subir a YouTube** | — |
+| Spot 16:9 ES | **publicado en YouTube** — `L8F6kxHy2z8`, 0:44, público | 19 ago |
+| Spot 16:9 EN y vertical | renderizados, sin subir | — |
 
 La landing enlaza a `releases/latest`, así que no se queda vieja al sacar versión.
 
@@ -317,12 +319,19 @@ part stands alone and works on any file.
 https://ondine.hdglabs.com
 ```
 
-## 6 · r/jellyfin (EN) — vía libre, listo para publicar
+## 6 · r/jellyfin (EN) — ✅ PUBLICADO
+
+> 19 de agosto, con *flair* «Other» —el único honesto: no es Bug, ni Question, ni Guide, ni una
+> Release de Jellyfin—. https://old.reddit.com/r/jellyfin/comments/1vsk2mx/fixing_the_unknown_episode_case_jellyfin_cannot/
+>
+> Se añadió al texto del plan una frase que no llevaba: que **no es un plugin y no toca el servidor**.
+> Es lo primero que se pregunta en un sub de un servidor de medios. Y la declaración de IA, por
+> coherencia con lo publicado en r/selfhosted el mismo día.
 
 Sin trabas: la única regla de publicidad del sub es sobre **vender** servicios de Jellyfin, y esto
 es gratis y MIT. Se publica y ya.
 
-## 7 · r/PleX — antes hay que pedir permiso por modmail
+## 7 · r/PleX — 📨 MODMAIL ENVIADO, esperando respuesta
 
 Su regla 6 es explícita: *«r/Plex does NOT allow self promotion of your app/service. If you ignore
 this rule you may be banned. If you wish to share an application […] you must modmail asking for
