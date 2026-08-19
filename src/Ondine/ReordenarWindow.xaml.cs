@@ -75,7 +75,7 @@ public partial class ReordenarWindow : Window
     private readonly string _raiz;
     private readonly Settings _ajustes;
     private List<PlanDeReordenado.Paso> _plan = new();
-    private MudanzaDeTemporada.Parte? _hecho;
+    private Mudanza.Parte? _hecho;
 
     // Los tres valores del desplegable, en el mismo orden en que se añaden.
     private static readonly string?[] Idiomas = [null, "en", "es"];

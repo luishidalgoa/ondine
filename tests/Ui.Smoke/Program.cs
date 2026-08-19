@@ -75,6 +75,13 @@ public static class Program
         Probar("CatalogoWindow", () => new CatalogoWindow(cat, loQueHay: res));
         Probar("FaltantesWindow", () => new FaltantesWindow(cat, res));
         Probar("ReordenarWindow", () => new ReordenarWindow(res, Path.Combine("C:", "tv"), new Settings()));
+        Probar("PeliculasWindow", () => new PeliculasWindow(
+            new[]
+            {
+                Path.Combine("C:", "pelis", "Disney", "Up.mp4"),
+                Path.Combine("C:", "pelis", "Grease (1978)", "Grease.mp4"),
+            },
+            Path.Combine("C:", "pelis")));
         Probar("ComplementosPanel", () => new ComplementosPanel(cat, res));
 
         LaTarjetaDiceLoQueSeVaAEscribir(cat);

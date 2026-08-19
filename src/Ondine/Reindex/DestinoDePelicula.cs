@@ -25,8 +25,10 @@ public static class DestinoDePelicula
     /// episodios: dos limpiezas distintas dejarían el mismo título escrito de dos
     /// formas según por dónde hubiera pasado.
     /// </summary>
-    public static string Nombre(TituloDePelicula.Ficha ficha, string extension)
-        => LibraryTemplate.LimpiarNombre(TituloDePelicula.Canonico(ficha)) + extension;
+    public static string Nombre(TituloDePelicula.Ficha ficha, string extension, int? parte = null)
+        => LibraryTemplate.LimpiarNombre(TituloDePelicula.Canonico(ficha))
+           + (parte is null ? "" : $" - part{parte}")
+           + extension;
 
     /// <summary>La carpeta que le toca, dentro de la raíz de la biblioteca.</summary>
     public static string Carpeta(string raiz, TituloDePelicula.Ficha ficha)
