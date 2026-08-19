@@ -25,7 +25,7 @@ Hace tres cosas, y las tres suben **la calidad del dato**:
 - **Parte y recorta** lo que viene pegado o sobra.
 
 Y una cuarta que es la más difícil de explicar y la que más convence: **adelgaza sin recomprimir**.
-Quita los doblajes y subtítulos que no usas y el vídeo queda **idéntico bit a bit**. 1 GB a 133 MB
+Quita los doblajes y subtítulos que no usas y el vídeo queda **idéntico bit a bit**. 155 MB a 134 MB
 en 0,6 s.
 
 **A quién le habla:** gente que se monta su propio servidor de medios en casa. Mundo del
@@ -165,7 +165,7 @@ va a mirar con lupa porque es la que usa a diario. Dime qué pantallazos necesit
 sección, y te los mando. Lo único que sí es ilustración son las carátulas, que van en formas
 planas de la paleta con títulos inventados por la regla de más abajo.
 
-**8 · Los números ya están y son reales.** `246 correctos`, `0 conflictos`, `1 GB a 133 MB`,
+**8 · Los números ya están y son reales.** `246 correctos`, `0 conflictos`, `155 MB a 134 MB`,
 `0,6 s`, `80-90 %`. Salen de la aplicación. No inventes más cifras para rellenar, ni porcentajes
 de satisfacción, ni número de usuarios, ni «4,8/5». No hay ninguno y no lo va a haber.
 
@@ -287,7 +287,7 @@ peso, el bueno se pierde.
 **Arriba: adelgazar sin recomprimir.** Puedes quitarle a un vídeo los doblajes y subtítulos que no
 usas **sin tocar el vídeo**. Queda idéntico.
 
-A un lado, el fotograma de un vídeo. Al otro, el tamaño bajando de **1 GB a 133 MB**, un cronómetro
+A un lado, el fotograma de un vídeo. Al otro, el tamaño bajando de **155 MB a 134 MB**, un cronómetro
 que marca **0,6 s**, y las pistas: se queda `spa`, se van `eng` (audio) y `eng` (subtítulos).
 Al final, un sello: **«vídeo idéntico»**.
 
@@ -373,7 +373,7 @@ que no hace ninguna otra herramienta, y estaba en quinto lugar, que es donde se 
 dicen «ocupa menos» seguidas, y eso reparte el impacto en lugar de sumarlo. Además la comparación
 entre las dos es justamente el argumento: adelgazar es gratis y no toca el vídeo, comprimir cuesta
 calidad pero baja mucho más. Van juntas o no se entiende ninguna. La sección queda como **una sola,
-con dos tiempos**: arriba el número que sorprende (1 GB a 133 MB en 0,6 s, vídeo idéntico) y abajo,
+con dos tiempos**: arriba el número que sorprende (155 MB a 134 MB en 0,6 s, vídeo idéntico) y abajo,
 más contenido, el 80-90 % con su pronóstico.
 
 Con eso el índice queda en **ocho secciones**: hero, el problema, partir, ordenar, el tamaño,
