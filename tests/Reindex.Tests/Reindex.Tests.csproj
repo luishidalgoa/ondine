@@ -37,6 +37,10 @@
     <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
          ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->
     <Compile Include="..\..\src\Ondine\Rutas\*.cs" LinkBase="Rutas" />
+    <!-- Identificar una pelicula contra TMDb: la clave, la peticion, la cascada de
+         confianza y la cache. HttpClient y JSON, nada de WPF, asi que se prueba
+         entero sin hablar con ningun servidor. -->
+    <Compile Include="..\..\src\Ondine\Peliculas\*.cs" LinkBase="Peliculas" />
   </ItemGroup>
 
 </Project>
