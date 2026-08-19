@@ -45,7 +45,15 @@ public static class DestinoDePelicula
     /// </summary>
     public static string? HayQueMover(string origen, string raiz)
     {
-        var ficha = TituloDePelicula.Leer(Path.GetFileName(origen));
+        // Se mira también la carpeta: si el fichero no trae año y ella sí, ese año
+        // ya estaba escrito y perderlo sería un paso atrás. No se mira cuando el
+        // fichero cuelga directamente de la raíz, que ahí la carpeta es la
+        // biblioteca entera y no dice nada de esta película.
+        var padre = Path.GetDirectoryName(Path.GetFullPath(origen));
+        var esRaiz = padre is null || string.Equals(padre, Path.GetFullPath(raiz),
+                                                    StringComparison.OrdinalIgnoreCase);
+        var ficha = TituloDePelicula.Leer(Path.GetFileName(origen),
+                                          esRaiz ? null : Path.GetFileName(padre));
 
         // De un nombre del que no sale título no sale destino. Mover eso a una
         // carpeta inventada es la forma más rápida de perder un fichero.

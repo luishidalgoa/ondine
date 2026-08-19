@@ -59,6 +59,52 @@ public static class TituloDePeliculaTests
         // esta regla, «Blade Runner 2049» a secas se parte por la mitad.
         Igual("Blade Runner 2049.mkv", "Blade Runner 2049", null);
 
+        // ── Sacados de una biblioteca DE VERDAD ───────────────────────────────
+        // Estos no me los he inventado: son nombres reales de una carpeta de 75
+        // películas, y los tres primeros los fallaba la versión anterior.
+
+        // El año entre paréntesis pero con el director delante. Antes salía
+        // «Cadena Perpetua (Frank Darabont,» y una carpeta con ese nombre.
+        Igual("Cadena Perpetua (Frank Darabont, 1994).mkv", "Cadena Perpetua", 1994);
+
+        // Sin espacio antes del paréntesis.
+        Igual("Una cuestion de tiempo(2013).mkv", "Una cuestion de tiempo", 2013);
+
+        // La resolución pegada al final y en mayúsculas, sin separador de guión.
+        Igual("El Rey Leon 2 1080P.mp4", "El Rey Leon 2", null);
+
+        // Números de tres cifras al principio que NO son años: son el título.
+        Igual("101 Dalmatas (1961).avi", "101 Dalmatas", 1961);
+        Igual("102 Dalmatas.avi", "102 Dalmatas", null);
+
+        // Un año reciente sin paréntesis sí es el año.
+        Igual("Bob Esponja Plankton La Película 2025.mkv", "Bob Esponja Plankton La Película", 2025);
+
+        // Dos espacios seguidos en medio del título.
+        Igual("Piratas Del Caribe  La Venganza De Salazar.mp4",
+              "Piratas Del Caribe La Venganza De Salazar", null);
+
+        // Signos de apertura al principio, que no son basura sino el título.
+        Igual("¡Qué bello es vivir! (1946).mkv", "¡Qué bello es vivir!", 1946);
+
+        // ── El año lo tiene la CARPETA y no el fichero ────────────────────────
+        // 52 de 75 ficheros de esa biblioteca no traen año, y en muchos casos la
+        // carpeta que los contiene sí. Leer solo el fichero significaba proponer
+        // «Grease/Grease.mp4» y TIRAR un año que ya estaba escrito.
+        var conCarpeta = TituloDePelicula.Leer("Grease.mp4", "Grease (1978)");
+        Program.Assert(conCarpeta.Titulo == "Grease" && conCarpeta.Anio == 1978,
+            "si el fichero no trae año y la carpeta sí, se toma el de la carpeta");
+
+        // El del fichero manda cuando lo hay: es el más específico de los dos.
+        var manda = TituloDePelicula.Leer("It (2017).mp4", "IT (1990)");
+        Program.Assert(manda.Anio == 2017,
+            "el año del fichero gana al de la carpeta: es el que habla de ESTE fichero");
+
+        // Y una carpeta de colección no aporta año ninguno, así que no estorba.
+        var coleccion = TituloDePelicula.Leer("Up.mp4", "Disney");
+        Program.Assert(coleccion.Titulo == "Up" && coleccion.Anio is null,
+            "una carpeta sin año no inventa ninguno");
+
         // ── Sin año ───────────────────────────────────────────────────────────
         Igual("Una película sin año.mkv", "Una película sin año", null);
         Igual("Una.pelicula.sin.año.mkv", "Una pelicula sin año", null);

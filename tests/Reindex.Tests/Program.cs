@@ -13,6 +13,10 @@ public static class Program
     public static int Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+        // ARNÉS TEMPORAL: informe sobre una biblioteca de verdad. Solo lee.
+        if (args.Length >= 2 && args[0] == "--informe") { InformeBiblioteca.Correr(args[1]); return 0; }
+
         Console.WriteLine("── Motor de reindexado ─────────────────────────────\n");
 
         Normalizacion();

@@ -32,13 +32,42 @@ public static partial class TituloDePelicula
     /// </summary>
     private const int PrimerAnio = 1888;
 
-    /// <summary>Un año entre paréntesis o corchetes: la forma en que se escribe a propósito.</summary>
-    [GeneratedRegex(@"[\(\[](\d{4})[\)\]]")]
+    /// <summary>
+    /// Un año entre paréntesis o corchetes: la forma en que se escribe a
+    /// propósito. Admite texto delante dentro del mismo paréntesis porque en una
+    /// biblioteca real aparece «(Frank Darabont, 1994)», y exigir el año pegado
+    /// al paréntesis dejaba al director dentro del título.
+    /// </summary>
+    [GeneratedRegex(@"[\(\[][^\)\]]*?(\d{4})[\)\]]")]
     private static partial Regex RxAnioMarcado();
 
     /// <summary>Cuatro cifras sueltas, con separador o borde a los lados.</summary>
     [GeneratedRegex(@"(?<![0-9])(\d{4})(?![0-9])")]
     private static partial Regex RxAnioSuelto();
+
+    /// <summary>
+    /// Igual, pero mirando también el nombre de la <b>carpeta</b> que lo contiene
+    /// cuando el fichero no trae año.
+    ///
+    /// <para>
+    /// Medido sobre una biblioteca real de 75 películas: <b>52 no traen año en el
+    /// nombre del fichero</b>, y en buena parte de esos casos la carpeta sí lo
+    /// tiene —«Grease (1978)/Grease.mp4»—. Leyendo solo el fichero se proponía
+    /// «Grease/Grease.mp4», es decir, <b>tirar un año que ya estaba escrito</b>.
+    /// </para>
+    /// <para>
+    /// El del fichero manda siempre que exista: es el que habla de ESTE fichero,
+    /// mientras que la carpeta puede contener varias películas.
+    /// </para>
+    /// </summary>
+    public static Ficha Leer(string nombre, string? carpeta)
+    {
+        var f = Leer(nombre);
+        if (f.Anio is not null || string.IsNullOrWhiteSpace(carpeta)) return f;
+
+        var deLaCarpeta = Leer(carpeta);
+        return deLaCarpeta.Anio is null ? f : f with { Anio = deLaCarpeta.Anio };
+    }
 
     public static Ficha Leer(string nombre)
     {
