@@ -264,6 +264,17 @@ public sealed partial class Textos
         "{0} hechas, {1} no se pudieron tocar.");
     public string PeliculasDeshecho => Idioma.Elegir("{0} put back.", "{0} devueltas a su sitio.");
 
+    // Compartidos por las dos ventanas que mueven ficheros.
+    // {0} = cuántos volvieron · {1} = cuántos no pudieron.
+    public string DeshacerAMedias => Idioma.Elegir(
+        "{0} put back, {1} could not — they are probably open in a player. The Undo button stays: try again when you close them.",
+        "{0} devueltas a su sitio, {1} no pudieron — lo normal es que estén abiertas en el reproductor. El botón de deshacer se queda: vuelve a intentarlo al cerrarlas.");
+
+    // {0} = cuántos compañeros se quedaron atrás.
+    public string CompanerosSinMover => Idioma.Elegir(
+        "{0} companion files (subtitles, .nfo) stayed behind: their new name was already taken.",
+        "{0} ficheros compañeros (subtítulos, fichas) se quedaron atrás: su nombre nuevo ya estaba ocupado.");
+
     public string PeliculasAbrir => Idioma.Elegir("Sort out films…", "Ordenar las películas…");
     public string PeliculasAbrirAyuda => Idioma.Elegir(
         "Show what would change so each film ends up as «Title (Year)/Title (Year).ext», which is what Plex and Jellyfin expect. A folder holding several films is left alone: only the file names inside are cleaned up.",

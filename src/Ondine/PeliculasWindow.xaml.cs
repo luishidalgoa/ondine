@@ -199,12 +199,22 @@ public partial class PeliculasWindow : Window
 
         int eran = _hecho.Movidos.Count;
         int vueltos = Mudanza.Deshacer(_hecho);
-        lblPie.Text = string.Format(Textos.Instancia.PeliculasDeshecho, vueltos);
-        btnDeshacer.Visibility = Visibility.Collapsed;
+        bool aMedias = vueltos < eran;
+
+        lblPie.Text = aMedias
+            ? string.Format(Textos.Instancia.DeshacerAMedias, vueltos, eran - vueltos)
+            : string.Format(Textos.Instancia.PeliculasDeshecho, vueltos);
+
+        // Si alguno NO pudo volver —lo normal es que esté abierto en el
+        // reproductor—, el registro se conserva y el botón se queda: es el único
+        // sitio donde vive la lista de qué fue a dónde, y tirarlo dejaba ese
+        // fichero desplazado para siempre sin forma de recuperarlo desde la app.
+        // Reintentar es seguro: lo que ya volvió se salta solo.
+        btnDeshacer.Visibility = aMedias ? Visibility.Visible : Visibility.Collapsed;
 
         // Si alguno no pudo volver, la tabla de quien nos abrió sigue estando mal.
-        MovioAlgo = vueltos < eran;
-        _hecho = null;
+        MovioAlgo = aMedias;
+        if (!aMedias) _hecho = null;
         Recalcular();
     }
 

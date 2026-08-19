@@ -82,6 +82,7 @@ public static class Program
         Ondine.Reindex.Tests.MudanzaTests.Todas();
         Ondine.Reindex.Tests.SidecarNoArrastraVideosTests.Todas();
         Ondine.Reindex.Tests.PeliculasQueNoLoSonTests.Todas();
+        Ondine.Reindex.Tests.BibliotecaRealDeExtremoAExtremoTests.Todas();
         Ondine.Reindex.Tests.MudanzaDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.TenenciaTests.Todas();
         Ondine.Reindex.Tests.ModeloConectadoTests.Todas();

@@ -28,6 +28,19 @@ public static class Mudanza
         public List<string> Fallidos { get; init; } = new();
         /// <summary>Carpetas que no existían y hubo que crear: al deshacer se retiran si quedan vacías.</summary>
         public List<string> CarpetasCreadas { get; init; } = new();
+
+        /// <summary>
+        /// Compañeros que se quedaron atrás —el destino estaba ocupado, o el
+        /// fichero desapareció entre medias—.
+        ///
+        /// <para>
+        /// Se cuentan porque callarlos hacía daño en silencio: el vídeo llegaba a
+        /// su carpeta, la ventana decía «hechas, 0 fallos», y el subtítulo se
+        /// quedaba en otro sitio. No está borrado, pero para el servidor de medios
+        /// ha dejado de existir, y nadie se enteraba.
+        /// </para>
+        /// </summary>
+        public List<string> CompanerosSinMover { get; init; } = new();
     }
 
     /// <summary>
@@ -80,8 +93,9 @@ public static class Mudanza
                 var hechos = new List<(string, string)>();
                 foreach (var (de, a) in companeros)
                 {
-                    if (File.Exists(a) || !File.Exists(de)) continue;
-                    try { File.Move(de, a); hechos.Add((de, a)); } catch { }
+                    if (File.Exists(a) || !File.Exists(de)) { parte.CompanerosSinMover.Add(de); continue; }
+                    try { File.Move(de, a); hechos.Add((de, a)); }
+                    catch { parte.CompanerosSinMover.Add(de); }
                 }
 
                 parte.Movidos.Add(new(origen, destino, hechos));
