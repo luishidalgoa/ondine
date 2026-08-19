@@ -10,8 +10,7 @@ namespace Ondine.Reindex.Tests;
 /// No forma parte de la tanda —depende de un disco concreto, y las pruebas no
 /// pueden—: se lanza a mano.
 /// </para>
-/// <code>dotnet run --project tests/Reindex.Tests -- --informe "C:
-uta\Movies"</code>
+/// <code>dotnet run --project tests/Reindex.Tests -- --informe RUTA</code>
 /// <para>
 /// Existe porque las pruebas inventadas no ven lo que hay ahí fuera. Este arnés
 /// encontró, en la primera pasada sobre 75 películas: que el 71 % vivía en
