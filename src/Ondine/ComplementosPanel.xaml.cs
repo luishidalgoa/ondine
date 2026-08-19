@@ -123,11 +123,26 @@ public partial class ComplementosPanel : UserControl
     private readonly ObservableCollection<Puesto> _puestos = new();
     private readonly ObservableCollection<Oferta> _tienda = new();
 
-    private readonly ReindexCatalog? _catalogo;
+    /// <summary>
+    /// Lo que hay AHORA MISMO en Organizar. No se guarda: se pregunta.
+    ///
+    /// <para>
+    /// El panel se conserva entre aperturas a propósito —para no tirar una lista
+    /// que costó minutos traer—, y por eso guardarse el catálogo al construirlo
+    /// era quedarse con el primero que hubiera puesto: cargabas otro catálogo,
+    /// volvías al panel, y seguía cotejando contra el anterior. Si al abrirlo la
+    /// primera vez no había ninguno, no cotejaba nunca y <b>salía todo como que
+    /// no lo tienes</b>. Preguntarlo cada vez hace que eso no pueda pasar.
+    /// </para>
+    /// </summary>
+    public sealed record EstadoDeOrganizar(
+        ReindexCatalog? Catalogo,
+        IReadOnlyList<ReindexResolution> LoQueHay,
+        string RutaCatalogo);
+
+    private readonly Func<EstadoDeOrganizar> _ahora;
 
     /// <summary>La ruta del catálogo abierto: la clave con la que se recuerda su lista.</summary>
-    private readonly string _rutaCatalogo = "";
-    private readonly IReadOnlyList<ReindexResolution> _loQueHay;
     private CancellationTokenSource? _corte;
     private bool _enTienda;
     private Action? _accionVacio;
@@ -141,13 +156,23 @@ public partial class ComplementosPanel : UserControl
     /// <summary>Han pedido cerrar el panel desde dentro.</summary>
     public event Action? Cerrar;
 
-    public ComplementosPanel(ReindexCatalog? catalogo, IReadOnlyList<ReindexResolution>? loQueHay,
-                              Complemento? elegido = null, string rutaCatalogo = "")
+    /// <summary>
+    /// Una línea para el Registro de la aplicación.
+    ///
+    /// <para>
+    /// Existe porque el error de un complemento se pintaba en el panel y se
+    /// perdía al cerrarlo. Cuando hizo falta saber POR QUÉ había fallado una
+    /// lectura semanas antes, no había forma: el texto exacto no estaba en
+    /// ninguna parte. Lo que se ve una vez y no se guarda, no se puede
+    /// diagnosticar después.
+    /// </para>
+    /// </summary>
+    public event Action<string>? Log;
+
+    public ComplementosPanel(Func<EstadoDeOrganizar> ahora, Complemento? elegido = null)
     {
         InitializeComponent();
-        _catalogo = catalogo;
-        _loQueHay = loQueHay ?? Array.Empty<ReindexResolution>();
-        _rutaCatalogo = rutaCatalogo;
+        _ahora = ahora;
 
         // Va acoplado a la ventana, no flotando: no hay nada que arrastrar ni
         // ventana que cerrar. Pedir el cierre es cosa de quien lo aloja, que es
@@ -218,6 +243,12 @@ public partial class ComplementosPanel : UserControl
             listaInstalados.SelectedIndex = 0;
 
         MostrarElElegido();
+
+        // Y se vuelve a cotejar: entre una apertura y la siguiente puedes haber
+        // cargado otro catálogo o analizado otra carpeta, y las etiquetas de la
+        // lista que ya está traída tienen que decir la verdad de AHORA.
+        Cotejar();
+        RefrescarPie();
     }
 
     /// <summary>
@@ -307,7 +338,7 @@ public partial class ComplementosPanel : UserControl
         // La lista de la que salió lo último que se cotejó con ESTE catálogo. Es
         // lo que evita volver a pegar el mismo enlace cada vez, y va por catálogo
         // porque la lista de una serie no vale para otra.
-        txtFuente.Text = ReindexStore.CargarFuente(_rutaCatalogo, c.Id);
+        txtFuente.Text = ReindexStore.CargarFuente(_ahora().RutaCatalogo, c.Id);
         PintarPermisoModelo(c);
         PintarDesinstalar(c);
 
@@ -409,7 +440,7 @@ public partial class ComplementosPanel : UserControl
         // no se pueden cotejar contra nada es devolver la lista tal cual está en
         // la web: todo el valor de esto es responder «¿qué me falta?», y esa
         // pregunta no existe sin una biblioteca contra la que hacerla.
-        if (_catalogo is null)
+        if (_ahora().Catalogo is null)
         {
             Estado(Textos.Instancia.ComplementosHaceFaltaCatalogo, "");
             return;
@@ -428,7 +459,7 @@ public partial class ComplementosPanel : UserControl
 
         // Se apunta ANTES de listar, no después: si la lista tarda o falla, el
         // enlace que acabas de pegar no se pierde. Y va atada a ESTE catálogo.
-        ReindexStore.GuardarFuente(_rutaCatalogo, c.Id, fuente);
+        ReindexStore.GuardarFuente(_ahora().RutaCatalogo, c.Id, fuente);
 
         try
         {
@@ -489,14 +520,19 @@ public partial class ComplementosPanel : UserControl
         Cotejar();
         btnSoloFaltan.IsEnabled = btnNinguno.IsEnabled = true;
         RefrescarPie();
-        if (error is not null) lblEstado.Text = error;
+        if (error is not null)
+        {
+            lblEstado.Text = error;
+            Log?.Invoke(string.Format(Textos.Instancia.ComplementosLogError,
+                                      Elegido?.Nombre ?? "?", error));
+        }
     }
 
     private void Cotejar()
     {
         if (_filas.Count == 0) return;
 
-        if (_catalogo is null)
+        if (_ahora().Catalogo is null)
         {
             foreach (var f in _filas)
             {
@@ -510,7 +546,9 @@ public partial class ComplementosPanel : UserControl
             return;
         }
 
-        var veredictos = CotejoDeLista.Cotejar(_filas.Select(f => f.Titulo), _catalogo, _loQueHay);
+        var estado = _ahora();
+        var veredictos = CotejoDeLista.Cotejar(_filas.Select(f => f.Titulo),
+                                               estado.Catalogo!, estado.LoQueHay);
 
         for (int i = 0; i < _filas.Count && i < veredictos.Count; i++)
         {
@@ -704,7 +742,13 @@ public partial class ComplementosPanel : UserControl
         catch (OperationCanceledException) { }
         finally { btnTraer.IsEnabled = btnListar.IsEnabled = true; }
 
-        if (error is not null) { lblEstado.Text = error; return; }
+        if (error is not null)
+        {
+            lblEstado.Text = error;
+            Log?.Invoke(string.Format(Textos.Instancia.ComplementosLogError,
+                                      c.Nombre, error));
+            return;
+        }
 
         lblEstado.Text = string.Format(Textos.Instancia.ComplementosTraidos, traidos.Count);
 

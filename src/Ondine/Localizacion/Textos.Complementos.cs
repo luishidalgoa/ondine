@@ -145,6 +145,12 @@ public sealed partial class Textos
         "{0} ticked of {1}  ·  {2} missing",
         "{0} marcados de {1}  ·  te faltan {2}");
 
+    // {0} = el complemento · {1} = lo que dijo. Va al Registro para que el error
+    // exacto se pueda leer más tarde y no solo en el momento en que ocurre.
+    public string ComplementosLogError => Idioma.Elegir(
+        "Add-on «{0}» failed: {1}",
+        "El complemento «{0}» ha fallado: {1}");
+
     public string ComplementosTraer => Idioma.Elegir("Download", "Descargar");
 
     public string ComplementosDondeDejarlos => Idioma.Elegir(
