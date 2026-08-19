@@ -3,18 +3,30 @@
 > Escrito el 19 de agosto de 2026. El producto lleva público desde el 8 de agosto y **no se ha
 > anunciado en ningún sitio**: esto es lo que falta.
 
-## Qué hay publicado ya
+## Estado, a 19 de agosto
+
+| Canal | Estado |
+|---|---|
+| **r/selfhosted**, New Project Megathread | ✅ **publicado** — [comentario](https://old.reddit.com/r/selfhosted/comments/1vnoqxf/new_project_megathread_week_of_13_aug_2026/) |
+| **Discussions de Jellyfin**, *Show and tell* | ✅ **publicado** — [#17675](https://github.com/orgs/jellyfin/discussions/17675) |
+| **r/jellyfin** | listo para publicar, sin traba ninguna |
+| **r/PleX** | hay que pedir permiso por modmail **antes**; el texto está escrito |
+| **Lemmy `selfhosted`** | hace falta cuenta |
+| **Show HN** | ⛔ bloqueado por antigüedad de cuenta. Semanas |
+| **r/DataHoarder** | ⛔ **descartado**, va contra dos reglas suyas |
+| **LinkedIn** y **X** | esperando a que el spot esté en YouTube |
+| Hilo propio en **r/selfhosted** | 20 de octubre, cuando el proyecto cumpla 3 meses |
+
+## Qué hay publicado del producto
 
 | Cosa | Estado | Cuándo |
 |---|---|---|
-| Repositorio `luishidalgoa/ondine` | público | — |
+| Repositorio `luishidalgoa/ondine` | público, con imagen social propia | — |
 | Release **v1.8.0** con instalador y 5 binarios de CLI | publicada, no borrador | 8 ago 2026 |
-| Landing `ondine.hdglabs.com` (EN por defecto + ES) | viva, con el spot embebido | último despliegue, 5 ago |
-| Spot 16:9 ES, 16:9 EN y vertical | renderizados, con miniatura y ficha de YouTube escrita | — |
-| **Anuncio en cualquier sitio** | **nada** | — |
+| Landing `ondine.hdglabs.com` (EN por defecto + ES) | viva, con el spot embebido | 19 ago |
+| Spot 16:9 ES, 16:9 EN y vertical | renderizados; **sin subir a YouTube** | — |
 
-La landing enlaza a `releases/latest`, así que no se queda vieja al sacar versión. Eso está bien
-resuelto y no hay que tocarlo antes de lanzar.
+La landing enlaza a `releases/latest`, así que no se queda vieja al sacar versión.
 
 ## La decisión que manda todo: por dónde NO entrar
 
@@ -51,8 +63,7 @@ después, sí — y lo escribe en los comentarios.
       doblaje es una cuenta que este público hace de cabeza.
 - [ ] **Subir el spot a YouTube** (ES, EN y el vertical). El texto está escrito en
       `spot/videos/*/YOUTUBE.md`. Sin el vídeo público no hay nada que enlazar en X ni en LinkedIn.
-- [x] **Reglas de r/selfhosted, leídas.** Y cambian el plan, ver abajo. Faltan las de r/jellyfin,
-      r/PleX y r/DataHoarder, que hay que leer el mismo día de cada post.
+- [x] **Reglas de los cuatro subs, leídas.** Y cambian el plan, ver abajo.
 
 ## Lo que dicen las reglas de r/selfhosted, que manda sobre todo lo demás
 
@@ -93,8 +104,9 @@ primero**.
 | Hoy | **New Project Megathread de r/selfhosted** | Es el único sitio donde un proyecto de un mes puede ir en ese sub. Menos visible que un hilo propio, pero legal y con gente que lo lee a diario. |
 | +1 día | **Show HN** | No tiene regla de antigüedad, así que aquí sí puede ir el lanzamiento de verdad. Entre semana y por la mañana en EE. UU. Pide otro texto: interesa cómo está hecho, no para qué sirve. |
 | +2 días | **Lemmy, comunidad `selfhosted`** | Parte de este público se fue de Reddit. Cuesta poco y el hilo dura. |
-| +3 días | **r/DataHoarder** | Solo el ángulo del remux sin recomprimir. Ni una palabra de renombrado. Leer sus reglas ese día. |
-| +4 y +5 | **r/jellyfin** y **r/PleX**, separados | Solo si lo anterior no ha ido mal. El ángulo aquí es «el episodio sale como Desconocido». Leer sus reglas ese día. |
+| ~~+3 días~~ | ~~r/DataHoarder~~ | **Descartado.** Su regla 6 prohíbe «advertising websites, software» y los posts de «look what I built»; la 7 excluye los «vibe-coded projects». Con la declaración de IA por delante, es retirada segura. |
+| +1 día | **r/jellyfin** | **Vía libre.** Su regla de publicidad es sobre la VENTA de servicios, y esto es gratis y MIT. Ni antigüedad, ni megahilo, ni día de la semana. |
+| Cuando contesten | **r/PleX** | Su regla 6 exige **modmail pidiendo permiso antes**, «explain how it was developed» incluido. El texto está más abajo. |
 | Cualquier día | **Discussions de `jellyfin/jellyfin`**, categoría *Show and tell* | El único canal sin barrera de entrada: ni antigüedad de cuenta ni karma, y la categoría dice literalmente «show off something you've made». No va a mover descargas —13 hilos desde 2022, uno o dos votos cada uno— pero se queda ahí para quien lo busque dentro de un año. |
 | Cuando esté el vídeo | **LinkedIn** (ES) y **X/Mastodon** | Red propia. No mueve descargas; sí posiciona. |
 | **20 oct 2026, miércoles** | **Hilo propio en r/selfhosted**, con *flair* de herramienta | Ya no aplica la regla 6. Es el post grande, y para entonces habrá comentarios de todo lo anterior con los que afinarlo. |
@@ -103,7 +115,7 @@ primero**.
 
 # Los textos
 
-## 1 · New Project Megathread de r/selfhosted (EN) — **el de hoy**
+## 1 · New Project Megathread de r/selfhosted (EN) — ✅ PUBLICADO
 
 Va como **comentario de primer nivel** en el megahilo de la semana, con la plantilla que pide el
 sub. Enlace del vigente:
@@ -154,7 +166,7 @@ had to correct the site because it claimed a figure I could not reproduce.
 > diferencia de Sonarr o FileBot?»*, ya contestada en el cuerpo. La segunda, por cómo está el sub,
 > será sobre la IA: la respuesta es la que ya va escrita, sin defenderse.
 
-## 1-bis · Hilo propio en r/selfhosted (EN) — **para el 20 de octubre, no para hoy**
+## 2 · Hilo propio en r/selfhosted (EN) — **para el 20 de octubre, no para hoy**
 
 **Título**
 
@@ -202,13 +214,13 @@ https://ondine.hdglabs.com
 > salir seguro es *«¿en qué se diferencia de Sonarr o FileBot?»*: ya está contestada en el cuerpo,
 > así que remitir a ello sin repetirlo entero.
 
-## 2 · Lemmy, comunidad `selfhosted` (EN)
+## 3 · Lemmy, comunidad `selfhosted` (EN) — falta cuenta
 
 Mismo título. El cuerpo, el de Reddit a la mitad: aquí los textos largos se leen menos. Dejar los
 dos primeros párrafos, la línea de honestidad sobre Sonarr y el enlace; fuera la lista de «lo
 aburrido».
 
-## 3 · Show HN (EN) — **bloqueado, no es cosa del texto**
+## 4 · Show HN (EN) — ⛔ BLOQUEADO, y no es cosa del texto
 
 Intentado el 19 de agosto. HN lo rechaza antes de publicar y redirige a `/showlim`:
 
@@ -266,7 +278,17 @@ Windows GUI plus a CLI for Linux/macOS/Windows over the same engine. C#/.NET 9, 
 https://github.com/luishidalgoa/ondine
 ```
 
-## 4 · r/DataHoarder (EN)
+## 5 · r/DataHoarder (EN) — ⛔ DESCARTADO
+
+Leídas sus reglas el 19 de agosto, **no se puede publicar ahí**. Dos, no una:
+
+- **Regla 6:** *«No unapproved sale threads, advertisement posts […] This includes advertising
+  websites, software»*, y además *«No "look what I built" posts»*.
+- **Regla 7:** *«This sub is for Data Hoarders, not […] for posting AI-generated content or
+  **Vibe-coded projects**»*. Con la declaración de IA por delante —que no se va a omitir—, es
+  retirada segura y probablemente baneo.
+
+El texto se queda escrito por si algún día cambia el enfoque, pero **no se manda**.
 
 Sin una palabra de renombrado.
 
@@ -295,7 +317,53 @@ part stands alone and works on any file.
 https://ondine.hdglabs.com
 ```
 
-## 5 · r/jellyfin y r/PleX (EN) — dos días distintos y dos textos distintos
+## 6 · r/jellyfin (EN) — vía libre, listo para publicar
+
+Sin trabas: la única regla de publicidad del sub es sobre **vender** servicios de Jellyfin, y esto
+es gratis y MIT. Se publica y ya.
+
+## 7 · r/PleX — antes hay que pedir permiso por modmail
+
+Su regla 6 es explícita: *«r/Plex does NOT allow self promotion of your app/service. If you ignore
+this rule you may be banned. If you wish to share an application […] you must modmail asking for
+permission first […] explain how it was developed. If open source, also send a link to the
+codebase.»*
+
+Publicar sin eso es arriesgar la cuenta. **Modmail primero**, a `/r/PleX`:
+
+**Asunto**
+
+```
+Permission to share a free open-source tool for preparing libraries before Plex scans them
+```
+
+**Cuerpo**
+
+```
+Hi mods,
+
+Rule 6 says to ask before sharing an application, so here I am.
+
+What it is: Ondine, a free MIT-licensed desktop app (Windows) plus a CLI (Linux/macOS/Windows) that
+renames and organises episode files against a catalogue BEFORE Plex scans them — for the libraries
+that otherwise land as Unknown. It also handles a case I could not solve with anything else: one
+file that holds two or three separate stories, which it names E12a / E12b / E12c and can split
+without re-encoding. It is not a Plex plugin, does not talk to your server, and touches nothing but
+the filenames on disk.
+
+Nothing is sold, there is no paid tier, no account, no telemetry, and no affiliate anything.
+
+How it was developed, since you ask: it is written with AI coding assistants (Claude Code) under my
+direction — I own the architecture, the product decisions and the review of every change. It has
+been in development since 20 July 2026 and is on release 1.8.0. Codebase, since it is open source:
+https://github.com/luishidalgoa/ondine · site: https://ondine.hdglabs.com
+
+If you would rather I did not post it, that is a fine answer and I will not.
+
+Thanks for your time.
+```
+
+## 8 · El texto del post, para r/jellyfin y para r/PleX (EN) — dos días y dos versiones
 
 **Título, jellyfin**
 
@@ -330,7 +398,9 @@ It needs a catalogue file, which the app can generate with an AI from any episod
 Free, MIT, Windows app plus a CLI. https://ondine.hdglabs.com
 ```
 
-## 5-bis · Discussions de `jellyfin/jellyfin`, categoría *Show and tell* (EN)
+## 9 · Discussions de `jellyfin/jellyfin`, *Show and tell* (EN) — ✅ PUBLICADO
+
+> Publicado el 19 de agosto: https://github.com/orgs/jellyfin/discussions/17675
 
 No estaba en la primera versión de este plan y tendría que haber estado. Mirado el 19 de agosto:
 la categoría existe, dice *«Show off something you've made»*, y no pide antigüedad ni karma — que
@@ -384,7 +454,7 @@ in the docs is measured rather than estimated.
 https://github.com/luishidalgoa/ondine · https://ondine.hdglabs.com
 ```
 
-## 6 · LinkedIn (ES)
+## 10 · LinkedIn (ES) — esperando al vídeo
 
 ```
 Plex y Jellyfin enseñan una biblioteca preciosa, pero solo si los ficheros ya están bien nombrados.
@@ -407,7 +477,7 @@ Nada se toca sin aprobación, y hay deshacer.
 https://ondine.hdglabs.com
 ```
 
-## 7 · X y Mastodon (EN)
+## 11 · X y Mastodon (EN) — esperando al vídeo
 
 ```
 Ondine is out. It renames TV episodes the way Plex and Jellyfin expect — and handles the case
