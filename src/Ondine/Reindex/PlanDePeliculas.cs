@@ -74,9 +74,14 @@ public static class PlanDePeliculas
 
         foreach (var origen in todos)
         {
-            var carpeta = Path.GetDirectoryName(Path.GetFullPath(origen)) ?? raizPlena;
-            var enLaRaiz = string.Equals(carpeta, raizPlena, StringComparison.OrdinalIgnoreCase);
-            var esColeccion = !enLaRaiz && cuantasPorCarpeta.GetValueOrDefault(carpeta) > 1;
+            // Para AGRUPAR y COMPARAR se usa la ruta expandida; para CONSTRUIR el
+            // destino, la que entró tal cual. Mezclarlas cambia la forma de la
+            // ruta —fuera de Windows, «C:lgo» se expande contra el directorio
+            // de trabajo— y el destino sale con una raíz que nadie pidió.
+            var carpetaPlena = Path.GetDirectoryName(Path.GetFullPath(origen)) ?? raizPlena;
+            var carpeta = Path.GetDirectoryName(origen) ?? raiz;
+            var enLaRaiz = string.Equals(carpetaPlena, raizPlena, StringComparison.OrdinalIgnoreCase);
+            var esColeccion = !enLaRaiz && cuantasPorCarpeta.GetValueOrDefault(carpetaPlena) > 1;
 
             // La carpeta solo aporta año cuando es de esta película. En una
             // colección el nombre de la carpeta es «Disney», que no dice nada.
