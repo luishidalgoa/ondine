@@ -33,26 +33,24 @@ public static class InformeBiblioteca
 
         Console.WriteLine($"── {ficheros.Count} ficheros en {raiz}\n");
 
-        int conAnio = 0, sinAnio = 0;
-        var carpetas = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var f in ficheros)
+        var plan = PlanDePeliculas.Montar(ficheros, raiz);
+        foreach (var paso in plan)
         {
-            var carpeta = Path.GetFileName(Path.GetDirectoryName(f)) ?? "";
-            carpetas[carpeta] = carpetas.GetValueOrDefault(carpeta) + 1;
-
-            var ficha = TituloDePelicula.Leer(Path.GetFileName(f));
-            if (ficha.Anio is null) sinAnio++; else conAnio++;
-
-            var destino = DestinoDePelicula.HayQueMover(f, raiz);
-            var adonde = destino is null ? "(ya está)" : Path.GetFileName(Path.GetDirectoryName(destino));
-
-            Console.WriteLine($"{carpeta,-28} | {Path.GetFileName(f),-58} | {ficha.Titulo,-46} | {ficha.Anio?.ToString() ?? "—",-6} | {adonde}");
+            var de = Path.GetRelativePath(raiz, paso.Origen);
+            var a = paso.Destino is null ? "" : Path.GetRelativePath(raiz, paso.Destino);
+            if (paso.Motivo == PlanDePeliculas.Porque.YaEsta) continue;
+            Console.WriteLine($"{paso.Motivo,-12} | {de,-62} | {a}");
         }
 
-        Console.WriteLine($"\ncon año: {conAnio}   ·   SIN año: {sinAnio}");
-        Console.WriteLine("\n── carpetas con más de un fichero (¿colecciones?) ──");
-        foreach (var (c, n) in carpetas.Where(x => x.Value > 1).OrderByDescending(x => x.Value))
-            Console.WriteLine($"  {n,3}  {c}");
+        Console.WriteLine();
+        foreach (var g in plan.GroupBy(p => p.Motivo).OrderByDescending(g => g.Count()))
+            Console.WriteLine($"  {g.Count(),3}  {g.Key}");
+
+        // Lo que de verdad importa comprobar: que NADIE sale de una carpeta de
+        // coleccion. Si esto no es cero, la regla no esta funcionando.
+        var salen = plan.Count(p => p.Destino is not null
+            && !string.Equals(Path.GetDirectoryName(p.Origen), Path.GetDirectoryName(p.Destino),
+                              StringComparison.OrdinalIgnoreCase));
+        Console.WriteLine($"\n  cambian de carpeta: {salen}");
     }
 }

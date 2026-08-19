@@ -45,7 +45,13 @@ es un acuerdo de buena voluntad: está verificado.
   lado. Leer el año tiene más trampa de la que parece, porque **hay títulos que son un año**: manda
   el que va entre paréntesis, uno al principio del nombre es título —«1917», «2001 A Space
   Odyssey»— y uno que aún no ha pasado tampoco es un estreno, que es lo único que salva a «Blade
-  Runner 2049» cuando viene sin paréntesis. **Identificarlas contra una base de datos pública
+  Runner 2049» cuando viene sin paréntesis. **Una carpeta con varias películas dentro no se desmonta.** Medido sobre una biblioteca real de
+  75 películas: **53 vivían en carpetas de colección** —«Disney» con 26, «Bob Esponja» con 10,
+  «Paco Martínez Soria» con 8—. La convención de Plex es una carpeta por película, así que
+  desmontarlas sería lo «correcto» para el escáner y destruiría la forma en que su dueño mira su
+  biblioteca. Dentro de una colección se limpia el nombre del fichero, que es lo que el escáner
+  lee, y nada sale de su sitio. Sobre esa misma biblioteca: 64 de 75 no se tocan y solo 6 cambian
+  de carpeta. **Identificarlas contra una base de datos pública
   todavía no está**: por ahora, marcar la carpeta como de películas y darle a analizar lo dice y se
   para, en vez de no hacer nada en silencio.
 
