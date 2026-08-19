@@ -1,11 +1,12 @@
 {
   "nombre": "YouTube",
-  "descripcion": "Lee una lista de reproducción pública y coteja lo que hay en ella con tu catálogo, episodio por episodio. Pega el enlace de la lista en la casilla de fuente. No descarga: lee.",
-  "version": "1.0.2",
+  "descripcion": "Lee una lista de reproducción pública, la coteja con tu catálogo y descarga los vídeos accesibles que elijas, hasta 480p.",
+  "version": "1.1.0",
   "autor": "Ondine",
   "ejecutable": "youtube.cmd",
   "capacidades": [
-    "importar"
+    "importar",
+    "descargar"
   ],
   "ambito": [
     "organizar"

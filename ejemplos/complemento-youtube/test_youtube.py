@@ -4,12 +4,16 @@ Se corren con la biblioteca estandar -`python -m unittest`- a proposito: un
 complemento de ejemplo que pide instalar pytest para leerlo es un complemento
 que nadie lee.
 """
+import os
+import tempfile
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
-from youtube import (diagnostico_no_disponibles, es_accesible, es_residuo,
-                     ficha_aprovechable, historias_del_modelo, limpiar, segmentos,
-                     titulo_completo)
+from youtube import (_peticion_de_descarga, diagnostico_no_disponibles,
+                     es_accesible, es_residuo, ficha_aprovechable,
+                     historias_del_modelo, limpiar, segmentos, titulo_completo,
+                     traer)
 
 
 class LimpiarTitulo(unittest.TestCase):
@@ -61,6 +65,52 @@ class DisponibilidadDeLaLista(unittest.TestCase):
         diagnostico = diagnostico_no_disponibles([privado, miembros])
         self.assertIn("1 privados", diagnostico)
         self.assertIn("1 solo para miembros", diagnostico)
+
+
+class DescargarLosElegidos(unittest.TestCase):
+    def test_rechaza_un_id_que_no_sea_de_youtube(self):
+        with tempfile.TemporaryDirectory() as destino:
+            ids, carpeta, reparo = _peticion_de_descarga(
+                ["../../algo", "--destino", destino])
+
+        self.assertIsNone(ids)
+        self.assertIsNone(carpeta)
+        self.assertIn("identificador", reparo)
+
+    def test_descarga_solo_los_ids_recibidos_y_devuelve_el_fichero(self):
+        with tempfile.TemporaryDirectory() as destino:
+            fichero = os.path.join(destino, "Episodio [abcdefghijk].mp4")
+            respuesta = SimpleNamespace(
+                returncode=0, stderr="", stdout="@@ONDINE_FILE@@" + fichero + "\n")
+            with patch("youtube.shutil.which", return_value="yt-dlp"), \
+                 patch("youtube.subprocess.run", return_value=respuesta) as ejecutar, \
+                 patch("youtube.decir") as decir:
+                traer(["abcdefghijk", "--destino", destino])
+
+        orden = ejecutar.call_args.args[0]
+        self.assertEqual(orden[-1], "https://www.youtube.com/watch?v=abcdefghijk")
+        self.assertTrue(any("best[height<=480]" in argumento for argumento in orden))
+        hecho = [c.kwargs for c in decir.call_args_list if c.kwargs.get("tipo") == "hecho"]
+        self.assertEqual(hecho[0]["ficheros"], [fichero])
+
+    def test_un_bloqueado_no_impide_entregar_otro_que_si_bajo(self):
+        with tempfile.TemporaryDirectory() as destino:
+            fichero = os.path.join(destino, "Bueno [abcdefghijk].mp4")
+            bien = SimpleNamespace(returncode=0, stderr="",
+                                   stdout="@@ONDINE_FILE@@" + fichero + "\n")
+            bloqueado = SimpleNamespace(returncode=1,
+                                        stderr="ERROR: Video unavailable",
+                                        stdout="")
+            with patch("youtube.shutil.which", return_value="yt-dlp"), \
+                 patch("youtube.subprocess.run", side_effect=[bien, bloqueado]), \
+                 patch("youtube.decir") as decir:
+                traer(["abcdefghijk", "lmnopqrstuv", "--destino", destino])
+
+        hecho = [c.kwargs for c in decir.call_args_list if c.kwargs.get("tipo") == "hecho"]
+        self.assertEqual(hecho[0]["ficheros"], [fichero])
+        textos = [c.kwargs.get("texto", "") for c in decir.call_args_list]
+        self.assertTrue(any("1 correctos" in texto and "1 no disponibles" in texto
+                            for texto in textos))
 
 
 class TituloConLaDescripcion(unittest.TestCase):
