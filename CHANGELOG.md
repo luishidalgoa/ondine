@@ -32,6 +32,26 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Ordenar una carpeta de películas ya se puede hacer.** Antes se podía marcar la carpeta como de
+  películas y ahí acababa todo. Ahora, con «Películas» puesto, **Analizar abre su propia ventana**:
+  enseña qué cambiaría para que cada una acabe como `Título (Año)/Título (Año).ext` —que es lo que
+  esperan Plex y Jellyfin— y **no toca nada hasta que aceptas**, con el mismo trato que el
+  reordenado por temporadas. Los subtítulos y las fichas viajan con su vídeo, nunca se sobrescribe
+  nada, y se puede deshacer. Avisa igual de lo que va a costar: cambiar de disco, entrar en una
+  carpeta sincronizada, o mover ficheros que solo están en la nube.
+- **Una carpeta con varias películas dentro no se desmonta.** Se trata como colección: se limpia el
+  nombre de cada fichero, que es lo que lee el escáner, y nada sale de su sitio.
+
+### Cambiado
+
+- **Mover ficheros vive ahora en un solo sitio.** El reordenado por temporadas y el de películas
+  comparten el mismo motor. Lo delicado no es mover un fichero: es no pisar nada, llevarse los
+  compañeros y poder volver atrás — y de eso no puede haber dos copias, porque divergen y la que se
+  quede corta lo hará sobre la biblioteca de alguien.
+
+
 ## [1.9.0] - 2026-08-19
 
 ### Añadido

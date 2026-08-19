@@ -216,6 +216,58 @@ public sealed partial class Textos
         "Choose the folder whose files you want to organise",
         "Elegir la carpeta cuyos ficheros quieres organizar");
 
+    // ── La ventana de películas ───────────────────────────────────────────────
+    public string PeliculasTitulo => Idioma.Elegir("Sort out films", "Ordenar las películas");
+
+    // {0} = cuántas tienen trabajo.
+    public string PeliculasResumen => Idioma.Elegir(
+        "{0} films would be renamed or moved.",
+        "{0} películas se renombrarían o se moverían.");
+
+    public string PeliculasResumenNinguno => Idioma.Elegir(
+        "Nothing to do: every film already follows the convention.",
+        "No hay nada que hacer: todas cumplen ya la convención.");
+
+    // {0} = cuántas se quedan como están.
+    public string PeliculasResumenQuietos => Idioma.Elegir(
+        " {0} stay as they are.",
+        " {0} se quedan como están.");
+
+    public string PeliculasPorqueVa => Idioma.Elegir("moves", "se coloca");
+    public string PeliculasPorqueEnColeccion => Idioma.Elegir("renamed in place", "se renombra donde está");
+    public string PeliculasPorqueYaEsta => Idioma.Elegir("already right", "ya está bien");
+    public string PeliculasPorqueSinTitulo => Idioma.Elegir("no title in the name", "sin título en el nombre");
+    public string PeliculasPorqueOcupado => Idioma.Elegir("name already taken there", "ese nombre ya está ocupado");
+
+    public string PeliculasVerSoloLosQueVan => Idioma.Elegir(
+        "Show only the ones with work to do",
+        "Enseñar solo las que tienen trabajo");
+
+    // {0} = cuántas se van a tocar.
+    public string PeliculasBoton => Idioma.Elegir("Apply to {0}", "Aplicar a {0}");
+    public string PeliculasBotonNada => Idioma.Elegir("Apply", "Aplicar");
+
+    // Es una simulación hasta que se pulsa, y hay que decirlo donde se lee. Y la
+    // segunda frase es la que evita la decepción: sin base de datos, un título
+    // mal escrito en el fichero sigue mal escrito después.
+    public string PeliculasPie => Idioma.Elegir(
+        "Nothing has been touched yet. Names come from the file and its folder — there is no database behind this yet, so a misspelt title stays misspelt.",
+        "Todavía no se ha tocado nada. Los nombres salen del fichero y de su carpeta —aún no hay ninguna base de datos detrás—, así que un título mal escrito seguirá mal escrito.");
+
+    public string PeliculasDeshacer => Idioma.Elegir("Undo", "Deshacer");
+
+    // {0} = cuántas se movieron · {1} = cuántas fallaron.
+    public string PeliculasHecho => Idioma.Elegir("{0} done.", "{0} hechas.");
+    public string PeliculasHechoConFallos => Idioma.Elegir(
+        "{0} done, {1} could not be touched.",
+        "{0} hechas, {1} no se pudieron tocar.");
+    public string PeliculasDeshecho => Idioma.Elegir("{0} put back.", "{0} devueltas a su sitio.");
+
+    public string PeliculasAbrir => Idioma.Elegir("Sort out films…", "Ordenar las películas…");
+    public string PeliculasAbrirAyuda => Idioma.Elegir(
+        "Show what would change so each film ends up as «Title (Year)/Title (Year).ext», which is what Plex and Jellyfin expect. A folder holding several films is left alone: only the file names inside are cleaned up.",
+        "Enseña qué cambiaría para que cada película acabe como «Título (Año)/Título (Año).ext», que es lo que esperan Plex y Jellyfin. Una carpeta con varias películas dentro no se desmonta: solo se limpian los nombres de los ficheros.");
+
     // De qué es la carpeta. Va lo primero de la fila porque condiciona todo lo
     // demás: una película no tiene catálogo, ni temporada, ni número.
     public string OrganizarTipoBiblioteca => Idioma.Elegir("Library", "Biblioteca");
@@ -225,12 +277,6 @@ public sealed partial class Textos
     public string OrganizarTipoBibliotecaAyuda => Idioma.Elegir(
         "What this folder holds. A series is identified against a catalogue, with seasons and episode numbers; a film has none of that — its name is built from the title and the year read from the file itself. Remembered per folder.",
         "Qué hay en esta carpeta. Una serie se identifica contra un catálogo, con temporadas y números de episodio; una película no tiene nada de eso — su nombre se compone con el título y el año leídos del propio fichero. Se recuerda por carpeta.");
-
-    // Se dice y se para. Antes esto no hacía nada en silencio, porque el análisis
-    // pedía catálogo y una carpeta de películas nunca lo tiene.
-    public string OrganizarPeliculasTodavia => Idioma.Elegir(
-        "This folder is set to Films. Ondine can already read the title and the year from each filename, but identifying films against a public database is not in yet — that is what will let it tell one «Blade Runner» from another. For now it only renames series.",
-        "Esta carpeta está marcada como Películas. Ondine ya sabe leer el título y el año de cada nombre de fichero, pero identificarlas contra una base de datos pública todavía no está — es lo que permitirá distinguir un «Blade Runner» de otro. De momento solo renombra series.");
 
     public string OrganizarVinculosAyuda => Idioma.Elegir(
         "Folders linked to this catalogue: pick one, link the current one or remove the link",

@@ -598,6 +598,25 @@ public partial class OrganizarView : UserControl
         panelPlantilla.Visibility = esSerie ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>
+    /// Abre la ventana de películas con lo que hay en la carpeta. Es una
+    /// simulación: no toca nada hasta que se acepta dentro.
+    /// </summary>
+    private void AbrirPeliculas(string carpeta)
+    {
+        if (_ficheros.Length == 0)
+        {
+            Aviso(Textos.Instancia.OrganizarSinVideos);
+            return;
+        }
+
+        var v = new PeliculasWindow(_ficheros, carpeta) { Owner = Window.GetWindow(this) };
+        v.ShowDialog();
+
+        // Si movió algo, las rutas de esta pantalla han dejado de existir.
+        if (v.MovioAlgo) RevisarCarpeta();
+    }
+
     private void RevisarCarpeta()
     {
         var carpeta = txtCarpeta.Text?.Trim() ?? "";
@@ -818,9 +837,13 @@ public partial class OrganizarView : UserControl
         // compararse. Se dice y se para, en vez de no hacer nada en silencio —que
         // es lo que pasaba antes, porque abajo hay un guard que pedía catálogo y
         // una carpeta de películas nunca lo tiene.
+        // Una carpeta de películas no se identifica con la cascada de episodios
+        // —no hay número, ni temporada, ni catálogo—, así que va por su propia
+        // ventana: la misma forma que el reordenado de temporadas, que propone
+        // entero y espera.
         if (TipoActual() == TipoDeBiblioteca.Pelicula)
         {
-            Aviso(Textos.Instancia.OrganizarPeliculasTodavia);
+            AbrirPeliculas(carpetaActual);
             return;
         }
 
