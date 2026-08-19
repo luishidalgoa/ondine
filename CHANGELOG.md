@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-08-19
+
 ### Añadido
 
 - **Ordenar una carpeta de películas ya se puede hacer.** Antes se podía marcar la carpeta como de
