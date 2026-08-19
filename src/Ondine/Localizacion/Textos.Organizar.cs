@@ -1155,6 +1155,23 @@ public sealed partial class Textos
         " {0} stay where they are.",
         " {0} se quedan donde están.");
 
+    // Lo que va a costar el movimiento, que por fuera no se ve. Un reordenado
+    // dentro del mismo disco es instantáneo; entre discos o hacia una nube, no.
+    // {0} = cuántos ficheros.
+    public string ReordenarRiesgoVolumen => Idioma.Elegir(
+        "{0} move to another drive: those get copied and deleted, not just renamed.",
+        "{0} van a otro disco: esos se copian y se borran, no solo se renombran.");
+
+    // {0} = cuántos ficheros · {1} = el nombre de la nube.
+    public string ReordenarRiesgoNube => Idioma.Elegir(
+        "{0} land inside {1} and will be uploaded again.",
+        "{0} entran en {1} y se volverán a subir.");
+
+    // {0} = cuántos ficheros.
+    public string ReordenarRiesgoMarcador => Idioma.Elegir(
+        "{0} are online-only: moving them downloads them in full.",
+        "{0} están solo en la nube: moverlos se los baja enteros.");
+
     // Los motivos, tal y como se le cuentan a quien mira la lista.
     public string ReordenarPorqueVa => Idioma.Elegir("moves", "se mueve");
     public string ReordenarPorqueYaEsta => Idioma.Elegir("already there", "ya está en su sitio");

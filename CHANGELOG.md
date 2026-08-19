@@ -32,6 +32,25 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Ordenar por temporadas avisa de lo que va a costar antes de que pulses.** Un movimiento se
+  ve siempre igual —una flecha de una carpeta a otra— y por debajo puede ser gratis o puede ser
+  una tarde. Dentro del mismo disco mover es reetiquetar; **a otro disco es copiar entero y
+  borrar**. Y si el destino cae dentro de una carpeta sincronizada donde el fichero no estaba,
+  se vuelve a subir todo, cosa que no se ve en esta pantalla sino en la barra de tareas, durante
+  horas. El tercer caso es el peor y el menos evidente: los ficheros que **solo están en la
+  nube** —los que ocupan cero y se descargan al abrirlos— se bajan enteros al moverlos; medido
+  en esta misma casa, un marcador de 277 MB tardó 18 segundos. Ahora los tres se cuentan y se
+  dicen arriba, con cuántos ficheros afecta cada uno. **No bloquea nada**: hay bibliotecas que
+  viven en la nube a propósito y reordenarlas es legítimo; lo que no lo es, es enterarse después.
+  Moverse dentro de la misma nube no avisa, porque ahí el cliente mueve una referencia y no sube
+  nada — un aviso que salta siempre es un aviso que se deja de leer.
+
+- **La Ayuda ya cuenta «Ordenar por temporadas».** La ventana llegó en la 1.7.0 y se quedó sin
+  explicar: qué mueve, qué **no** mueve y por qué, y por qué el nombre de la carpeta se elige a
+  mano en vez de seguir al idioma de la app.
+
 ### Corregido
 
 - **La protección contra las carpetas numeradas por otro se apagaba sola según ibas

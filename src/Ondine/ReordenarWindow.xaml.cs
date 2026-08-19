@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using Ondine.Localizacion;
 using Ondine.Reindex;
+using Ondine.Rutas;
 
 namespace Ondine;
 
@@ -136,6 +137,8 @@ public partial class ReordenarWindow : Window
                           + (quietos > 0 && van > 0
                               ? string.Format(Textos.Instancia.ReordenarResumenQuietos, quietos) : "");
 
+        PintarRiesgos();
+
         var visibles = chkSoloLosQueVan.IsChecked == true
             ? _plan.Where(p => p.Motivo == PlanDeReordenado.Porque.Va)
             : _plan;
@@ -145,6 +148,35 @@ public partial class ReordenarWindow : Window
         btnMover.Content = van > 0
             ? string.Format(Textos.Instancia.ReordenarBoton, van)
             : Textos.Instancia.ReordenarBotonNada;
+    }
+
+    /// <summary>
+    /// Lo que va a costar el movimiento, dicho antes de pulsar. No bloquea nada:
+    /// hay bibliotecas que viven en la nube a propósito y reordenarlas es
+    /// legítimo. Lo que no es legítimo es que se entere por la barra de tareas.
+    /// </summary>
+    private void PintarRiesgos()
+    {
+        // Las raíces se preguntan al sistema aquí y no dentro del cálculo: leer
+        // el registro es lo único que no se puede probar sin un Windows con
+        // nubes instaladas, así que se queda fuera de la decisión.
+        var avisos = RiesgoDelReordenado.Mirar(_plan, NubesDelEquipo.Registradas());
+
+        if (avisos.Count == 0)
+        {
+            cajaRiesgo.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        lblRiesgo.Text = string.Join("\n", avisos.Select(a => a.Que switch
+        {
+            RiesgoDelReordenado.Riesgo.CruzaVolumen =>
+                string.Format(Textos.Instancia.ReordenarRiesgoVolumen, a.Cuantos),
+            RiesgoDelReordenado.Riesgo.Nube =>
+                string.Format(Textos.Instancia.ReordenarRiesgoNube, a.Cuantos, a.Detalle),
+            _ => string.Format(Textos.Instancia.ReordenarRiesgoMarcador, a.Cuantos),
+        }));
+        cajaRiesgo.Visibility = Visibility.Visible;
     }
 
     private void Mover()

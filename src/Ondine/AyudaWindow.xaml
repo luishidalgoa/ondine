@@ -187,6 +187,7 @@
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosQueFalta}"/>
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosRepetido}"/>
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosSegmentos}"/>
+              <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosReordenar}"/>
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosOrdenar}"/>
             </StackPanel>
 
