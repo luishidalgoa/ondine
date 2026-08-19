@@ -95,6 +95,7 @@ primero**.
 | +2 días | **Lemmy, comunidad `selfhosted`** | Parte de este público se fue de Reddit. Cuesta poco y el hilo dura. |
 | +3 días | **r/DataHoarder** | Solo el ángulo del remux sin recomprimir. Ni una palabra de renombrado. Leer sus reglas ese día. |
 | +4 y +5 | **r/jellyfin** y **r/PleX**, separados | Solo si lo anterior no ha ido mal. El ángulo aquí es «el episodio sale como Desconocido». Leer sus reglas ese día. |
+| Cualquier día | **Discussions de `jellyfin/jellyfin`**, categoría *Show and tell* | El único canal sin barrera de entrada: ni antigüedad de cuenta ni karma, y la categoría dice literalmente «show off something you've made». No va a mover descargas —13 hilos desde 2022, uno o dos votos cada uno— pero se queda ahí para quien lo busque dentro de un año. |
 | Cuando esté el vídeo | **LinkedIn** (ES) y **X/Mastodon** | Red propia. No mueve descargas; sí posiciona. |
 | **20 oct 2026, miércoles** | **Hilo propio en r/selfhosted**, con *flair* de herramienta | Ya no aplica la regla 6. Es el post grande, y para entonces habrá comentarios de todo lo anterior con los que afinarlo. |
 
@@ -311,6 +312,60 @@ the country — which is exactly the material that ends up Unknown.
 It needs a catalogue file, which the app can generate with an AI from any episode-list page.
 
 Free, MIT, Windows app plus a CLI. https://ondine.hdglabs.com
+```
+
+## 5-bis · Discussions de `jellyfin/jellyfin`, categoría *Show and tell* (EN)
+
+No estaba en la primera versión de este plan y tendría que haber estado. Mirado el 19 de agosto:
+la categoría existe, dice *«Show off something you've made»*, y no pide antigüedad ni karma — que
+es justo lo que bloqueó r/selfhosted y Hacker News el mismo día.
+
+Expectativa honesta: **13 hilos desde 2022, uno o dos votos cada uno**. No es un canal de
+lanzamiento, es un canal *duradero*: se queda indexado y lo encuentra quien busque su problema
+dentro de un año. Cuesta diez minutos, así que sale a cuenta igual.
+
+Buscado antes si había un hilo al que sumarse en vez de abrir uno: no lo hay. Lo más cercano es
+«Support custom resolvers», de 2019, y colgar ahí un anuncio sería colarse.
+
+**Título**
+
+```
+Ondine: a desktop tool for the libraries Jellyfin files as Unknown — including one file that holds two episodes
+```
+
+**Cuerpo**
+
+```
+Jellyfin shows a beautiful library, but only when the filenames already say what the file is. When
+they do not it gives up, and the episode sits there as Unknown with no artwork and no synopsis.
+
+I built Ondine for the folders where that keeps happening. It is not a plugin and it does not touch
+your server at all — it renames the files on disk, before the scan, and then Jellyfin does what it
+already does well.
+
+The case it exists for, which I could not solve with anything else: one file carrying two or three
+separate stories. There is no filename that says "this is episodes 12a and 12b", so those folders
+stay broken no matter what you rename them to. Ondine matches each file against a catalogue, names
+the stories E12a / E12b / E12c, and can split them into separate files — it finds the cut on its own
+(black fade, plus what the catalogue says each story is) and remuxes without re-encoding.
+
+Around that: nothing is renamed without your approval and there is undo for the whole batch; it
+tells you which episodes you are missing; and it can drop dub and subtitle tracks without
+re-encoding, which is unrelated to Jellyfin but is what I use it for most.
+
+Two honest limits, because I would rather you know now than after installing it:
+
+- If your library is mainstream and has clean TheTVDB entries, Sonarr already renames it better and
+  you do not need this. Ondine earns its keep on material with no clean entry anywhere — regional
+  dubs, old cartoons numbered differently per country, episodes split by story.
+- It needs a catalogue file, a JSON listing the episodes. The app can build one with an AI from any
+  episode-list page, but it is a step you have to do once per series.
+
+Windows desktop app, plus a CLI for Linux and macOS sharing the same engine. Needs ffmpeg. MIT,
+free, no account, no telemetry. Written with AI coding assistants under my direction; every number
+in the docs is measured rather than estimated.
+
+https://github.com/luishidalgoa/ondine · https://ondine.hdglabs.com
 ```
 
 ## 6 · LinkedIn (ES)
