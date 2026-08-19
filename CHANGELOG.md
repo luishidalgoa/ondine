@@ -34,6 +34,25 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **El complemento cotejaba contra el primer catálogo que hubieras cargado, no contra el de ahora.**
+  El panel se conserva entre aperturas a propósito —para no tirar una lista que costó minutos
+  traer—, y con él se guardaba el catálogo del momento en que se abrió por primera vez. Cargabas
+  otro catálogo, volvías al panel, y seguía comparando contra el anterior; **y si la primera vez no
+  había ninguno puesto, no comparaba nunca y salía todo como que no lo tienes**. Ahora el panel
+  **pregunta** qué hay cargado en vez de guardarse una foto, así que eso no puede volver a pasar, y
+  al volver al panel se recalculan las etiquetas de la lista que ya estuviera traída. De paso se
+  arregla lo mismo en la casilla de fuente, que enseñaba la dirección guardada del catálogo viejo.
+
+### Añadido
+
+- **El error de un complemento se guarda en el Registro.** Antes se pintaba en el panel y se perdía
+  al cerrarlo: cuando hizo falta saber por qué había fallado una lectura semanas antes, el texto
+  exacto no estaba en ninguna parte. Lo que se ve una vez y no se guarda no se puede diagnosticar
+  después.
+
+
+### Corregido
+
 - **Ondine no sabía leer los nombres que ella misma escribe.** Cuando un fichero junta historias de
   episodios distintos, la app lo nombra `[1262+1264]`. Al releerlo solo veía el **1262**: el
   corchete con «+» no casaba con su propia expresión, y además se borraba antes de mirarlo. La

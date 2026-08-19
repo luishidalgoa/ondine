@@ -1532,8 +1532,15 @@ public partial class MainWindow : Window
             return;
         }
 
-        var v = new ComplementosPanel(pageOrganizar.CatalogoAbierto, pageOrganizar.LoQueHay, cual,
-                                      pageOrganizar.RutaCatalogoAbierto);
+        // Se le pasa una PREGUNTA, no una foto: el panel se conserva entre
+        // aperturas y con una foto se quedaba con el catálogo que hubiera la
+        // primera vez. Así siempre coteja contra lo que haya puesto ahora.
+        var v = new ComplementosPanel(
+            () => new ComplementosPanel.EstadoDeOrganizar(
+                pageOrganizar.CatalogoAbierto,
+                pageOrganizar.LoQueHay,
+                pageOrganizar.RutaCatalogoAbierto),
+            cual);
         _complementos = v;
 
         v.Traido += carpeta =>
@@ -1541,6 +1548,7 @@ public partial class MainWindow : Window
             CambiarPagina(Pagina.Organizar);
             pageOrganizar.ApuntarA(carpeta);
         };
+        v.Log += AppendLog;
         v.Cerrar += () => MostrarPanel(false);
 
         huecoPanel.Content = v;

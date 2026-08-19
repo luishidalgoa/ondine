@@ -83,7 +83,8 @@ public static class Program
                 Path.Combine("C:", "pelis", "Grease (1978)", "Grease.mp4"),
             },
             Path.Combine("C:", "pelis")));
-        Probar("ComplementosPanel", () => new ComplementosPanel(cat, res));
+        Probar("ComplementosPanel", () => new ComplementosPanel(
+            () => new ComplementosPanel.EstadoDeOrganizar(cat, res, "")));
 
         LaTarjetaDiceLoQueSeVaAEscribir(cat);
         LosAvisosNoSePisan();
