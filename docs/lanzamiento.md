@@ -51,9 +51,36 @@ después, sí — y lo escribe en los comentarios.
       doblaje es una cuenta que este público hace de cabeza.
 - [ ] **Subir el spot a YouTube** (ES, EN y el vertical). El texto está escrito en
       `spot/videos/*/YOUTUBE.md`. Sin el vídeo público no hay nada que enlazar en X ni en LinkedIn.
-- [ ] **Leer las reglas de cada sub el mismo día.** No he podido comprobarlas desde aquí: Reddit no
-      responde sin sesión. r/PleX y r/jellyfin tienen normas propias sobre herramientas de terceros
-      y varias piden *flair*. Un post borrado por norma quema el sub durante meses.
+- [x] **Reglas de r/selfhosted, leídas.** Y cambian el plan, ver abajo. Faltan las de r/jellyfin,
+      r/PleX y r/DataHoarder, que hay que leer el mismo día de cada post.
+
+## Lo que dicen las reglas de r/selfhosted, que manda sobre todo lo demás
+
+Leídas el 19 de agosto. Dos reglas afectan de lleno:
+
+**Regla 6 — proyectos nuevos.** *«Only in the current "New Project Megathread", you may post
+projects that are younger than 3 months (measured by first public presence, e.g. git commit).»* Y
+el propio megahilo lo remacha: *«Standalone new project posts will be removed and the author will
+be redirected to the current week's megathread.»*
+
+El primer commit de Ondine es del **20 de julio de 2026**. Tiene **un mes**. Así que un hilo propio
+**se borra**, y de paso quema el sub. No es interpretación: lo dice el texto del megahilo.
+
+**Regla 5 — herramientas, los miércoles.** *«On Wednesdays, you may post dashboards or tools that
+help self-hosters provided it is flaired as such, even if they are not self-hosted.»* Esta es la
+puerta buena, y resuelve además la duda de si Ondine encaja en el sub sin ser un servicio que se
+aloje uno mismo: encaja, y lo dice la regla.
+
+Las dos juntas dan la única lectura segura:
+
+- **Hoy**: comentario en el **New Project Megathread** vigente, con la plantilla que piden.
+- **Desde el 20 de octubre de 2026** (tres meses del primer commit): hilo propio, **en miércoles**
+  y con el *flair* de herramienta. El texto largo de más abajo es para ese día, no para hoy.
+
+Y una cosa que el sub deja clarísima, porque está en la plantilla y en casi todos los hilos de
+proyecto: **hay que declarar el uso de IA**. La comunidad está saturada de proyectos generados con
+IA y presentados como si no; declararlo de frente es lo que separa un hilo que se lee de uno que se
+entierra.
 
 ## Orden y calendario
 
@@ -61,20 +88,72 @@ Todo el mismo día es lo que dispara los filtros de spam y, peor, deja sin munic
 sale mal. Un canal por día, y **el segundo se escribe después de leer los comentarios del
 primero**.
 
-| Día | Sitio | Por qué ahí |
+| Cuándo | Sitio | Por qué ahí |
 |---|---|---|
-| 1 | **r/selfhosted** | El público exacto y el sitio más tolerante con proyectos propios. Es el ensayo: lo que pregunten aquí corrige todo lo demás. |
-| 2 | **Lemmy, comunidad `selfhosted`** | Parte de este público se fue de Reddit. Cuesta poco y el hilo dura. |
-| 3 | **Show HN** | Entre semana y por la mañana en EE. UU. Pide un texto distinto: aquí interesa cómo está hecho, no para qué sirve. |
-| 4 | **r/DataHoarder** | Solo el ángulo del remux sin recomprimir. Ni una palabra de renombrado. |
-| 5 y 6 | **r/jellyfin** y **r/PleX**, separados | Solo si los anteriores no han ido mal. El ángulo aquí es «el episodio sale como Desconocido». |
+| Hoy | **New Project Megathread de r/selfhosted** | Es el único sitio donde un proyecto de un mes puede ir en ese sub. Menos visible que un hilo propio, pero legal y con gente que lo lee a diario. |
+| +1 día | **Show HN** | No tiene regla de antigüedad, así que aquí sí puede ir el lanzamiento de verdad. Entre semana y por la mañana en EE. UU. Pide otro texto: interesa cómo está hecho, no para qué sirve. |
+| +2 días | **Lemmy, comunidad `selfhosted`** | Parte de este público se fue de Reddit. Cuesta poco y el hilo dura. |
+| +3 días | **r/DataHoarder** | Solo el ángulo del remux sin recomprimir. Ni una palabra de renombrado. Leer sus reglas ese día. |
+| +4 y +5 | **r/jellyfin** y **r/PleX**, separados | Solo si lo anterior no ha ido mal. El ángulo aquí es «el episodio sale como Desconocido». Leer sus reglas ese día. |
 | Cuando esté el vídeo | **LinkedIn** (ES) y **X/Mastodon** | Red propia. No mueve descargas; sí posiciona. |
+| **20 oct 2026, miércoles** | **Hilo propio en r/selfhosted**, con *flair* de herramienta | Ya no aplica la regla 6. Es el post grande, y para entonces habrá comentarios de todo lo anterior con los que afinarlo. |
 
 ---
 
 # Los textos
 
-## 1 · r/selfhosted (EN)
+## 1 · New Project Megathread de r/selfhosted (EN) — **el de hoy**
+
+Va como **comentario de primer nivel** en el megahilo de la semana, con la plantilla que pide el
+sub. Enlace del vigente:
+`https://old.reddit.com/r/selfhosted/comments/1vnoqxf/new_project_megathread_week_of_13_aug_2026/`
+(sale uno nuevo cada viernes; comprobar cuál es el vigente antes de pegar).
+
+```
+**Project Name:** Ondine
+
+**Repo/Website Link:** https://github.com/luishidalgoa/ondine · https://ondine.hdglabs.com
+
+**Description:** The step you run before Plex, Jellyfin or Kodi scans your library. Those servers
+show you a beautiful library, but only when the filenames already say what the file is; when they
+do not, the episode sits there as Unknown.
+
+The case I built it for, and the one the usual tools cannot even express: one file carrying two or
+three separate stories. Sonarr and FileBot can rename that file, but there is no name for "this is
+episodes 12a and 12b". Ondine matches each file against a catalogue, names them E12a / E12b / E12c,
+and can split them into separate files — finding the cut on its own (black fade plus what the
+catalogue says each story is) and remuxing without re-encoding.
+
+The rest: nothing is renamed without your approval and there is undo for the whole batch; it tells
+you which episodes you are missing; it drops dubs and subtitle tracks without re-encoding (a 155 MB
+episode goes to 134 MB in 0.6 s, video identical bit for bit); and it compresses with hardware
+acceleration when you do want to re-encode, forecasting the size before it starts.
+
+Where it does not win, so nobody wastes an evening: if your library is mainstream and has clean
+TheTVDB entries, Sonarr already renames it better. Ondine earns its keep on material with no clean
+entry anywhere — regional dubs, old cartoons numbered differently per country, episodes split by
+story. And the friction: it needs a catalogue file, a JSON listing the episodes. The app can build
+one with an AI from any episode-list page, but that is a step Sonarr does not ask of you.
+
+**Deployment:** Not a service and not a container — it is a desktop app plus a CLI, so there is no
+Docker image and I am not going to pretend otherwise. Windows: per-user installer from the releases page, which
+auto-updates itself. Linux and macOS: a single CLI binary (x64 and arm64) that
+shares the same engine, in the same release. Needs ffmpeg on PATH. README covers both, and the
+catalogue format is documented in docs/catalogo-reindex.md. MIT, free, no account, no telemetry.
+https://github.com/luishidalgoa/ondine/releases/latest
+
+**AI Involvement:** Heavy and worth stating plainly: it is written with AI coding assistants
+(Claude Code) throughout. What is mine is the architecture, every product decision, and the review
+of every change before it lands. One house rule that is relevant to you: every number in the README
+and on the site is measured, not estimated — the 155 MB to 134 MB above is a real file, and today I
+had to correct the site because it claimed a figure I could not reproduce.
+```
+
+> **Al publicar:** contestar en los primeros 30 minutos. La pregunta segura es *«¿en qué se
+> diferencia de Sonarr o FileBot?»*, ya contestada en el cuerpo. La segunda, por cómo está el sub,
+> será sobre la IA: la respuesta es la que ya va escrita, sin defenderse.
+
+## 1-bis · Hilo propio en r/selfhosted (EN) — **para el 20 de octubre, no para hoy**
 
 **Título**
 
@@ -130,11 +209,14 @@ aburrido».
 
 ## 3 · Show HN (EN)
 
-**Título**
+**Título** — 80 caracteres justos, que es el límite de HN. La versión con «them» al final se pasa
+en cinco y la corta el formulario. Y empieza por «splits» a propósito: es lo que no hace nadie.
 
 ```
-Show HN: Ondine – renames and splits TV episodes before Plex or Jellyfin scans them
+Show HN: Ondine – splits and renames TV episodes before Plex or Jellyfin scans
 ```
+
+**URL:** `https://github.com/luishidalgoa/ondine`
 
 **Primer comentario.** En HN el texto va como comentario del autor, no dentro del envío.
 
