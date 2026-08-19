@@ -463,7 +463,11 @@ in the docs is measured rather than estimated.
 https://github.com/luishidalgoa/ondine · https://ondine.hdglabs.com
 ```
 
-## 10 · LinkedIn (ES) — esperando al vídeo
+## 10 · LinkedIn (ES) — ⏳ CARGADO EN EL COMPOSITOR, sin enviar
+
+> Escrito y esperando revisión del autor. El compositor de LinkedIn es un iframe que la extensión no
+> ve en el árbol de accesibilidad, pero en Chrome sí acepta escritura; en Edge no. Los dos enlaces
+> del final se añadieron al texto original, que se escribió cuando el vídeo aún no existía.
 
 ```
 Plex y Jellyfin enseñan una biblioteca preciosa, pero solo si los ficheros ya están bien nombrados.
@@ -483,7 +487,8 @@ herramienta que se lo cree en silencio hace más daño que una que pregunta.
 
 Nada se toca sin aprobación, y hay deshacer.
 
-https://ondine.hdglabs.com
+44 segundos de vídeo: https://www.youtube.com/watch?v=L8F6kxHy2z8
+Descarga y código: https://ondine.hdglabs.com
 ```
 
 ## 11 · X y Mastodon (EN) — esperando al vídeo
