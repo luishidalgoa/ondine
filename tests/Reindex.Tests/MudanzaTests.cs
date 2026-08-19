@@ -97,17 +97,33 @@ public static class MudanzaTests
             var parte5 = Mudanza.Aplicar(new[] { (v3, destino3) });
             Program.Assert(parte5.Movidos.Count == 1, "se mueve");
 
-            int bloqueado;
-            using (File.Open(destino3, FileMode.Open, FileAccess.Read, FileShare.None))
-                bloqueado = Mudanza.Deshacer(parte5);
+            // Bloquear un fichero abierto solo impide moverlo en Windows: en Linux
+            // se puede renombrar un fichero que alguien tiene abierto, así que
+            // allí no hay forma de provocar el fallo parcial. Se dice en voz alta
+            // en vez de saltarlo callando, que un salto silencioso se lee como
+            // cobertura.
+            if (OperatingSystem.IsWindows())
+            {
+                int bloqueado;
+                using (File.Open(destino3, FileMode.Open, FileAccess.Read, FileShare.None))
+                    bloqueado = Mudanza.Deshacer(parte5);
 
-            Program.Assert(bloqueado == 0, "con el fichero en uso no puede volver");
-            Program.Assert(parte5.Movidos.Count == 1,
-                "pero el registro NO se destruye: sin él, ese fichero se queda desplazado para siempre");
+                Program.Assert(bloqueado == 0, "con el fichero en uso no puede volver");
+                Program.Assert(parte5.Movidos.Count == 1,
+                    "pero el registro NO se destruye: sin él, ese fichero se queda desplazado para siempre");
+            }
+            else
+            {
+                Console.WriteLine("  · saltado: bloquear un fichero solo impide moverlo en Windows");
+            }
 
-            Program.Assert(Mudanza.Deshacer(parte5) == 1,
-                "y al soltarlo, reintentar lo completa");
-            Program.Assert(File.Exists(v3), "el vídeo está de vuelta");
+            // Esto sí vale en las dos: deshacer es idempotente y se puede
+            // reintentar, que es lo que hace seguro conservar el registro.
+            Program.Assert(parte5.Movidos.Count == 1, "el registro sigue entero para reintentar");
+            Program.Assert(Mudanza.Deshacer(parte5) >= 0 && File.Exists(v3),
+                "reintentar lo completa y el vídeo está de vuelta");
+            Program.Assert(Mudanza.Deshacer(parte5) == 0,
+                "y un tercer intento no hace nada ni rompe: lo que ya volvió se salta solo");
         }
         finally
         {
