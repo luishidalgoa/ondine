@@ -21,6 +21,22 @@ public sealed class FileSignals
     public int? Indice { get; init; }
     /// <summary>Sufijo de sub-segmento de «[438a]»: distingue mitades del mismo episodio.</summary>
     public string? SubSegmento { get; init; }
+
+    /// <summary>Un episodio añadido en un nombre compuesto: el «+1264b» de «[1262+1264b]».</summary>
+    public sealed record Anadido(int Num, string Segmento);
+
+    /// <summary>
+    /// Los OTROS episodios cuyas historias trae este mismo fichero.
+    ///
+    /// <para>
+    /// Ondine escribe «[1262+1264]» cuando un fichero junta historias de
+    /// episodios distintos, y durante un tiempo no supo leer lo que ella misma
+    /// escribía: solo veía el 1262. La consecuencia era que la historia del 1264
+    /// no contaba como cubierta, y la app decía «te falta» de un episodio que el
+    /// usuario tenía delante — en el mismo fichero cuyo nombre lo nombraba.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<Anadido> TambienEpisodios { get; init; } = Array.Empty<Anadido>();
     public bool Especial { get; init; }
     public int? IndiceEspecial { get; init; }
     public int? Temporada { get; init; }
@@ -68,6 +84,7 @@ public sealed class FileSignals
         Fecha = Fecha, Indice = Indice, SubSegmento = seg, Especial = Especial,
         IndiceEspecial = IndiceEspecial, Temporada = Temporada, TituloNombre = TituloNombre,
         TituloMeta = TituloMeta, Segmentos = Segmentos, Duracion = Duracion, Fingerprint = Fingerprint, Error = Error,
+        TambienEpisodios = TambienEpisodios,
     };
 
     /// <summary>¿Hay algo con lo que identificar? Si no, es ERROR de entrada.</summary>
@@ -90,8 +107,16 @@ public static partial class SignalExtractor
     // «[438]», «[438a]» (una historia) o «[438ac]» (varias): las letras son el sub-segmento.
     // Hasta 3 letras: un episodio no trae tantas historias, y limitarlo evita leer una palabra
     // pegada al número («E02best») como si fueran segmentos.
-    [GeneratedRegex(@"\[\s*(\d{1,4})\s*([a-z]{0,3})\s*\]", RegexOptions.IgnoreCase)]
+    // El «(?:\+\d{1,4}[a-z]{0,3})*» es lo que deja pasar «[1262+1264]», que es como
+    // la propia app escribe un fichero con historias de episodios distintos. Sin
+    // eso el corchete entero no casaba y el numero se leia de otro sitio.
+    [GeneratedRegex(@"\[\s*(\d{1,4})\s*([a-z]{0,3})((?:\s*\+\s*\d{1,4}[a-z]{0,3})*)\s*\]",
+                    RegexOptions.IgnoreCase)]
     private static partial Regex RxIndiceCorchetes();
+
+    /// <summary>Los «+1264b» de dentro del corchete.</summary>
+    [GeneratedRegex(@"\+\s*(\d{1,4})([a-z]{0,3})", RegexOptions.IgnoreCase)]
+    private static partial Regex RxAnadido();
 
     // «S03E12» / «s03e12», «S2017E487b» (una historia) y «S2017E487ac» (varias). Las letras
     // pegadas al número son las historias que trae. Es el formato que ESCRIBE la propia app al
@@ -194,6 +219,32 @@ public static partial class SignalExtractor
         // título: hay catálogos que los usan («Cuido de mamá (LA)[30]»), y entonces el
         // nombre que la propia app escribía se releía como el episodio 30. Renombrar y
         // volver a simular tiene que dar lo mismo, o los datos se degradan solos.
+        // 3-a. Antes que nada, el nombre COMPUESTO: «[1262+1264]».
+        //
+        // Va aquí y no más abajo porque el corchete no sobrevive: la limpieza que
+        // se aplica al quedarse con lo de después del marcador borra cualquier
+        // grupo entre corchetes. Ondine escribe «[1262+1264]» cuando un fichero
+        // junta historias de episodios distintos, y durante un tiempo no supo leer
+        // lo que ella misma escribía: solo veía el 1262, así que la historia del
+        // otro no contaba como cubierta y la app decía «te falta» de algo que
+        // estaba en ese mismo fichero, con su nombre delante.
+        var anadidos = new List<FileSignals.Anadido>();
+        int? indiceDelCompuesto = null;
+        var mComp = RxIndiceCorchetes().Match(resto);
+        if (mComp.Success && mComp.Groups[3].Value.Length > 0)
+        {
+            indiceDelCompuesto = int.Parse(mComp.Groups[1].Value);
+            if (mComp.Groups[2].Value.Length > 0) subSegmento = mComp.Groups[2].Value.ToLowerInvariant();
+
+            foreach (Match a in RxAnadido().Matches(mComp.Groups[3].Value))
+                anadidos.Add(new FileSignals.Anadido(int.Parse(a.Groups[1].Value),
+                                                     a.Groups[2].Value.ToLowerInvariant()));
+
+            // Fuera del texto: es numeración, no título. Y así la cadena de abajo
+            // no vuelve a tropezar con él.
+            resto = resto.Remove(mComp.Index, mComp.Length);
+        }
+
         int? temporadaNombre = null;   // la que declara el propio nombre en «S2012E455»
         var mSE = RxSxxExx().Match(resto);
         if (mSE.Success)
@@ -241,6 +292,8 @@ public static partial class SignalExtractor
             }
         }
 
+        indice ??= indiceDelCompuesto;
+
         // 4. temporada: manda la de la carpeta (así está organizada la biblioteca), pero si la
         //    carpeta no la dice —un fichero en una subcarpeta de trabajo tipo «Renombrar»— se
         //    usa la que trae el propio nombre en «S2012E455». Sin esto, un fichero perfecto
@@ -268,6 +321,7 @@ public static partial class SignalExtractor
             Especial = especial,
             IndiceEspecial = indiceEspecial,
             Temporada = temporada,
+            TambienEpisodios = anadidos,
             TituloNombre = titulo,
             TituloMeta = string.IsNullOrWhiteSpace(tituloMeta) ? null : tituloMeta.Trim(),
             Segmentos = segmentos,

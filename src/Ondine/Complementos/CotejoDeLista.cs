@@ -79,16 +79,16 @@ public static class CotejoDeLista
     {
         var cubierto = new Dictionary<int, HashSet<int>>();
         foreach (var r in loQueHay)
+        foreach (var (num, historias) in CoberturaCatalogo.LoQueCubre(r, catalogo))
         {
-            if (r.Episodio is not { } ep) continue;
-            if (!cubierto.TryGetValue(ep.Num, out var set))
-                cubierto[ep.Num] = set = new HashSet<int>();
+            if (!cubierto.TryGetValue(num, out var set))
+                cubierto[num] = set = new HashSet<int>();
 
             // La MISMA cuenta que usa el informe de «qué falta» y el distintivo del
             // explorador. Tenerla repetida aquí era tener tres criterios para lo
             // mismo, y por eso este cotejo decía «ya lo tienes» de un episodio del
             // que solo había una de sus dos historias.
-            set.UnionWith(CoberturaCatalogo.HistoriasQueCubre(r, ep));
+            set.UnionWith(historias);
         }
 
         var indice = new IndiceTitulos(catalogo);

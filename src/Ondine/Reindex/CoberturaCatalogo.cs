@@ -74,6 +74,43 @@ public static class CoberturaCatalogo
     /// Tres copias de una regla son tres criterios en cuanto alguien toca una.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Todo lo que cubre un fichero: su episodio y, si el nombre es compuesto
+    /// —«[1262+1264]»—, también las historias de los OTROS episodios que trae.
+    ///
+    /// <para>
+    /// Existe porque contar solo <see cref="ReindexResolution.Episodio"/> hacía
+    /// que la app dijera «te falta» de un episodio que estaba dentro del fichero
+    /// que tenía delante, con su título escrito en el nombre. Está en un solo
+    /// sitio para que el informe de «qué falta» y el cotejo de una lista no
+    /// puedan volver a responder cosas distintas.
+    /// </para>
+    /// </summary>
+    public static IEnumerable<(int Num, HashSet<int> Historias)> LoQueCubre(
+        ReindexResolution r, ReindexCatalog catalogo)
+    {
+        if (r.Episodio is not { } ep) yield break;
+
+        yield return (ep.Num, HistoriasQueCubre(r, ep));
+
+        foreach (var mas in r.Archivo.TambienEpisodios)
+        {
+            var otro = catalogo.Episodios.FirstOrDefault(e => e.Num == mas.Num);
+            if (otro is null) continue;
+
+            // Con letra, esa historia; sin letra, el episodio entero — que es lo
+            // que significa juntarlo sin más precisión.
+            var cuantas = Math.Max(1, otro.TitulosSalida.Count);
+            var suyas = new HashSet<int>();
+            foreach (var c in mas.Segmento)
+            {
+                int i = char.ToLowerInvariant(c) - 'a';
+                if (i >= 0 && i < cuantas) suyas.Add(i);
+            }
+            yield return (otro.Num, suyas.Count > 0 ? suyas : new HashSet<int>(Enumerable.Range(0, cuantas)));
+        }
+    }
+
     public static HashSet<int> HistoriasQueCubre(ReindexResolution r, CatalogEpisode ep)
     {
         int cuantas = Math.Max(1, ep.TitulosSalida.Count);
@@ -157,16 +194,18 @@ public static class CoberturaCatalogo
 
         foreach (var r in resoluciones)
         {
-            if (r.Episodio is not { } ep) continue;
-            if (!cubierto.TryGetValue(ep.Num, out var set))
+            foreach (var (num, historias) in LoQueCubre(r, catalogo))
             {
-                cubierto[ep.Num] = set = new HashSet<int>();
-                ficheros[ep.Num] = new List<string>();
+                if (!cubierto.TryGetValue(num, out var set))
+                {
+                    cubierto[num] = set = new HashSet<int>();
+                    ficheros[num] = new List<string>();
+                }
+
+                set.UnionWith(historias);
+
+                if (!string.IsNullOrEmpty(r.Archivo.Path)) ficheros[num].Add(r.Archivo.Path);
             }
-
-            set.UnionWith(HistoriasQueCubre(r, ep));
-
-            if (!string.IsNullOrEmpty(r.Archivo.Path)) ficheros[ep.Num].Add(r.Archivo.Path);
         }
 
         var mapa = new Dictionary<int, Tenencia>();
