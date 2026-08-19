@@ -207,7 +207,23 @@ Mismo título. El cuerpo, el de Reddit a la mitad: aquí los textos largos se le
 dos primeros párrafos, la línea de honestidad sobre Sonarr y el enlace; fuera la lista de «lo
 aburrido».
 
-## 3 · Show HN (EN)
+## 3 · Show HN (EN) — **bloqueado, no es cosa del texto**
+
+Intentado el 19 de agosto. HN lo rechaza antes de publicar y redirige a `/showlim`:
+
+> *«We're temporarily restricting Show HNs because of a massive influx, mostly by users who aren't
+> yet familiar with the site or its culture. […] Take some time to get to know the community, become
+> a good contributor, and then it will be fine to post an occasional Show HN.»*
+
+La cuenta `luishidalgoa` tiene **1 punto de karma y cero envíos**, que es justo el perfil que están
+frenando. No hay nada que arreglar en el título ni en el enlace: comprobado, no se publicó nada.
+
+**Y no se rodea.** Mandarlo sin el prefijo «Show HN:» es exactamente lo que la restricción intenta
+evitar, y ahí lo que se juega es la cuenta. La única vía es la que dicen: participar en la
+comunidad —comentar donde se tenga algo que aportar— y volver a intentarlo cuando la cuenta tenga
+recorrido. Semanas, no días.
+
+El texto de abajo queda escrito para ese momento.
 
 **Título** — 80 caracteres justos, que es el límite de HN. La versión con «them» al final se pasa
 en cinco y la corta el formulario. Y empieza por «splits» a propósito: es lo que no hace nadie.
