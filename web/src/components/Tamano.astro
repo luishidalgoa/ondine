@@ -241,16 +241,18 @@ const t = textos(Astro.currentLocale);
       scrollTrigger: { trigger: "#tamano", start: "top 70%" },
     });
 
-    // El peso baja de 1024 a 133. Se cuenta en megas todo el rato y solo se
-    // escribe «GB» en el punto de partida, que es donde la unidad cambia.
+    // El peso baja de 155 a 134, que es lo MEDIDO sobre un episodio real y lo
+    // que dicen el CHANGELOG y los dos README. Aqui puso «1 GB a 133 MB» una
+    // temporada: quitar un doblaje y unos subtitulos no se lleva el 87 % de un
+    // fichero, y a este publico esa cuenta le sale en el primer comentario.
     const peso = document.querySelector<HTMLElement>("[data-peso]");
     if (peso) {
       // La unidad viene del propio elemento, no escrita aquí: en inglés la
       // sección entera cambia de idioma y el contador se quedaba en español.
       const unidad = peso.dataset.unidad ?? "MB";
-      const v = { n: 1024 };
+      const v = { n: 155 };
       gsap.to(v, {
-        n: 133,
+        n: 134,
         duration: 1.3,
         ease: "power2.out",
         onUpdate: () => (peso.textContent = `${Math.round(v.n)} ${unidad}`),
