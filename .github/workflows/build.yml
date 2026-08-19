@@ -139,8 +139,15 @@ jobs:
       - name: Instalar Inno Setup
         run: choco install innosetup --no-progress -y
 
+      # La clave de TMDb se hornea AQUI, en la build oficial, desde un secreto
+      # del repo. Si el secreto no existe la variable llega vacia y la app se
+      # publica sin clave: arranca igual, la identificacion de peliculas queda
+      # apagada y lo dice, y quien quiera usarla pone la suya en Preferencias.
+      # Un fallo de build por una clave ausente seria peor que la funcion apagada.
       - name: Compilar instalador (icono + .exe self-contained + Inno)
         shell: pwsh
+        env:
+          ONDINE_TMDB_KEY: ${{ secrets.ONDINE_TMDB_KEY }}
         run: ./build.ps1
 
       - name: Subir instalador como artefacto

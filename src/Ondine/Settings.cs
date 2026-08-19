@@ -76,6 +76,12 @@ public sealed class Settings
     /// </summary>
     public List<string> ComplementosConModelo { get; set; } = new();
 
+    /// <summary>
+    /// Identificar peliculas contra TMDb. Opcional y apagado de fabrica: sale a
+    /// internet con los titulos de lo que hay en el disco.
+    /// </summary>
+    public Peliculas.AjustesDeTmdb Tmdb { get; set; } = new();
+
     /// <summary>¿Tiene permiso este complemento? Lo que no está en la lista, no.</summary>
     public bool PuedeUsarModelo(string? idComplemento) =>
         !string.IsNullOrEmpty(idComplemento) &&
@@ -94,6 +100,7 @@ public sealed class Settings
         // ajustes de verdad aunque luego se cancele.
         c.Ia = Ia.Clone();
         c.ComplementosConModelo = new List<string>(ComplementosConModelo);
+        c.Tmdb = Tmdb.Clone();
         return c;
     }
 }
