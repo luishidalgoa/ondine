@@ -70,6 +70,44 @@ public static class MudanzaTests
             Mudanza.Deshacer(parte3);
             Program.Assert(Directory.Exists(Path.Combine(raiz, "Ocupada")),
                 "la carpeta que ya existía se queda: borrar lo que no creamos sería destruir");
+
+            // ── Un compañero que no se pudo mover NO se calla ─────────────────
+            // Si el destino del subtítulo ya está ocupado, se salta. Antes eso no
+            // se contaba en ningún sitio: la ventana decía «2 hechas, 0 fallos» y
+            // el subtítulo se quedaba huérfano en otra carpeta, que para Plex es
+            // como si no existiera.
+            var v2 = Poner("otra.mkv");
+            Poner("otra.srt");
+            var destino2 = Path.Combine(raiz, "Otra (2020)", "Otra (2020).mkv");
+            Poner(Path.Combine("Otra (2020)", "Otra (2020).srt"), "ya estaba aqui");
+
+            var parte4 = Mudanza.Aplicar(new[] { (v2, destino2) });
+            Program.Assert(parte4.Movidos.Count == 1, "el vídeo sí llega");
+            Program.Assert(parte4.CompanerosSinMover.Count == 1,
+                "y se dice que un compañero se quedó atrás, en vez de callarlo");
+            Program.Assert(parte4.CompanerosSinMover[0].EndsWith("otra.srt", StringComparison.Ordinal),
+                "y cuál fue");
+
+            // ── Deshacer a medias se puede reintentar ─────────────────────────
+            // Un vídeo abierto en el reproductor no puede volver. Antes de esto,
+            // la ventana tiraba el registro y ese fichero se quedaba desplazado
+            // para siempre, sin forma de recuperarlo desde la app.
+            var v3 = Poner("bloqueada.mkv");
+            var destino3 = Path.Combine(raiz, "Bloqueada (1999)", "Bloqueada (1999).mkv");
+            var parte5 = Mudanza.Aplicar(new[] { (v3, destino3) });
+            Program.Assert(parte5.Movidos.Count == 1, "se mueve");
+
+            int bloqueado;
+            using (File.Open(destino3, FileMode.Open, FileAccess.Read, FileShare.None))
+                bloqueado = Mudanza.Deshacer(parte5);
+
+            Program.Assert(bloqueado == 0, "con el fichero en uso no puede volver");
+            Program.Assert(parte5.Movidos.Count == 1,
+                "pero el registro NO se destruye: sin él, ese fichero se queda desplazado para siempre");
+
+            Program.Assert(Mudanza.Deshacer(parte5) == 1,
+                "y al soltarlo, reintentar lo completa");
+            Program.Assert(File.Exists(v3), "el vídeo está de vuelta");
         }
         finally
         {

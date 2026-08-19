@@ -58,6 +58,18 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Un deshacer a medias ya no tira el registro.** Si al deshacer un fichero no podía volver —lo
+  normal es que esté abierto en el reproductor—, la ventana escondía el botón y **borraba la única
+  lista que existía de qué había ido a dónde**. Ese fichero se quedaba desplazado para siempre, sin
+  forma de recuperarlo desde la app, y encima aparecía en rojo como «ese nombre ya está ocupado»
+  señalándose a sí mismo. Ahora el registro se conserva, el botón se queda, y se dice cuántos
+  faltan: reintentar es seguro porque lo que ya volvió se salta solo. Afecta a las dos ventanas que
+  mueven ficheros.
+- **Un subtítulo que se queda atrás ya no se calla.** Cuando el nombre nuevo de un compañero ya
+  estaba ocupado, se saltaba sin contarlo en ningún sitio: el vídeo llegaba a su carpeta, la
+  ventana decía «hechas, 0 fallos», y el subtítulo se quedaba en otro sitio. No estaba borrado,
+  pero para Plex o Jellyfin había dejado de existir. Ahora se cuentan y se dicen.
+
 - **Un vídeo podía viajar como si fuera el subtítulo de otro, y acabar en la carpeta de otra
   película.** Al mover un fichero se llevan con él sus compañeros —el `.srt`, la ficha—, y para
   decidir quién era compañero se miraba solo el nombre: cualquier cosa que empezara por
