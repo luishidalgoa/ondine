@@ -32,6 +32,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Al elegir «Películas» seguía viéndose media pantalla de series.** Se ocultaban el desplegable
+  de serie y la plantilla, pero quedaban a la vista el panel de catálogos, «Partir en segmentos» y
+  «Ordenar por temporadas» — cosas que a una película no le aplican, porque no hay catálogo del que
+  sacarla ni temporadas que ordenar. Ahora las películas tienen **su propia pantalla**: la carpeta,
+  cuántas hay, y una sola acción. Una pantalla llena de huecos enseña a desconfiar de lo que queda,
+  y esconder trozos sueltos no es lo mismo que cambiar de flujo.
+
+
 ## [1.9.1] - 2026-08-19
 
 ### Añadido

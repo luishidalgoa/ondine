@@ -275,6 +275,20 @@ public sealed partial class Textos
         "{0} companion files (subtitles, .nfo) stayed behind: their new name was already taken.",
         "{0} ficheros compañeros (subtítulos, fichas) se quedaron atrás: su nombre nuevo ya estaba ocupado.");
 
+    // La pantalla propia de películas.
+    public string PeliculasCarpeta => Idioma.Elegir("Folder with your films", "Carpeta con tus películas");
+    public string PeliculasUnaPelicula => Idioma.Elegir("1 film found.", "1 película encontrada.");
+    // {0} = cuántas.
+    public string PeliculasCuantas => Idioma.Elegir("{0} films found.", "{0} películas encontradas.");
+
+    public string PeliculasNadaSinAprobar => Idioma.Elegir(
+        "Nothing is renamed without your approval: you get the whole simulation first, and it can be undone.",
+        "Nada se renombra sin tu aprobación: primero ves la simulación entera, y se puede deshacer.");
+
+    public string PeliculasSinBaseDeDatos => Idioma.Elegir(
+        "Names come from the file and its folder. There is no database behind this yet, so a misspelt title stays misspelt and two films with the same name cannot be told apart.",
+        "Los nombres salen del fichero y de su carpeta. Todavía no hay ninguna base de datos detrás, así que un título mal escrito seguirá mal escrito y dos películas que se llamen igual no se pueden distinguir.");
+
     public string PeliculasAbrir => Idioma.Elegir("Sort out films…", "Ordenar las películas…");
     public string PeliculasAbrirAyuda => Idioma.Elegir(
         "Show what would change so each film ends up as «Title (Year)/Title (Year).ext», which is what Plex and Jellyfin expect. A folder holding several films is left alone: only the file names inside are cleaned up.",

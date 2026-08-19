@@ -179,6 +179,12 @@
     </Grid>
 
     <!-- ══════════════ INICIO: catálogos + ficheros ══════════════ -->
+    <!-- La biblioteca de películas tiene su propio flujo y su propio componente:
+         ni catálogo, ni plantilla, ni temporadas, ni segmentos. Ocupa las filas
+         de contenido y acciones enteras, en vez de esconder media pantalla. -->
+    <local:PeliculasPanel x:Name="vistaPeliculas" Grid.Row="1" Grid.RowSpan="3"
+                          Visibility="Collapsed"/>
+
     <Grid x:Name="vistaInicio" Grid.Row="2" Margin="16,0,16,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/>
@@ -801,7 +807,7 @@
     </Grid>
 
     <!-- ══════════════ Barra de acciones ══════════════ -->
-    <Grid Grid.Row="3" Margin="16,10,16,8">
+    <Grid x:Name="filaAcciones" Grid.Row="3" Margin="16,10,16,8">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <WrapPanel Orientation="Horizontal">
         <Button x:Name="btnSimular" Style="{StaticResource BtnPrimary}" Margin="0,0,8,0" IsEnabled="False"
