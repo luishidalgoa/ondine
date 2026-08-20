@@ -22,6 +22,22 @@ namespace Ondine;
 public partial class ReproductorWindow : Window
 {
     private readonly string _ruta;
+    /// <summary>
+    /// La ventana ya se cerró. Todo lo que pueda llegar tarde —un evento de
+    /// <c>MediaElement</c>, una miniatura a medio sacar— tiene que mirarlo antes de
+    /// hacer nada.
+    ///
+    /// <para>
+    /// Sin esto la app se quedaba gastando <b>~11% de un núcleo para siempre</b> tras
+    /// cerrar el reproductor. El motivo: <c>BufferingStarted</c> puede llegar durante
+    /// o después de <c>video.Close()</c>, volvía a arrancar el péndulo de carga, y sus
+    /// animaciones son <c>RepeatBehavior.Forever</c>. Un reloj de animación vivo
+    /// mantiene su objeto en pie y obliga a pintar en cada fotograma, aunque no se vea
+    /// nada — y no había forma de pararlo porque la ventana ya no existía.
+    /// </para>
+    /// </summary>
+    private bool _cerrado;
+
     private readonly DispatcherTimer _reloj;
     private readonly DispatcherTimer _apagon;   // esconde los controles tras un rato quieto
     private bool _pausado;
@@ -155,9 +171,14 @@ public partial class ReproductorWindow : Window
         _esperaPrevia = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(90) };
         _esperaPrevia.Tick += async (_, _) => { _esperaPrevia.Stop(); await SacarPreviaAsync(); };
 
-        video.MediaEnded += (_, _) => { _pausado = true; glifoPlay.Data = GlifoPlay; Mostrar(); };
+        video.MediaEnded += (_, _) =>
+        {
+            if (_cerrado) return;
+            _pausado = true; glifoPlay.Data = GlifoPlay; Mostrar();
+        };
         video.MediaFailed += (_, e) =>
         {
+            if (_cerrado) return;
             lblFallo.Text = string.Format(Textos.Instancia.ReproductorFalloCodec,
                                           e.ErrorException?.Message);
             panelFallo.Visibility = Visibility.Visible;
@@ -166,8 +187,16 @@ public partial class ReproductorWindow : Window
         // El péndulo se queda hasta que el vídeo AVANZA de verdad, no cuando dice estar
         // abierto: con un fichero descargándose, MediaOpened llega mucho antes que el primer
         // fotograma, y quitarlo ahí dejaba el rectángulo negro sin explicación.
-        video.BufferingStarted += (_, _) => { Chip(Textos.Instancia.ReproductorCargando); _cargando.Arrancar(); };
-        video.BufferingEnded += (_, _) => RevisarNube();
+        // La guarda de estos dos es la que arregla la fuga: BufferingStarted llega
+        // durante el propio Close(), y arrancaba el péndulo cuando ya no había quien
+        // lo parase.
+        video.BufferingStarted += (_, _) =>
+        {
+            if (_cerrado) return;
+            Chip(Textos.Instancia.ReproductorCargando);
+            _cargando.Arrancar();
+        };
+        video.BufferingEnded += (_, _) => { if (!_cerrado) RevisarNube(); };
 
         _reloj = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _reloj.Tick += (_, _) =>
@@ -204,11 +233,26 @@ public partial class ReproductorWindow : Window
         };
         Closed += (_, _) =>
         {
+            // Lo PRIMERO, antes de tocar el vídeo: a partir de aquí todo lo que llegue
+            // tarde se planta solo.
+            _cerrado = true;
+
             _reloj.Stop();
             _apagon.Stop();
-            _cargando.Parar();
             _esperaPrevia.Stop();
+
             video.Close();
+
+            // Y a null además de Close(). MediaElement no suelta del todo la sesión de
+            // Media Foundation con Close() a secas: se queda con el fichero y con el
+            // decodificador. Es lo que hace que el fichero no se pueda liberar a la
+            // nube tres líneas más abajo.
+            video.Source = null;
+
+            // El péndulo se para DESPUÉS del vídeo, no antes: pararlo antes dejaba a
+            // Close() la oportunidad de volver a arrancarlo por la puerta de atrás.
+            _cargando.Parar();
+
             BorrarPrevias();
 
             // Si estaba solo en la nube, se devuelve a la nube: verlo para identificarlo no
@@ -217,6 +261,14 @@ public partial class ReproductorWindow : Window
             if (_eraMarcador) NubeLocal.Liberar(_ruta);
         };
     }
+
+    /// <summary>
+    /// Si el péndulo de carga sigue animando. Se asoma para poder <b>comprobar el
+    /// cierre</b>: sus animaciones son «para siempre», así que una que se quede en
+    /// marcha no se ve —no hay ventana— y solo se nota en el consumo de CPU. Eso no
+    /// es algo que se descubra mirando; hace falta poder preguntarlo.
+    /// </summary>
+    public bool PenduloEnMarcha => _cargando.EnMarcha;
 
     // ─────────────────────────── reproducción ───────────────────────────
 
@@ -381,7 +433,7 @@ public partial class ReproductorWindow : Window
     /// </summary>
     private async Task SacarPreviaAsync()
     {
-        if (_sacandoPrevia || _previaPedida < 0) return;
+        if (_cerrado || _sacandoPrevia || _previaPedida < 0) return;
 
         // Un fichero que aún está solo en la nube no se abre para sacarle un fotograma: eso
         // lo descargaría entero. Cuando termine de bajar, las previas salen solas.
@@ -415,8 +467,11 @@ public partial class ReproductorWindow : Window
         finally
         {
             _sacandoPrevia = false;
-            // Mientras se sacaba esa, el ratón puede haberse ido a otro sitio.
-            if (_previaPedida != hueco) { _esperaPrevia.Stop(); _esperaPrevia.Start(); }
+            // Mientras se sacaba esa, el ratón puede haberse ido a otro sitio. Salvo que
+            // la ventana se haya cerrado por el camino: volver a arrancar el reloj aquí
+            // lanzaba un ffmpeg con el reproductor ya cerrado y, si el fichero acababa
+            // de devolverse a la nube, lo hacía bajar otra vez entero.
+            if (!_cerrado && _previaPedida != hueco) { _esperaPrevia.Stop(); _esperaPrevia.Start(); }
         }
     }
 
