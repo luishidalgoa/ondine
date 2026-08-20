@@ -1114,6 +1114,19 @@ public partial class OrganizarView : UserControl
         ActualizarEstado();
     }
 
+    /// <summary>
+    /// Vuelve al estado de partida: la tabla se tira y se enseña la pantalla de
+    /// entrada.
+    ///
+    /// <para>
+    /// Aquí se decide cuál de las dos vistas de SERIE toca —entrada o revisión—,
+    /// pero no si se ve una vista de serie: eso lo decide el tipo de biblioteca,
+    /// y lo decide <see cref="AplicarTipo"/>, en un solo sitio. Sin esa llamada
+    /// del final, elegir carpeta en modo Películas volvía a pintar la pantalla de
+    /// series ENCIMA de la de películas, las dos a la vez: esto la mostraba a
+    /// ciegas y nadie volvía a mirar el tipo después.
+    /// </para>
+    /// </summary>
     private void MostrarInicio()
     {
         _filas.Clear();
@@ -1121,6 +1134,8 @@ public partial class OrganizarView : UserControl
         vistaRevision.Visibility = Visibility.Collapsed;
         filaChips.Visibility = Visibility.Collapsed;
         bannerAplicado.Visibility = Visibility.Collapsed;
+
+        AplicarTipo();
     }
 
     private void MostrarRevision()

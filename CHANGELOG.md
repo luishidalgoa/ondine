@@ -32,6 +32,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **En modo «Películas», elegir carpeta volvía a pintar la pantalla de series encima.** Se cerraba el
+  explorador de archivos y aparecían el panel de catálogos y el de ficheros de series **superpuestos**
+  a la pantalla de películas, las dos a la vez. Volver al estado inicial enseñaba la pantalla de
+  series sin mirar de qué era la biblioteca, y elegir carpeta pasa por ahí.
+- **Las pestañas de Preferencias no se podían desplazar.** El alto de la ventana era fijo, así que lo
+  que no cabía en una pestaña quedaba cortado y fuera de alcance —el botón del final de «Películas»,
+  por ejemplo—. Ahora se desplazan.
+
 ### Añadido
 
 - **Las películas se pueden identificar contra TMDb, y la app dice por qué se lo cree.** Hasta ahora
