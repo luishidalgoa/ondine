@@ -87,6 +87,21 @@ auth)» de la página de ajustes de TMDb: Ondine distingue una de otra **por la
 forma** y la manda por donde corresponda —la v3 como parámetro, el token v4 en la
 cabecera—, porque quien pega la que no toca solo recibe un 401 pelado.
 
+## Desde la pantalla
+
+Identificar es un **paso aparte y a petición**, no algo que pase al abrir la
+ventana: una app de disco que sale a internet sola, sin que se lo pidas, no es lo
+que nadie instaló. Así que primero se ve el plan tal y como sale de los nombres,
+y el botón «Identificar con TMDb» está al lado del filtro.
+
+Cuando está apagado, el botón se queda **visible y apagado con el motivo al
+lado**. No escondido, y no apagado a secas: un botón apagado sin explicación se
+lee como una función rota en vez de una que hay que encender.
+
+Cada fila enseña, además de a dónde iría, **qué se encontró y por qué señal** —en
+verde lo que se va a aplicar, en ámbar lo que no—. Se enseña también cuando
+acierta: una confianza que solo aparece al fallar no se aprende a leer.
+
 ## La cascada de confianza
 
 Es lo que Ondine aporta encima del proveedor. El dato lo da TMDb; lo que no da

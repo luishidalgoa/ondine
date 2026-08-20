@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using Ondine.Localizacion;
+using Ondine.Peliculas;
 using Ondine.Reindex;
 using Ondine.Rutas;
 
@@ -51,6 +52,48 @@ public sealed class PeliculaVista
         _ => Textos.Instancia.PeliculasPorqueOcupado,
     };
 
+    /// <summary>Lo que dijo TMDb de esta película, si se preguntó.</summary>
+    public IdentificacionDePelicula.Veredicto? Veredicto { get; init; }
+
+    /// <summary>
+    /// Qué se encontró y por qué señal, en una línea. Vacío si no se ha
+    /// preguntado —que es el estado de partida y no un fallo—.
+    /// </summary>
+    public string Segun
+    {
+        get
+        {
+            if (Veredicto is not { } v) return "";
+
+            var senal = Senal(v.Senal);
+            var propuesta = IdentificacionDePelicula.Propuesta(v);
+            return propuesta is null
+                ? senal
+                : string.Format(Textos.Instancia.PeliculasSegunTmdb,
+                                TituloDePelicula.Canonico(propuesta)) + " · " + senal;
+        }
+    }
+
+    public Visibility VerSegun => Segun.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>
+    /// En verde lo que se va a aplicar y en ámbar lo que no. Es la misma señal
+    /// que el resto de la app: el color dice si hay que mirarlo.
+    /// </summary>
+    public Brush SegunColor => (Brush)Application.Current.FindResource(
+        Veredicto?.SePuedeAplicar == true ? "OrgOk" : "OrgWarn");
+
+    private static string Senal(IdentificacionDePelicula.Porque p) => p switch
+    {
+        IdentificacionDePelicula.Porque.AnioYTitulo => Textos.Instancia.PeliculasSenalAnioYTitulo,
+        IdentificacionDePelicula.Porque.TituloOriginal => Textos.Instancia.PeliculasSenalTituloOriginal,
+        IdentificacionDePelicula.Porque.SinAnio => Textos.Instancia.PeliculasSenalSinAnio,
+        IdentificacionDePelicula.Porque.SoloTitulo => Textos.Instancia.PeliculasSenalSoloTitulo,
+        IdentificacionDePelicula.Porque.Empate => Textos.Instancia.PeliculasSenalEmpate,
+        IdentificacionDePelicula.Porque.TituloFlojo => Textos.Instancia.PeliculasSenalTituloFlojo,
+        _ => Textos.Instancia.PeliculasSenalSinCandidatos,
+    };
+
     public Brush Color => (Brush)Application.Current.FindResource(Paso.Motivo switch
     {
         PlanDePeliculas.Porque.Va => "OrgOk",
@@ -72,39 +115,140 @@ public sealed class PeliculaVista
 /// biblioteca de alguien.
 /// </para>
 /// <para>
-/// Lo que esta ventana NO hace: identificar la película contra ninguna base de
-/// datos. Todo lo que sabe sale del nombre del fichero y de su carpeta, así que
-/// no puede arreglar un título mal escrito ni distinguir dos películas que se
-/// llamen igual. Eso llega con el proveedor de metadatos.
+/// Identificar contra TMDb es un paso <b>aparte y opcional</b>, con su propio
+/// botón: primero se ve el plan tal y como sale de los nombres, y solo si se
+/// pide se pregunta a nadie. Lo que vuelve con confianza se aplica al plan; lo
+/// dudoso se enseña con la señal por la que se dudó y <b>no se toca</b>, porque
+/// una película mal identificada es peor que una sin identificar.
 /// </para>
 /// </summary>
 public partial class PeliculasWindow : Window
 {
     private readonly IReadOnlyList<string> _ficheros;
     private readonly string _raiz;
+    private readonly Settings _ajustes;
     private List<PlanDePeliculas.Paso> _plan = new();
     private Mudanza.Parte? _hecho;
 
-    public PeliculasWindow(IReadOnlyList<string> ficheros, string raiz)
+    /// <summary>Lo que dijo TMDb de cada fichero, por ruta. Vacío hasta que se pida.</summary>
+    private readonly Dictionary<string, IdentificacionDePelicula.Veredicto> _veredictos =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    public PeliculasWindow(IReadOnlyList<string> ficheros, string raiz, Settings ajustes)
     {
         InitializeComponent();
         _ficheros = ficheros;
         _raiz = raiz;
+        _ajustes = ajustes;
 
         btnCerrar.Click += (_, _) => Close();
         chkSoloLosQueVan.Checked += (_, _) => Pintar();
         chkSoloLosQueVan.Unchecked += (_, _) => Pintar();
         btnMover.Click += (_, _) => Mover();
         btnDeshacer.Click += (_, _) => Deshacer();
+        btnIdentificar.Click += async (_, _) => await Identificar();
 
+        PintarIdentificar();
         Recalcular();
+    }
+
+    /// <summary>
+    /// El botón se puede pulsar cuando hay con qué preguntar. Cuando no, se
+    /// queda visible y apagado <b>con el motivo al lado</b>: esconderlo dejaría
+    /// la función invisible, y apagarlo sin explicación se lee como algo roto.
+    /// </summary>
+    private void PintarIdentificar()
+    {
+        bool listo = _ajustes.Tmdb.Listo;
+        btnIdentificar.IsEnabled = listo && _hecho is null;
+        lblTmdbApagado.Visibility = listo ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>
+    /// Pregunta a TMDb por cada película y vuelve a montar el plan con lo que se
+    /// haya podido identificar <b>con seguridad</b>.
+    ///
+    /// <para>
+    /// Es un paso aparte y a petición, no algo que pase al abrir la ventana: una
+    /// app de disco que sale a internet sola, sin que se lo pidas, no es lo que
+    /// nadie instaló. Lo ya preguntado sale de la caché, así que repetirlo no
+    /// cuesta ni una consulta.
+    /// </para>
+    /// </summary>
+    private async Task Identificar()
+    {
+        var clave = _ajustes.Tmdb.ClaveElegida().Clave;
+        if (string.IsNullOrEmpty(clave)) return;
+
+        btnIdentificar.IsEnabled = false;
+
+        // El idioma de la app es el idioma en el que se pide el título, porque
+        // es el que se va a escribir en el disco.
+        var idioma = Idioma.Elegir("en-US", "es-ES");
+        var cache = CacheDePeliculas.Abrir(CacheDePeliculas.Predeterminada());
+
+        // Solo lo que trae ficha: un extra no la lleva, y por él no se pregunta.
+        var aPreguntar = _plan
+            .Where(p => p.Ficha is { } f && !string.IsNullOrWhiteSpace(f.Titulo))
+            .ToList();
+
+        int hechas = 0, seguras = 0, dudas = 0;
+        bool falloRed = false;
+
+        foreach (var paso in aPreguntar)
+        {
+            var ficha = paso.Ficha!;
+            lblPie.Text = string.Format(Textos.Instancia.PeliculasIdentificando,
+                                        hechas + 1, aPreguntar.Count);
+
+            var candidatos = cache.Buscar(ficha.Titulo, ficha.Anio, idioma);
+            if (candidatos is null)
+            {
+                var traidos = await Tmdb.Preguntar(ficha.Titulo, ficha.Anio, idioma, clave);
+
+                // Un «no se pudo preguntar» NO se guarda: si se guardara, un rato
+                // sin conexión dejaría esta película marcada como imposible para
+                // siempre.
+                if (traidos is null) { falloRed = true; hechas++; continue; }
+
+                cache.Guardar(ficha.Titulo, ficha.Anio, idioma, traidos);
+                candidatos = traidos;
+            }
+
+            var v = IdentificacionDePelicula.Decidir(ficha, candidatos);
+            _veredictos[paso.Origen] = v;
+            if (v.SePuedeAplicar) seguras++; else dudas++;
+            hechas++;
+        }
+
+        cache.Volcar();
+        Recalcular();
+        PintarIdentificar();
+
+        lblPie.Text = seguras == 0 && dudas == 0
+            ? Textos.Instancia.PeliculasIdentificadaNinguna
+            : dudas == 0
+                ? string.Format(Textos.Instancia.PeliculasIdentificadasTodas, seguras)
+                : string.Format(Textos.Instancia.PeliculasIdentificadas, seguras, dudas);
+
+        if (falloRed) lblPie.Text += " " + Textos.Instancia.PeliculasSinRed;
     }
 
     private void Recalcular()
     {
-        _plan = PlanDePeliculas.Montar(_ficheros, _raiz);
+        _plan = PlanDePeliculas.Montar(_ficheros, _raiz, identificada: FichaIdentificada);
         Pintar();
     }
+
+    /// <summary>
+    /// La ficha que va a usar el plan para este fichero: la de TMDb solo si se
+    /// pudo identificar con seguridad. Una duda se enseña y no entra en el plan,
+    /// que es la regla entera de esta pantalla.
+    /// </summary>
+    private TituloDePelicula.Ficha? FichaIdentificada(string origen)
+        => _veredictos.TryGetValue(origen, out var v) && v.SePuedeAplicar
+            ? IdentificacionDePelicula.Propuesta(v)
+            : null;
 
     private void Pintar()
     {
@@ -126,7 +270,12 @@ public partial class PeliculasWindow : Window
         var visibles = chkSoloLosQueVan.IsChecked == true
             ? _plan.Where(p => p.Motivo is not (PlanDePeliculas.Porque.YaEsta or PlanDePeliculas.Porque.EsExtra))
             : _plan;
-        lista.ItemsSource = visibles.Select(p => new PeliculaVista { Paso = p, Raiz = _raiz }).ToList();
+        lista.ItemsSource = visibles.Select(p => new PeliculaVista
+        {
+            Paso = p,
+            Raiz = _raiz,
+            Veredicto = _veredictos.TryGetValue(p.Origen, out var v) ? v : null,
+        }).ToList();
 
         btnMover.IsEnabled = van > 0 && _hecho == null;
         btnMover.Content = van > 0
@@ -182,6 +331,7 @@ public partial class PeliculasWindow : Window
 
         btnDeshacer.Visibility = _hecho.Movidos.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         MovioAlgo = _hecho.Movidos.Count > 0;
+        PintarIdentificar();
 
         // Se marca a mano en vez de recalcular: las rutas del plan son las de
         // ANTES, y volver a montarlo diría otra vez «se mueve» sobre ficheros que

@@ -46,9 +46,26 @@
                      Foreground="{StaticResource OrgWarn}"/>
         </Border>
 
-        <CheckBox x:Name="chkSoloLosQueVan" Margin="0,8,0,0" FontSize="12" IsChecked="True"
-                  Foreground="{StaticResource Neutral400}"
-                  Content="{i:T PeliculasVerSoloLosQueVan}"/>
+        <!-- El filtro a la izquierda y el identificar a la derecha. El aviso de
+             «está apagado» va AL LADO del botón y visible, no escondido en el
+             tooltip de un botón deshabilitado: un botón apagado sin explicación
+             se lee como una función rota. -->
+        <Grid Margin="0,8,0,0">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+
+          <CheckBox x:Name="chkSoloLosQueVan" FontSize="12" IsChecked="True" VerticalAlignment="Center"
+                    Foreground="{StaticResource Neutral400}"
+                    Content="{i:T PeliculasVerSoloLosQueVan}"/>
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <TextBlock x:Name="lblTmdbApagado" Text="{i:T PeliculasIdentificarApagado}" FontSize="10.5"
+                       MaxWidth="250" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0"
+                       Foreground="{StaticResource Neutral600}" Visibility="Collapsed"/>
+            <Button x:Name="btnIdentificar" Style="{StaticResource BtnSecondary}" FontSize="12" Padding="12,5"
+                    Content="{i:T PeliculasIdentificar}" ToolTip="{i:T PeliculasIdentificarAyuda}"
+                    ToolTipService.ShowOnDisabled="True"/>
+          </StackPanel>
+        </Grid>
       </StackPanel>
 
       <ListBox x:Name="lista" Grid.Row="2" Background="Transparent" BorderThickness="0"
@@ -86,6 +103,11 @@
                 <TextBlock Text="{Binding Adonde}" FontFamily="{StaticResource FontMono}" FontSize="11"
                            Margin="0,2,0,0" TextWrapping="Wrap"
                            Foreground="{StaticResource Neutral500}"/>
+                <!-- Qué dijo TMDb y por qué señal. Se enseña también cuando
+                     acertó: una confianza que solo aparece al fallar no se
+                     aprende a leer, y aquí es donde se decide si fiarse. -->
+                <TextBlock Text="{Binding Segun}" Visibility="{Binding VerSegun}" FontSize="11"
+                           Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{Binding SegunColor}"/>
               </StackPanel>
               <Border Grid.Column="1" Background="{StaticResource Field}" CornerRadius="6" Padding="7,2"
                       VerticalAlignment="Top" Margin="8,0,0,0">

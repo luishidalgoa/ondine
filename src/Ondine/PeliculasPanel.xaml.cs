@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Ondine.Localizacion;
 
 namespace Ondine;
@@ -57,13 +58,42 @@ public partial class PeliculasPanel : UserControl
 
         btnOrdenar.IsEnabled = ficheros.Count > 0;
         lblPie.Text = "";
+
+        PintarQueSabe();
+    }
+
+    /// <summary>
+    /// Lo que esta pantalla sabe hacer, según esté encendida la consulta a TMDb.
+    ///
+    /// <para>
+    /// Se lee de los ajustes cada vez, y no se guarda: si se acaban de tocar las
+    /// preferencias, lo que vale es lo de ahora. Y cambia de color además de
+    /// texto — apagado es un aviso de lo que NO se puede hacer, encendido es
+    /// información— porque un aviso ámbar permanente enseña a no leerlo.
+    /// </para>
+    /// </summary>
+    private void PintarQueSabe()
+    {
+        bool con = SettingsStore.Load().Tmdb.Activo;
+
+        lblBaseDeDatos.Text = con ? Textos.Instancia.PeliculasConBaseDeDatos
+                                  : Textos.Instancia.PeliculasSinBaseDeDatos;
+
+        lblBaseDeDatos.Foreground = (Brush)FindResource(con ? "Neutral500" : "OrgWarn");
+        cajaBaseDeDatos.Background = (Brush)FindResource(con ? "Field" : "OrgWarnBg");
+        cajaBaseDeDatos.BorderBrush = (Brush)FindResource(con ? "Divider" : "OrgWarnBorder");
     }
 
     private void Ordenar()
     {
         if (_ficheros.Count == 0) return;
 
-        var v = new PeliculasWindow(_ficheros, _carpeta) { Owner = Window.GetWindow(this) };
+        // Los ajustes se leen AQUÍ y no se guardan en el panel: si se han tocado
+        // las preferencias con la app abierta, lo que vale es lo de ahora.
+        var v = new PeliculasWindow(_ficheros, _carpeta, SettingsStore.Load())
+        {
+            Owner = Window.GetWindow(this),
+        };
         v.ShowDialog();
 
         if (v.MovioAlgo) MovioAlgo?.Invoke();

@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using Ondine.Ia;
 using Ondine.Localizacion;
+using Ondine.Peliculas;
 
 namespace Ondine;
 
@@ -105,6 +107,51 @@ public partial class PreferencesWindow : Window
             PintarClave();
         };
         btnIaProbar.Click += async (_, _) => await ProbarIa();
+
+        // Películas. Copia igual que el modelo, por el mismo motivo: si se
+        // cancela la ventana, nada de esto se aplica.
+        _tmdb = current.Tmdb.Clone();
+        chkTmdb.IsChecked = _tmdb.Activo;
+        PintarClaveTmdb();
+
+        btnTmdbOlvidar.Click += (_, _) =>
+        {
+            _tmdb.PonerClave(null);
+            txtTmdbClave.Clear();
+            PintarClaveTmdb(Textos.Instancia.TmdbClaveOlvidada);
+        };
+        // Se repinta al escribir porque la línea de «cuál se está usando» cambia
+        // en cuanto hay algo en el campo: enterarse al guardar es enterarse tarde.
+        txtTmdbClave.PasswordChanged += (_, _) => PintarClaveTmdb();
+    }
+
+    // ── Identificar películas contra TMDb ──
+
+    private readonly AjustesDeTmdb _tmdb;
+
+    /// <summary>
+    /// Qué clave hay y, sobre todo, <b>cuál se va a usar</b>. Las dos cosas se
+    /// parecen y no son la misma: se puede no tener clave propia y funcionar
+    /// —porque la trae la app— o no tener ninguna de las dos, que es lo que le
+    /// pasa a quien compile el repo sin el secreto de la build.
+    /// </summary>
+    private void PintarClaveTmdb(string? aviso = null)
+    {
+        bool propia = _tmdb.TieneClave || txtTmdbClave.Password.Length > 0;
+
+        btnTmdbOlvidar.Visibility = _tmdb.TieneClave ? Visibility.Visible : Visibility.Collapsed;
+        lblTmdbClaveNota.Text = aviso
+                                ?? (_tmdb.TieneClave ? Textos.Instancia.TmdbClaveGuardada
+                                                     : Textos.Instancia.TmdbClaveAyuda);
+
+        bool falta = !propia && ClaveDeTmdb.Empotrada is null;
+        lblTmdbOrigen.Text = propia ? Textos.Instancia.TmdbUsandoLaTuya
+                           : falta ? Textos.Instancia.TmdbSinNingunaClave
+                                   : Textos.Instancia.TmdbUsandoLaDeLaApp;
+
+        lblTmdbOrigen.Foreground = (Brush)FindResource(falta ? "OrgWarn" : "Neutral500");
+        cajaTmdbClave.Background = (Brush)FindResource(falta ? "OrgWarnBg" : "Field");
+        cajaTmdbClave.BorderBrush = (Brush)FindResource(falta ? "OrgWarnBorder" : "Divider");
     }
 
     // ── Modelo de lenguaje ──
@@ -184,6 +231,12 @@ public partial class PreferencesWindow : Window
         // tocar cualquier otra cosa borrase la clave de paso.
         if (txtIaClave.Password.Length > 0) _ia.PonerClave(txtIaClave.Password);
         s.Ia = _ia;
+
+        _tmdb.Activo = chkTmdb.IsChecked == true;
+        // Vacío = «no la cambies», igual que con la del modelo: entrar en
+        // preferencias a tocar otra cosa no puede borrar la clave de paso.
+        if (txtTmdbClave.Password.Length > 0) _tmdb.PonerClave(txtTmdbClave.Password);
+        s.Tmdb = _tmdb;
 
         // Se aplica aquí y no al cerrar: los textos están enlazados, así que la
         // app entera cambia de idioma sola en cuanto se toca esto.

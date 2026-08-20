@@ -52,11 +52,9 @@
 
           <!-- Lo que esta pantalla NO sabe hacer, dicho donde se decide usarla y
                no después de haberla usado. -->
-          <Border Margin="0,14,0,0" Padding="10,7" CornerRadius="8"
-                  Background="{StaticResource OrgWarnBg}"
-                  BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
-            <TextBlock Text="{i:T PeliculasSinBaseDeDatos}" FontSize="11.5" TextWrapping="Wrap"
-                       Foreground="{StaticResource OrgWarn}"/>
+          <Border x:Name="cajaBaseDeDatos" Margin="0,14,0,0" Padding="10,7" CornerRadius="8"
+                  BorderThickness="1">
+            <TextBlock x:Name="lblBaseDeDatos" FontSize="11.5" TextWrapping="Wrap"/>
           </Border>
 
           <Button x:Name="btnOrdenar" Style="{StaticResource BtnPrimary}" Margin="0,18,0,0"

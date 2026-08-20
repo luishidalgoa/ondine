@@ -134,6 +134,46 @@
             </StackPanel>
           </StackPanel>
         </TabItem>
+        <!-- ══ Películas: identificar contra TMDb (opcional) ══ -->
+        <TabItem Header="{i:T TmdbPestania}">
+          <StackPanel>
+            <TextBlock Text="{i:T TmdbTitulo}" FontSize="12" Foreground="{StaticResource Neutral400}" Margin="0,0,0,4"/>
+            <TextBlock Text="{i:T TmdbIntro}" TextWrapping="Wrap" FontSize="10.5"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+            <CheckBox x:Name="chkTmdb" Content="{i:T TmdbActivo}" Margin="0,0,0,10"/>
+
+            <!-- Qué sale de esta máquina. Va pegado al interruptor y no detrás de
+                 un «saber más»: es justo la información con la que se decide
+                 encenderlo, y leída después ya no sirve para decidir. -->
+            <Border Padding="10,7" CornerRadius="8" Margin="0,0,0,16"
+                    Background="{StaticResource Field}">
+              <TextBlock Text="{i:T TmdbQueSeManda}" TextWrapping="Wrap" FontSize="10.5"
+                         Foreground="{StaticResource Neutral500}"/>
+            </Border>
+
+            <TextBlock Text="{i:T TmdbClave}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+            <!-- PasswordBox y no TextBox, igual que la clave del modelo: no se
+                 saca a pantalla algo que ya está a salvo. -->
+            <Grid Margin="0,0,0,3">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <PasswordBox x:Name="txtTmdbClave"/>
+              <Button x:Name="btnTmdbOlvidar" Grid.Column="1" Style="{StaticResource BtnGhostMuted}"
+                      Content="{i:T TmdbClaveBorrar}" FontSize="11" Padding="10,4" Margin="8,0,0,0"
+                      Visibility="Collapsed"/>
+            </Grid>
+            <TextBlock x:Name="lblTmdbClaveNota" TextWrapping="Wrap" FontSize="10.5"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,10"/>
+
+            <!-- CUÁL se está usando. Sin esta línea, «hay clave» y «funciona» se
+                 parecen demasiado: una copia compilada del repo sin el secreto no
+                 tiene ninguna, y eso hay que decirlo aquí, que es donde se
+                 arregla, y no como un fallo de red al primer intento. -->
+            <Border x:Name="cajaTmdbClave" Padding="10,7" CornerRadius="8" BorderThickness="1">
+              <TextBlock x:Name="lblTmdbOrigen" TextWrapping="Wrap" FontSize="11"/>
+            </Border>
+          </StackPanel>
+        </TabItem>
       </TabControl>
 
       <!-- footer -->
