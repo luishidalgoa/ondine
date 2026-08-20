@@ -63,13 +63,28 @@
               <!-- El DesiredFrameRate va en el STORYBOARD: puesto en la animación hija,
                    WPF lo ignora — solo se respeta en la raíz del árbol de tiempo. -->
               <Storyboard Timeline.DesiredFrameRate="5">
-                <!-- A 5 fps, no a 60. El ambiente está DEBAJO de toda la ventana: cada
-                     paso del latido marca sucia la ventana entera y WPF recompone toda la
-                     interfaz. A 60 fps eso era el 6 % de la máquina parada — el pintor
-                     dominante de la app, medido apagándolo. Una rampa de 9 s a 5 pasos por
-                     segundo es visualmente idéntica y cuesta la doceava parte. -->
+                <!-- QUIETO. La rampa de opacidad ya no se repite: hace su pasada al abrir
+                     y se para.
+
+                     Aquí hubo una animación que respiraba para siempre, y bajarla de 60 a
+                     5 fps NO la abarató como se creyó. Medido en agosto de 2026, con la
+                     app abierta y sin tocarla:
+
+                        con las dos animaciones vivas ............ 12,2 % de un núcleo
+                        sin el latido de la píldora ..............  7,2 %
+                        sin ninguna de las dos ...................  0,3 %
+
+                     O sea: esta costaba ~7 % ella sola, a 5 fps y con BitmapCache puesto.
+                     El motivo es que está DEBAJO de toda la ventana: cambiar su opacidad
+                     obliga a recomponer la interfaz entera, y eso no lo arregla bajar los
+                     fotogramas porque lo caro es cada paso, no cuántos hay.
+
+                     Siete por ciento de un núcleo, para siempre, por una rampa de 9 s
+                     entre 0,82 y 1 que nadie llega a percibir conscientemente. Si alguna
+                     vez se echa de menos, devolverla es poner RepeatBehavior="Forever"
+                     aquí — pero ese es el precio, y ahora está medido. -->
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.82" To="1" Duration="0:0:9"
-                                 AutoReverse="True" RepeatBehavior="Forever"/>
+                                 AutoReverse="True"/>
               </Storyboard>
             </BeginStoryboard>
           </EventTrigger>
@@ -265,21 +280,43 @@
                   <DropShadowEffect ShadowDepth="0" BlurRadius="10" Color="#968AE0" Opacity="0.9"
                                     RenderingBias="Performance"/>
                 </Ellipse.Effect>
-                <Ellipse.Triggers>
-                  <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                      <Storyboard>
-                        <!-- Solo late la OPACIDAD del elemento: como el halo es su efecto,
-                             se atenúan juntos y en el mismo compás — igual que cuando el
-                             latido animaba el radio del blur, pero sin recalcular el
-                             desenfoque en cada fotograma (1,4 % de CPU constante, medido;
-                             con el blur fijo y cacheado, nada). -->
-                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.4" Duration="0:0:1.2"
-                                         AutoReverse="True" RepeatBehavior="Forever"/>
-                      </Storyboard>
-                    </BeginStoryboard>
-                  </EventTrigger>
-                </Ellipse.Triggers>
+                <!-- El latido arranca al hacerse VISIBLE la píldora, y se PARA al
+                     ocultarse. Va en un Style y no en Ellipse.Triggers porque la
+                     colección de disparadores de un elemento solo admite EventTrigger:
+                     un DataTrigger ahí revienta al construir la ventana.
+
+                     Antes colgaba de «Loaded», y ahí está el problema que esto arregla:
+                     la píldora nace Collapsed y pasa casi todo el tiempo así, pero
+                     Loaded se dispara igual. El latido corría SIEMPRE, a 60 fps, sobre
+                     algo que nadie ve. Medido apagándolo: 5 % de un núcleo, constante,
+                     con la app parada. Y a 15 fps, que para un pulso de 1,2 s es
+                     indistinguible y cuesta la cuarta parte. -->
+                <Ellipse.Style>
+                  <Style TargetType="Ellipse">
+                    <Style.Triggers>
+                      <DataTrigger Value="True"
+                                   Binding="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=Border}}">
+                        <DataTrigger.EnterActions>
+                          <BeginStoryboard x:Name="sbLatido">
+                            <Storyboard Timeline.DesiredFrameRate="15">
+                              <!-- Solo late la OPACIDAD del elemento: como el halo es su
+                                   efecto, se atenúan juntos y en el mismo compás — igual
+                                   que cuando el latido animaba el radio del blur, pero sin
+                                   recalcular el desenfoque en cada fotograma (1,4 % de CPU
+                                   constante, medido; con el blur fijo y cacheado, nada). -->
+                              <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.4"
+                                               Duration="0:0:1.2" AutoReverse="True"
+                                               RepeatBehavior="Forever"/>
+                            </Storyboard>
+                          </BeginStoryboard>
+                        </DataTrigger.EnterActions>
+                        <DataTrigger.ExitActions>
+                          <StopStoryboard BeginStoryboardName="sbLatido"/>
+                        </DataTrigger.ExitActions>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Ellipse.Style>
               </Ellipse>
               <TextBlock x:Name="lblPill" Text="{i:T MainPildoraComprimiendo}" FontSize="12" Foreground="{StaticResource Neutral300}"
                          VerticalAlignment="Center"/>

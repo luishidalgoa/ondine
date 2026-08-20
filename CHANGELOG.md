@@ -53,6 +53,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **La app se comía un 12% de un núcleo estando parada, sin hacer nada.** Dos animaciones decorativas
+  que no paraban nunca: el latido del punto de «comprimiendo» —que corría **aunque la píldora
+  estuviera oculta**, que es casi siempre— y la respiración del fondo, que al cambiar de opacidad
+  obliga a repintar la ventana entera. Medido apagándolas una a una: **12,2% → 0,2%**. El latido
+  ahora solo late cuando se le ve; el fondo hace su pasada al abrir y se queda quieto.
+
+
 - **Cuando un vídeo no se puede reproducir, ahora se dice qué códec es y qué hacer.** Antes salía
   «códec no soportado» y un número en hexadecimal, que no le dice a nadie qué hacer. Ahora se le
   pregunta al analizador y se te dice cuál es —**AV1**, **HEVC**, **VP9** o el que sea— y se te manda
