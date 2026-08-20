@@ -92,5 +92,28 @@ public static class CotejoDeDosEpisodiosTests
         // «episodio 985» del detalle no cambie de significado.
         Program.Eq(985, solo985[0].Episodio?.Num,
             "el número que se enseña es el del trozo que mejor casó");
+
+        // yt-dlp conserva en el nombre las barras verticales de ancho completo
+        // que usa YouTube. El análisis inyectado y el cotejo de la playlist deben
+        // entender el mismo título para que «te falta» cambie al terminar.
+        var catYoutube = ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0", "serie": "Shin chan",
+          "episodios": [
+            { "num": 513, "temporada": 2004,
+              "titulos": { "es": ["Así son los 24 minutos de papá", "Celebramos una competición en la escuela"] } }
+          ]
+        }
+        """);
+        var nombreYoutube = "Shin chan ｜ ¡Eh, que celebramos una competición en la escuela! ｜ Episodio 551 en español [6OjZVHt4QHQ].mp4";
+        var señalYoutube = SignalExtractor.Extract(Path.Combine("C:", "tv", nombreYoutube), "Descargas");
+        var resYoutube = ReindexEngine.Resolve(new[] { señalYoutube }, catYoutube)[0];
+        Program.Eq(513, resYoutube.Episodio?.Num,
+            "el fichero descargado con barras de YouTube se inyecta en su episodio real");
+        var actualizado = CotejoDeLista.Cotejar(
+            new[] { "¡Eh, que celebramos una competición en la escuela!" },
+            catYoutube, new[] { resYoutube });
+        Program.Eq(CotejoDeLista.Estado.YaEsta, actualizado[0].Estado,
+            "tras inyectarlo, la playlist deja de decir «te falta»");
     }
 }
