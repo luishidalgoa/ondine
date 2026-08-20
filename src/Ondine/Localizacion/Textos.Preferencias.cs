@@ -221,4 +221,58 @@ public sealed partial class Textos
     public string IaRespuestaIlegible => Idioma.Elegir(
         "The answer did not come in a shape that can be read.",
         "La respuesta no vino en una forma que se pueda leer.");
+
+    // ── Identificar películas contra TMDb (opcional) ────────────────────────
+    // Va en su propia pestaña y no dentro de «Modelo» porque son dos cosas
+    // distintas que solo se parecen en que las dos salen a internet.
+    public string TmdbPestania => Idioma.Elegir("Films", "Películas");
+
+    public string TmdbTitulo => Idioma.Elegir(
+        "Identify films against TMDb",
+        "Identificar películas contra TMDb");
+
+    public string TmdbIntro => Idioma.Elegir(
+        "Series have a catalogue to import; films do not — a film is just a film. Turning this on lets Ondine look each one up on The Movie Database, which is what fixes a misspelt title, brings the year when the file has none, and knows that «The commuter» and «El pasajero» are the same film.",
+        "Las series tienen un catálogo que importar; las películas no —una película es solo una película—. Encender esto deja que Ondine busque cada una en The Movie Database, que es lo que arregla un título mal escrito, trae el año cuando el fichero no lo tiene, y sabe que «The commuter» y «El pasajero» son la misma película.");
+
+    public string TmdbActivo => Idioma.Elegir(
+        "Look films up on TMDb",
+        "Buscar las películas en TMDb");
+
+    // Lo que sale de la máquina, dicho donde se decide encenderlo. Es la
+    // pregunta que se hace cualquiera al ver que una app de disco sale a
+    // internet, y merece respuesta exacta y no «datos anónimos».
+    public string TmdbQueSeManda => Idioma.Elegir(
+        "What leaves this computer: the cleaned-up title and the year, and nothing else. Not the file name — the resolution, the codec and the release group are no use for identifying anything and say where the file came from. Answers are kept on disk, so the same film is never asked twice and what has already been asked keeps working with no connection.",
+        "Qué sale de este equipo: el título ya limpio y el año, y nada más. No el nombre del fichero —la resolución, el códec y el grupo de release no sirven para identificar nada y dicen de dónde salió el fichero—. Las respuestas se guardan en disco, así que la misma película no se pregunta dos veces y lo ya preguntado sigue funcionando sin conexión.");
+
+    public string TmdbClave => Idioma.Elegir("Your own key (optional)", "Tu propia clave (opcional)");
+
+    public string TmdbClaveAyuda => Idioma.Elegir(
+        "Ondine already comes with a key, so you do not need one. Paste yours if you would rather use your own quota, or if you built Ondine yourself. Both credentials on the TMDb settings page work — the «API Key (v3 auth)» and the «API Read Access Token (v4 auth)»: Ondine tells them apart and sends each one the way TMDb expects.",
+        "Ondine ya trae una clave, así que no necesitas ninguna. Pega la tuya si prefieres gastar tu propia cuota, o si has compilado Ondine tú. Valen las dos credenciales de la página de ajustes de TMDb —la «API Key (v3 auth)» y el «API Read Access Token (v4 auth)»—: Ondine las distingue y manda cada una como TMDb la espera.");
+
+    public string TmdbClaveGuardada => Idioma.Elegir(
+        "There is a key saved. Type over it to replace it.",
+        "Hay una clave guardada. Escribe encima para reemplazarla.");
+
+    public string TmdbClaveBorrar => Idioma.Elegir("Forget my key", "Olvidar mi clave");
+    public string TmdbClaveOlvidada => Idioma.Elegir(
+        "Your key is forgotten; the one that comes with Ondine will be used.",
+        "Tu clave está olvidada; se usará la que trae Ondine.");
+
+    public string TmdbUsandoLaDeLaApp => Idioma.Elegir(
+        "Using the key that comes with Ondine.",
+        "Se está usando la clave que trae Ondine.");
+
+    public string TmdbUsandoLaTuya => Idioma.Elegir(
+        "Using your key.",
+        "Se está usando tu clave.");
+
+    // El caso de quien compila el repo: sin el secreto de la build no hay clave.
+    // Se dice aquí, que es donde se puede arreglar, en vez de dejar que se
+    // descubra como un fallo de red al primer intento.
+    public string TmdbSinNingunaClave => Idioma.Elegir(
+        "This copy of Ondine was built without a key, so nothing can be looked up until you paste one. You can get one free at themoviedb.org, under Settings, API.",
+        "Esta copia de Ondine se compiló sin clave, así que no se puede buscar nada hasta que pegues una. Se consigue gratis en themoviedb.org, en Ajustes, API.");
 }

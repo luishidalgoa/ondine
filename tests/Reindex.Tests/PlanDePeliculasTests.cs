@@ -84,5 +84,83 @@ public static class PlanDePeliculasTests
         // ── Cuántos se mueven de verdad ───────────────────────────────────────
         Program.Assert(PlanDePeliculas.Cuantos(plan) == 4,
             "de los ocho, cuatro tienen trabajo: dos dentro de su colección y dos que se colocan");
+
+        // ── El paso lleva la ficha que se leyó ────────────────────────────────
+        // La ventana necesita preguntarle a TMDb por ESTA ficha, la que el plan
+        // ha leído de verdad. Si la volviera a calcular por su cuenta habría dos
+        // versiones de la misma regla —la del año que aporta la carpeta, la de
+        // las colecciones— y una de las dos se quedaría atrás.
+        Program.Assert(Del("Grease.mp4").Ficha == new TituloDePelicula.Ficha("Grease", 1978),
+            "el paso lleva la ficha que se leyó, con el año que puso la carpeta");
+        Program.Assert(Del("Up.mp4").Ficha?.Titulo == "Up",
+            "también dentro de una colección");
+        ConIdentificacion();
+    }
+
+    /// <summary>
+    /// El plan cuando TMDb ya ha identificado la película: manda la ficha del
+    /// proveedor y no la que se pudo leer del nombre. Es medio motivo de
+    /// conectarlo — el nombre del fichero no puede arreglar un título mal escrito
+    /// ni traer un año que no está escrito en ninguna parte.
+    ///
+    /// <para>
+    /// Aquí se le pasan las fichas ya decididas. Filtrar las dudosas es cosa de
+    /// quien pregunta: el plan se cree lo que le den, y por eso lo que le llega
+    /// solo son las seguras.
+    /// </para>
+    /// </summary>
+    private static void ConIdentificacion()
+    {
+        Program.Seccion("El plan cuando TMDb ya identificó la película");
+
+        var raiz = R("C:", "Plex", "Movies");
+        var suelta = R(raiz, "The commuter.mkv");
+        var enColeccion = R(raiz, "Disney", "up 1080p x264.mp4");
+        var otraDeLaColeccion = R(raiz, "Disney", "El Rey Leon 2 1080P.mp4");
+        var elExtra = R(raiz, "The commuter-trailer.mkv");
+        var aSecas = R(raiz, "Grease.mp4");
+
+        var fichas = new Dictionary<string, TituloDePelicula.Ficha>(StringComparer.OrdinalIgnoreCase)
+        {
+            [suelta] = new("El pasajero", 2018),
+            [enColeccion] = new("Up", 2009),
+            [elExtra] = new("El pasajero", 2018),
+        };
+
+        var plan = PlanDePeliculas.Montar(
+            new[] { suelta, enColeccion, otraDeLaColeccion, elExtra, aSecas }, raiz,
+            existe: _ => false,
+            identificada: f => fichas.TryGetValue(f, out var v) ? v : null);
+
+        PlanDePeliculas.Paso Del(string ruta) => plan.First(p => p.Origen == ruta);
+
+        // Lo que no puede hacer ningún nombre de fichero: saber que «The
+        // commuter» y «El pasajero» son la misma película.
+        Program.Assert(Del(suelta).Destino == R(raiz, "El pasajero (2018)", "El pasajero (2018).mkv"),
+            "manda el título del proveedor, que es lo que unifica una biblioteca medio en inglés y medio en castellano");
+        Program.Assert(Del(suelta).Motivo == PlanDePeliculas.Porque.Va, "y se coloca");
+
+        // Dentro de una colección sigue sin salir de su carpeta: identificar no
+        // cambia esa regla, solo mejora el nombre que se escribe.
+        Program.Assert(Del(enColeccion).Destino == R(raiz, "Disney", "Up (2009).mp4"),
+            "en una colección se renombra con el nombre bueno y NO se desmonta la carpeta");
+        Program.Assert(Del(enColeccion).Motivo == PlanDePeliculas.Porque.EnColeccion,
+            "y sigue contando como «se renombra donde está»");
+
+        // Lo que NO se identificó se sigue leyendo del nombre, como antes.
+        Program.Assert(Del(otraDeLaColeccion).Destino == R(raiz, "Disney", "El Rey Leon 2.mp4"),
+            "lo que el proveedor no supo decir se sigue leyendo del nombre: no se pierde lo que ya funcionaba");
+        Program.Assert(Del(aSecas).Destino == R(raiz, "Grease", "Grease.mp4"),
+            "y una sin identificar tampoco se inventa un año");
+
+        // Y la regla de los extras NO se puede saltar por identificar. Es el
+        // fallo que convertía un tráiler en una segunda versión de la película,
+        // y ahora el proveedor sabría decir de qué película es el tráiler: razón
+        // de más para que esto siga cerrado.
+        Program.Assert(Del(elExtra).Ficha is null,
+            "un extra no lleva ficha: no se va a preguntar por él");
+        Program.Assert(Del(elExtra).Motivo == PlanDePeliculas.Porque.EsExtra
+                       && Del(elExtra).Destino is null,
+            "un extra identificado sigue siendo un extra: renombrarlo lo convertiría en otra versión de la película");
     }
 }

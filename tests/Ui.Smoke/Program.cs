@@ -82,12 +82,13 @@ public static class Program
                 Path.Combine("C:", "pelis", "Disney", "Up.mp4"),
                 Path.Combine("C:", "pelis", "Grease (1978)", "Grease.mp4"),
             },
-            Path.Combine("C:", "pelis")));
+            Path.Combine("C:", "pelis"), new Settings()));
         Probar("ComplementosPanel", () => new ComplementosPanel(
             () => new ComplementosPanel.EstadoDeOrganizar(cat, res, "")));
 
         LaTarjetaDiceLoQueSeVaAEscribir(cat);
         LosAvisosNoSePisan();
+        ElBotonDeIdentificarDiceSiSePuede();
 
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
@@ -203,6 +204,59 @@ public static class Program
     /// es cuando se aplican las plantillas de control y se resuelven los
     /// recursos que solo nombra el estilo, no el elemento.
     /// </summary>
+    /// <summary>
+    /// El botón de identificar contra TMDb solo se puede pulsar cuando hay con
+    /// qué preguntar, y cuando no, el motivo está a la vista.
+    ///
+    /// <para>
+    /// Se prueba aquí y no de pasada porque este exacto fallo ya se cometió una
+    /// vez, con el botón de descargar de los complementos: se ofrecía una acción
+    /// que no podía funcionar. Un botón apagado sin explicación al lado se lee
+    /// como una función rota, no como una que hay que encender.
+    /// </para>
+    /// </summary>
+    private static void ElBotonDeIdentificarDiceSiSePuede()
+    {
+        const string nombre = "el botón de identificar dice si se puede pulsar, y por qué no";
+        try
+        {
+            var ficheros = new[] { Path.Combine("C:", "pelis", "Grease (1978)", "Grease.mp4") };
+            var raiz = Path.Combine("C:", "pelis");
+
+            // Apagado de fábrica: nada de red sin que se lo pidan.
+            var apagado = new PeliculasWindow(ficheros, raiz, new Settings());
+            var boton = (Button)apagado.FindName("btnIdentificar")!;
+            var aviso = (TextBlock)apagado.FindName("lblTmdbApagado")!;
+
+            if (boton.IsEnabled)
+                throw new Exception("con TMDb apagado el botón se podía pulsar, y no habría preguntado a nadie");
+            if (aviso.Visibility != Visibility.Visible)
+                throw new Exception("el botón estaba apagado y sin decir por qué: eso se lee como roto");
+            apagado.Close();
+
+            // Encendido y con clave. Cifrar es DPAPI y solo existe en Windows,
+            // que es donde corre esta prueba —WPF no existe fuera—, así que aquí
+            // no hay nada que saltarse.
+            var ajustes = new Settings();
+            ajustes.Tmdb.Activo = true;
+            ajustes.Tmdb.PonerClave("una-clave-de-prueba");
+
+            var encendido = new PeliculasWindow(ficheros, raiz, ajustes);
+            var boton2 = (Button)encendido.FindName("btnIdentificar")!;
+            var aviso2 = (TextBlock)encendido.FindName("lblTmdbApagado")!;
+
+            if (!boton2.IsEnabled)
+                throw new Exception("con TMDb encendido y clave puesta el botón seguía apagado");
+            if (aviso2.Visibility == Visibility.Visible)
+                throw new Exception("seguía diciendo que está apagado cuando ya no lo está");
+            encendido.Close();
+
+            Vaciar();
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
     private static void Probar(string nombre, Func<FrameworkElement> hacer)
     {
         try

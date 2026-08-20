@@ -32,6 +32,24 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Las películas se pueden identificar contra TMDb, y la app dice por qué se lo cree.** Hasta ahora
+  los nombres salían solo del fichero y de su carpeta, así que un título mal escrito seguía mal
+  escrito. Encendiéndolo en **Preferencias → Películas**, la ventana de películas trae un botón que
+  pregunta a The Movie Database qué es cada una: acierta el título, **trae el año cuando el fichero
+  no lo tiene** —de una biblioteca de 75, 52 no lo traían— y sabe que «The commuter» y «El pasajero»
+  son la misma película. Cada fila enseña qué se encontró **y por qué señal**, y lo que no se pueda
+  identificar con confianza se enseña y **no se toca**: dos películas que encajan igual de bien y
+  nada que las separe no se resuelven a cara o cruz, porque una película mal identificada es peor
+  que una sin identificar.
+
+  Viene apagado y con la clave puesta, así que no hay que registrarse en ningún sitio; si prefieres
+  gastar tu propia cuota, hay un campo para tu clave. **De tu equipo solo sale el título ya limpio y
+  el año** —nunca el nombre del fichero, que dice de dónde salió—, y las respuestas se guardan en
+  disco: la misma película no se pregunta dos veces y lo ya preguntado sigue valiendo sin conexión.
+
+
 ## [1.9.2] - 2026-08-20
 
 ### Corregido

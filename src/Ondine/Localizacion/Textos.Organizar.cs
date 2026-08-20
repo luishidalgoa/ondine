@@ -252,8 +252,8 @@ public sealed partial class Textos
     // segunda frase es la que evita la decepción: sin base de datos, un título
     // mal escrito en el fichero sigue mal escrito después.
     public string PeliculasPie => Idioma.Elegir(
-        "Nothing has been touched yet. Names come from the file and its folder — there is no database behind this yet, so a misspelt title stays misspelt.",
-        "Todavía no se ha tocado nada. Los nombres salen del fichero y de su carpeta —aún no hay ninguna base de datos detrás—, así que un título mal escrito seguirá mal escrito.");
+        "Nothing has been touched yet. Names come from the file and its folder: a misspelt title stays misspelt unless you identify it against TMDb.",
+        "Todavía no se ha tocado nada. Los nombres salen del fichero y de su carpeta: un título mal escrito seguirá mal escrito si no lo identificas contra TMDb.");
 
     public string PeliculasDeshacer => Idioma.Elegir("Undo", "Deshacer");
 
@@ -285,9 +285,17 @@ public sealed partial class Textos
         "Nothing is renamed without your approval: you get the whole simulation first, and it can be undone.",
         "Nada se renombra sin tu aprobación: primero ves la simulación entera, y se puede deshacer.");
 
+    // Lo que esta pantalla sabe y no sabe, según esté encendida la consulta a
+    // TMDb. Antes decía «no hay ninguna base de datos detrás» y eso dejó de ser
+    // verdad: un texto que miente sobre lo que la app puede hacer es peor que
+    // no tener texto.
     public string PeliculasSinBaseDeDatos => Idioma.Elegir(
-        "Names come from the file and its folder. There is no database behind this yet, so a misspelt title stays misspelt and two films with the same name cannot be told apart.",
-        "Los nombres salen del fichero y de su carpeta. Todavía no hay ninguna base de datos detrás, así que un título mal escrito seguirá mal escrito y dos películas que se llamen igual no se pueden distinguir.");
+        "Names come from the file and its folder, so a misspelt title stays misspelt and two films with the same name cannot be told apart. Turn on TMDb in Preferences, Films to fix that.",
+        "Los nombres salen del fichero y de su carpeta, así que un título mal escrito seguirá mal escrito y dos películas que se llamen igual no se pueden distinguir. Enciende TMDb en Preferencias, Películas para arreglarlo.");
+
+    public string PeliculasConBaseDeDatos => Idioma.Elegir(
+        "Films will be looked up on TMDb to get the title and the year right. Whatever cannot be identified with confidence is shown and left alone.",
+        "Las películas se buscarán en TMDb para acertar el título y el año. Lo que no se pueda identificar con confianza se enseña y no se toca.");
 
     public string PeliculasAbrir => Idioma.Elegir("Sort out films…", "Ordenar las películas…");
     public string PeliculasAbrirAyuda => Idioma.Elegir(
@@ -1359,4 +1367,57 @@ public sealed partial class Textos
     /// es— sin bajarse nada.
     /// </summary>
     public string OrganizarVerloEnLaWeb => Idioma.Elegir("Watch it on the web", "Verlo en la web");
+
+    // ── Identificar contra TMDb, desde la ventana de películas ──────────────
+    public string PeliculasIdentificar => Idioma.Elegir("Identify with TMDb", "Identificar con TMDb");
+    public string PeliculasIdentificarAyuda => Idioma.Elegir(
+        "Ask TMDb what each film is, to get the title and the year right. This applies nothing: the plan is redrawn and you still decide.",
+        "Preguntar a TMDb qué es cada película, para acertar el título y el año. Esto no aplica nada: se vuelve a dibujar el plan y sigues decidiendo tú.");
+
+    // {0} = cuántas van · {1} = cuántas hay.
+    public string PeliculasIdentificando => Idioma.Elegir("Asking TMDb… {0} of {1}", "Preguntando a TMDb… {0} de {1}");
+
+    // {0} = identificadas con seguridad · {1} = las que hay que mirar.
+    public string PeliculasIdentificadas => Idioma.Elegir(
+        "{0} identified. {1} need a look: they are shown with what was found, and left alone.",
+        "{0} identificadas. {1} hay que mirarlas: se enseñan con lo que se encontró, y no se tocan.");
+
+    // {0} = cuántas.
+    public string PeliculasIdentificadasTodas => Idioma.Elegir(
+        "{0} identified, with nothing left in doubt.",
+        "{0} identificadas, sin ninguna duda pendiente.");
+
+    public string PeliculasIdentificadaNinguna => Idioma.Elegir(
+        "None could be identified. The names stay as they were read from the files.",
+        "No se pudo identificar ninguna. Los nombres se quedan como se leyeron de los ficheros.");
+
+    public string PeliculasIdentificarApagado => Idioma.Elegir(
+        "Turn on TMDb in Preferences, Films, to identify these.",
+        "Enciende TMDb en Preferencias, Películas, para identificar estas.");
+
+    public string PeliculasSinRed => Idioma.Elegir(
+        "TMDb could not be reached. What had already been asked still works; the rest keep the name read from the file.",
+        "No se pudo llegar a TMDb. Lo que ya se había preguntado sigue valiendo; el resto se queda con el nombre leído del fichero.");
+
+    // Por qué señal se identificó cada una. Se enseña siempre, también cuando
+    // acertó: una confianza que solo aparece cuando falla no se aprende a leer.
+    public string PeliculasSenalAnioYTitulo => Idioma.Elegir(
+        "title and year match", "título y año cuadran");
+    public string PeliculasSenalTituloOriginal => Idioma.Elegir(
+        "matched its original title", "cuadró por su título original");
+    public string PeliculasSenalSinAnio => Idioma.Elegir(
+        "no year in the file; the title is identical", "sin año en el fichero; el título es idéntico");
+    public string PeliculasSenalSoloTitulo => Idioma.Elegir(
+        "the title matches, the year does not: could be the remake",
+        "el título cuadra y el año no: puede ser el remake");
+    public string PeliculasSenalEmpate => Idioma.Elegir(
+        "two films fit equally well and nothing tells them apart",
+        "dos películas encajan igual de bien y nada las distingue");
+    public string PeliculasSenalTituloFlojo => Idioma.Elegir(
+        "nothing found that looks like this title", "no se encontró nada parecido a este título");
+    public string PeliculasSenalSinCandidatos => Idioma.Elegir(
+        "TMDb knows nothing by this name", "TMDb no conoce nada con este nombre");
+
+    // {0} = lo que propone TMDb.
+    public string PeliculasSegunTmdb => Idioma.Elegir("TMDb says: {0}", "Según TMDb: {0}");
 }
