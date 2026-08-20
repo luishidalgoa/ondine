@@ -543,14 +543,16 @@ def traer(argumentos):
         url = "https://www.youtube.com/watch?v=" + ident
         rutas, ultimas = _descargar_un_video(base + [url], i, total)
 
-        # A veces YouTube entrega una URL temporal que responde 403 al abrirla.
-        # Repetir la extraccion pide una URL nueva. Cambiar de cliente no sirve:
-        # en estos mismos videos `web_safari` solo ve storyboards y acaba tapando
-        # el 403 real con un engañoso «Requested format is not available».
+        # El cliente que yt-dlp elige por defecto puede ser `android_vr`. En
+        # algunos videos publicos sus enlaces dejan de responder tras unos pocos
+        # megas con 403, aunque Android normal ofrece el mismo formato completo.
+        # Se usa solo como segundo intento para conservar el camino habitual.
         if not rutas and any("403" in linea for linea in ultimas):
             decir(tipo="progreso", avance=(i - 1) / total,
-                  texto=f"Renovando el enlace del video {i} de {total}")
-            rutas, segundo_error = _descargar_un_video(base + [url], i, total)
+                  texto=f"Probando otra fuente publica para el video {i} de {total}")
+            alternativa = base + ["--extractor-args",
+                                  "youtube:player_client=android", url]
+            rutas, segundo_error = _descargar_un_video(alternativa, i, total)
             if segundo_error:
                 ultimas = segundo_error
 

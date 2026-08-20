@@ -87,12 +87,12 @@ se descargó, conserva y entrega los correctos y resume cuántos no estaban
 disponibles. Si ninguno se pudo descargar, emite `error` con el último detalle
 de cada ID.
 
-Si la primera representación pública devuelve HTTP 403 al abrir sus fragmentos,
-el complemento repite una vez la extracción para obtener una URL temporal nueva.
-No cambia al cliente `web_safari`: en vídeos que sí ofrecen MP4 360p y pistas
-480p al cliente normal, `web_safari` puede ver solo storyboards y producir el
-engañoso «Requested format is not available». Repetir la extracción no convierte
-en accesible un vídeo privado o restringido: esos se conservan como error.
+Si la representación pública elegida por defecto devuelve HTTP 403 durante la
+transferencia, el complemento hace un único segundo intento con el cliente
+`android`. Esto evita los enlaces de `android_vr` que, para algunos vídeos
+públicos, dejan de responder después de unos pocos megabytes. No convierte en
+accesible un vídeo privado o restringido: si Android tampoco ofrece un formato
+reproducible, se conserva el error.
 
 En la interfaz, el diagnóstico ocupa todo el ancho del pie en un campo de solo
 lectura. Se puede seleccionar con el ratón y copiar con Ctrl+C. «Marcar los que

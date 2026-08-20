@@ -118,7 +118,7 @@ class DescargarLosElegidos(unittest.TestCase):
         self.assertTrue(any("1 correctos" in texto and "1 no disponibles" in texto
                             for texto in textos))
 
-    def test_un_403_renueva_el_enlace_sin_cambiar_a_un_cliente_sin_formatos(self):
+    def test_un_403_reintenta_con_el_cliente_android_que_ofrece_el_video(self):
         with tempfile.TemporaryDirectory() as destino:
             fichero = os.path.join(destino, "Bueno [abcdefghijk].mp4")
             prohibido = self.proceso("video data: HTTP Error 403: Forbidden\n", codigo=1)
@@ -131,8 +131,10 @@ class DescargarLosElegidos(unittest.TestCase):
         self.assertEqual(ejecutar.call_count, 2)
         primera = ejecutar.call_args_list[0].args[0]
         segunda = ejecutar.call_args_list[1].args[0]
-        self.assertEqual(primera, segunda)
-        self.assertNotIn("youtube:player_client=web_safari", segunda)
+        self.assertNotEqual(primera, segunda)
+        self.assertNotIn("--extractor-args", primera)
+        self.assertIn("--extractor-args", segunda)
+        self.assertIn("youtube:player_client=android", segunda)
 
 
 class TituloConLaDescripcion(unittest.TestCase):
