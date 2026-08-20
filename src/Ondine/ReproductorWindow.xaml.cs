@@ -38,6 +38,13 @@ public partial class ReproductorWindow : Window
     /// </summary>
     private bool _cerrado;
 
+    /// <summary>
+    /// Falló, pero porque el fichero aún se estaba bajando de la nube. En cuanto
+    /// termine hay que volver a intentarlo: el usuario no tiene que saber que existe
+    /// esa diferencia, solo que el vídeo tardó un poco.
+    /// </summary>
+    private bool _fallaMientrasBaja;
+
     private readonly DispatcherTimer _reloj;
     private readonly DispatcherTimer _apagon;   // esconde los controles tras un rato quieto
     private bool _pausado;
@@ -179,6 +186,20 @@ public partial class ReproductorWindow : Window
         video.MediaFailed += (_, e) =>
         {
             if (_cerrado) return;
+
+            // Un fichero que TODAVÍA se está bajando de la nube falla igual que uno con
+            // un códec que no está, y decir «códec no soportado» ahí es mandar a la
+            // gente a buscar un problema que no tiene. Se distingue y se reintenta solo
+            // cuando termine de bajar.
+            if (Reindex.Nube.EsMarcador(_ruta))
+            {
+                _fallaMientrasBaja = true;
+                lblFallo.Text = Textos.Instancia.ReproductorEsperandoLaNube;
+                panelFallo.Visibility = Visibility.Visible;
+                _cargando.Arrancar(Textos.Instancia.ReproductorChipNube);
+                return;
+            }
+
             lblFallo.Text = string.Format(Textos.Instancia.ReproductorFalloCodec,
                                           e.ErrorException?.Message);
             panelFallo.Visibility = Visibility.Visible;
@@ -202,6 +223,12 @@ public partial class ReproductorWindow : Window
         _reloj.Tick += (_, _) =>
         {
             if (video.Position > TimeSpan.Zero) _cargando.Parar();
+
+            // Con el vídeo caído esperando a la nube, la duración no está y el resto del
+            // tic no aplica; pero hay que seguir mirando si ya terminó de bajar. Antes
+            // este return dejaba el reintento sin quien lo disparase.
+            if (_fallaMientrasBaja && ++_tics % 10 == 0) RevisarNube();
+
             if (_arrastrando || !video.NaturalDuration.HasTimeSpan) return;
             _desdeReloj = true;
             barra.Value = video.Position.TotalSeconds;
@@ -377,9 +404,51 @@ public partial class ReproductorWindow : Window
     /// </summary>
     private void RevisarNube()
     {
+        bool enLaNube = Reindex.Nube.EsMarcador(_ruta);
+        Chip(enLaNube ? Textos.Instancia.ReproductorChipNube : null);
+
+        // Ya está entero en el disco y lo que falló fue solo eso: se reintenta sin
+        // pedirle nada a nadie.
+        if (!enLaNube && _fallaMientrasBaja && !_cerrado)
         {
-            Chip(Reindex.Nube.EsMarcador(_ruta) ? Textos.Instancia.ReproductorChipNube : null);
+            _fallaMientrasBaja = false;
+            panelFallo.Visibility = Visibility.Collapsed;
+            try
+            {
+                video.Source = new Uri(_ruta);
+                video.Play();
+            }
+            catch { /* si tampoco ahora, el propio MediaFailed lo contará */ }
         }
+    }
+
+    /// <summary>
+    /// A qué segundo corresponde una x sobre la barra, <b>con la misma regla que usa la
+    /// propia barra</b> para colocarse al pulsar.
+    ///
+    /// <para>
+    /// Antes la previa lo calculaba a ojo —<c>x / ancho * duración</c>— y eso ignora
+    /// que el recorrido útil de un deslizador no es todo su ancho: empieza y acaba a
+    /// medio tirador de los bordes. La cuenta salía distinta de la del control, así que
+    /// <b>el globo decía una hora y el clic te llevaba a otra</b>, hasta unos diez
+    /// segundos antes en la primera mitad de un capítulo de media hora. Se veía como
+    /// «pincho y se va para atrás».
+    /// </para>
+    /// </summary>
+    private double SegundosEn(double x)
+    {
+        double pulgar = (barra.Template?.FindName("PART_Track", barra) as Track)?.Thumb?.ActualWidth ?? 0;
+        return SegundosDeX(x, barra.ActualWidth, pulgar, barra.Maximum);
+    }
+
+    /// <summary>
+    /// La cuenta, aparte para poder comprobarla sin una ventana. Es la misma que hace
+    /// <c>Track</c>: el recorrido va de medio tirador a ancho menos medio tirador.
+    /// </summary>
+    public static double SegundosDeX(double x, double ancho, double pulgar, double maximo)
+    {
+        double util = Math.Max(1, ancho - pulgar);
+        return Math.Clamp((x - pulgar / 2) / util, 0, 1) * maximo;
     }
 
     private void Chip(string? texto)
@@ -402,7 +471,7 @@ public partial class ReproductorWindow : Window
         if (!_abierto || barra.Maximum <= 0) { globoPrevia.Visibility = Visibility.Collapsed; return; }
 
         double x = Math.Clamp(e.GetPosition(barra).X, 0, barra.ActualWidth);
-        double seg = x / Math.Max(1, barra.ActualWidth) * barra.Maximum;
+        double seg = SegundosEn(x);
 
         globoPrevia.Visibility = Visibility.Visible;
         // Centrado con el ancho REAL y sujeto a los bordes: un globo medio salido de la

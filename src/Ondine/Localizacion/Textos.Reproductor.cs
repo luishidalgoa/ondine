@@ -65,4 +65,11 @@ public sealed partial class Textos
 
     public string ReproductorPantallaTip =>
         Idioma.Elegir("Full screen  (F)", "Pantalla completa  (F)");
+
+    // Un fichero a medio bajar de la nube falla EXACTAMENTE igual que uno con un
+    // códec que el sistema no trae. Decir «códec» ahí manda a buscar un problema
+    // que no existe, así que se distingue y se reintenta solo.
+    public string ReproductorEsperandoLaNube => Idioma.Elegir(
+        "This file is still coming down from the cloud. It will start on its own when it finishes.",
+        "Este fichero todavía se está bajando de la nube. Empezará solo en cuanto termine.");
 }

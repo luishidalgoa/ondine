@@ -84,6 +84,8 @@ public static class Program
         LosAvisosNoSePisan();
         ElRepasoDePeliculasTieneLaFormaDelDeSeries();
         AlCerrarElReproductorNoQuedaNadaEnMarcha();
+        LasDosPantallasNoSePisanNunca();
+        LaPreviaDeLaBarraMideComoLaBarra();
         LasPreferenciasLleganHastaElFinal();
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
 
@@ -481,6 +483,191 @@ public static class Program
 
             if (v.PenduloEnMarcha)
                 throw new Exception("un evento tardío del vídeo volvió a arrancar el péndulo sobre una ventana cerrada");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// Series y películas <b>nunca</b> se ven a la vez, vayas y vengas como vayas y
+    /// vengas.
+    ///
+    /// <para>
+    /// No comprueba un caso: comprueba una <b>regla</b>, y la comprueba después de cada
+    /// paso de un recorrido con idas y vueltas —elegir carpeta, cambiar de tipo,
+    /// analizar, volver—. Los fallos de esta pantalla han sido siempre del mismo tipo:
+    /// una vista que se enseña sin mirar en qué biblioteca estás, y aparecen «a veces»
+    /// porque dependen del orden en que hagas las cosas. Una regla comprobada en cada
+    /// punto del recorrido los caza; un caso suelto, no.
+    /// </para>
+    /// </summary>
+    private static void LasDosPantallasNoSePisanNunca()
+    {
+        const string nombre = "series y películas nunca se ven a la vez, vayas y vengas como vayas";
+        var raizAntes = DatosDeUsuario.RaizOverride;
+        string? tmp = null;
+        try
+        {
+            tmp = Path.Combine(Path.GetTempPath(), "ondine-idas-" + Guid.NewGuid().ToString("N")[..8]);
+            var datos = Path.Combine(tmp, "datos");
+            var libreria = Path.Combine(tmp, "libreria");
+            Directory.CreateDirectory(datos);
+            Directory.CreateDirectory(Path.Combine(libreria, "Season 01"));
+            File.WriteAllText(Path.Combine(libreria, "Grease 1978.mp4"), "x");
+            File.WriteAllText(Path.Combine(libreria, "Season 01", "Serie S01E01 - Uno.mkv"), "x");
+
+            DatosDeUsuario.RaizOverride = datos;
+            SettingsStore.Save(new Settings());
+
+            var vista = new OrganizarView();
+            var cboTipo = (ComboBox)vista.FindName("cboTipo")!;
+            var panel = (PeliculasPanel)vista.FindName("vistaPeliculas")!;
+
+            Visibility V(string cual) => ((FrameworkElement)vista.FindName(cual)!).Visibility;
+            bool Se(string cual) => V(cual) == Visibility.Visible;
+
+            void Revisar(string paso)
+            {
+                bool serie = cboTipo.SelectedIndex != 1;
+
+                // Uno, y solo uno, de los cuatro cuerpos de pantalla.
+                var cuerpos = new[] { "vistaInicio", "vistaRevision", "vistaPeliculas", "vistaRevisionPelis" };
+                var puestos = cuerpos.Where(Se).ToList();
+                if (puestos.Count != 1)
+                    throw new Exception($"tras «{paso}» había {puestos.Count} pantallas a la vez: {string.Join(" + ", puestos)}");
+
+                // Y lo que se ve tiene que ser de la biblioteca en la que estás.
+                var visible = puestos[0];
+                bool esDeSerie = visible is "vistaInicio" or "vistaRevision";
+                if (esDeSerie != serie)
+                    throw new Exception($"tras «{paso}» estabas en {(serie ? "Serie" : "Películas")} y se veía «{visible}»");
+
+                // Los accesorios van con su pantalla: unos chips o unos botones de la
+                // otra biblioteca son media pantalla ajena colada.
+                if (Se("panelSerie") != serie || Se("panelPlantilla") != serie)
+                    throw new Exception($"tras «{paso}» el panel de serie no seguía a la biblioteca");
+                if (Se("filaAcciones") != serie)
+                    throw new Exception($"tras «{paso}» las acciones de serie no seguían a la biblioteca");
+                if (Se("filaChips") && !(serie && visible == "vistaRevision"))
+                    throw new Exception($"tras «{paso}» estaban los chips de series fuera de su repaso");
+                if (Se("filaChipsPelis") && !(!serie && visible == "vistaRevisionPelis"))
+                    throw new Exception($"tras «{paso}» estaban los chips de películas fuera de su repaso");
+                if (Se("filaAccionesPelis") != (!serie && visible == "vistaRevisionPelis"))
+                    throw new Exception($"tras «{paso}» las acciones de películas no seguían a su repaso");
+            }
+
+            void Analizar()
+            {
+                ((Button)panel.FindName("btnOrdenar")!).RaiseEvent(
+                    new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                Vaciar();
+            }
+
+            void Tipo(int i) { cboTipo.SelectedIndex = i; Vaciar(); }
+
+            // ── El recorrido, con idas y vueltas ──────────────────────────────
+            Revisar("recién abierta");
+
+            vista.ApuntarA(libreria);
+            Vaciar();
+            Revisar("elegir carpeta");
+
+            Tipo(1);
+            Revisar("pasar a Películas");
+
+            Analizar();
+            Revisar("analizar películas");
+
+            Tipo(0);
+            Revisar("volver a Serie con el repaso de películas puesto");
+
+            Tipo(1);
+            Revisar("y otra vez a Películas");
+
+            Analizar();
+            Revisar("analizar otra vez");
+
+            // Elegir carpeta ESTANDO en el repaso: aquí es donde la vista se pintaba
+            // con la fase anterior todavía puesta.
+            vista.ApuntarA(libreria);
+            Vaciar();
+            Revisar("elegir carpeta desde el repaso de películas");
+
+            Tipo(0);
+            Revisar("y a Serie desde ahí");
+
+            vista.ApuntarA(libreria);
+            Vaciar();
+            Revisar("elegir carpeta en Serie");
+
+            ((Button)vista.FindName("btnVolverPelis")!).RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Vaciar();
+            Revisar("pulsar «Volver» de películas estando en Serie");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+        finally
+        {
+            DatosDeUsuario.RaizOverride = raizAntes;
+            if (tmp != null) { try { Directory.Delete(tmp, true); } catch { } }
+        }
+    }
+
+    /// <summary>
+    /// El globo de la previa dice la misma hora a la que te lleva el clic.
+    ///
+    /// <para>
+    /// El fallo, tal y como se vio: «paso el cursor por la barra, pincho, y me manda
+    /// diez segundos atrás de donde pinché». La previa medía a ojo —posición partido
+    /// por ancho— y eso ignora que el recorrido de un deslizador no es todo su ancho:
+    /// empieza y acaba a medio tirador de los bordes. Dos cuentas distintas para el
+    /// mismo punto.
+    /// </para>
+    /// <para>
+    /// La cuenta va aparte y sin ventana a propósito: es aritmética, y una prueba que
+    /// necesita abrir una ventana para comprobar una división no se corre igual de
+    /// contenta en CI.
+    /// </para>
+    /// </summary>
+    private static void LaPreviaDeLaBarraMideComoLaBarra()
+    {
+        const string nombre = "el globo de la barra dice la hora a la que de verdad te lleva el clic";
+        try
+        {
+            // Un capítulo de 26:02 en una barra de 1250 px con un tirador de 14 px, que
+            // es el caso que lo destapó.
+            const double ancho = 1250, pulgar = 14, dur = 26 * 60 + 2;
+
+            double En(double x) => ReproductorWindow.SegundosDeX(x, ancho, pulgar, dur);
+            double AOjo(double x) => x / ancho * dur;
+
+            // Los extremos del recorrido son medio tirador adentro, no los bordes.
+            if (Math.Abs(En(pulgar / 2) - 0) > 0.001)
+                throw new Exception($"al principio del recorrido debería dar 0 y dio {En(pulgar / 2):0.##}");
+            if (Math.Abs(En(ancho - pulgar / 2) - dur) > 0.001)
+                throw new Exception($"al final debería dar la duración entera y dio {En(ancho - pulgar / 2):0.##}");
+
+            // En el centro las dos cuentas coinciden: por eso el fallo no se veía
+            // pinchando en medio, y costaba creerlo.
+            if (Math.Abs(En(ancho / 2) - dur / 2) > 0.001)
+                throw new Exception("en el centro debería dar la mitad justa");
+
+            // Y aquí está el desfase que se notaba. Con la cuenta a ojo, el principio
+            // del recorrido decía casi nueve segundos en vez de cero.
+            double desfase = AOjo(pulgar / 2) - En(pulgar / 2);
+            if (desfase < 5)
+                throw new Exception($"la prueba no está midiendo el fallo: solo {desfase:0.#} s de diferencia");
+
+            // La cuenta nunca se sale, aunque el ratón se pase de los bordes.
+            if (En(-50) != 0 || Math.Abs(En(ancho + 50) - dur) > 0.001)
+                throw new Exception("fuera de la barra la cuenta se sale del vídeo");
+
+            // Y sin duración -el vídeo aún no ha abierto- no se inventa nada.
+            if (ReproductorWindow.SegundosDeX(600, ancho, pulgar, 0) != 0)
+                throw new Exception("sin duración conocida debería dar 0");
 
             Bien(nombre);
         }

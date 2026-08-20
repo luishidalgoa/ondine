@@ -44,6 +44,21 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **En el reproductor, pinchar en la barra te llevaba unos segundos antes de donde habías pinchado.**
+  El globo que enseña la hora al pasar el cursor medía a ojo —posición partido por ancho— y la barra
+  se coloca con otra cuenta: su recorrido no es todo el ancho, empieza y acaba a medio tirador de los
+  bordes. Dos cuentas distintas para el mismo punto. En el centro coincidían, que es por lo que el
+  fallo costaba de creer.
+
+- **Un vídeo que todavía se estaba bajando de la nube decía «códec no soportado».** Falla igual que
+  uno cuyo códec no está en el sistema, y el aviso mandaba a buscar un problema que no existía. Ahora
+  se distingue, lo dice, y **empieza solo en cuanto termina de bajar**.
+
+- **Al elegir carpeta aparecía un momento la pantalla de la otra biblioteca.** Se recolocaba el tipo
+  de biblioteca y se repintaba sin salir antes del repaso, así que se pintaba el repaso de la
+  biblioteca recién elegida con la tabla anterior o vacía. Duraba lo que tardase el recorrido del
+  disco: nada en una carpeta local, un rato en una de OneDrive.
+
 - **La app se quedaba lenta después de cerrar el reproductor.** Y no era una impresión: con el
   reproductor cerrado y sin hacer nada, Ondine seguía gastando **un 11% de un núcleo, para siempre**.
   El péndulo de carga anima en bucle infinito, y el vídeo mandaba un aviso de «estoy cargando» justo

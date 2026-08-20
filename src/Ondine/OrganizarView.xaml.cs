@@ -599,12 +599,24 @@ public partial class OrganizarView : UserControl
     /// decirle en cada análisis que la carpeta de pelis es de pelis, que es la
     /// clase de pregunta repetida que la app ya se ahorra con el catálogo.
     /// </summary>
+    /// <summary>
+    /// Coloca el desplegable con el tipo recordado de esa carpeta.
+    ///
+    /// <para>
+    /// Y vuelve al INICIO, no solo repinta. Elegir carpeta invalida lo que hubiera en
+    /// la tabla, así que quedarse en la fase de repaso pintaba el repaso de la
+    /// biblioteca recién elegida <b>con la tabla de la anterior, o vacía</b>. Se veía
+    /// poco tiempo en una carpeta local y bastante en una de OneDrive, porque entre
+    /// esto y el arreglo del final va el recorrido del disco, que con ficheros en la
+    /// nube tarda: ahí es donde salían «cosas raras al elegir carpeta».
+    /// </para>
+    /// </summary>
     private void CargarTipoDeCarpeta(string carpeta)
     {
         _cargandoTipo = true;
         cboTipo.SelectedIndex = ReindexStore.TipoDeCarpeta(carpeta) == TipoDeBiblioteca.Pelicula ? 1 : 0;
         _cargandoTipo = false;
-        AplicarTipo();
+        MostrarInicio();
     }
 
     /// <summary>
