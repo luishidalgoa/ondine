@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Ondine;
 using Ondine.Reindex;
+using Ondine.Rutas;
 
 namespace Ondine.Ui.Smoke;
 
@@ -76,19 +77,12 @@ public static class Program
         Probar("FaltantesWindow", () => new FaltantesWindow(cat, res));
         Probar("ReordenarWindow", () => new ReordenarWindow(res, Path.Combine("C:", "tv"), new Settings()));
         Probar("PeliculasPanel", () => new PeliculasPanel());
-        Probar("PeliculasWindow", () => new PeliculasWindow(
-            new[]
-            {
-                Path.Combine("C:", "pelis", "Disney", "Up.mp4"),
-                Path.Combine("C:", "pelis", "Grease (1978)", "Grease.mp4"),
-            },
-            Path.Combine("C:", "pelis"), new Settings()));
         Probar("ComplementosPanel", () => new ComplementosPanel(
             () => new ComplementosPanel.EstadoDeOrganizar(cat, res, "")));
 
         LaTarjetaDiceLoQueSeVaAEscribir(cat);
         LosAvisosNoSePisan();
-        ElBotonDeIdentificarDiceSiSePuede();
+        ElRepasoDePeliculasTieneLaFormaDelDeSeries();
         LasPreferenciasLleganHastaElFinal();
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
 
@@ -207,78 +201,123 @@ public static class Program
     /// recursos que solo nombra el estilo, no el elemento.
     /// </summary>
     /// <summary>
-    /// El botón de identificar contra TMDb solo se puede pulsar cuando hay con
-    /// qué preguntar, y cuando no, el motivo está a la vista.
+    /// El repaso de películas tiene la forma del de series, y el botón de
+    /// identificar dice si se puede pulsar.
     ///
     /// <para>
-    /// Se prueba aquí y no de pasada porque este exacto fallo ya se cometió una
-    /// vez, con el botón de descargar de los complementos: se ofrecía una acción
-    /// que no podía funcionar. Un botón apagado sin explicación al lado se lee
-    /// como una función rota, no como una que hay que encender.
+    /// Dos cosas en una prueba porque son el mismo recorrido. La primera versión de
+    /// esta pantalla era un diálogo modal con una lista simple y sin casillas:
+    /// aplicar era «las once o ninguna», y era lo que menos confianza daba de la
+    /// app. Esto fija la forma —chips, rejilla y barra de aplicar, donde está la de
+    /// series— para que no se pierda.
+    /// </para>
+    /// <para>
+    /// Los ajustes se escriben en una carpeta temporal con
+    /// <c>DatosDeUsuario.RaizOverride</c>: sin eso la prueba leería las preferencias
+    /// de verdad de quien la corre, y pasaría o fallaría según cómo tenga él la app.
     /// </para>
     /// </summary>
-    private static void ElBotonDeIdentificarDiceSiSePuede()
+    private static void ElRepasoDePeliculasTieneLaFormaDelDeSeries()
     {
-        const string nombre = "el botón de identificar dice si se puede pulsar, y por cuál de los dos motivos no";
+        const string nombre = "el repaso de películas tiene la forma del de series, con casilla por fila";
+        var raizAntes = DatosDeUsuario.RaizOverride;
+        string? tmp = null;
         try
         {
-            var ficheros = new[] { Path.Combine("C:", "pelis", "Grease (1978)", "Grease.mp4") };
-            var raiz = Path.Combine("C:", "pelis");
+            tmp = Path.Combine(Path.GetTempPath(), "ondine-humo-" + Guid.NewGuid().ToString("N")[..8]);
+            var datos = Path.Combine(tmp, "datos");
+            var pelis = Path.Combine(tmp, "pelis");
+            Directory.CreateDirectory(datos);
+            Directory.CreateDirectory(Path.Combine(pelis, "Blade Runner (1982)"));
 
-            // Hay DOS motivos distintos por los que no se puede preguntar, y los
-            // dos tienen que dejar el botón quieto y el motivo a la vista.
-            //
-            // Uno: lo apagó el usuario. Viene encendido de fábrica, así que aquí
-            // se apaga a mano a propósito — dejarlo por defecto probaría el otro
-            // caso y la prueba diría una cosa mientras comprueba otra.
-            var apagados = new Settings();
-            apagados.Tmdb.Activo = false;
-            apagados.Tmdb.PonerClave("una-clave-de-prueba");
+            File.WriteAllText(Path.Combine(pelis, "Grease 1978.mp4"), "x");
+            File.WriteAllText(Path.Combine(pelis, "Blade Runner (1982)", "Blade Runner (1982).mkv"), "x");
 
-            var apagado = new PeliculasWindow(ficheros, raiz, apagados);
-            var boton = (Button)apagado.FindName("btnIdentificar")!;
-            var aviso = (TextBlock)apagado.FindName("lblTmdbApagado")!;
+            DatosDeUsuario.RaizOverride = datos;
 
-            if (boton.IsEnabled)
-                throw new Exception("apagado por el usuario, y el botón se podía pulsar de todas formas");
-            if (aviso.Visibility != Visibility.Visible)
-                throw new Exception("el botón estaba apagado y sin decir por qué: eso se lee como roto");
-            apagado.Close();
-
-            // Y dos: encendido pero SIN NINGUNA clave, que es lo que le pasa a
-            // quien compile el repo sin el secreto de la build — este arnés
-            // incluido. Tiene que quedarse igual de quieto y decirlo igual.
-            var sinClave = new Settings();
-            sinClave.Tmdb.Activo = true;
-
-            var sin = new PeliculasWindow(ficheros, raiz, sinClave);
-            if (((Button)sin.FindName("btnIdentificar")!).IsEnabled)
-                throw new Exception("encendido y sin clave: habría preguntado con las manos vacías");
-            if (((TextBlock)sin.FindName("lblTmdbApagado")!).Visibility != Visibility.Visible)
-                throw new Exception("sin clave y sin decirlo: el 401 habría parecido un fallo de red");
-            sin.Close();
-
-            // Encendido y con clave. Cifrar es DPAPI y solo existe en Windows,
-            // que es donde corre esta prueba —WPF no existe fuera—, así que aquí
-            // no hay nada que saltarse.
             var ajustes = new Settings();
             ajustes.Tmdb.Activo = true;
             ajustes.Tmdb.PonerClave("una-clave-de-prueba");
+            SettingsStore.Save(ajustes);
 
-            var encendido = new PeliculasWindow(ficheros, raiz, ajustes);
-            var boton2 = (Button)encendido.FindName("btnIdentificar")!;
-            var aviso2 = (TextBlock)encendido.FindName("lblTmdbApagado")!;
+            var vista = new OrganizarView();
 
-            if (!boton2.IsEnabled)
+            // ApuntarA es la entrada de verdad: pone la carpeta Y la cuenta, así que
+            // la tabla mide filas reales en vez de quedarse vacía y no comprobar nada.
+            // Va ANTES de elegir el tipo: apuntar a una carpeta recoloca el
+            // desplegable con el tipo recordado de esa carpeta, y en una carpeta nueva
+            // eso es «serie». Al revés, la elección se perdería.
+            vista.ApuntarA(pelis);
+            ((ComboBox)vista.FindName("cboTipo")!).SelectedIndex = 1;   // Películas
+            Vaciar();
+
+            var panel = (PeliculasPanel)vista.FindName("vistaPeliculas")!;
+            ((Button)panel.FindName("btnOrdenar")!).RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Vaciar();
+
+            var tabla = (DataGrid)vista.FindName("tablaPelis")!;
+            if (tabla.Items.Count < 2)
+                throw new Exception($"la tabla salió con {tabla.Items.Count} filas: la prueba no está midiendo nada");
+
+            // Lo que faltaba y era el problema: casilla por fila, y solo en lo que
+            // de verdad se puede aplicar.
+            var filas = tabla.Items.Cast<PeliculaFila>().ToList();
+            if (!filas.Any(x => x.ListoParaAplicar))
+                throw new Exception("ninguna fila se podía aplicar; el caso de prueba no vale");
+            if (filas.Any(x => x.ListoParaAplicar && !x.Marcado))
+                throw new Exception("las filas aplicables no venían marcadas");
+            if (filas.Any(x => !x.ListoParaAplicar && x.Entra))
+                throw new Exception("una fila que no se puede aplicar entraba en el «Aplicar»");
+
+            // Y la forma: lo de películas a la vista, lo de series recogido.
+            void Ver(string cual, Visibility esperada)
+            {
+                var e = (FrameworkElement)vista.FindName(cual)!;
+                if (e.Visibility != esperada)
+                    throw new Exception($"«{cual}» estaba {e.Visibility} y se esperaba {esperada}");
+            }
+
+            Ver("filaChipsPelis", Visibility.Visible);
+            Ver("vistaRevisionPelis", Visibility.Visible);
+            Ver("filaAccionesPelis", Visibility.Visible);
+            Ver("vistaPeliculas", Visibility.Collapsed);
+            Ver("vistaInicio", Visibility.Collapsed);
+            Ver("vistaRevision", Visibility.Collapsed);
+            Ver("filaChips", Visibility.Collapsed);
+            Ver("filaAcciones", Visibility.Collapsed);
+
+            // El botón de identificar, con TMDb encendido y clave puesta.
+            if (!((Button)vista.FindName("btnIdentificar")!).IsEnabled)
                 throw new Exception("con TMDb encendido y clave puesta el botón seguía apagado");
-            if (aviso2.Visibility == Visibility.Visible)
-                throw new Exception("seguía diciendo que está apagado cuando ya no lo está");
-            encendido.Close();
+            if (((TextBlock)vista.FindName("lblTmdbApagado")!).Visibility == Visibility.Visible)
+                throw new Exception("decía que TMDb está apagado cuando no lo está");
+
+            // Y ahora apagado: mismo recorrido, botón quieto y motivo a la vista.
+            ajustes.Tmdb.Activo = false;
+            SettingsStore.Save(ajustes);
+
+            var vista2 = new OrganizarView();
+            vista2.ApuntarA(pelis);
+            ((ComboBox)vista2.FindName("cboTipo")!).SelectedIndex = 1;
+            ((Button)((PeliculasPanel)vista2.FindName("vistaPeliculas")!).FindName("btnOrdenar")!).RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Vaciar();
+
+            if (((Button)vista2.FindName("btnIdentificar")!).IsEnabled)
+                throw new Exception("apagado por el usuario y el botón se podía pulsar de todas formas");
+            if (((TextBlock)vista2.FindName("lblTmdbApagado")!).Visibility != Visibility.Visible)
+                throw new Exception("el botón estaba apagado y sin decir por qué: eso se lee como roto");
 
             Vaciar();
             Bien(nombre);
         }
         catch (Exception ex) { Mal(nombre, ex); }
+        finally
+        {
+            DatosDeUsuario.RaizOverride = raizAntes;
+            if (tmp != null) { try { Directory.Delete(tmp, true); } catch { } }
+        }
     }
 
     /// <summary>
@@ -452,6 +491,14 @@ public static class Program
         // de fuera solo dice «error al establecer la propiedad Content».
         var raiz = ex;
         while (raiz.InnerException != null) raiz = raiz.InnerException;
-        Console.WriteLine($"  ✗ {q}\n      {raiz.GetType().Name}: {raiz.Message}");
+
+        Console.WriteLine($"  \u2717 {q}\n      {raiz.GetType().Name}: {raiz.Message}");
+
+        // Y las dos primeras lineas de la traza. Una NullReferenceException sin sitio
+        // no dice nada: se sabe que algo era nulo y no donde, que es lo unico que hace
+        // falta para arreglarlo.
+        foreach (var linea in (raiz.StackTrace ?? "").Split('\n').Take(2)
+                                  .Select(l => l.Trim()).Where(l => l.Length > 0))
+            Console.WriteLine($"      {linea}");
     }
 }

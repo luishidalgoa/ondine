@@ -182,8 +182,35 @@
     <!-- La biblioteca de películas tiene su propio flujo y su propio componente:
          ni catálogo, ni plantilla, ni temporadas, ni segmentos. Ocupa las filas
          de contenido y acciones enteras, en vez de esconder media pantalla. -->
-    <local:PeliculasPanel x:Name="vistaPeliculas" Grid.Row="1" Grid.RowSpan="3"
+    <!-- La fila 2 es «inicio / revisión», y el panel de películas es el inicio DEL
+         flujo de películas: ocupa la misma fila que vistaInicio y no tres, para que
+         los chips (fila 1) y las acciones (fila 3) sean suyas también. -->
+    <local:PeliculasPanel x:Name="vistaPeliculas" Grid.Row="2"
                           Visibility="Collapsed"/>
+
+    <!-- ══ Chips de películas: mismo sitio y misma forma que los de series ══
+         Llevan el recuento dentro y filtran la tabla. Con glifo además de color:
+         un chip que solo se distingue por el color no se distingue para quien no
+         distingue esos dos colores. -->
+    <Grid x:Name="filaChipsPelis" Grid.Row="1" Margin="16,0,16,10" Visibility="Collapsed">
+      <WrapPanel Orientation="Horizontal">
+        <Button x:Name="btnVolverPelis" Style="{StaticResource BtnSecondary}" FontSize="11.5"
+                Padding="9,4" Margin="0,0,10,0" Content="{i:T OrganizarVolver}"
+                ToolTip="{i:T OrganizarVolverAyuda}"/>
+        <ToggleButton x:Name="chipColocan" Style="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="●" Foreground="#86D8A6"/><Run x:Name="runColocan"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton x:Name="chipRenombran" Style="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="↻" Foreground="#86D8A6"/><Run x:Name="runRenombran"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton x:Name="chipMirar" Style="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="◆" Foreground="#EC9AA0"/><Run x:Name="runMirar"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton x:Name="chipQuietas" Style="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="✓" Foreground="#8A8F98"/><Run x:Name="runQuietas"/></TextBlock>
+        </ToggleButton>
+      </WrapPanel>
+    </Grid>
 
     <Grid x:Name="vistaInicio" Grid.Row="2" Margin="16,0,16,0">
       <Grid.ColumnDefinitions>
@@ -807,6 +834,143 @@
     </Grid>
 
     <!-- ══════════════ Barra de acciones ══════════════ -->
+    <!-- ══ Repaso de películas ══
+         La forma es la del repaso de series a propósito: mismos chips arriba, misma
+         rejilla, misma barra de aplicar abajo. Lo que da confianza es reconocer la
+         pantalla y poder decidir fila a fila; para eso no hace falta compartir la
+         clase de la fila, que en series arrastra catálogo, plantilla y temporada
+         —tres cosas que una película no tiene—. -->
+    <Grid x:Name="vistaRevisionPelis" Grid.Row="2" Margin="16,0,16,0" Visibility="Collapsed">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- Lo que va a costar el movimiento: cruzar de disco, entrar en una nube, o
+           ficheros que solo están en la nube. Arriba y no abajo, porque es lo que
+           puede hacerte no aplicar nada: un aviso que se lee después de pulsar no
+           es un aviso. -->
+      <Border x:Name="cajaRiesgoPelis" Grid.Row="0" Background="{StaticResource OrgWarnBg}"
+              BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,9" Margin="0,0,0,10" Visibility="Collapsed">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="▲" Foreground="{StaticResource OrgWarn}" VerticalAlignment="Top" Margin="0,1,9,0"/>
+          <TextBlock x:Name="lblRiesgoPelis" Foreground="{StaticResource OrgWarn}" FontSize="12.5"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <Border x:Name="bandaPelis" Grid.Row="1" Background="{StaticResource OrgOkBg}"
+              BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,9" Margin="0,0,0,10" Visibility="Collapsed">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="✓" Foreground="{StaticResource OrgOk}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+          <TextBlock x:Name="lblBandaPelis" Foreground="{StaticResource OrgOk}" FontSize="12.5"
+                     VerticalAlignment="Center" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="2" Background="{StaticResource SurfaceGlass}" CornerRadius="8" ClipToBounds="True">
+        <DataGrid x:Name="tablaPelis" Style="{StaticResource OrgGrid}">
+          <DataGrid.Columns>
+
+            <!-- Marcar qué se aplica. Solo lleva casilla lo que tiene trabajo: ponerla
+                 en un nombre ocupado insinuaría que marcándolo se aplica, y es al
+                 revés. Es la pieza que faltaba, y la que hacía desconfiar de la
+                 pantalla: era aplicar las once o ninguna. -->
+            <DataGridTemplateColumn Width="44" CanUserSort="False">
+              <DataGridTemplateColumn.Header>
+                <CheckBox x:Name="chkTodasPelis" IsChecked="True"
+                          Checked="OnMarcarTodasPelis" Unchecked="OnMarcarTodasPelis"
+                          ToolTip="{i:T OrganizarMarcarTodosAyuda}"/>
+              </DataGridTemplateColumn.Header>
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <CheckBox IsChecked="{Binding Marcado, UpdateSourceTrigger=PropertyChanged}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Checked="OnMarcarPelicula" Unchecked="OnMarcarPelicula"
+                            Visibility="{Binding ListoParaAplicar, Converter={StaticResource B2V}}"
+                            ToolTip="{i:T OrganizarMarcarFilaAyuda}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="{i:T OrganizarColEstado}" Width="120" SortMemberPath="EstadoVisible">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{Binding EstadoBg}" BorderBrush="{Binding EstadoBorde}" BorderThickness="1"
+                          CornerRadius="6" Padding="8,3" HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding EstadoGlifo}" Foreground="{Binding EstadoFg}" FontSize="10.5"
+                                 VerticalAlignment="Center" Margin="0,0,5,0"/>
+                      <TextBlock Text="{Binding EstadoTexto}" Foreground="{Binding EstadoFg}" FontSize="11.5"
+                                 VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="{i:T OrganizarColOriginal}" Width="1.1*" SortMemberPath="Original">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Original}" FontFamily="{StaticResource FontMono}" FontSize="11.5"
+                             Foreground="{StaticResource Neutral400}"
+                             TextTrimming="CharacterEllipsis" ToolTip="{Binding Original}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="{i:T OrganizarColPropuesta}" Width="1.6*" SortMemberPath="Propuesta">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Propuesta}" FontFamily="{StaticResource FontMono}" FontSize="11.5"
+                             Foreground="{StaticResource Text}"
+                             TextTrimming="CharacterEllipsis" ToolTip="{Binding Propuesta}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- POR QUÉ — la columna que convierte un color en una razón. En verde
+                 cuando lo dijo TMDb y entró; en ámbar cuando lo dijo y NO entró. -->
+            <DataGridTemplateColumn Header="{i:T OrganizarColPorQue}" Width="0.9*" MinWidth="110"
+                                    SortMemberPath="PorQue">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding PorQue}" Foreground="{Binding PorQueColor}" FontSize="12"
+                             TextTrimming="CharacterEllipsis" ToolTip="{Binding Explicacion}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+    </Grid>
+
+    <!-- ══ Acciones de películas ══ -->
+    <Grid x:Name="filaAccionesPelis" Grid.Row="3" Margin="16,10,16,8" Visibility="Collapsed">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <Button x:Name="btnIdentificar" Style="{StaticResource BtnSecondary}" FontSize="12" Padding="12,5"
+                Content="{i:T PeliculasIdentificar}" ToolTip="{i:T PeliculasIdentificarAyuda}"
+                ToolTipService.ShowOnDisabled="True"/>
+        <TextBlock x:Name="lblTmdbApagado" Text="{i:T PeliculasIdentificarApagado}" FontSize="10.5"
+                   MaxWidth="300" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0"
+                   Foreground="{StaticResource Neutral600}" Visibility="Collapsed"/>
+      </StackPanel>
+
+      <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <TextBlock x:Name="lblPiePelis" FontSize="11" Foreground="{StaticResource Neutral500}"
+                   VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="320" Margin="0,0,10,0"/>
+        <Button x:Name="btnDeshacerPelis" Style="{StaticResource BtnGhostMuted}" FontSize="12" Padding="12,5"
+                Margin="0,0,8,0" Visibility="Collapsed" Content="{i:T PeliculasDeshacer}"/>
+        <Button x:Name="btnAplicarPelis" Style="{StaticResource BtnPrimary}" FontSize="12" Padding="14,5"
+                Content="{i:T PeliculasBotonNada}" IsEnabled="False"/>
+      </StackPanel>
+    </Grid>
+
     <Grid x:Name="filaAcciones" Grid.Row="3" Margin="16,10,16,8">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <WrapPanel Orientation="Horizontal">

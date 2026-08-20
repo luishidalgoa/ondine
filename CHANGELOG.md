@@ -32,6 +32,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Cambiado
+
+- **El repaso de películas pasa a la pantalla principal, con la forma del de series.** Antes era un
+  diálogo aparte con una lista simple, y lo que le faltaba no era información: era poder **decidir
+  fila a fila**. Aplicar era «las once o ninguna». Ahora cada película lleva **su casilla** —y solo
+  la llevan las que de verdad se pueden aplicar—, arriba están los mismos chips con recuento que
+  filtran la tabla (se colocan · se renombran · hay que mirar · ya están bien), y hay una columna
+  **«Por qué»** que dice el motivo en palabras en vez de solo un color. El aviso de lo que va a
+  costar el movimiento —cruzar de disco, entrar en una nube— cuenta solo lo que tengas marcado.
+
 ### Corregido
 
 - **En modo «Películas», elegir carpeta volvía a pintar la pantalla de series encima.** Se cerraba el

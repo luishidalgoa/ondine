@@ -59,7 +59,7 @@
 
           <Button x:Name="btnOrdenar" Style="{StaticResource BtnPrimary}" Margin="0,18,0,0"
                   Padding="16,8" HorizontalAlignment="Center" IsEnabled="False"
-                  Content="{i:T PeliculasAbrir}"
+                  Content="{i:T OrganizarAnalizarCarpeta}"
                   ToolTip="{i:T PeliculasAbrirAyuda}"/>
         </StackPanel>
       </Grid>

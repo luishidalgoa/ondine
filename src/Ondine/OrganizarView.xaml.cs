@@ -8,7 +8,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
 using Ondine.Localizacion;
+using Ondine.Peliculas;
 using Ondine.Reindex;
+using Ondine.Rutas;
 
 namespace Ondine;
 
@@ -128,7 +130,18 @@ public partial class OrganizarView : UserControl
 
         vistaPeliculas.PidenOtraCarpeta += () => btnCarpeta.RaiseEvent(
             new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-        vistaPeliculas.MovioAlgo += RevisarCarpeta;
+        vistaPeliculas.PidenAnalizar += AnalizarPeliculas;
+
+        btnVolverPelis.Click += (_, _) => VolverAlInicio();
+        btnAplicarPelis.Click += (_, _) => AplicarPeliculas();
+        btnDeshacerPelis.Click += (_, _) => DeshacerPeliculas();
+        btnIdentificar.Click += async (_, _) => await IdentificarPeliculas();
+
+        foreach (var chip in new[] { chipColocan, chipRenombran, chipMirar, chipQuietas })
+        {
+            chip.Checked += (_, _) => FiltrarPeliculas();
+            chip.Unchecked += (_, _) => FiltrarPeliculas();
+        }
 
         cboTipo.SelectionChanged += (_, _) =>
         {
@@ -137,7 +150,11 @@ public partial class OrganizarView : UserControl
             if (_cargandoTipo) return;
             var carpeta = txtCarpeta.Text?.Trim() ?? "";
             if (carpeta.Length > 0) ReindexStore.GuardarTipoDeCarpeta(carpeta, TipoActual());
-            AplicarTipo();
+
+            // Al inicio, no a la revisión: la tabla que hubiera es de la OTRA
+            // biblioteca, y enseñarla al cambiar de tipo es enseñar algo que no es
+            // de lo que estás mirando.
+            MostrarInicio();
         };
         cboSerie.SelectionChanged += (_, _) => ElegirCatalogo(cboSerie.SelectedItem as CatalogoGuardado);
         cboModo.SelectionChanged += (_, _) =>
@@ -601,23 +618,53 @@ public partial class OrganizarView : UserControl
     /// llena de huecos enseña a desconfiar de lo que queda.
     /// </para>
     /// </summary>
+    /// <summary>En qué punto del recorrido está la pantalla.</summary>
+    private enum Fase
+    {
+        /// <summary>Antes de analizar.</summary>
+        Inicio,
+
+        /// <summary>Con la simulación delante, decidiendo.</summary>
+        Revision,
+    }
+
+    private Fase _fase = Fase.Inicio;
+
+    /// <summary>
+    /// Quién se ve. <b>Dos ejes y un solo dueño</b>: el tipo de biblioteca y la fase.
+    ///
+    /// <para>
+    /// Antes esto estaba repartido y se pagó: <c>MostrarInicio</c> ponía la vista de
+    /// series a la vista sin mirar el tipo, así que elegir carpeta en modo Películas
+    /// pintaba media pantalla de series ENCIMA de la de películas. Con las seis
+    /// piezas decididas aquí, en una sola pasada, no hay forma de que dos queden
+    /// visibles a la vez.
+    /// </para>
+    /// </summary>
     private void AplicarTipo()
     {
         var esSerie = TipoActual() == TipoDeBiblioteca.Serie;
-        var deSerie = esSerie ? Visibility.Visible : Visibility.Collapsed;
-        var dePelis = esSerie ? Visibility.Collapsed : Visibility.Visible;
+        var revisando = _fase == Fase.Revision;
 
-        panelSerie.Visibility = deSerie;
-        panelPlantilla.Visibility = deSerie;
-        vistaInicio.Visibility = esSerie && vistaRevision.Visibility != Visibility.Visible
-            ? Visibility.Visible : Visibility.Collapsed;
-        if (!esSerie) vistaRevision.Visibility = Visibility.Collapsed;
-        filaChips.Visibility = Visibility.Collapsed;
-        filaAcciones.Visibility = deSerie;
+        panelSerie.Visibility = Ver(esSerie);
+        panelPlantilla.Visibility = Ver(esSerie);
+        filaAcciones.Visibility = Ver(esSerie);
 
-        vistaPeliculas.Visibility = dePelis;
-        if (!esSerie) vistaPeliculas.Poner(txtCarpeta.Text?.Trim() ?? "", _ficheros);
+        vistaInicio.Visibility = Ver(esSerie && !revisando);
+        vistaRevision.Visibility = Ver(esSerie && revisando);
+        filaChips.Visibility = Ver(esSerie && revisando);
+
+        vistaPeliculas.Visibility = Ver(!esSerie && !revisando);
+        vistaRevisionPelis.Visibility = Ver(!esSerie && revisando);
+        filaChipsPelis.Visibility = Ver(!esSerie && revisando);
+        filaAccionesPelis.Visibility = Ver(!esSerie && revisando);
+
+        if (!esSerie && !revisando) vistaPeliculas.Poner(CarpetaActual(), _ficheros);
     }
+
+    private static Visibility Ver(bool si) => si ? Visibility.Visible : Visibility.Collapsed;
+
+    private string CarpetaActual() => txtCarpeta.Text?.Trim() ?? "";
 
     private void RevisarCarpeta()
     {
@@ -1130,20 +1177,16 @@ public partial class OrganizarView : UserControl
     private void MostrarInicio()
     {
         _filas.Clear();
-        vistaInicio.Visibility = Visibility.Visible;
-        vistaRevision.Visibility = Visibility.Collapsed;
-        filaChips.Visibility = Visibility.Collapsed;
+        _fase = Fase.Inicio;
         bannerAplicado.Visibility = Visibility.Collapsed;
-
         AplicarTipo();
     }
 
     private void MostrarRevision()
     {
-        vistaInicio.Visibility = Visibility.Collapsed;
-        vistaRevision.Visibility = Visibility.Visible;
-        filaChips.Visibility = Visibility.Visible;
+        _fase = Fase.Revision;
         bannerAplicado.Visibility = Visibility.Collapsed;
+        AplicarTipo();
     }
 
     // ─────────────────────────── contadores y filtro ───────────────────────────
@@ -2475,5 +2518,316 @@ public partial class OrganizarView : UserControl
     {
         Escribir(mensaje);
         DialogWindow.Aviso(Window.GetWindow(this), Textos.Instancia.OrganizarTitulo, mensaje);
+    }
+
+    // ═══════════════════════ Repaso de películas ═══════════════════════════
+    //
+    // Con la forma del repaso de series a propósito: mismos chips con recuento,
+    // misma rejilla, misma barra de aplicar, y casilla por fila. Lo que da
+    // confianza es reconocer la pantalla y poder decidir fila a fila; la primera
+    // versión aplicaba las once o ninguna, y eso es lo que la hacía sospechosa.
+
+    private readonly ObservableCollection<PeliculaFila> _pelis = new();
+    private List<PlanDePeliculas.Paso> _planPelis = new();
+
+    /// <summary>Lo que dijo TMDb de cada fichero, por ruta. Vacío hasta que se pida.</summary>
+    private readonly Dictionary<string, IdentificacionDePelicula.Veredicto> _veredictos =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private Mudanza.Parte? _hechoPelis;
+
+    /// <summary>
+    /// «Analizar» en modo Películas: monta la simulación y pasa a la revisión. No
+    /// toca ni un fichero — para eso está el botón de aplicar, y con las filas
+    /// marcadas una a una.
+    /// </summary>
+    private void AnalizarPeliculas()
+    {
+        _veredictos.Clear();
+        _hechoPelis = null;
+        bandaPelis.Visibility = Visibility.Collapsed;
+        btnDeshacerPelis.Visibility = Visibility.Collapsed;
+        lblPiePelis.Text = "";
+
+        foreach (var chip in new[] { chipColocan, chipRenombran, chipMirar, chipQuietas })
+            chip.IsChecked = false;
+
+        RecalcularPeliculas();
+        MostrarRevision();
+        Escribir(string.Format(Textos.Instancia.PeliculasResumen, PlanDePeliculas.Cuantos(_planPelis)));
+    }
+
+    private void RecalcularPeliculas()
+    {
+        var raiz = CarpetaActual();
+        _planPelis = PlanDePeliculas.Montar(_ficheros, raiz, identificada: FichaIdentificada);
+
+        _pelis.Clear();
+        foreach (var paso in _planPelis)
+            _pelis.Add(new PeliculaFila
+            {
+                Paso = paso,
+                Raiz = raiz,
+                Veredicto = _veredictos.TryGetValue(paso.Origen, out var v) ? v : null,
+            });
+
+        PintarPeliculas();
+    }
+
+    /// <summary>
+    /// La ficha que va a usar el plan para este fichero: la de TMDb solo si se pudo
+    /// identificar con seguridad. Una duda se enseña en la columna «Por qué» y no
+    /// entra en la propuesta.
+    /// </summary>
+    private TituloDePelicula.Ficha? FichaIdentificada(string origen)
+        => _veredictos.TryGetValue(origen, out var v) && v.SePuedeAplicar
+            ? IdentificacionDePelicula.Propuesta(v)
+            : null;
+
+    private void PintarPeliculas()
+    {
+        int colocan = _pelis.Count(x => x.Paso.Motivo == PlanDePeliculas.Porque.Va);
+        int renombran = _pelis.Count(x => x.Paso.Motivo == PlanDePeliculas.Porque.EnColeccion);
+        int mirar = _pelis.Count(x => x.Paso.Motivo is PlanDePeliculas.Porque.Ocupado
+                                                    or PlanDePeliculas.Porque.SinTitulo);
+        int quietas = _pelis.Count - colocan - renombran - mirar;
+
+        runColocan.Text = string.Format(Textos.Instancia.PeliculasChipColocan, colocan);
+        runRenombran.Text = string.Format(Textos.Instancia.PeliculasChipRenombran, renombran);
+        runMirar.Text = string.Format(Textos.Instancia.PeliculasChipMirar, mirar);
+        runQuietas.Text = string.Format(Textos.Instancia.PeliculasChipQuietas, quietas);
+
+        PintarRiesgoPeliculas();
+        FiltrarPeliculas();
+        PintarAplicarPeliculas();
+        PintarIdentificar();
+    }
+
+    /// <summary>
+    /// Ningún chip marcado = se ven todas. Es lo mismo que hacen los de series, y
+    /// evita el estado tonto de «todos apagados, tabla vacía».
+    /// </summary>
+    private void FiltrarPeliculas()
+    {
+        var conColocan = chipColocan.IsChecked == true;
+        var conRenombran = chipRenombran.IsChecked == true;
+        var conMirar = chipMirar.IsChecked == true;
+        var conQuietas = chipQuietas.IsChecked == true;
+
+        bool ninguno = !conColocan && !conRenombran && !conMirar && !conQuietas;
+
+        tablaPelis.ItemsSource = _pelis.Where(x => ninguno || x.Paso.Motivo switch
+        {
+            PlanDePeliculas.Porque.Va => conColocan,
+            PlanDePeliculas.Porque.EnColeccion => conRenombran,
+            PlanDePeliculas.Porque.Ocupado or PlanDePeliculas.Porque.SinTitulo => conMirar,
+            _ => conQuietas,
+        }).ToList();
+    }
+
+    private void PintarAplicarPeliculas()
+    {
+        // La casilla del encabezado nace marcada, y WPF dispara su evento DENTRO de
+        // InitializeComponent -antes de que exista el resto de la fila de acciones-.
+        // Sin esta guarda, construir la pantalla revienta con un nulo que no dice de
+        // donde viene. Se comprueba el boton y no una bandera de «ya inicie» porque es
+        // exactamente lo que falta.
+        if (btnAplicarPelis is null) return;
+
+        int marcadas = _pelis.Count(x => x.Entra);
+
+        btnAplicarPelis.Content = marcadas > 0
+            ? string.Format(Textos.Instancia.PeliculasAplicarMarcadas, marcadas)
+            : Textos.Instancia.PeliculasBotonNada;
+        btnAplicarPelis.IsEnabled = marcadas > 0 && _hechoPelis is null;
+    }
+
+    private void OnMarcarPelicula(object sender, RoutedEventArgs e) => PintarAplicarPeliculas();
+
+    /// <summary>
+    /// La casilla del encabezado marca o desmarca todo lo <b>aplicable</b>. Lo que no
+    /// lo es no se toca: marcarlo no lo haría entrar, y dejarlo marcado insinuaría
+    /// que sí.
+    /// </summary>
+    private void OnMarcarTodasPelis(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.CheckBox c) return;
+        foreach (var fila in _pelis.Where(x => x.ListoParaAplicar))
+            fila.Marcado = c.IsChecked == true;
+        PintarAplicarPeliculas();
+    }
+
+    /// <summary>
+    /// Lo que va a costar: cruzar de disco, entrar en una nube donde no estaba, y los
+    /// ficheros que solo están en la nube. Se reaprovecha el cálculo del reordenado de
+    /// temporadas traduciendo los pasos, porque el riesgo de mover un fichero no
+    /// depende de por qué se mueve. Solo cuenta lo MARCADO: avisar de un riesgo que
+    /// has desmarcado es ruido.
+    /// </summary>
+    private void PintarRiesgoPeliculas()
+    {
+        var comoReordenado = _pelis
+            .Where(x => x.Entra)
+            .Select(x => new PlanDeReordenado.Paso(x.Paso.Origen, x.Paso.Destino, PlanDeReordenado.Porque.Va));
+
+        var avisos = RiesgoDelReordenado.Mirar(comoReordenado, NubesDelEquipo.Registradas());
+
+        if (avisos.Count == 0)
+        {
+            cajaRiesgoPelis.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        lblRiesgoPelis.Text = string.Join("\n", avisos.Select(a => a.Que switch
+        {
+            RiesgoDelReordenado.Riesgo.CruzaVolumen =>
+                string.Format(Textos.Instancia.ReordenarRiesgoVolumen, a.Cuantos),
+            RiesgoDelReordenado.Riesgo.Nube =>
+                string.Format(Textos.Instancia.ReordenarRiesgoNube, a.Cuantos, a.Detalle),
+            _ => string.Format(Textos.Instancia.ReordenarRiesgoMarcador, a.Cuantos),
+        }));
+        cajaRiesgoPelis.Visibility = Visibility.Visible;
+    }
+
+    private void AplicarPeliculas()
+    {
+        var pares = _pelis.Where(x => x.Entra).Select(x => (x.Paso.Origen, x.Paso.Destino!)).ToList();
+        if (pares.Count == 0) return;
+
+        _hechoPelis = Mudanza.Aplicar(pares);
+
+        lblBandaPelis.Text = _hechoPelis.Fallidos.Count == 0
+            ? string.Format(Textos.Instancia.PeliculasHecho, _hechoPelis.Movidos.Count)
+            : string.Format(Textos.Instancia.PeliculasHechoConFallos,
+                            _hechoPelis.Movidos.Count, _hechoPelis.Fallidos.Count);
+
+        // Un compañero que se queda atrás -un subtítulo cuyo destino estaba ocupado-
+        // no se calla: para el servidor es como si no existiera.
+        if (_hechoPelis.CompanerosSinMover.Count > 0)
+            lblBandaPelis.Text += " " + string.Format(Textos.Instancia.CompanerosSinMover,
+                                                     _hechoPelis.CompanerosSinMover.Count);
+
+        bandaPelis.Visibility = Visibility.Visible;
+        btnDeshacerPelis.Visibility = _hechoPelis.Movidos.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        Escribir(lblBandaPelis.Text);
+
+        // Se marca a mano en vez de recalcular: las rutas del plan son las de ANTES, y
+        // volver a montarlo diría otra vez «se mueve» sobre ficheros que ya no están
+        // ahí. Lo que se sabe de verdad es lo que devolvió la mudanza.
+        var movidos = _hechoPelis.Movidos.Select(m => m.Origen).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < _pelis.Count; i++)
+            if (movidos.Contains(_pelis[i].Paso.Origen))
+                _pelis[i] = new PeliculaFila
+                {
+                    Paso = _pelis[i].Paso with { Motivo = PlanDePeliculas.Porque.YaEsta, Destino = null },
+                    Raiz = _pelis[i].Raiz,
+                    Veredicto = _pelis[i].Veredicto,
+                };
+
+        PintarPeliculas();
+    }
+
+    private void DeshacerPeliculas()
+    {
+        if (_hechoPelis is null) return;
+
+        int eran = _hechoPelis.Movidos.Count;
+        int vueltos = Mudanza.Deshacer(_hechoPelis);
+        bool aMedias = vueltos < eran;
+
+        lblBandaPelis.Text = aMedias
+            ? string.Format(Textos.Instancia.DeshacerAMedias, vueltos, eran - vueltos)
+            : string.Format(Textos.Instancia.PeliculasDeshecho, vueltos);
+        Escribir(lblBandaPelis.Text);
+
+        // Si alguno NO pudo volver -lo normal es que esté abierto en el reproductor-,
+        // el registro se conserva y el botón se queda: es el único sitio donde vive la
+        // lista de qué fue a dónde, y tirarlo dejaba ese fichero desplazado para
+        // siempre. Reintentar es seguro: lo que ya volvió se salta solo.
+        btnDeshacerPelis.Visibility = aMedias ? Visibility.Visible : Visibility.Collapsed;
+        if (!aMedias) _hechoPelis = null;
+
+        RecalcularPeliculas();
+    }
+
+    /// <summary>
+    /// El botón de identificar se puede pulsar cuando hay con qué preguntar. Cuando
+    /// no, se queda visible y apagado <b>con el motivo al lado</b>: esconderlo dejaría
+    /// la función invisible, y apagarlo sin explicación se lee como algo roto.
+    /// </summary>
+    private void PintarIdentificar()
+    {
+        bool listo = SettingsStore.Load().Tmdb.Listo;
+        btnIdentificar.IsEnabled = listo && _hechoPelis is null;
+        lblTmdbApagado.Visibility = listo ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>
+    /// Pregunta a TMDb por cada película y vuelve a montar el plan con lo que se haya
+    /// identificado <b>con seguridad</b>. Lo dudoso se queda en la columna «Por qué».
+    ///
+    /// <para>
+    /// Es un paso aparte y a petición, no algo que pase al analizar: una app de disco
+    /// que sale a internet sola no es lo que nadie instaló. Lo ya preguntado sale de
+    /// la caché, así que repetirlo no cuesta ni una consulta.
+    /// </para>
+    /// </summary>
+    private async Task IdentificarPeliculas()
+    {
+        var ajustes = SettingsStore.Load().Tmdb;
+        var clave = ajustes.ClaveElegida().Clave;
+        if (!ajustes.Activo || string.IsNullOrEmpty(clave)) return;
+
+        btnIdentificar.IsEnabled = false;
+
+        // El idioma de la app es el idioma en el que se pide el título, porque es el
+        // que se va a escribir en el disco.
+        var idioma = Idioma.Elegir("en-US", "es-ES");
+        var cache = CacheDePeliculas.Abrir(CacheDePeliculas.Predeterminada());
+
+        // Solo lo que trae ficha: un extra no la lleva, y por él no se pregunta.
+        var aPreguntar = _planPelis
+            .Where(p => p.Ficha is { } fi && !string.IsNullOrWhiteSpace(fi.Titulo))
+            .ToList();
+
+        int hechas = 0, seguras = 0, dudas = 0;
+        bool falloRed = false;
+
+        foreach (var paso in aPreguntar)
+        {
+            var ficha = paso.Ficha!;
+            lblPiePelis.Text = string.Format(Textos.Instancia.PeliculasIdentificando,
+                                             hechas + 1, aPreguntar.Count);
+
+            var candidatos = cache.Buscar(ficha.Titulo, ficha.Anio, idioma);
+            if (candidatos is null)
+            {
+                var traidos = await Tmdb.Preguntar(ficha.Titulo, ficha.Anio, idioma, clave);
+
+                // Un «no se pudo preguntar» NO se guarda: si se guardara, un rato sin
+                // conexión dejaría esta película marcada como imposible para siempre.
+                if (traidos is null) { falloRed = true; hechas++; continue; }
+
+                cache.Guardar(ficha.Titulo, ficha.Anio, idioma, traidos);
+                candidatos = traidos;
+            }
+
+            var v = IdentificacionDePelicula.Decidir(ficha, candidatos);
+            _veredictos[paso.Origen] = v;
+            if (v.SePuedeAplicar) seguras++; else dudas++;
+            hechas++;
+        }
+
+        cache.Volcar();
+        RecalcularPeliculas();
+
+        lblPiePelis.Text = seguras == 0 && dudas == 0
+            ? Textos.Instancia.PeliculasIdentificadaNinguna
+            : dudas == 0
+                ? string.Format(Textos.Instancia.PeliculasIdentificadasTodas, seguras)
+                : string.Format(Textos.Instancia.PeliculasIdentificadas, seguras, dudas);
+
+        if (falloRed) lblPiePelis.Text += " " + Textos.Instancia.PeliculasSinRed;
+        Escribir(lblPiePelis.Text);
     }
 }

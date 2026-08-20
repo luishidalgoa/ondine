@@ -216,7 +216,7 @@ public sealed partial class Textos
         "Choose the folder whose files you want to organise",
         "Elegir la carpeta cuyos ficheros quieres organizar");
 
-    // ── La ventana de películas ───────────────────────────────────────────────
+    // ── El repaso de películas ─────────────────────────────────────────────────
     public string PeliculasTitulo => Idioma.Elegir("Sort out films", "Ordenar las películas");
 
     // {0} = cuántas tienen trabajo.
@@ -1368,7 +1368,7 @@ public sealed partial class Textos
     /// </summary>
     public string OrganizarVerloEnLaWeb => Idioma.Elegir("Watch it on the web", "Verlo en la web");
 
-    // ── Identificar contra TMDb, desde la ventana de películas ──────────────
+    // ── Identificar contra TMDb, desde el repaso de películas ───────────────
     public string PeliculasIdentificar => Idioma.Elegir("Identify with TMDb", "Identificar con TMDb");
     public string PeliculasIdentificarAyuda => Idioma.Elegir(
         "Ask TMDb what each film is, to get the title and the year right. This applies nothing: the plan is redrawn and you still decide.",
@@ -1420,4 +1420,31 @@ public sealed partial class Textos
 
     // {0} = lo que propone TMDb.
     public string PeliculasSegunTmdb => Idioma.Elegir("TMDb says: {0}", "Según TMDb: {0}");
+
+    // ── El repaso de películas, con la forma del de series ──────────────────
+    // Los chips llevan el recuento dentro y filtran, igual que en series. Van con
+    // glifo además de color: un chip que solo se distingue por el color no se
+    // distingue para quien no distingue esos dos colores.
+    // {0} = cuántas.
+    public string PeliculasChipColocan => Idioma.Elegir(" {0} move", " {0} se colocan");
+    public string PeliculasChipRenombran => Idioma.Elegir(" {0} renamed in place", " {0} se renombran");
+    public string PeliculasChipQuietas => Idioma.Elegir(" {0} already fine", " {0} ya están bien");
+    public string PeliculasChipMirar => Idioma.Elegir(" {0} to look at", " {0} hay que mirar");
+
+    // {0} = cuántas marcadas.
+    public string PeliculasAplicarMarcadas => Idioma.Elegir("Apply to {0} marked", "Aplicar a {0} marcadas");
+
+    // La columna «Por qué»: convierte un color en una razón. Sin esto la tabla
+    // dice QUÉ va a pasar y no por qué, que es lo que hace falta para fiarse.
+    public string PeliculasPorQueYaCumple => Idioma.Elegir(
+        "already as Plex expects it", "ya está como lo espera Plex");
+    public string PeliculasPorQueExtra => Idioma.Elegir(
+        "an extra: renaming it would pass it off as another version",
+        "un extra: renombrarlo lo haría pasar por otra versión");
+    public string PeliculasPorQueOcupadoDetalle => Idioma.Elegir(
+        "there is already a file with that name", "ya hay un fichero con ese nombre");
+    public string PeliculasPorQueSinTituloDetalle => Idioma.Elegir(
+        "no title comes out of the name", "del nombre no sale ningún título");
+    public string PeliculasPorQueDelNombre => Idioma.Elegir(
+        "read from the file and its folder", "leído del fichero y de su carpeta");
 }
