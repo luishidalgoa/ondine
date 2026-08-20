@@ -88,10 +88,11 @@ disponibles. Si ninguno se pudo descargar, emite `error` con el último detalle
 de cada ID.
 
 Si la primera representación pública devuelve HTTP 403 al abrir sus fragmentos,
-el complemento hace un único segundo intento con el cliente `web_safari`. Eso
-soluciona enlaces temporales defectuosos de algunos vídeos públicos. No convierte
-en accesible un vídeo privado o restringido: si el segundo cliente tampoco ofrece
-un formato reproducible, se conserva el error.
+el complemento repite una vez la extracción para obtener una URL temporal nueva.
+No cambia al cliente `web_safari`: en vídeos que sí ofrecen MP4 360p y pistas
+480p al cliente normal, `web_safari` puede ver solo storyboards y producir el
+engañoso «Requested format is not available». Repetir la extracción no convierte
+en accesible un vídeo privado o restringido: esos se conservan como error.
 
 En la interfaz, el diagnóstico ocupa todo el ancho del pie en un campo de solo
 lectura. Se puede seleccionar con el ratón y copiar con Ctrl+C. «Marcar los que

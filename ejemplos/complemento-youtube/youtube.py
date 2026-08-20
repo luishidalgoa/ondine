@@ -543,15 +543,14 @@ def traer(argumentos):
         url = "https://www.youtube.com/watch?v=" + ident
         rutas, ultimas = _descargar_un_video(base + [url], i, total)
 
-        # A veces YouTube entrega una URL de fragmentos que responde 403 al
-        # abrirla. Pedir otra representacion salva el video cuando es publico;
-        # no aporta formatos a contenido privado o restringido.
+        # A veces YouTube entrega una URL temporal que responde 403 al abrirla.
+        # Repetir la extraccion pide una URL nueva. Cambiar de cliente no sirve:
+        # en estos mismos videos `web_safari` solo ve storyboards y acaba tapando
+        # el 403 real con un engañoso «Requested format is not available».
         if not rutas and any("403" in linea for linea in ultimas):
             decir(tipo="progreso", avance=(i - 1) / total,
-                  texto=f"Reintentando video {i} de {total} con otra fuente")
-            alternativa = base + ["--extractor-args",
-                                  "youtube:player_client=web_safari", url]
-            rutas, segundo_error = _descargar_un_video(alternativa, i, total)
+                  texto=f"Renovando el enlace del video {i} de {total}")
+            rutas, segundo_error = _descargar_un_video(base + [url], i, total)
             if segundo_error:
                 ultimas = segundo_error
 
