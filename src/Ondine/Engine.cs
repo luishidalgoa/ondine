@@ -223,12 +223,16 @@ public sealed class Engine
         (codec is "hevc" or "av1") && totalKbps > 0 && totalKbps < 2500;
 
     /// <summary>Extrae un fotograma como miniatura JPG. Devuelve true si lo consiguió.</summary>
-    public static async Task<bool> MakeThumbnailAsync(string video, string destJpg, int atSec)
+    /// <summary>
+    /// Un fotograma del segundo pedido. <paramref name="ancho"/> por defecto es el del
+    /// globo de la barra; el visor de fotogramas lo pide grande porque llena la ventana.
+    /// </summary>
+    public static async Task<bool> MakeThumbnailAsync(string video, string destJpg, int atSec, int ancho = 480)
     {
         var (code, _, _) = await RunAsync(Ffmpeg, new[]
         {
             "-v", "error", "-ss", $"{atSec}", "-i", video, "-frames:v", "1",
-            "-vf", "scale=480:-2", "-q:v", "4", "-y", destJpg
+            "-vf", $"scale={ancho}:-2", "-q:v", "4", "-y", destJpg
         });
         return code == 0 && File.Exists(destJpg);
     }

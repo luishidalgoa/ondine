@@ -45,6 +45,17 @@ public partial class ReproductorWindow : Window
     /// </summary>
     private bool _fallaMientrasBaja;
 
+    /// <summary>
+    /// Windows no sabe decodificar este vídeo, así que se recorre a fotogramas sacados
+    /// con ffmpeg. Ver <see cref="EntrarEnModoFotogramas"/>.
+    /// </summary>
+    private bool _modoFotogramas;
+
+    private bool _sacandoFotograma;
+    private int _fotogramaPedido = -1;
+    private readonly DispatcherTimer _esperaFotograma =
+        new() { Interval = TimeSpan.FromMilliseconds(120) };
+
     private readonly DispatcherTimer _reloj;
     private readonly DispatcherTimer _apagon;   // esconde los controles tras un rato quieto
     private bool _pausado;
@@ -141,10 +152,21 @@ public partial class ReproductorWindow : Window
         // él encendido, cada cambio de posición obliga a decodificar de más.
         barra.ValueChanged += (_, e) =>
         {
-            if (_desdeReloj || !_abierto) return;
+            if (_desdeReloj) return;
+
+            if (_modoFotogramas)
+            {
+                lblPos.Text = Fmt(TimeSpan.FromSeconds(e.NewValue));
+                PedirFotograma((int)e.NewValue);
+                return;
+            }
+
+            if (!_abierto) return;
             video.Position = TimeSpan.FromSeconds(e.NewValue);
             lblPos.Text = Fmt(TimeSpan.FromSeconds(e.NewValue));
         };
+
+        _esperaFotograma.Tick += async (_, _) => { _esperaFotograma.Stop(); await SacarFotogramaAsync(); };
         barra.AddHandler(Thumb.DragStartedEvent, new DragStartedEventHandler((_, _) =>
         {
             _arrastrando = true;
@@ -210,7 +232,10 @@ public partial class ReproductorWindow : Window
             // sí. Se pregunta después de enseñar el aviso, no antes: ffprobe tarda un
             // instante y dejar la pantalla en negro mientras tanto sería peor.
             var codec = await CodecDelVideo();
-            if (!_cerrado && codec.Length > 0) lblFallo.Text = MensajeDeCodec(codec);
+            if (_cerrado) return;
+            if (codec.Length > 0) lblFallo.Text = MensajeDeCodec(codec);
+
+            await EntrarEnModoFotogramas(codec);
         };
         // El péndulo se queda hasta que el vídeo AVANZA de verdad, no cuando dice estar
         // abierto: con un fichero descargándose, MediaOpened llega mucho antes que el primer
@@ -274,6 +299,7 @@ public partial class ReproductorWindow : Window
             _reloj.Stop();
             _apagon.Stop();
             _esperaPrevia.Stop();
+            _esperaFotograma.Stop();
 
             video.Close();
 
@@ -316,6 +342,15 @@ public partial class ReproductorWindow : Window
 
     private void Saltar(double segundos)
     {
+        // En modo fotogramas no hay posición de vídeo que mover: se mueve la barra, y
+        // ella pide la imagen. Así los botones de saltar siguen sirviendo.
+        if (_modoFotogramas)
+        {
+            barra.Value = Math.Clamp(barra.Value + segundos, 0, barra.Maximum);
+            Mostrar();
+            return;
+        }
+
         if (!_abierto) return;
         var destino = video.Position.TotalSeconds + segundos;
         var tope = video.NaturalDuration.HasTimeSpan ? video.NaturalDuration.TimeSpan.TotalSeconds : destino;
@@ -492,6 +527,106 @@ public partial class ReproductorWindow : Window
             "" => Textos.Instancia.ReproductorCodecSinSaber,
             _ => string.Format(Textos.Instancia.ReproductorCodecDesconocido, c),
         };
+    }
+
+    /// <summary>
+    /// El plan B: si Windows no sabe decodificar esto, se recorre a fotogramas.
+    ///
+    /// <para>
+    /// ffmpeg sí sabe —lo lleva la propia app, y es lo que ya saca las miniaturas del
+    /// globo de la barra—, así que en vez de una pantalla negra se pinta el fotograma
+    /// del segundo donde estés. No hay sonido ni reproducción seguida, y eso se dice;
+    /// pero la pregunta para la que existe este reproductor es «¿qué capítulo es?», y a
+    /// esa sí contesta.
+    /// </para>
+    /// </summary>
+    private async Task EntrarEnModoFotogramas(string codec)
+    {
+        if (_cerrado || _modoFotogramas) return;
+
+        _modoFotogramas = true;
+        _cargando.Parar();
+
+        // Que el vídeo deje de intentarlo: no va a poder, y mientras tanto estorba.
+        video.Close();
+        video.Source = null;
+
+        imgFotograma.Visibility = Visibility.Visible;
+
+        // El aviso pasa a ser una franja abajo en vez de tapar el centro: ahora hay algo
+        // que enseñar detrás. El botón del reproductor del sistema sigue estando.
+        lblFallo.Text = codec.Length > 0
+            ? string.Format(Textos.Instancia.ReproductorModoFotogramas, codec)
+            : Textos.Instancia.ReproductorCodecSinSaber;
+        panelFallo.VerticalAlignment = VerticalAlignment.Bottom;
+        panelFallo.Margin = new Thickness(0, 0, 0, 128);
+        panelFallo.MaxWidth = 620;
+
+        // El reproducir/pausar no aplica: no hay nada que reproducir.
+        btnPlay.Visibility = Visibility.Collapsed;
+
+        // La duración: si el contenedor llegó a abrirse ya está en la barra; si ni eso,
+        // se le pregunta al analizador, que lee el fichero sin decodificarlo.
+        if (barra.Maximum <= 0)
+        {
+            try
+            {
+                var info = await new Engine().ProbeAsync(_ruta);
+                if (!_cerrado && info.DurationSec > 0)
+                {
+                    barra.Maximum = info.DurationSec;
+                    lblDur.Text = Fmt(TimeSpan.FromSeconds(info.DurationSec));
+                }
+            }
+            catch { /* sin duración la barra no se mueve, pero el primer fotograma sale */ }
+        }
+
+        if (_cerrado) return;
+        PedirFotograma(0);
+        Mostrar();
+    }
+
+    private void PedirFotograma(int segundo)
+    {
+        if (_cerrado) return;
+        _fotogramaPedido = Math.Max(0, segundo);
+        _esperaFotograma.Stop();
+        _esperaFotograma.Start();
+    }
+
+    /// <summary>
+    /// Saca UN fotograma, el último que se pidió. Los de en medio se descartan: por la
+    /// barra se piden decenas por segundo, y sacarlos todos dejaría la imagen siempre
+    /// por detrás de la mano. Es el mismo trato que el globo de la previa.
+    /// </summary>
+    private async Task SacarFotogramaAsync()
+    {
+        if (_cerrado || _sacandoFotograma || _fotogramaPedido < 0) return;
+
+        int seg = _fotogramaPedido;
+        _sacandoFotograma = true;
+        try
+        {
+            var jpg = Path.Combine(CarpetaDePrevias(), $"vista-{seg}.jpg");
+            if (await Engine.MakeThumbnailAsync(_ruta, jpg, seg, 1280) && !_cerrado)
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;   // se lee entera; el fichero queda libre
+                bmp.UriSource = new Uri(jpg);
+                bmp.EndInit();
+                bmp.Freeze();
+                imgFotograma.Source = bmp;
+                try { File.Delete(jpg); } catch { }
+            }
+        }
+        catch { /* un fotograma que no sale no es motivo para tumbar la ventana */ }
+        finally
+        {
+            _sacandoFotograma = false;
+            // Mientras se sacaba ese, la barra puede haberse movido a otro sitio.
+            if (!_cerrado && _fotogramaPedido != seg) { _esperaFotograma.Stop(); _esperaFotograma.Start(); }
+        }
     }
 
     private void Chip(string? texto)

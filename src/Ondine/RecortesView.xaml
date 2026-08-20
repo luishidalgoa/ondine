@@ -124,6 +124,12 @@
               </LinearGradientBrush>
             </Grid.Background>
             <MediaElement x:Name="video" LoadedBehavior="Manual" UnloadedBehavior="Stop" Stretch="Uniform"/>
+
+            <!-- Plan B cuando Windows no sabe decodificar el vídeo (AV1, HEVC…): los
+                 fotogramas los saca ffmpeg, que sí sabe, y son los mismos que ya tiende
+                 la tira del fondo. Cortar nunca dependió de esto -eso también lo hace
+                 ffmpeg-, lo que faltaba era poder VER dónde cortas. -->
+            <Image x:Name="imgFotograma" Stretch="Uniform" Visibility="Collapsed"/>
             <!-- El texto del estado vacío va en una pastilla translúcida: así se lee igual de
                  bien sobre el fondo que sobre el vídeo. -->
             <Border x:Name="chipSinVideo" HorizontalAlignment="Center" VerticalAlignment="Center"

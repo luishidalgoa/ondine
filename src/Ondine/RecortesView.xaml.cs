@@ -71,6 +71,17 @@ public partial class RecortesView : UserControl
 {
     private readonly ObservableCollection<TramoFila> _tramos = new();
     private readonly Engine _engine = new();
+
+    /// <summary>
+    /// Windows no sabe decodificar este vídeo, así que la previa grande son fotogramas
+    /// sacados con ffmpeg. Cortar funciona igual: eso nunca pasó por aquí.
+    /// </summary>
+    private bool _modoFotogramas;
+
+    private bool _sacandoFotogramaGrande;
+    private int _fotogramaGrandePedido = -1;
+    private readonly System.Windows.Threading.DispatcherTimer _esperaFotogramaGrande =
+        new() { Interval = TimeSpan.FromMilliseconds(120) };
     private readonly DispatcherTimer _reloj;
     private VideoRow? _fuente;
     private double _duracion;
@@ -197,10 +208,29 @@ public partial class RecortesView : UserControl
         };
         video.MediaFailed += (_, _) =>
         {
-            // No se puede previsualizar (pero sí cortar): se dice en la pastilla, sobre el
-            // fondo degradado, porque no hay imagen de vídeo que enseñar.
-            lblSinVideo.Text = Textos.Instancia.RecortesSinPrevisualizacion;
+            // Windows no sabe decodificar esto, pero ffmpeg sí: en vez de un fondo vacío
+            // se enseñan fotogramas. Cortar nunca dependió de la previsualización -eso lo
+            // hace ffmpeg también-, lo que faltaba era poder ver dónde cortas.
+            _modoFotogramas = true;
+            imgFotograma.Visibility = Visibility.Visible;
+
+            var codec = _fuente?.Codec ?? "";
+            lblSinVideo.Text = codec.Length > 0
+                ? string.Format(Textos.Instancia.RecortesModoFotogramas, codec)
+                : Textos.Instancia.RecortesSinPrevisualizacion;
+
+            // La pastilla baja: ahora hay imagen detrás y taparla sería absurdo.
+            chipSinVideo.VerticalAlignment = VerticalAlignment.Bottom;
+            chipSinVideo.Margin = new Thickness(0, 0, 0, 16);
             chipSinVideo.Visibility = Visibility.Visible;
+
+            PedirFotogramaGrande(video.Position.TotalSeconds);
+        };
+
+        _esperaFotogramaGrande.Tick += async (_, _) =>
+        {
+            _esperaFotogramaGrande.Stop();
+            await SacarFotogramaGrandeAsync();
         };
 
         _reloj = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
@@ -721,6 +751,15 @@ public partial class RecortesView : UserControl
     {
         globoPrevia.Visibility = Visibility.Collapsed;
         imgPrevia.Source = null;
+
+        // Otro vídeo, otra historia: el que venga puede decodificarse perfectamente.
+        _modoFotogramas = false;
+        _fotogramaGrandePedido = -1;
+        _esperaFotogramaGrande.Stop();
+        imgFotograma.Source = null;
+        imgFotograma.Visibility = Visibility.Collapsed;
+        chipSinVideo.VerticalAlignment = VerticalAlignment.Center;
+        chipSinVideo.Margin = new Thickness(0);
         _previas.Clear();
         _previaPedida = -1;
         _colaFondo.Clear();
@@ -1023,6 +1062,52 @@ public partial class RecortesView : UserControl
         var donde = Math.Clamp(segundo, 0, _duracion);
         video.Position = TimeSpan.FromSeconds(donde);
         Cabezal(donde);
+
+        // Es el único sitio por el que se salta, así que es el único que necesita
+        // enterarse de que aquí la imagen la pinta ffmpeg.
+        if (_modoFotogramas) PedirFotogramaGrande(donde);
+    }
+
+    private void PedirFotogramaGrande(double segundo)
+    {
+        _fotogramaGrandePedido = (int)Math.Max(0, segundo);
+        _esperaFotogramaGrande.Stop();
+        _esperaFotogramaGrande.Start();
+    }
+
+    /// <summary>
+    /// Saca UN fotograma, el último pedido. Misma disciplina que la tira del fondo y que
+    /// el globo: los de en medio se descartan, el jpg se carga entero en memoria y se
+    /// borra del disco al momento.
+    /// </summary>
+    private async Task SacarFotogramaGrandeAsync()
+    {
+        if (_sacandoFotogramaGrande || _fuente == null || _fotogramaGrandePedido < 0) return;
+        if (_exportando) return;   // nada de ffmpegs de previa mientras se exporta
+
+        int seg = _fotogramaGrandePedido;
+        _sacandoFotogramaGrande = true;
+        try
+        {
+            var jpg = Path.Combine(CarpetaDeFotogramas(), $"grande-{seg}.jpg");
+            if (await Engine.MakeThumbnailAsync(_fuente.Path, jpg, seg, 1280))
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.UriSource = new Uri(jpg);
+                bmp.EndInit();
+                bmp.Freeze();
+                imgFotograma.Source = bmp;
+                try { File.Delete(jpg); } catch { }
+            }
+        }
+        catch { /* un fotograma que no sale no rompe nada: se sigue pudiendo cortar */ }
+        finally
+        {
+            _sacandoFotogramaGrande = false;
+            if (_fotogramaGrandePedido != seg) { _esperaFotogramaGrande.Stop(); _esperaFotogramaGrande.Start(); }
+        }
     }
 
     /// <summary>

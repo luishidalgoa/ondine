@@ -42,6 +42,15 @@ es un acuerdo de buena voluntad: está verificado.
   **«Por qué»** que dice el motivo en palabras en vez de solo un color. El aviso de lo que va a
   costar el movimiento —cruzar de disco, entrar en una nube— cuenta solo lo que tengas marcado.
 
+### Añadido
+
+- **Los vídeos que Windows no sabe reproducir ahora se pueden ver por fotogramas.** El anime en AV1,
+  y también HEVC o VP9, se quedaban en pantalla negra dentro de Ondine. Ahora, cuando el reproductor
+  de Windows no puede con el vídeo, los fotogramas los saca **ffmpeg** —que sí sabe, y ya venía en la
+  app— y se recorren con la misma barra de siempre. No hay sonido ni reproducción seguida, y se dice;
+  pero sirve para lo que existe ese reproductor: saber qué capítulo es. Lo mismo en **Recortes**, que
+  ya no se queda sin previa: ahí **cortar siempre funcionó**, porque de eso se encarga ffmpeg.
+
 ### Corregido
 
 - **Cuando un vídeo no se puede reproducir, ahora se dice qué códec es y qué hacer.** Antes salía
