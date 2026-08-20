@@ -89,6 +89,7 @@ public static class Program
         ElAvisoDeCodecDiceQueHacer();
         LasPreferenciasLleganHastaElFinal();
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
+        ElVeredictoDelComplementoAvisaAlCambiar();
 
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
@@ -101,6 +102,28 @@ public static class Program
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         app.Shutdown();
         return _fallos == 0 ? 0 : 1;
+    }
+
+    private static void ElVeredictoDelComplementoAvisaAlCambiar()
+    {
+        try
+        {
+            var fila = new ComplementosPanel.Fila { Id = "video", Titulo = "Un episodio" };
+            var cambios = new HashSet<string>();
+            fila.PropertyChanged += (_, e) => cambios.Add(e.PropertyName ?? "");
+
+            fila.Veredicto = "ya lo tienes";
+            fila.Falta = false;
+            fila.ColorTexto = Brushes.Green;
+
+            if (!cambios.Contains(nameof(fila.Veredicto)) ||
+                !cambios.Contains(nameof(fila.TituloEntero)) ||
+                !cambios.Contains(nameof(fila.ColorTexto)))
+                throw new InvalidOperationException("la fila no notificó el nuevo veredicto");
+
+            Bien("el complemento repinta «te falta» cuando cambia el cotejo");
+        }
+        catch (Exception ex) { Mal("el complemento repinta «te falta» cuando cambia el cotejo", ex); }
     }
 
     /// <summary>

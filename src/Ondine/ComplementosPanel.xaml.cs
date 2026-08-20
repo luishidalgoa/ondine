@@ -50,18 +50,51 @@ public partial class ComplementosPanel : UserControl
             ? Titulo
             : $"{Titulo}\n{Detalle}  ·  {Veredicto}";
 
-        public string Veredicto { get; set; } = "";
-        public string Detalle { get; set; } = "";
-        public Brush ColorFondo { get; set; } = Brushes.Transparent;
-        public Brush ColorTexto { get; set; } = Brushes.Gray;
+        private string _veredicto = "";
+        public string Veredicto
+        {
+            get => _veredicto;
+            set { if (_veredicto == value) return; _veredicto = value; Avisar(nameof(Veredicto)); Avisar(nameof(TituloEntero)); }
+        }
+
+        private string _detalle = "";
+        public string Detalle
+        {
+            get => _detalle;
+            set { if (_detalle == value) return; _detalle = value; Avisar(nameof(Detalle)); Avisar(nameof(TituloEntero)); }
+        }
+
+        private Brush _colorFondo = Brushes.Transparent;
+        public Brush ColorFondo
+        {
+            get => _colorFondo;
+            set { if (ReferenceEquals(_colorFondo, value)) return; _colorFondo = value; Avisar(nameof(ColorFondo)); }
+        }
+
+        private Brush _colorTexto = Brushes.Gray;
+        public Brush ColorTexto
+        {
+            get => _colorTexto;
+            set { if (ReferenceEquals(_colorTexto, value)) return; _colorTexto = value; Avisar(nameof(ColorTexto)); }
+        }
 
         /// <summary>
         /// El hueco de la miniatura solo se reserva si ALGUNA la trae. Un
         /// rectángulo gris en todas las filas parece roto y no informa de nada.
         /// </summary>
-        public Visibility HuecoMiniatura { get; set; } = Visibility.Collapsed;
+        private Visibility _huecoMiniatura = Visibility.Collapsed;
+        public Visibility HuecoMiniatura
+        {
+            get => _huecoMiniatura;
+            set { if (_huecoMiniatura == value) return; _huecoMiniatura = value; Avisar(nameof(HuecoMiniatura)); }
+        }
 
-        public bool Falta { get; set; }
+        private bool _falta;
+        public bool Falta
+        {
+            get => _falta;
+            set { if (_falta == value) return; _falta = value; Avisar(nameof(Falta)); }
+        }
 
         private bool _marcado;
         public bool Marcado
