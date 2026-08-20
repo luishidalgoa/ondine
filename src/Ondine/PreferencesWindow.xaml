@@ -5,10 +5,12 @@
         Title="{i:T PreferenciasTitulo}" Width="580" Height="620" WindowStyle="None" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         FontFamily="{StaticResource FontUI}" Foreground="{StaticResource Text}" Background="{StaticResource Bg}">
-  <!-- El alto de la ventana es fijo y las pestañas no llevan barra de desplazamiento:
-       cada línea que se añada a una pestaña hay que pagarla en el Height de arriba. Al
-       meter el selector de idioma se quedó fuera la última casilla de «General», y la
-       pestaña del modelo volvió a subirlo: es la más alta de las cuatro. -->
+  <!-- El alto es fijo, pero las pestañas SÍ se desplazan: el ScrollViewer está en la
+       plantilla del TabControl (Theme.xaml). Antes no lo llevaban y la regla era «cada
+       línea nueva se paga en el Height de arriba»; se incumplió tres veces —el selector
+       de idioma dejó fuera la última casilla de «General», la pestaña del modelo volvió a
+       subir el alto, y la de películas se salió otra vez—. Así que ya no hay que acordarse
+       de nada al añadir una línea. -->
 
   <!-- 8 px: el mismo radio que Windows 11 recorta por fuera, para que el borde dibujado
        y el recorte del sistema coincidan en vez de pelearse en la esquina. -->
@@ -30,7 +32,7 @@
         </Button>
       </Grid>
 
-      <TabControl Grid.Row="1" Margin="18,0,18,0">
+      <TabControl x:Name="pestanias" Grid.Row="1" Margin="18,0,18,0">
         <!-- ══ General ══ -->
         <TabItem Header="{i:T PreferenciasTabGeneral}">
           <StackPanel>

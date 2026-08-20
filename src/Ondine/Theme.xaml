@@ -1182,7 +1182,19 @@
             <Border DockPanel.Dock="Top" BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1">
               <TabPanel IsItemsHost="True" Panel.ZIndex="1" Margin="0" Background="Transparent"/>
             </Border>
-            <ContentPresenter ContentSource="SelectedContent" Margin="0,14,0,0"/>
+            <!-- El contenido va dentro de un ScrollViewer, y esto se arregla AQUÍ y
+                 no pestaña por pestaña. Antes el alto de la ventana era fijo y sin
+                 desplazamiento, con la regla de «cada línea nueva se paga en el
+                 Height»: se incumplió tres veces —el selector de idioma dejó fuera
+                 la última casilla de General, la pestaña del modelo volvió a subir
+                 el alto, y la de películas se salió otra vez—. Una regla que hay
+                 que recordar cada vez que se añade una línea no es una regla, es
+                 una trampa. Solo esta ventana usa TabControl, así que el cambio no
+                 alcanza a nada más. -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Focusable="False" Background="Transparent">
+              <ContentPresenter ContentSource="SelectedContent" Margin="0,14,0,0"/>
+            </ScrollViewer>
           </DockPanel>
         </ControlTemplate>
       </Setter.Value>

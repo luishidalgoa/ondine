@@ -89,6 +89,8 @@ public static class Program
         LaTarjetaDiceLoQueSeVaAEscribir(cat);
         LosAvisosNoSePisan();
         ElBotonDeIdentificarDiceSiSePuede();
+        LasPreferenciasLleganHastaElFinal();
+        LaPantallaDeSeriesNoVuelveEnModoPeliculas();
 
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
@@ -277,6 +279,131 @@ public static class Program
             Bien(nombre);
         }
         catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// Todo lo que hay en una pestaña de Preferencias se puede alcanzar.
+    ///
+    /// <para>
+    /// Este fallo se cometió <b>tres veces</b>: el alto de la ventana era fijo,
+    /// las pestañas no se desplazaban, y la regla era acordarse de subir el alto
+    /// cada vez que se añadía una línea. Dejó fuera una casilla de «General», y
+    /// más tarde el botón del final de «Películas». Una regla que hay que
+    /// recordar a mano no es una regla; esto es lo que la sustituye.
+    /// </para>
+    /// <para>
+    /// Mide con el tamaño REAL de la ventana —580×620—, no con los 1280×800 del
+    /// resto del arnés: medir con más sitio del que hay es no medir nada.
+    /// </para>
+    /// </summary>
+    private static void LasPreferenciasLleganHastaElFinal()
+    {
+        const string nombre = "en Preferencias se llega hasta el final de la pestaña más alta";
+        try
+        {
+            var v = new PreferencesWindow(new Settings(), new[] { "Un preset" });
+            var contenido = (FrameworkElement)v.Content;
+
+            var pestanias = (TabControl)v.FindName("pestanias")!;
+            pestanias.SelectedIndex = pestanias.Items.Count - 1;   // «Películas», la más alta
+
+            contenido.Measure(new Size(v.Width, v.Height));
+            contenido.Arrange(new Rect(0, 0, v.Width, v.Height));
+            contenido.UpdateLayout();
+
+            var sv = Buscar<ScrollViewer>(pestanias)
+                     ?? throw new Exception("la pestaña no tiene por dónde desplazarse: lo que sobresalga queda inalcanzable");
+
+            if (sv.ViewportHeight <= 0)
+                throw new Exception("el área de la pestaña midió cero de alto; la prueba no estaba mirando nada");
+
+            // El último control de la pestaña. Si esto se alcanza, se alcanza todo.
+            var ultimo = (Button)v.FindName("btnTmdbAbrir")!;
+
+            sv.ScrollToBottom();
+            contenido.UpdateLayout();
+
+            var caja = ultimo.TransformToAncestor(sv).TransformBounds(new Rect(ultimo.RenderSize));
+            if (caja.Height <= 0)
+                throw new Exception("el último control de la pestaña no llegó a ocupar sitio");
+
+            // Con medio píxel de margen: la comparación es en unidades de WPF y
+            // el redondeo del arranque no debe hacer fallar una prueba buena.
+            if (caja.Bottom > sv.ViewportHeight + 0.5 || caja.Top < -0.5)
+                throw new Exception(
+                    $"desplazada al final, el último control sigue fuera de la vista " +
+                    $"(abajo {caja.Bottom:0.#} sobre un alto de {sv.ViewportHeight:0.#})");
+
+            v.Close();
+            Vaciar();
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// En modo «Películas», la pantalla de series no vuelve a aparecer por detrás.
+    ///
+    /// <para>
+    /// El fallo tal y como se vio: eliges la carpeta, se cierra el explorador de
+    /// archivos, y el panel de catálogos y el de ficheros de <b>series</b> quedan
+    /// pintados ENCIMA del de películas, los dos a la vez y superpuestos. La causa
+    /// es que volver al estado inicial ponía la vista de series a la vista <b>sin
+    /// mirar el tipo de biblioteca</b>, y nadie volvía a mirarlo después.
+    /// </para>
+    /// <para>
+    /// Se dispara con el botón «Volver» y no eligiendo carpeta porque abrir el
+    /// explorador de archivos deja la prueba esperando a una persona. Es el mismo
+    /// camino: los dos pasan por el estado inicial, que es donde estaba el fallo.
+    /// </para>
+    /// </summary>
+    private static void LaPantallaDeSeriesNoVuelveEnModoPeliculas()
+    {
+        const string nombre = "en modo Películas la pantalla de series no vuelve por detrás";
+        try
+        {
+            var vista = new OrganizarView();
+            var cboTipo = (ComboBox)vista.FindName("cboTipo")!;
+            var vistaInicio = (FrameworkElement)vista.FindName("vistaInicio")!;
+            var vistaPeliculas = (FrameworkElement)vista.FindName("vistaPeliculas")!;
+            var panelSerie = (FrameworkElement)vista.FindName("panelSerie")!;
+
+            cboTipo.SelectedIndex = 1;   // Películas
+            Vaciar();
+
+            if (vistaPeliculas.Visibility != Visibility.Visible)
+                throw new Exception("al elegir Películas no se enseñó la pantalla de películas");
+            if (vistaInicio.Visibility == Visibility.Visible)
+                throw new Exception("al elegir Películas seguía a la vista la pantalla de series");
+
+            // Volver al estado inicial: es por donde pasa también elegir carpeta.
+            ((Button)vista.FindName("btnVolver")!).RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Vaciar();
+
+            if (vistaInicio.Visibility == Visibility.Visible)
+                throw new Exception("la pantalla de series volvió a aparecer, superpuesta a la de películas");
+            if (panelSerie.Visibility == Visibility.Visible)
+                throw new Exception("volvió el panel de serie, que a una película no le aplica");
+            if (vistaPeliculas.Visibility != Visibility.Visible)
+                throw new Exception("y de paso se perdió la pantalla de películas");
+
+            Vaciar();
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>El primer descendiente de ese tipo, buscando por el árbol visual.</summary>
+    private static T? Buscar<T>(DependencyObject raiz) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(raiz); i++)
+        {
+            var hijo = VisualTreeHelper.GetChild(raiz, i);
+            if (hijo is T t) return t;
+            if (Buscar<T>(hijo) is { } hondo) return hondo;
+        }
+        return null;
     }
 
     private static void Probar(string nombre, Func<FrameworkElement> hacer)
