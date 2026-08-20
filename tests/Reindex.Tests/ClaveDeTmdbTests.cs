@@ -71,14 +71,24 @@ public static class ClaveDeTmdbTests
         Program.Assert(!v4.RequestUri!.ToString().Contains("eyJ"),
             "y NO acaba en la URL: las URL se quedan en los registros de los proxys");
 
-        // ── Apagado de fabrica ────────────────────────────────────────────────
-        // Identificar manda a un servicio de fuera los titulos de lo que hay en
-        // el disco de alguien. Eso lo enciende el usuario, no la instalacion.
+        // ── Encendido de fabrica ──────────────────────────────────────────────
+        // Decision del 20 de agosto de 2026: viene encendido. El motivo es que la
+        // clave ya la trae la app, asi que apagado significaba que la funcion
+        // existia y nadie la encontraba: hay que saber que TMDb es una cosa, ir a
+        // Preferencias y buscarla. Una funcion que solo usa quien ya sabia que
+        // estaba no sirve de nada.
+        //
+        // Lo que lo compensa, y tiene que seguir estando: la pantalla de
+        // peliculas DICE que se van a buscar en TMDb, identificar es un paso
+        // aparte que hay que pulsar, y se puede apagar. Si eso desaparece, esto
+        // se convierte en salir a internet a escondidas.
         var ajustes = new AjustesDeTmdb();
-        Program.Assert(!ajustes.Activo,
-            "de fabrica no se sale a internet: lo enciende quien quiera, no la instalacion");
+        Program.Assert(ajustes.Activo,
+            "viene encendido: con la clave puesta, apagado era una funcion que nadie encontraba");
 
-        ajustes.Activo = true;
+        // Y aun encendido, sin ninguna clave NO esta listo. Es lo que separa
+        // «encendido» de «funciona», y lo que hace que una copia compilada del
+        // repo sin el secreto lo diga en vez de fallar por dentro.
         Program.Assert(!ajustes.Listo,
             "encendido pero sin ninguna clave NO esta listo: eso hay que decirlo, no descubrirlo en el primer intento");
 
@@ -105,10 +115,13 @@ public static class ClaveDeTmdbTests
         // esta documentado con los ajustes del modelo: MemberwiseClone es
         // superficial, y sin esto la ventana de preferencias editaria los
         // ajustes de verdad aunque luego se cancele.
+        // Se APAGA en la copia, no se enciende: ahora viene encendido de fabrica,
+        // y encenderlo otra vez no probaria nada -pasaria igual con una copia
+        // superficial-.
         var reales = new Settings();
         var copia = reales.Clone();
-        copia.Tmdb.Activo = true;
-        Program.Assert(!reales.Tmdb.Activo,
-            "editar la copia de los ajustes no enciende la consulta de verdad: cancelar tiene que cancelar");
+        copia.Tmdb.Activo = false;
+        Program.Assert(reales.Tmdb.Activo,
+            "editar la copia de los ajustes no cambia los de verdad: cancelar tiene que cancelar");
     }
 }

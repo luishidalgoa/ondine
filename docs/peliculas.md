@@ -38,12 +38,23 @@ llaman igual, o media biblioteca en castellano y media en inglés. Para eso se
 consulta **TMDb**, que es el estándar de facto y lo que usan Jellyfin, Kodi y
 Plex.
 
-### Apagado de fábrica
+### Encendido de fábrica, con tres cosas que lo compensan
 
-Identificar significa mandar a un servicio de fuera los títulos de lo que hay en
-el disco de alguien. Una app que ordena tu disco no debería contar qué tienes sin
-que se lo pidas, así que **lo enciende el usuario** en Preferencias y puede
-apagarlo.
+Nació apagado y se cambió el 20 de agosto de 2026. El motivo: la clave ya la trae
+la app, así que «apagado» no significaba prudencia, significaba que **la función
+existía y nadie la encontraba** —había que saber que TMDb es una cosa, ir a
+Preferencias y buscarla—.
+
+Lo que compensa venir encendido, y tiene que seguir estando:
+
+1. La pantalla de películas **dice** que se van a buscar en TMDb.
+2. Identificar es **un paso aparte que hay que pulsar**; nunca pasa al abrir.
+3. Se puede **apagar** en Preferencias → Películas.
+
+Si cualquiera de las tres desaparece, esto se convierte en salir a internet a
+escondidas. Y hay un efecto que conviene tener presente: a quien ya tenga Ondine
+instalada **se le enciende al actualizar**, porque su `settings.json` no trae esa
+sección y hereda el valor de fábrica.
 
 **Qué sale de esta máquina:** el título ya limpio y el año. Nunca el nombre del
 fichero — la resolución, el códec y el nombre del grupo de release no hacen falta

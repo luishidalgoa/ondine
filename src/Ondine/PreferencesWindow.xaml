@@ -169,9 +169,21 @@
                  parecen demasiado: una copia compilada del repo sin el secreto no
                  tiene ninguna, y eso hay que decirlo aquí, que es donde se
                  arregla, y no como un fallo de red al primer intento. -->
-            <Border x:Name="cajaTmdbClave" Padding="10,7" CornerRadius="8" BorderThickness="1">
+            <Border x:Name="cajaTmdbClave" Padding="10,7" CornerRadius="8" BorderThickness="1"
+                    Margin="0,0,0,16">
               <TextBlock x:Name="lblTmdbOrigen" TextWrapping="Wrap" FontSize="11"/>
             </Border>
+
+            <!-- Cómo sacar tu propia clave, paso a paso y con el enlace. Va aquí,
+                 delante del campo donde se pega, y no en la Ayuda: mandar a
+                 alguien a otra pantalla a leer cómo rellenar la que tiene abierta
+                 pierde a la mitad por el camino. -->
+            <TextBlock Text="{i:T TmdbComoTitulo}" FontSize="11" FontWeight="Medium"
+                       Foreground="{StaticResource Neutral500}" Margin="0,0,0,6"/>
+            <TextBlock Text="{i:T TmdbComoPasos}" TextWrapping="Wrap" FontSize="10.5" LineHeight="17"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,10"/>
+            <Button x:Name="btnTmdbAbrir" Style="{StaticResource BtnSecondary}" FontSize="11"
+                    Padding="12,5" HorizontalAlignment="Left" Content="{i:T TmdbComoAbrir}"/>
           </StackPanel>
         </TabItem>
       </TabControl>
