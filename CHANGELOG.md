@@ -44,6 +44,11 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Cuando un vídeo no se puede reproducir, ahora se dice qué códec es y qué hacer.** Antes salía
+  «códec no soportado» y un número en hexadecimal, que no le dice a nadie qué hacer. Ahora se le
+  pregunta al analizador: si es **AV1**, **HEVC** o **VP9** te dice cuál es y qué extensión instalar
+  desde la Microsoft Store; si es otro, te dice su nombre y te manda al reproductor del sistema.
+
 - **En el reproductor, pinchar en la barra te llevaba unos segundos antes de donde habías pinchado.**
   El globo que enseña la hora al pasar el cursor medía a ojo —posición partido por ancho— y la barra
   se coloca con otra cuenta: su recorrido no es todo el ancho, empieza y acaba a medio tirador de los

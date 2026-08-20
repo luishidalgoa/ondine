@@ -86,6 +86,7 @@ public static class Program
         AlCerrarElReproductorNoQuedaNadaEnMarcha();
         LasDosPantallasNoSePisanNunca();
         LaPreviaDeLaBarraMideComoLaBarra();
+        ElAvisoDeCodecDiceQueHacer();
         LasPreferenciasLleganHastaElFinal();
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
 
@@ -668,6 +669,55 @@ public static class Program
             // Y sin duración -el vídeo aún no ha abierto- no se inventa nada.
             if (ReproductorWindow.SegundosDeX(600, ancho, pulgar, 0) != 0)
                 throw new Exception("sin duración conocida debería dar 0");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// Cuando un vídeo no se puede pintar, el aviso dice <b>qué</b> es y <b>qué hacer</b>.
+    ///
+    /// <para>
+    /// Salió de un caso real: un capítulo daba «códec no soportado: 0xC00D11B1». Ese
+    /// número no le dice a nadie qué hacer. Preguntándole a ffprobe resultó ser
+    /// <b>AV1</b> —no HEVC, que era lo que parecía—, y para AV1 hay una extensión
+    /// concreta en la tienda de Windows. Esa es la diferencia entre un aviso y un
+    /// callejón sin salida.
+    /// </para>
+    /// </summary>
+    private static void ElAvisoDeCodecDiceQueHacer()
+    {
+        const string nombre = "el aviso de códec dice qué códec es y qué hacer con él";
+        try
+        {
+            void Dice(string codec, params string[] debeSalir)
+            {
+                var m = ReproductorWindow.MensajeDeCodec(codec);
+                foreach (var trozo in debeSalir)
+                    if (!m.Contains(trozo, StringComparison.OrdinalIgnoreCase))
+                        throw new Exception($"para «{codec}» el aviso no menciona «{trozo}»: {m}");
+                if (m.Length < 30)
+                    throw new Exception($"para «{codec}» el aviso se queda en nada: {m}");
+            }
+
+            // El caso que lo destapó, y sus dos vecinos de la misma familia.
+            Dice("av1", "AV1", "AV1 Video Extension");
+            Dice("hevc", "HEVC", "HEVC Video Extensions");
+            Dice("vp9", "VP9", "VP9 Video Extensions");
+
+            // ffprobe escribe el códec en minúsculas, pero no se depende de eso.
+            Dice("AV1", "AV1 Video Extension");
+
+            // Uno que no está en la lista: se dice cuál es y se manda al reproductor
+            // del sistema. Inventarse una receta para un códec que no conocemos sería
+            // mandar a instalar cosas a ciegas.
+            Dice("theora", "theora");
+
+            // Y si ni siquiera se pudo averiguar, se dice eso, no se calla.
+            var sinSaber = ReproductorWindow.MensajeDeCodec("");
+            if (sinSaber.Length < 30 || sinSaber.Contains("AV1", StringComparison.Ordinal))
+                throw new Exception($"sin códec conocido el aviso no debería inventarse uno: {sinSaber}");
 
             Bien(nombre);
         }
