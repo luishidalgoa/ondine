@@ -53,6 +53,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **«Ordenar por temporadas» ofrecía mover ficheros que ya no estaban ahí, y fallaba sin decir por qué.**
+  Si aplicabas un renombrado y abrías la ventana de temporadas sin volver a analizar, la lista seguía
+  siendo la de antes: sus rutas ya no existían. El resultado era «0 movidos · 6 no se pudieron», sin
+  una palabra sobre el motivo. Ahora esas filas se marcan como **«ya no está ahí: vuelve a analizar la
+  carpeta»** y no cuentan para el botón — «Mover 6» sobre seis fantasmas era una promesa falsa.
+
+
 - **La app se comía un 12% de un núcleo estando parada, sin hacer nada.** Dos animaciones decorativas
   que no paraban nunca: el latido del punto de «comprimiendo» —que corría **aunque la píldora
   estuviera oculta**, que es casi siempre— y la respiración del fondo, que al cambiar de opacidad

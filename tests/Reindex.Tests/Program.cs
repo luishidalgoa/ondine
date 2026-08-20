@@ -75,6 +75,7 @@ public static class Program
         Ondine.Reindex.Tests.CarpetaDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.DestinoDeTemporadaTests.Todas();
         Ondine.Reindex.Tests.PlanDeReordenadoTests.Todas();
+        Ondine.Reindex.Tests.PlanDeReordenadoTests.LoQueYaNoEsta();
         Ondine.Reindex.Tests.RiesgoDelReordenadoTests.Todas();
         Ondine.Reindex.Tests.TituloDePeliculaTests.Todas();
         Ondine.Reindex.Tests.BibliotecaDePeliculasTests.Todas();
