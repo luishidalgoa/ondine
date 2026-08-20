@@ -703,6 +703,19 @@ public static class Program
 
             // El caso que lo destapó, y sus dos vecinos de la misma familia.
             Dice("av1", "AV1", "AV1 Video Extension");
+
+            // Y lo que se aprendió después, midiendo: instalar la extensión NO arregla
+            // esto. El reproductor de dentro va sobre la tubería clásica de Windows y
+            // las extensiones de la Store son para Media Foundation, que es otra. Así
+            // que el aviso tiene que mandar al reproductor del sistema; si no lo dice,
+            // manda a la gente a instalar algo que no le va a servir.
+            foreach (var c in new[] { "av1", "hevc", "vp9", "theora", "" })
+            {
+                var m = ReproductorWindow.MensajeDeCodec(c);
+                if (!m.Contains("reproductor del sistema", StringComparison.OrdinalIgnoreCase) &&
+                    !m.Contains("system player", StringComparison.OrdinalIgnoreCase))
+                    throw new Exception($"para «{c}» el aviso no manda al reproductor del sistema: {m}");
+            }
             Dice("hevc", "HEVC", "HEVC Video Extensions");
             Dice("vp9", "VP9", "VP9 Video Extensions");
 
