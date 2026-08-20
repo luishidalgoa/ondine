@@ -44,6 +44,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **La app se quedaba lenta después de cerrar el reproductor.** Y no era una impresión: con el
+  reproductor cerrado y sin hacer nada, Ondine seguía gastando **un 11% de un núcleo, para siempre**.
+  El péndulo de carga anima en bucle infinito, y el vídeo mandaba un aviso de «estoy cargando» justo
+  mientras se cerraba la ventana: eso lo volvía a arrancar cuando ya no había ventana que lo parase,
+  y una animación viva obliga a repintar en cada fotograma aunque no se vea nada. Ahora nada de lo
+  que llegue tarde hace nada. De paso, el reproductor **suelta el fichero** al cerrarse —antes se
+  quedaba con él y con el decodificador—, que es lo que permite devolverlo a la nube.
+
 - **En modo «Películas», elegir carpeta volvía a pintar la pantalla de series encima.** Se cerraba el
   explorador de archivos y aparecían el panel de catálogos y el de ficheros de series **superpuestos**
   a la pantalla de películas, las dos a la vez. Volver al estado inicial enseñaba la pantalla de

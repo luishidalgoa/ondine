@@ -83,6 +83,7 @@ public static class Program
         LaTarjetaDiceLoQueSeVaAEscribir(cat);
         LosAvisosNoSePisan();
         ElRepasoDePeliculasTieneLaFormaDelDeSeries();
+        AlCerrarElReproductorNoQuedaNadaEnMarcha();
         LasPreferenciasLleganHastaElFinal();
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
 
@@ -90,8 +91,9 @@ public static class Program
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
         //   · PistasWindow      — necesita un Engine y un vídeo de verdad.
         //   · ReproductorWindow — necesita un vídeo de verdad.
-        Console.WriteLine("\n  · sin cubrir: DialogWindow, PistasWindow, ReproductorWindow " +
-                          "(piden ventana modal o un vídeo real)");
+        Console.WriteLine("\n  · sin cubrir: DialogWindow, PistasWindow (piden ventana modal o un vídeo real).\n" +
+                          "    Del reproductor se cubre el CIERRE, que es donde estaba la fuga; reproducir de " +
+                          "verdad sigue pidiendo un vídeo y códecs.");
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         app.Shutdown();
@@ -428,6 +430,58 @@ public static class Program
                 throw new Exception("y de paso se perdió la pantalla de películas");
 
             Vaciar();
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// Al cerrar el reproductor no queda nada corriendo por detrás.
+    ///
+    /// <para>
+    /// Salió de un caso medido: con el reproductor cerrado y la app quieta, Ondine
+    /// gastaba <b>0,69 s de CPU cada 6 s</b> —un 11% de un núcleo— para siempre. El
+    /// péndulo de carga anima con <c>RepeatBehavior.Forever</c>, y
+    /// <c>BufferingStarted</c> llega durante el propio <c>Close()</c>: lo volvía a
+    /// arrancar cuando ya no había ventana que lo parase. Un reloj de animación vivo
+    /// obliga a pintar en cada fotograma aunque no se vea nada.
+    /// </para>
+    /// <para>
+    /// Se provoca el evento a mano —es enrutado, así que se puede— en vez de esperar a
+    /// que lo mande un vídeo de verdad. Así la prueba corre en CI, sin fichero y sin
+    /// códecs.
+    /// </para>
+    /// </summary>
+    private static void AlCerrarElReproductorNoQuedaNadaEnMarcha()
+    {
+        const string nombre = "al cerrar el reproductor no queda nada animando por detrás";
+        try
+        {
+            // Un fichero que no existe vale: lo que se comprueba es el CIERRE, y sin
+            // Show() el vídeo ni siquiera llega a intentar abrirse.
+            var v = new ReproductorWindow(Path.Combine(Path.GetTempPath(), "no-existe.mp4"));
+            var video = (MediaElement)v.FindName("video")!;
+
+            if (!v.PenduloEnMarcha)
+                throw new Exception("el péndulo no arrancó al abrir; la prueba no mediría nada");
+
+            v.Close();
+            Vaciar();
+
+            if (v.PenduloEnMarcha)
+                throw new Exception("el péndulo seguía animando después de cerrar");
+            if (video.Source != null)
+                throw new Exception("el MediaElement se quedó con el fichero: ni se libera ni se suelta el decodificador");
+
+            // Y lo que de verdad pasaba: un evento tardío del vídeo, ya cerrada la
+            // ventana. Sin la guarda, esto vuelve a arrancar las animaciones y ya no
+            // hay quien las pare.
+            video.RaiseEvent(new RoutedEventArgs(MediaElement.BufferingStartedEvent));
+            Vaciar();
+
+            if (v.PenduloEnMarcha)
+                throw new Exception("un evento tardío del vídeo volvió a arrancar el péndulo sobre una ventana cerrada");
+
             Bien(nombre);
         }
         catch (Exception ex) { Mal(nombre, ex); }

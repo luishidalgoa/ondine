@@ -144,6 +144,13 @@ public sealed class CirculosCargando
     private void Pista(DependencyObject obj, DependencyProperty prop, AnimationTimeline anim) =>
         _pistas.Add((obj, prop, anim));
 
+    /// <summary>
+    /// Si sus animaciones están corriendo. Se expone para poder comprobarlo desde
+    /// fuera: son <c>RepeatBehavior.Forever</c>, así que una que se quede en marcha no
+    /// se nota mirando la pantalla —no se ve nada— sino en el consumo de CPU.
+    /// </summary>
+    public bool EnMarcha => _enMarcha;
+
     public void Arrancar(string? texto = null)
     {
         if (texto != null) _texto.Text = texto;
