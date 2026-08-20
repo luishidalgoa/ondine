@@ -153,6 +153,9 @@ public partial class ComplementosPanel : UserControl
     /// </summary>
     public event Action<string>? Traido;
 
+    /// <summary>Entrega los ficheros exactos a la revisión que ya esté abierta.</summary>
+    public Func<IReadOnlyList<string>, Task<bool>>? IncorporarDescarga { get; set; }
+
     /// <summary>Han pedido cerrar el panel desde dentro.</summary>
     public event Action? Cerrar;
 
@@ -777,6 +780,18 @@ public partial class ComplementosPanel : UserControl
         }
 
         lblEstado.Text = string.Format(Textos.Instancia.ComplementosTraidos, traidos.Count);
+
+        // Una revisión abierta ya tiene catálogo, decisiones y filas. Se añaden
+        // solo los ficheros nuevos y después se vuelve a cotejar esta lista.
+        if (traidos.Count > 0 && IncorporarDescarga is not null &&
+            await IncorporarDescarga(traidos))
+        {
+            Cotejar();
+            RefrescarPie();
+            lblEstado.Text = string.Format(
+                Textos.Instancia.ComplementosIncorporados, traidos.Count);
+            return;
+        }
 
         // Se avisa del destino elegido y no de la carpeta del primer fichero: un
         // complemento puede repartir por temporadas, y entonces la del primero

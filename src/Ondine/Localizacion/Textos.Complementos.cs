@@ -160,6 +160,10 @@ public sealed partial class Textos
     public string ComplementosTraidos => Idioma.Elegir(
         "{0} brought over", "{0} traídos");
 
+    public string ComplementosIncorporados => Idioma.Elegir(
+        "{0} added to the current review · playlist updated",
+        "{0} añadidos al análisis actual · lista actualizada");
+
     // {0} = cuantos, {1} = la carpeta.
     public string ComplementosLlevarAOrganizar => Idioma.Elegir(
         "{0} files are now in:\n{1}\n\nOpen that folder in Organise to identify them against the catalogue?",

@@ -1543,6 +1543,8 @@ public partial class MainWindow : Window
             cual);
         _complementos = v;
 
+        v.IncorporarDescarga = pageOrganizar.IncorporarDescargadosAsync;
+
         v.Traido += carpeta =>
         {
             CambiarPagina(Pagina.Organizar);
