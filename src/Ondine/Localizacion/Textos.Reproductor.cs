@@ -72,4 +72,19 @@ public sealed partial class Textos
     public string ReproductorEsperandoLaNube => Idioma.Elegir(
         "This file is still coming down from the cloud. It will start on its own when it finishes.",
         "Este fichero todavía se está bajando de la nube. Empezará solo en cuanto termine.");
+
+    // Qué códec es y qué hacer. Un código en hexadecimal no le dice a nadie qué
+    // hacer; «es AV1, instala su extensión» sí. {0} = el códec · {1} = la extensión.
+    public string ReproductorFaltaExtension => Idioma.Elegir(
+        "This video is {0}, and Windows does not ship that decoder. Install «{1}» from the Microsoft Store, or open it in the system player.",
+        "Este vídeo es {0}, y Windows no trae ese decodificador de fábrica. Instala «{1}» desde la Microsoft Store, o ábrelo en el reproductor del sistema.");
+
+    // {0} = el códec, tal y como lo llama ffprobe.
+    public string ReproductorCodecDesconocido => Idioma.Elegir(
+        "This video uses the {0} codec, which the Windows decoder does not recognise. Open it in the system player.",
+        "Este vídeo usa el códec {0}, que el decodificador de Windows no reconoce. Ábrelo en el reproductor del sistema.");
+
+    public string ReproductorCodecSinSaber => Idioma.Elegir(
+        "This video cannot be played here and it was not possible to find out which codec it uses. Open it in the system player.",
+        "Este vídeo no se puede reproducir aquí y no se ha podido averiguar qué códec usa. Ábrelo en el reproductor del sistema.");
 }

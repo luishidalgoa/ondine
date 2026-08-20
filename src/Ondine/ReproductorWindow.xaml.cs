@@ -183,7 +183,7 @@ public partial class ReproductorWindow : Window
             if (_cerrado) return;
             _pausado = true; glifoPlay.Data = GlifoPlay; Mostrar();
         };
-        video.MediaFailed += (_, e) =>
+        video.MediaFailed += async (_, e) =>
         {
             if (_cerrado) return;
 
@@ -204,6 +204,13 @@ public partial class ReproductorWindow : Window
                                           e.ErrorException?.Message);
             panelFallo.Visibility = Visibility.Visible;
             _cargando.Parar();
+
+            // Y ahora se averigua QUÉ códec es, que es lo único accionable. Un
+            // «0xC00D11B1» no le dice a nadie qué hacer; «es AV1, instala su extensión»
+            // sí. Se pregunta después de enseñar el aviso, no antes: ffprobe tarda un
+            // instante y dejar la pantalla en negro mientras tanto sería peor.
+            var codec = await CodecDelVideo();
+            if (!_cerrado && codec.Length > 0) lblFallo.Text = MensajeDeCodec(codec);
         };
         // El péndulo se queda hasta que el vídeo AVANZA de verdad, no cuando dice estar
         // abierto: con un fichero descargándose, MediaOpened llega mucho antes que el primer
@@ -449,6 +456,42 @@ public partial class ReproductorWindow : Window
     {
         double util = Math.Max(1, ancho - pulgar);
         return Math.Clamp((x - pulgar / 2) / util, 0, 1) * maximo;
+    }
+
+    /// <summary>El códec de vídeo del fichero, o vacío si no se pudo averiguar.</summary>
+    private async Task<string> CodecDelVideo()
+    {
+        try { return (await new Engine().ProbeAsync(_ruta)).Codec ?? ""; }
+        catch { return ""; }
+    }
+
+    /// <summary>
+    /// Qué decirle a alguien cuyo vídeo no se puede pintar aquí.
+    ///
+    /// <para>
+    /// Los tres de la lista son los que Windows <b>no trae de fábrica</b> y sí tienen
+    /// solución conocida: una extensión de la tienda. Para el resto se dice el nombre
+    /// del códec y se manda al reproductor del sistema, que es lo honesto — inventarse
+    /// una receta para un códec que no conocemos sería mandar a la gente a instalar
+    /// cosas a ciegas.
+    /// </para>
+    /// <para>
+    /// No se dice el precio a propósito: la extensión de AV1 es gratis y la de HEVC no
+    /// siempre, y un precio equivocado en un aviso es peor que ningún precio.
+    /// </para>
+    /// </summary>
+    public static string MensajeDeCodec(string codec)
+    {
+        var c = (codec ?? "").Trim().ToLowerInvariant();
+        return c switch
+        {
+            "av1" => string.Format(Textos.Instancia.ReproductorFaltaExtension, "AV1", "AV1 Video Extension"),
+            "hevc" or "h265" or "h.265" =>
+                string.Format(Textos.Instancia.ReproductorFaltaExtension, "HEVC (H.265)", "HEVC Video Extensions"),
+            "vp9" => string.Format(Textos.Instancia.ReproductorFaltaExtension, "VP9", "VP9 Video Extensions"),
+            "" => Textos.Instancia.ReproductorCodecSinSaber,
+            _ => string.Format(Textos.Instancia.ReproductorCodecDesconocido, c),
+        };
     }
 
     private void Chip(string? texto)
