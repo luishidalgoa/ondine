@@ -323,6 +323,7 @@ public partial class ComplementosPanel : UserControl
 
         btnSoloFaltan.IsEnabled = btnNinguno.IsEnabled = btnTraer.IsEnabled = false;
         lblEstado.Text = "";
+        OcultarProgreso();
 
         if (c is null)
         {
@@ -430,6 +431,20 @@ public partial class ComplementosPanel : UserControl
         btnAccionVacio.Visibility = boton is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    private void PintarProgreso(Mensaje m)
+    {
+        if (!string.IsNullOrWhiteSpace(m.Texto)) lblEstado.Text = m.Texto;
+        if (m.Avance is not { } avance) return;
+        barProgresoComplemento.Visibility = Visibility.Visible;
+        barProgresoComplemento.Value = Math.Clamp(avance, 0, 1);
+    }
+
+    private void OcultarProgreso()
+    {
+        barProgresoComplemento.Value = 0;
+        barProgresoComplemento.Visibility = Visibility.Collapsed;
+    }
+
     // ── listar ──────────────────────────────────────────────────────────────
 
     private async Task ListarAsync()
@@ -451,6 +466,7 @@ public partial class ComplementosPanel : UserControl
 
         _filas.Clear();
         lista.Visibility = Visibility.Collapsed;
+        OcultarProgreso();
         Estado(Textos.Instancia.ComplementosListando, "");
         btnListar.IsEnabled = false;
 
@@ -478,6 +494,7 @@ public partial class ComplementosPanel : UserControl
                 // colgado, y quien mira acaba cerrando algo que iba bien.
                 if (m.Tipo == Mensaje.TipoProgreso)
                 {
+                    PintarProgreso(m);
                     if (!string.IsNullOrWhiteSpace(m.Texto))
                         Estado(m.Avance is { } a and > 0 and < 1
                             ? $"{m.Texto}   {a:P0}"
@@ -502,7 +519,11 @@ public partial class ComplementosPanel : UserControl
             }
         }
         catch (OperationCanceledException) { }
-        finally { btnListar.IsEnabled = true; }
+        finally
+        {
+            btnListar.IsEnabled = true;
+            OcultarProgreso();
+        }
 
         if (_filas.Count == 0)
         {
@@ -719,6 +740,7 @@ public partial class ComplementosPanel : UserControl
         _corte = new CancellationTokenSource();
 
         btnTraer.IsEnabled = btnListar.IsEnabled = false;
+        OcultarProgreso();
         var traidos = new List<string>();
         string? error = null;
 
@@ -733,14 +755,18 @@ public partial class ComplementosPanel : UserControl
                 {
                     // El avance se dice con palabras y no solo con un porcentaje:
                     // «bajando 3 de 7» sitúa, y un número suelto no.
-                    case Mensaje.TipoProgreso: lblEstado.Text = m.Texto ?? ""; break;
+                    case Mensaje.TipoProgreso: PintarProgreso(m); break;
                     case Mensaje.TipoHecho: traidos.AddRange(m.Ficheros); break;
                     case Mensaje.TipoError: error = m.MensajeError; break;
                 }
             }
         }
         catch (OperationCanceledException) { }
-        finally { btnTraer.IsEnabled = btnListar.IsEnabled = true; }
+        finally
+        {
+            btnTraer.IsEnabled = btnListar.IsEnabled = true;
+            OcultarProgreso();
+        }
 
         if (error is not null)
         {

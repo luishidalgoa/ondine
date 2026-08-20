@@ -296,6 +296,9 @@
                 </StackPanel>
               </Grid>
 
+              <ProgressBar x:Name="barProgresoComplemento" Minimum="0" Maximum="1"
+                           Value="0" Visibility="Collapsed" Margin="0,0,0,12"/>
+
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="Auto"/>
