@@ -1280,6 +1280,12 @@ public sealed partial class Textos
     public string ReordenarPorqueSinTemporada => Idioma.Elegir("no season in the catalogue", "sin temporada en el catálogo");
     public string ReordenarPorqueOcupado => Idioma.Elegir("name already taken there", "ese nombre ya está ocupado");
 
+    // Pasa al aplicar un renombrado y abrir esto sin volver a analizar: la lista es de
+    // antes. Dice qué hacer, que es lo único útil aquí.
+    public string ReordenarPorqueYaNoEsta => Idioma.Elegir(
+        "not there any more - analyse the folder again",
+        "ya no está ahí: vuelve a analizar la carpeta");
+
     public string ReordenarVerSoloLosQueVan => Idioma.Elegir(
         "Show only the ones that move",
         "Enseñar solo los que se mueven");

@@ -47,6 +47,7 @@ public sealed class ReordenVista
         PlanDeReordenado.Porque.YaEsta => Textos.Instancia.ReordenarPorqueYaEsta,
         PlanDeReordenado.Porque.SinCurar => Textos.Instancia.ReordenarPorqueSinCurar,
         PlanDeReordenado.Porque.SinTemporada => Textos.Instancia.ReordenarPorqueSinTemporada,
+        PlanDeReordenado.Porque.YaNoEsta => Textos.Instancia.ReordenarPorqueYaNoEsta,
         _ => Textos.Instancia.ReordenarPorqueOcupado,
     };
 
@@ -55,6 +56,7 @@ public sealed class ReordenVista
         PlanDeReordenado.Porque.Va => "OrgOk",
         PlanDeReordenado.Porque.YaEsta => "Neutral500",
         PlanDeReordenado.Porque.Ocupado => "OrgDanger",
+        PlanDeReordenado.Porque.YaNoEsta => "OrgDanger",
         _ => "OrgWarn",
     });
 }

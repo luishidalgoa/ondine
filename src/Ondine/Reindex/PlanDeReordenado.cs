@@ -26,27 +26,50 @@ public static class PlanDeReordenado
         SinTemporada,
         /// <summary>En el destino ya hay otro fichero con ese nombre.</summary>
         Ocupado,
+
+        /// <summary>
+        /// El fichero ya no está donde decía el análisis: lo han renombrado o movido
+        /// por el camino, casi siempre desde la propia app.
+        /// </summary>
+        YaNoEsta,
     }
 
     public sealed record Paso(string Origen, string? Destino, Porque Motivo);
 
     /// <summary>
-    /// Monta el plan. <paramref name="existe"/> se inyecta para poder probar la
-    /// decisión sin disco; en la aplicación es <c>File.Exists</c>.
+    /// Monta el plan. <paramref name="existe"/> —¿está ocupado el destino?— y
+    /// <paramref name="hayOrigen"/> —¿sigue el fichero donde decía el análisis?— se
+    /// inyectan para poder probar la decisión sin disco; en la aplicación los dos son
+    /// <c>File.Exists</c>. Van separados porque preguntan cosas opuestas y las pruebas
+    /// necesitan fijar cada una por su lado.
     /// </summary>
     public static List<Paso> Montar(
         IEnumerable<ReindexResolution> resoluciones,
         string raiz,
         bool enCastellano,
-        Func<string, bool>? existe = null)
+        Func<string, bool>? existe = null,
+        Func<string, bool>? hayOrigen = null)
     {
         existe ??= File.Exists;
+        hayOrigen ??= File.Exists;
         var plan = new List<Paso>();
         var pedidos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var r in resoluciones)
         {
             var origen = r.Archivo.Path;
+
+            // Lo primero: ¿sigue estando ahí? La lista viene de un análisis, y entre
+            // aquel momento y este puede haberse aplicado un renombrado o un movimiento
+            // —desde la propia app, casi siempre—. Ofrecer mover un fichero que ya no
+            // está termina en «0 movidos · 6 no se pudieron», sin decir por qué; se vio
+            // tal cual. Seis fallos sin motivo son peores que seis filas que digan
+            // «vuelve a analizar».
+            if (!hayOrigen(origen))
+            {
+                plan.Add(new(origen, null, Porque.YaNoEsta));
+                continue;
+            }
 
             // SOLO lo ya curado. Un fichero en conflicto no se sabe de qué
             // temporada es -por eso está en conflicto-, y moverlo a una carpeta

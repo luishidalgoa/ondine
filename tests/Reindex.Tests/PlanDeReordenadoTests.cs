@@ -30,7 +30,10 @@ public static class PlanDeReordenadoTests
             Res(R(raiz, "dudoso.mkv"), ReindexEstado.Conflicto, 3),
             Res(R(raiz, "especial.mkv"), ReindexEstado.Especial, 0),
             Res(R(raiz, "sinTemp.mkv"), ReindexEstado.Corregido, null),
-        }, raiz, enCastellano: false, existe: _ => false);
+        // hayOrigen: estos ficheros son inventados y no estan en disco, pero la
+        // premisa de esta prueba es que SI estan donde dice el analisis. Antes no
+        // hacia falta decirlo porque el plan no lo miraba; ahora si lo mira.
+        }, raiz, enCastellano: false, existe: _ => false, hayOrigen: _ => true);
 
         Program.Assert(plan.Count == 5, "sale un paso por fichero, también por los que no se mueven");
         Program.Assert(PlanDeReordenado.Cuantos(plan) == 1, "solo uno se mueve de verdad");
@@ -55,7 +58,7 @@ public static class PlanDeReordenadoTests
         // Nada de sobrescribir.
         var choque = PlanDeReordenado.Montar(
             new[] { Res(R(raiz, "x.mkv"), ReindexEstado.Limpio, 3) },
-            raiz, false, existe: _ => true);
+            raiz, false, existe: _ => true, hayOrigen: _ => true);
         Program.Assert(choque[0].Motivo == PlanDeReordenado.Porque.Ocupado,
             "si el destino ya tiene ese nombre, no se pisa");
 
@@ -66,9 +69,51 @@ public static class PlanDeReordenadoTests
         {
             Res(R(raiz, "a", "cap.mkv"), ReindexEstado.Limpio, 3),
             Res(R(raiz, "b", "cap.mkv"), ReindexEstado.Limpio, 3),
-        }, raiz, false, existe: _ => false);
+        }, raiz, false, existe: _ => false, hayOrigen: _ => true);
         Program.Assert(PlanDeReordenado.Cuantos(dos) == 1 &&
                        dos[1].Motivo == PlanDeReordenado.Porque.Ocupado,
             "dos ficheros al mismo destino: solo va el primero");
+    }
+
+    /// <summary>
+    /// Un fichero que ya no está donde decía el análisis no se ofrece para mover.
+    ///
+    /// <para>
+    /// Sale de un caso real. Se analiza, se aplica el renombrado —o se mueve desde
+    /// otra pantalla— y después se abre «Ordenar por temporadas»: la lista es de
+    /// ANTES, así que sus rutas ya no existen. El plan ofrecía moverlas igual y
+    /// terminaba en «0 movidos · 6 no se pudieron», sin decir por qué. Seis fallos
+    /// sin motivo es peor que seis filas que digan «vuelve a analizar».
+    /// </para>
+    /// </summary>
+    public static void LoQueYaNoEsta()
+    {
+        Program.Seccion("Reordenar: lo que ya no está donde decía el análisis");
+
+        var raiz = Path.Combine("C:", "tv", "Serie");
+        var res = new ReindexResolution
+        {
+            Archivo = SignalExtractor.Extract(Path.Combine(raiz, "Serie S01E01.mkv"), "Serie"),
+            Estado = ReindexEstado.Limpio,
+            Episodio = new CatalogEpisode { Num = 1, Temporada = 2004 },
+        };
+
+        // Con el fichero en su sitio, se mueve: es el caso de siempre.
+        var normal = PlanDeReordenado.Montar(
+            new[] { res }, raiz, enCastellano: true,
+            existe: _ => false, hayOrigen: _ => true);
+        Program.Assert(normal[0].Motivo == PlanDeReordenado.Porque.Va,
+            "con el fichero donde dice el análisis, se mueve");
+
+        // Y si ya no está, NO se ofrece mover: se dice que ya no está.
+        var fantasma = PlanDeReordenado.Montar(
+            new[] { res }, raiz, enCastellano: true,
+            existe: _ => false, hayOrigen: _ => false);
+        Program.Assert(fantasma[0].Motivo == PlanDeReordenado.Porque.YaNoEsta,
+            "si el fichero ya no está ahí, se dice — no se intenta y se falla después");
+        Program.Assert(fantasma[0].Destino is null,
+            "y sin destino: no hay a dónde llevar lo que no existe");
+        Program.Assert(PlanDeReordenado.Cuantos(fantasma) == 0,
+            "y no cuenta para el botón: «Mover 6» sobre seis fantasmas es una promesa falsa");
     }
 }
