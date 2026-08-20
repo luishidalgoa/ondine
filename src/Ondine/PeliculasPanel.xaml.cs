@@ -1,5 +1,4 @@
 using System.IO;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Ondine.Localizacion;
@@ -29,15 +28,21 @@ public partial class PeliculasPanel : UserControl
     /// <summary>Se pide cambiar de carpeta. Lo resuelve quien nos aloja, que ya tiene el selector.</summary>
     public event Action? PidenOtraCarpeta;
 
-    /// <summary>Se movió algo y las rutas de fuera han dejado de valer.</summary>
-    public event Action? MovioAlgo;
+    /// <summary>
+    /// Se pide analizar. El repaso lo pinta quien nos aloja, en la pantalla
+    /// principal y con la forma del repaso de series — no en una ventana aparte.
+    /// La primera versión abría un diálogo modal con una lista simple, y era la
+    /// pantalla que menos confianza daba de la app: sin casilla por fila, aplicar
+    /// era todas o ninguna.
+    /// </summary>
+    public event Action? PidenAnalizar;
 
     public PeliculasPanel()
     {
         InitializeComponent();
         txtCarpeta.IsReadOnly = true;
         btnCarpeta.Click += (_, _) => PidenOtraCarpeta?.Invoke();
-        btnOrdenar.Click += (_, _) => Ordenar();
+        btnOrdenar.Click += (_, _) => { if (_ficheros.Count > 0) PidenAnalizar?.Invoke(); };
     }
 
     /// <summary>Lo que hay ahora mismo: la carpeta y los vídeos que se han encontrado.</summary>
@@ -84,18 +89,4 @@ public partial class PeliculasPanel : UserControl
         cajaBaseDeDatos.BorderBrush = (Brush)FindResource(con ? "Divider" : "OrgWarnBorder");
     }
 
-    private void Ordenar()
-    {
-        if (_ficheros.Count == 0) return;
-
-        // Los ajustes se leen AQUÍ y no se guardan en el panel: si se han tocado
-        // las preferencias con la app abierta, lo que vale es lo de ahora.
-        var v = new PeliculasWindow(_ficheros, _carpeta, SettingsStore.Load())
-        {
-            Owner = Window.GetWindow(this),
-        };
-        v.ShowDialog();
-
-        if (v.MovioAlgo) MovioAlgo?.Invoke();
-    }
 }

@@ -100,10 +100,23 @@ cabecera—, porque quien pega la que no toca solo recibe un 401 pelado.
 
 ## Desde la pantalla
 
-Identificar es un **paso aparte y a petición**, no algo que pase al abrir la
-ventana: una app de disco que sale a internet sola, sin que se lo pidas, no es lo
-que nadie instaló. Así que primero se ve el plan tal y como sale de los nombres,
-y el botón «Identificar con TMDb» está al lado del filtro.
+El repaso vive **en la pantalla principal y con la forma del repaso de series**:
+los mismos chips con recuento arriba —que además filtran—, la misma rejilla, y la
+misma barra de aplicar abajo. Cada fila lleva **su casilla**, y solo la llevan las
+que de verdad se pueden aplicar.
+
+Empezó siendo un diálogo aparte con una lista simple, y era la pantalla que menos
+confianza daba de la app. El motivo no era la cantidad de información: era que
+aplicar fuese **todas o ninguna**. La forma se comparte con series a propósito
+—reconocer la pantalla es la mitad de fiarse de ella—, pero no la clase de la
+fila: `OrganizarRow` arrastra catálogo, plantilla y temporada, tres
+cosas que una película no tiene, y sacárselas sería operar el flujo que más se
+usa para beneficiar al que menos.
+
+Identificar es un **paso aparte y a petición**, no algo que pase al analizar: una
+app de disco que sale a internet sola, sin que se lo pidas, no es lo que nadie
+instaló. Así que primero se ve el plan tal y como sale de los nombres, y el botón
+«Identificar con TMDb» está en la barra de abajo.
 
 Cuando está apagado, el botón se queda **visible y apagado con el motivo al
 lado**. No escondido, y no apagado a secas: un botón apagado sin explicación se
