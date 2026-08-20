@@ -123,7 +123,14 @@ public static partial class SignalExtractor
     // marcar «esto es solo la historia b» (o «la a y la c»), así que tiene que saber releerlo:
     // si no, cada pasada deshace la decisión de la anterior. Máximo 3 letras y el \b de después
     // las cierra: así una palabra como «best» pegada al número no se confunde con segmentos.
-    [GeneratedRegex(@"\bS(\d{1,4})E(\d{1,4})([a-z]{0,3})\b", RegexOptions.IgnoreCase)]
+    // El «(?:\+\d{1,4}[a-z]{0,3})*» del final es la OTRA forma en que la propia app
+    // escribe un fichero con historias de episodios distintos: la plantilla con <num>
+    // pega el añadido AL NÚMERO, «S2004E9042f+9044», mientras que la de <índice> lo
+    // pone entre corchetes, «[1262+1264]». Se escribían las dos y solo se sabía leer
+    // una, así que de un fichero como ese solo se veía el 9042 y la app pedía un
+    // episodio que estaba dentro de ese mismo fichero.
+    [GeneratedRegex(@"\bS(\d{1,4})E(\d{1,4})([a-z]{0,3})((?:\+\d{1,4}[a-z]{0,3})*)\b",
+                    RegexOptions.IgnoreCase)]
     private static partial Regex RxSxxExx();
 
     // «E72» suelto, con sus letras opcionales igual que arriba
@@ -252,6 +259,15 @@ public static partial class SignalExtractor
             indice = int.Parse(mSE.Groups[2].Value);
             if (int.TryParse(mSE.Groups[1].Value, out var tNom)) temporadaNombre = tNom;
             if (mSE.Groups[3].Value.Length > 0) subSegmento = mSE.Groups[3].Value.ToLowerInvariant();
+
+            // Los «+9044» pegados al número, si los hay. Solo cuando el corchete no
+            // dijo ya lo suyo: si vinieran los dos, manda el corchete, que es el que
+            // se leyó antes.
+            if (anadidos.Count == 0 && mSE.Groups[4].Value.Length > 0)
+                foreach (Match a in RxAnadido().Matches(mSE.Groups[4].Value))
+                    anadidos.Add(new FileSignals.Anadido(int.Parse(a.Groups[1].Value),
+                                                         a.Groups[2].Value.ToLowerInvariant()));
+
             resto = TrasElMarcador(resto, mSE.Index, mSE.Length);
         }
         else if (RxTemporadaEpisodioX().Match(resto) is { Success: true } mX)

@@ -85,6 +85,33 @@ public static class NombreCompuestoTests
         Program.Assert(cubre.First(c => c.Num == 1264).Historias.Count > 0,
             "y del añadido se cubre su historia, que es lo que se decía que faltaba");
 
+        // ── La OTRA forma en que la app escribe lo mismo ─────────────────────
+        // La plantilla con <num> pega el añadido AL NÚMERO, sin corchetes:
+        // «S2004E9042f+9044». Es un fichero real de una biblioteca real. La lectura
+        // solo entendía la forma con corchetes, así que de este solo veía el 9042 —
+        // el mismo fallo de arriba, en la otra escritura.
+        var pegado = SignalExtractor.Extract(
+            "Crayon Shin-Chan - S2004E9042f+9044 - Nevado lo pasa fatal + Soy un perro + Papá se pone a régimen.mp4",
+            "Season 01");
+
+        Program.Assert(pegado.Indice == 9042,
+            $"el número propio se lee · salió {pegado.Indice?.ToString() ?? "nada"}");
+        Program.Assert(pegado.SubSegmento == "f",
+            $"y su letra de historia · salió «{pegado.SubSegmento}»");
+        Program.Assert(pegado.TambienEpisodios.Count == 1,
+            $"y el añadido pegado al número también · salieron {pegado.TambienEpisodios.Count}");
+        Program.Assert(pegado.TambienEpisodios.Count == 1 && pegado.TambienEpisodios[0].Num == 9044,
+            "el añadido es el 9044, que es lo que dice el propio nombre");
+
+        // Con letra en el añadido, que es como lo escribe la plantilla cuando la hay.
+        var pegadoConLetra = SignalExtractor.Extract("Serie - S01E12a+14b - Una + Otra.mkv", "Season 1");
+        Program.Assert(pegadoConLetra.Indice == 12 && pegadoConLetra.SubSegmento == "a",
+            "el propio conserva su letra");
+        Program.Assert(pegadoConLetra.TambienEpisodios.Count == 1
+                       && pegadoConLetra.TambienEpisodios[0].Num == 14
+                       && pegadoConLetra.TambienEpisodios[0].Segmento == "b",
+            "y el añadido trae número y letra");
+
         // Y lo de siempre sigue igual: sin «+» no hay añadidos.
         var simple = SignalExtractor.Extract("Serie S01E12 [12a] - Una.mkv", "Season 1");
         Program.Assert(simple.Indice == 12 && simple.TambienEpisodios.Count == 0,

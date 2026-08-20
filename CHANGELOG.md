@@ -53,6 +53,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Ondine seguía sin saber leer una de las dos formas en que ella misma escribe un fichero con
+  varios episodios.** En marzo se arregló la forma con corchetes ——, pero la otra
+  plantilla pega el añadido **al número**: . De esos solo veía el primero, así que
+  «Qué falta» pedía un episodio que estaba dentro de ese mismo fichero, con su nombre delante. Ahora
+  entiende las dos.
+
+
 - **«Ordenar por temporadas» ofrecía mover ficheros que ya no estaban ahí, y fallaba sin decir por qué.**
   Si aplicabas un renombrado y abrías la ventana de temporadas sin volver a analizar, la lista seguía
   siendo la de antes: sus rutas ya no existían. El resultado era «0 movidos · 6 no se pudieron», sin
