@@ -87,6 +87,17 @@ se descargó, conserva y entrega los correctos y resume cuántos no estaban
 disponibles. Si ninguno se pudo descargar, emite `error` con el último detalle
 de cada ID.
 
+Si la primera representación pública devuelve HTTP 403 al abrir sus fragmentos,
+el complemento hace un único segundo intento con el cliente `web_safari`. Eso
+soluciona enlaces temporales defectuosos de algunos vídeos públicos. No convierte
+en accesible un vídeo privado o restringido: si el segundo cliente tampoco ofrece
+un formato reproducible, se conserva el error.
+
+En la interfaz, el diagnóstico ocupa todo el ancho del pie en un campo de solo
+lectura. Se puede seleccionar con el ratón y copiar con Ctrl+C. «Marcar los que
+faltan» y «Desmarcar» viven en una fila independiente para que no estrechen ni
+recorten el mensaje.
+
 ## Límite importante
 
 Que `listar` obtenga título, miniatura y duración no implica que el contenido
