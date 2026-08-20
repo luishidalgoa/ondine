@@ -96,4 +96,11 @@ public sealed partial class Textos
     public string ReproductorCodecSinSaber => Idioma.Elegir(
         "This video cannot be played here and it was not possible to find out which codec it uses. Open it in the system player.",
         "Este vídeo no se puede reproducir aquí y no se ha podido averiguar qué códec usa. Ábrelo en el reproductor del sistema.");
+
+    // El plan B: ffmpeg sí sabe decodificar esto, así que se recorre a fotogramas en
+    // vez de enseñar una pantalla negra. Se dice lo que NO da -sonido y continuidad-
+    // porque prometer de menos y cumplir es mejor que al revés. {0} = el códec.
+    public string ReproductorModoFotogramas => Idioma.Elegir(
+        "This video is {0} and the player inside Ondine cannot decode it, so it is shown frame by frame: drag the bar to move through it. There is no sound. To watch it properly, open it in the system player.",
+        "Este vídeo es {0} y el reproductor de dentro no sabe decodificarlo, así que se enseña por fotogramas: arrastra la barra para recorrerlo. No hay sonido. Para verlo de verdad, ábrelo en el reproductor del sistema.");
 }

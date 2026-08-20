@@ -393,4 +393,10 @@ public sealed partial class Textos
 
     // {0} = el mensaje de la excepción, sin traducir: viene del sistema.
     public string RecortesLogFallo => Idioma.Elegir("Clips: {0}", "Recortes: {0}");
+
+    // {0} = el códec. Lo importante va delante: cortar SÍ funciona. Lo que no hay es
+    // reproducción, y eso aquí importa menos que en el reproductor.
+    public string RecortesModoFotogramas => Idioma.Elegir(
+        "This video is {0}: Windows cannot play it here, so it is shown frame by frame. Cutting works exactly the same.",
+        "Este vídeo es {0}: Windows no sabe reproducirlo aquí, así que se enseña por fotogramas. Cortar funciona igual.");
 }

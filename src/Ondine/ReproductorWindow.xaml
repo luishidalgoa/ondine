@@ -14,6 +14,12 @@
   <Grid x:Name="raiz" Background="#08090F">
     <MediaElement x:Name="video" LoadedBehavior="Manual" UnloadedBehavior="Stop" Stretch="Uniform"/>
 
+    <!-- El plan B cuando Windows no sabe decodificar el vídeo: en vez de una pantalla
+         negra, los fotogramas los saca ffmpeg —que sí sabe— y se pintan aquí. Se
+         recorre con la misma barra. No es reproducir, pero contesta a la pregunta para
+         la que existe este reproductor: «¿qué capítulo es?». -->
+    <Image x:Name="imgFotograma" Stretch="Uniform" Visibility="Collapsed"/>
+
     <!-- Capta el click sobre el vídeo (play/pausa) y el doble click (pantalla completa).
          Va por debajo de las capas de control, así que estas reciben los suyos primero. -->
     <Rectangle x:Name="lienzo" Fill="Transparent"/>
