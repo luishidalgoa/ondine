@@ -15,11 +15,20 @@ const t = textos(idioma);
 const REPO = "https://github.com/luishidalgoa/ondine";
 const PORTFOLIO = "https://portfolio.hdglabs.com";
 
-// El retrato va copiado al repositorio y no enlazado a su origen. Enlazarlo
-// ahorraría tener que actualizarlo aquí, pero a cambio la página quedaría
-// colgando de que otro host responda, y por 10 KB no compensa: el original son
-// 192 KB a 460 px, y aquí se ve a 132. El monograma sigue debajo por si acaso.
-const RETRATO = ruta("img/retrato.jpg");
+// El retrato se enlaza a su origen, para no tener que actualizarlo aquí cada vez
+// que cambie. Antes iba copiado al repositorio por lo contrario —no depender de
+// que otro host responda—, y esa decisión se cambió a propósito el 20 de agosto
+// de 2026.
+//
+// Lo que sostiene el cambio es el respaldo, no la confianza en el host: debajo
+// hay un monograma con las iniciales y la <img> lleva onerror que se quita sola.
+// Si el origen no contesta no se ve un hueco roto, se ven las iniciales.
+//
+// Lo que SÍ conviene vigilar: este png pesa 3,5 MB y aquí se ve a 132 px. La
+// copia que sustituye eran 10 KB. Mientras siga así, cada visita a esta página
+// se baja 3,5 MB para pintar un círculo de 132 píxeles; lo suyo es servir una
+// versión redimensionada en el mismo sitio.
+const RETRATO = "https://s3.minio.hdglabs.com/portfolio/shared/perfil.png";
 
 const INICIALES = t.sobreMi.nombre
   .split(" ")
