@@ -118,6 +118,20 @@ class DescargarLosElegidos(unittest.TestCase):
         self.assertTrue(any("1 correctos" in texto and "1 no disponibles" in texto
                             for texto in textos))
 
+    def test_un_403_reintenta_con_web_safari(self):
+        with tempfile.TemporaryDirectory() as destino:
+            fichero = os.path.join(destino, "Bueno [abcdefghijk].mp4")
+            prohibido = self.proceso("video data: HTTP Error 403: Forbidden\n", codigo=1)
+            bien = self.proceso("@@ONDINE_FILE@@" + fichero + "\n")
+            with patch("youtube.shutil.which", return_value="yt-dlp"), \
+                 patch("youtube.subprocess.Popen", side_effect=[prohibido, bien]) as ejecutar, \
+                 patch("youtube.decir"):
+                traer(["abcdefghijk", "--destino", destino])
+
+        self.assertEqual(ejecutar.call_count, 2)
+        segunda = ejecutar.call_args_list[1].args[0]
+        self.assertIn("youtube:player_client=web_safari", segunda)
+
 
 class TituloConLaDescripcion(unittest.TestCase):
     """La descripcion manda SOLO cuando se demuestra que es el titulo y mas.

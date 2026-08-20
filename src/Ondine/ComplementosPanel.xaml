@@ -272,32 +272,24 @@
                  Son texto, no botones, porque no son el final de nada.
                  Abajo, las dos únicas acciones que cierran la tarea. -->
             <StackPanel>
-              <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                  <!-- Envuelve en vez de recortar: aquí acaban los mensajes de
-                       error del complemento, y un error a medias no sirve de
-                       nada. «Este complemento solo lee la lista y la co…» era
-                       exactamente lo que se leía. -->
-                  <TextBlock x:Name="lblEstado" VerticalAlignment="Center" FontSize="11.5"
-                             TextWrapping="Wrap" MaxWidth="420"
-                             Foreground="{StaticResource Neutral600}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                  <Button x:Name="btnSoloFaltan" Style="{StaticResource BtnGhost}" FontSize="11.5"
-                          Padding="6,2" Content="{i:T ComplementosMarcarLosQueFaltan}"/>
-                  <Button x:Name="btnNinguno" Style="{StaticResource BtnGhost}" FontSize="11.5"
-                          Padding="6,2" Margin="2,0,0,0" Content="{i:T ComplementosDesmarcar}"/>
-                </StackPanel>
-              </Grid>
+              <!-- Fila completa y seleccionable: un error con varios IDs no
+                   comparte ancho con acciones y se puede copiar para diagnosticarlo. -->
+              <TextBox x:Name="lblEstado" IsReadOnly="True" IsReadOnlyCaretVisible="True"
+                       VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                       FontSize="11.5" TextWrapping="Wrap" AcceptsReturn="True"
+                       Background="Transparent" BorderThickness="0" Padding="0"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,10"/>
 
               <ProgressBar x:Name="barProgresoComplemento" Minimum="0" Maximum="1"
                            Value="0" Visibility="Collapsed" Margin="0,0,0,12"/>
+
+              <!-- Seleccionar no compite con el diagnóstico ni con Descargar. -->
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
+                <Button x:Name="btnSoloFaltan" Style="{StaticResource BtnGhost}" FontSize="11.5"
+                        Padding="6,2" Content="{i:T ComplementosMarcarLosQueFaltan}"/>
+                <Button x:Name="btnNinguno" Style="{StaticResource BtnGhost}" FontSize="11.5"
+                        Padding="6,2" Margin="2,0,0,0" Content="{i:T ComplementosDesmarcar}"/>
+              </StackPanel>
 
               <Grid>
                 <Grid.ColumnDefinitions>

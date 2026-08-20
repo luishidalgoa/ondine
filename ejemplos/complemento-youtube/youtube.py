@@ -479,6 +479,39 @@ def _peticion_de_descarga(argumentos):
     return ids, os.path.abspath(resto[0]), None
 
 
+def _descargar_un_video(orden, indice, total):
+    """Ejecuta yt-dlp y devuelve las rutas finales y sus ultimos mensajes."""
+    try:
+        proc = subprocess.Popen(
+            orden, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", bufsize=1,
+        )
+    except OSError as ex:
+        return [], [str(ex)]
+
+    rutas = []
+    ultimas = []
+    for linea in proc.stdout:
+        limpia = linea.strip()
+        if limpia.startswith(_MARCA_PROGRESO):
+            numero = limpia[len(_MARCA_PROGRESO):].strip().rstrip("%").strip()
+            try:
+                porcentaje = max(0.0, min(100.0, float(numero)))
+            except ValueError:
+                continue
+            avance = ((indice - 1) + porcentaje / 100.0) / total
+            decir(tipo="progreso", avance=avance,
+                  texto=f"Descargando video {indice} de {total}: {porcentaje:.0f} %")
+        elif limpia.startswith(_MARCA_FICHERO):
+            rutas.append(limpia[len(_MARCA_FICHERO):].strip())
+        elif limpia:
+            ultimas.append(limpia)
+            ultimas = ultimas[-5:]
+    proc.wait()
+
+    return (rutas, []) if proc.returncode == 0 and rutas else ([], ultimas)
+
+
 def traer(argumentos):
     """Descarga los videos publicos elegidos, como maximo a 480p."""
     ids, destino, reparo = _peticion_de_descarga(argumentos)
@@ -495,7 +528,7 @@ def traer(argumentos):
     for i, ident in enumerate(ids, 1):
         decir(tipo="progreso", avance=(i - 1) / total,
               texto=f"Descargando video {i} de {total}")
-        orden = [
+        base = [
             exe, "--no-playlist", "--no-warnings", "--newline", "--progress",
             # Primero se intenta un formato completo: no necesita ffmpeg. Si no
             # existe, yt-dlp puede juntar video y audio. Nunca se elige mas de
@@ -506,38 +539,23 @@ def traer(argumentos):
             "--progress-template", "download:" + _MARCA_PROGRESO
                                    + "%(progress._percent_str)s",
             "--print", "after_move:" + _MARCA_FICHERO + "%(filepath)s",
-            "https://www.youtube.com/watch?v=" + ident,
         ]
-        try:
-            proc = subprocess.Popen(
-                orden, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, encoding="utf-8", errors="replace", bufsize=1,
-            )
-        except OSError as ex:
-            fallos.append(f"{ident}: {ex}")
-            continue
+        url = "https://www.youtube.com/watch?v=" + ident
+        rutas, ultimas = _descargar_un_video(base + [url], i, total)
 
-        rutas = []
-        ultimas = []
-        for linea in proc.stdout:
-            limpia = linea.strip()
-            if limpia.startswith(_MARCA_PROGRESO):
-                numero = limpia[len(_MARCA_PROGRESO):].strip().rstrip("%").strip()
-                try:
-                    porcentaje = max(0.0, min(100.0, float(numero)))
-                except ValueError:
-                    continue
-                avance = ((i - 1) + porcentaje / 100.0) / total
-                decir(tipo="progreso", avance=avance,
-                      texto=f"Descargando video {i} de {total}: {porcentaje:.0f} %")
-            elif limpia.startswith(_MARCA_FICHERO):
-                rutas.append(limpia[len(_MARCA_FICHERO):].strip())
-            elif limpia:
-                ultimas.append(limpia)
-                ultimas = ultimas[-5:]
-        proc.wait()
+        # A veces YouTube entrega una URL de fragmentos que responde 403 al
+        # abrirla. Pedir otra representacion salva el video cuando es publico;
+        # no aporta formatos a contenido privado o restringido.
+        if not rutas and any("403" in linea for linea in ultimas):
+            decir(tipo="progreso", avance=(i - 1) / total,
+                  texto=f"Reintentando video {i} de {total} con otra fuente")
+            alternativa = base + ["--extractor-args",
+                                  "youtube:player_client=web_safari", url]
+            rutas, segundo_error = _descargar_un_video(alternativa, i, total)
+            if segundo_error:
+                ultimas = segundo_error
 
-        if proc.returncode == 0 and rutas:
+        if rutas:
             ficheros.extend(rutas)
             continue
 
