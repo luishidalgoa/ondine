@@ -1432,6 +1432,17 @@ public sealed partial class Textos
     // {0} = lo que propone TMDb.
     public string PeliculasSegunTmdb => Idioma.Elegir("TMDb says: {0}", "Según TMDb: {0}");
 
+    // ── Elegir a mano cuando la cascada se planta ───────────────────────────
+    public string PeliculasCual => Idioma.Elegir("Which one is it?", "¿Cuál es?");
+    public string PeliculasEsEsta => Idioma.Elegir("This one", "Es esta");
+    public string PeliculasOlvidarEleccion => Idioma.Elegir("Forget my choice", "Olvidar mi elección");
+    public string PeliculasSenalLoDijisteTu => Idioma.Elegir("you chose it", "lo elegiste tú");
+
+    // {0} = el fichero · {1} = lo elegido.
+    public string PeliculasLogElegida => Idioma.Elegir(
+        "«{0}» is {1} — chosen by you, and remembered.",
+        "«{0}» es {1} — lo elegiste tú, y queda recordado.");
+
     // ── El repaso de películas, con la forma del de series ──────────────────
     // Los chips llevan el recuento dentro y filtran, igual que en series. Van con
     // glifo además de color: un chip que solo se distingue por el color no se

@@ -872,7 +872,55 @@
       </Border>
 
       <Border Grid.Row="2" Background="{StaticResource SurfaceGlass}" CornerRadius="8" ClipToBounds="True">
-        <DataGrid x:Name="tablaPelis" Style="{StaticResource OrgGrid}">
+        <DataGrid x:Name="tablaPelis" Style="{StaticResource OrgGrid}"
+                  RowDetailsVisibilityMode="VisibleWhenSelected">
+          <!-- ══ Elegir a mano, desplegado BAJO la fila ══
+               La cascada se planta cuando dos encajan igual de bien, y hace bien. Pero
+               si no puedes resolverlo tú, se planta para siempre. Aquí se elige, y la
+               elección se recuerda: no hay que volver a tomarla en cada análisis. -->
+          <DataGrid.RowDetailsTemplate>
+            <DataTemplate>
+              <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+                      BorderThickness="0,1,0,1" Padding="16,12"
+                      Visibility="{Binding TieneDetalle, Converter={StaticResource B2V}}">
+                <StackPanel>
+                  <Grid Margin="0,0,0,10">
+                    <TextBlock Text="{i:T PeliculasCual}" FontSize="11" FontWeight="Medium"
+                               Foreground="{StaticResource Accent400}" VerticalAlignment="Center"/>
+                    <Button x:Name="btnOlvidarPeli" HorizontalAlignment="Right"
+                            Style="{StaticResource BtnGhostMuted}" FontSize="11" Padding="10,3"
+                            Content="{i:T PeliculasOlvidarEleccion}"
+                            Visibility="{Binding VerOlvidar}"
+                            Tag="{Binding}" Click="OnOlvidarPelicula"/>
+                  </Grid>
+
+                  <ItemsControl ItemsSource="{Binding Candidatos}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,6">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                          </Grid.ColumnDefinitions>
+                          <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Titulo}" FontSize="12.5"
+                                       Foreground="{StaticResource Text}"/>
+                            <TextBlock FontSize="11" Foreground="{StaticResource Neutral500}">
+                              <Run Text="{Binding Anio, Mode=OneWay}"/><Run Text="  ·  "/><Run Text="{Binding Original, Mode=OneWay}"/>
+                            </TextBlock>
+                          </StackPanel>
+                          <Button Grid.Column="1" Style="{StaticResource BtnSecondary}" FontSize="11"
+                                  Padding="12,4" Content="{i:T PeliculasEsEsta}"
+                                  Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGridRow}}"
+                                  Click="OnElegirPelicula"/>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </DataGrid.RowDetailsTemplate>
+
           <DataGrid.Columns>
 
             <!-- Marcar qué se aplica. Solo lleva casilla lo que tiene trabajo: ponerla

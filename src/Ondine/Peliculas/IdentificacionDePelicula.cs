@@ -56,6 +56,9 @@ public static class IdentificacionDePelicula
 
         /// <summary>El fichero no traía año; se decidió solo con el título.</summary>
         SinAnio,
+
+        /// <summary>Lo decidiste tú, y eso manda sobre lo que habría deducido la cascada.</summary>
+        LoDijisteTu,
     }
 
     /// <summary>Lo que se ha decidido, con la señal y la confianza a la vista.</summary>
@@ -92,8 +95,20 @@ public static class IdentificacionDePelicula
 
     private readonly record struct Pesado(Tmdb.Candidato C, double Sim, bool PorOriginal);
 
-    public static Veredicto Decidir(TituloDePelicula.Ficha ficha, IReadOnlyList<Tmdb.Candidato> candidatos)
+    /// <summary>
+    /// Decide qué película es. <paramref name="decidido"/> es lo que el usuario haya
+    /// dicho para este fichero: si lo hay, manda — la duda era de la app, no suya, y
+    /// es su biblioteca.
+    /// </summary>
+    public static Veredicto Decidir(TituloDePelicula.Ficha ficha, IReadOnlyList<Tmdb.Candidato> candidatos,
+                                    Tmdb.Candidato? decidido = null)
     {
+        // Lo primero, antes de mirar nada: si lo decidiste tú no hay cascada que valga.
+        // Y no se exige que esté entre los candidatos de ahora: TMDb puede contestar otra
+        // cosa mañana, y eso no invalida lo que ya dijiste.
+        if (decidido is not null)
+            return new(decidido, Grado.Segura, 1, Porque.LoDijisteTu);
+
         if (candidatos is null || candidatos.Count == 0)
             return new(null, Grado.Ninguna, 0, Porque.SinCandidatos);
 
