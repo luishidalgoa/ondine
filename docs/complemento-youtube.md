@@ -87,6 +87,12 @@ se descargó, conserva y entrega los correctos y resume cuántos no estaban
 disponibles. Si ninguno se pudo descargar, emite `error` con el último detalle
 de cada ID.
 
+Al terminar, Ondine conserva las rutas exactas que devuelve `traer`. Si ya hay
+un análisis de serie abierto, resuelve únicamente esos ficheros, los incorpora a
+la tabla actual y vuelve a cotejar la playlist inmediatamente; no pide analizar
+otra vez ni duplica una ruta que ya estuviera cargada. Solo ofrece abrir la
+carpeta en Organizar cuando todavía no existe un análisis al que incorporarlos.
+
 Si la representación pública elegida por defecto devuelve HTTP 403 durante la
 transferencia, el complemento hace un único segundo intento con el cliente
 `android`. Esto evita los enlaces de `android_vr` que, para algunos vídeos

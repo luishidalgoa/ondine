@@ -590,6 +590,63 @@ public partial class OrganizarView : UserControl
         RevisarCarpeta();
     }
 
+    /// <summary>
+    /// Añade a la revisión activa los ficheros entregados por un complemento sin
+    /// recorrer ni resolver de nuevo toda la biblioteca.
+    /// </summary>
+    public async Task<bool> IncorporarDescargadosAsync(IReadOnlyList<string> rutas)
+    {
+        if (_fase != Fase.Revision || TipoActual() != TipoDeBiblioteca.Serie ||
+            _catalogoCargado is null || _filas.Count == 0)
+            return false;
+
+        var conocidas = _filas.Select(f => f.RutaActual)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var nuevas = rutas
+            .Where(File.Exists)
+            .Where(r => Engine.VideoExtensions.Contains(Path.GetExtension(r),
+                StringComparer.OrdinalIgnoreCase))
+            .Where(r => !conocidas.Contains(r))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Una ruta que ya estaba cargada se considera atendida, sin duplicarla
+        // ni volver a ofrecer «Analizar».
+        if (nuevas.Count == 0) return true;
+
+        var catalogo = _catalogoCargado;
+        var decisiones = _decisiones;
+        var modo = ModoActual();
+        var señales = await Task.Run(() => nuevas
+            .AsParallel()
+            .AsOrdered()
+            .Select(f => SignalExtractor.Extract(
+                f,
+                new DirectoryInfo(Path.GetDirectoryName(f)!).Name,
+                TituloCompanero.Leer(f),
+                duracion: FichaDeWindows.Duracion(f)))
+            .ToList());
+        var resoluciones = await Task.Run(() =>
+            ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
+
+        var raiz = CarpetaActual();
+        foreach (var r in resoluciones)
+        {
+            var fila = new OrganizarRow(r, catalogo, _plantilla,
+                LibraryScan.Etiqueta(LibraryScan.Grupo(raiz, r.Archivo.Path)));
+            if (_revision.Tiene(fila.RutaActual)) fila.Apartada = true;
+            _filas.Add(fila);
+        }
+
+        _ficheros = _ficheros.Concat(nuevas)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        RecalcularSeparadores();
+        ActualizarContadores();
+        Escribir(string.Format(Textos.Instancia.OrganizarLogIncorporados,
+                               nuevas.Count, catalogo.Serie));
+        return true;
+    }
+
     /// <summary>El tipo elegido ahora mismo en el desplegable.</summary>
     private TipoDeBiblioteca TipoActual() =>
         cboTipo.SelectedIndex == 1 ? TipoDeBiblioteca.Pelicula : TipoDeBiblioteca.Serie;

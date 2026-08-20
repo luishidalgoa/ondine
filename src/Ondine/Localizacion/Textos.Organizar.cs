@@ -1082,6 +1082,11 @@ public sealed partial class Textos
         "Analysis: {0} files against \"{1}\"",
         "Análisis: {0} ficheros contra «{1}»");
 
+    // {0} = cuántos ficheros nuevos, {1} = la serie de la revisión activa.
+    public string OrganizarLogIncorporados => Idioma.Elegir(
+        "{0} downloaded files added to the current review of \"{1}\".",
+        "{0} ficheros descargados añadidos al análisis actual de «{1}».");
+
     // {0} = en cuántas temporadas. Cierra la frase anterior, de ahí la coma
     // inicial y el punto final.
     public string OrganizarLogAnalisisTemporadas => Idioma.Elegir(
