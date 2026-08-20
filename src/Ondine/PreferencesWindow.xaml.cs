@@ -123,6 +123,28 @@ public partial class PreferencesWindow : Window
         // Se repinta al escribir porque la línea de «cuál se está usando» cambia
         // en cuanto hay algo en el campo: enterarse al guardar es enterarse tarde.
         txtTmdbClave.PasswordChanged += (_, _) => PintarClaveTmdb();
+        btnTmdbAbrir.Click += (_, _) => AbrirPaginaDeTmdb();
+    }
+
+    /// <summary>La página donde TMDb reparte las claves, dentro de la cuenta.</summary>
+    private const string UrlApiDeTmdb = "https://www.themoviedb.org/settings/api";
+
+    /// <summary>
+    /// Abre esa página en el navegador. Si no se puede abrir, se enseña la
+    /// dirección para copiarla a mano: dejar el botón sin hacer nada visible
+    /// convierte «no tengo navegador por defecto» en «esto está roto».
+    /// </summary>
+    private void AbrirPaginaDeTmdb()
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo(UrlApiDeTmdb) { UseShellExecute = true });
+        }
+        catch
+        {
+            lblTmdbClaveNota.Text = string.Format(Textos.Instancia.TmdbNoSeAbrio, UrlApiDeTmdb);
+        }
     }
 
     // ── Identificar películas contra TMDb ──

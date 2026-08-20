@@ -7,11 +7,19 @@ namespace Ondine.Peliculas;
 /// Si se sale a internet a identificar películas, y con qué clave.
 ///
 /// <para>
-/// <b>Apagado de fábrica</b>, y no por prudencia decorativa: identificar contra
-/// TMDb significa mandar a un servicio de fuera los títulos de lo que hay en el
-/// disco de alguien. Una app que ordena tu disco no debería contar qué tienes
-/// sin que se lo pidas, así que es el usuario quien lo enciende y puede
-/// apagarlo.
+/// <b>Encendido de fábrica</b> desde el 20 de agosto de 2026. Nació apagado, y
+/// se cambió por un motivo concreto: la clave ya la trae la app, así que
+/// «apagado» no significaba prudencia, significaba que la función existía y
+/// nadie la encontraba —había que saber que TMDb es una cosa, ir a Preferencias
+/// y buscarla—. Una función que solo usa quien ya sabía que estaba no sirve de
+/// nada.
+/// </para>
+/// <para>
+/// Lo que compensa eso, y <b>tiene que seguir estando</b>: la pantalla de
+/// películas dice que se van a buscar en TMDb, identificar es un paso aparte que
+/// hay que pulsar —nunca pasa solo al abrir—, y se puede apagar aquí. Si
+/// cualquiera de esas tres cosas desaparece, esto se convierte en salir a
+/// internet a escondidas con los títulos de lo que hay en el disco de alguien.
 /// </para>
 /// <para>
 /// La clave se guarda <b>cifrada</b> con la protección de datos de Windows y
@@ -27,8 +35,16 @@ public sealed class AjustesDeTmdb
     /// Si está apagado no se pregunta nada a nadie, aunque haya clave. Lo que
     /// sigue funcionando sin esto es limpiar el nombre y sacar título y año, que
     /// ya es la mayor parte del trabajo y no sale de la máquina.
+    ///
+    /// <para>
+    /// Ojo con el valor de fábrica: a quien ya tenga Ondine instalada se le
+    /// enciende al actualizar, porque su <c>settings.json</c> no trae esta
+    /// sección y hereda el valor de aquí. Es deliberado, y es la razón de que el
+    /// aviso de la pantalla de películas diga lo que va a pasar: quien nunca abra
+    /// Preferencias se enterará ahí.
+    /// </para>
     /// </summary>
-    public bool Activo { get; set; }
+    public bool Activo { get; set; } = true;
 
     /// <summary>La clave del usuario, cifrada. En claro no se guarda nunca.</summary>
     public string ClaveCifrada { get; set; } = "";

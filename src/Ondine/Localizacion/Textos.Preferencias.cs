@@ -275,4 +275,37 @@ public sealed partial class Textos
     public string TmdbSinNingunaClave => Idioma.Elegir(
         "This copy of Ondine was built without a key, so nothing can be looked up until you paste one. You can get one free at themoviedb.org, under Settings, API.",
         "Esta copia de Ondine se compiló sin clave, así que no se puede buscar nada hasta que pegues una. Se consigue gratis en themoviedb.org, en Ajustes, API.");
+
+    // ── Cómo conseguir tu propia clave ──────────────────────────────────────
+    // Va delante del campo donde se pega y no en la Ayuda: el sitio donde hace
+    // falta saber esto es justo aquí. Mandar a alguien a otra pantalla a leer
+    // cómo rellenar la que tiene abierta es perder a la mitad por el camino.
+    public string TmdbComoTitulo => Idioma.Elegir(
+        "Want to use your own key?",
+        "¿Quieres usar tu propia clave?");
+
+    public string TmdbComoPasos => Idioma.Elegir(
+        """
+        1. Sign in to TMDb, or create an account — it is free.
+        2. Open the API page with the button below.
+        3. Accept the terms of use and fill in the form: name «Ondine», type «Desktop application», and one line of description.
+        4. You end up with two credentials. Copy the «API Read Access Token (v4 auth)» — the long one starting with eyJ — and paste it whole into the field above. The «API Key (v3 auth)» works too, but the token travels in the request header instead of inside the address, and addresses get written into logs along the way.
+        5. Save.
+        """,
+        """
+        1. Entra en TMDb con tu cuenta, o créala: es gratis.
+        2. Abre la página de la API con el botón de abajo.
+        3. Acepta los términos de uso y rellena el formulario: nombre «Ondine», tipo «aplicación de escritorio», y una línea de descripción.
+        4. Te quedan dos credenciales. Copia el «API Read Access Token (v4 auth)» —el largo que empieza por eyJ— y pégalo entero en el campo de arriba. La «API Key (v3 auth)» también vale, pero el token viaja en la cabecera de la petición en vez de dentro de la dirección, y las direcciones se quedan escritas en los registros del camino.
+        5. Guarda.
+        """);
+
+    public string TmdbComoAbrir => Idioma.Elegir(
+        "Open the TMDb API page",
+        "Abrir la página de la API de TMDb");
+
+    // {0} = la dirección, para poder copiarla a mano si no hay navegador que abrir.
+    public string TmdbNoSeAbrio => Idioma.Elegir(
+        "The browser could not be opened. The address is: {0}",
+        "No se pudo abrir el navegador. La dirección es: {0}");
 }

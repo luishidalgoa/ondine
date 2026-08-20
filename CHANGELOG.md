@@ -44,10 +44,13 @@ es un acuerdo de buena voluntad: está verificado.
   nada que las separe no se resuelven a cara o cruz, porque una película mal identificada es peor
   que una sin identificar.
 
-  Viene apagado y con la clave puesta, así que no hay que registrarse en ningún sitio; si prefieres
-  gastar tu propia cuota, hay un campo para tu clave. **De tu equipo solo sale el título ya limpio y
-  el año** —nunca el nombre del fichero, que dice de dónde salió—, y las respuestas se guardan en
-  disco: la misma película no se pregunta dos veces y lo ya preguntado sigue valiendo sin conexión.
+  **Viene encendido y con la clave puesta**, así que no hay que registrarse en ningún sitio ni ir a
+  buscar el ajuste. Aun así nunca se pregunta nada sin que pulses: identificar es un botón, la
+  pantalla dice que las va a buscar en TMDb, y se puede apagar en **Preferencias → Películas**. Ahí
+  hay además un campo para tu propia clave, con los pasos para sacarla y un botón que abre la página
+  de TMDb, si prefieres gastar tu cuota. **De tu equipo solo sale el título ya limpio y el año**
+  —nunca el nombre del fichero, que dice de dónde salió—, y las respuestas se guardan en disco: la
+  misma película no se pregunta dos veces y lo ya preguntado sigue valiendo sin conexión.
 
 
 ## [1.9.2] - 2026-08-20

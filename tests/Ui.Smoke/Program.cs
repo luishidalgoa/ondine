@@ -217,22 +217,44 @@ public static class Program
     /// </summary>
     private static void ElBotonDeIdentificarDiceSiSePuede()
     {
-        const string nombre = "el botón de identificar dice si se puede pulsar, y por qué no";
+        const string nombre = "el botón de identificar dice si se puede pulsar, y por cuál de los dos motivos no";
         try
         {
             var ficheros = new[] { Path.Combine("C:", "pelis", "Grease (1978)", "Grease.mp4") };
             var raiz = Path.Combine("C:", "pelis");
 
-            // Apagado de fábrica: nada de red sin que se lo pidan.
-            var apagado = new PeliculasWindow(ficheros, raiz, new Settings());
+            // Hay DOS motivos distintos por los que no se puede preguntar, y los
+            // dos tienen que dejar el botón quieto y el motivo a la vista.
+            //
+            // Uno: lo apagó el usuario. Viene encendido de fábrica, así que aquí
+            // se apaga a mano a propósito — dejarlo por defecto probaría el otro
+            // caso y la prueba diría una cosa mientras comprueba otra.
+            var apagados = new Settings();
+            apagados.Tmdb.Activo = false;
+            apagados.Tmdb.PonerClave("una-clave-de-prueba");
+
+            var apagado = new PeliculasWindow(ficheros, raiz, apagados);
             var boton = (Button)apagado.FindName("btnIdentificar")!;
             var aviso = (TextBlock)apagado.FindName("lblTmdbApagado")!;
 
             if (boton.IsEnabled)
-                throw new Exception("con TMDb apagado el botón se podía pulsar, y no habría preguntado a nadie");
+                throw new Exception("apagado por el usuario, y el botón se podía pulsar de todas formas");
             if (aviso.Visibility != Visibility.Visible)
                 throw new Exception("el botón estaba apagado y sin decir por qué: eso se lee como roto");
             apagado.Close();
+
+            // Y dos: encendido pero SIN NINGUNA clave, que es lo que le pasa a
+            // quien compile el repo sin el secreto de la build — este arnés
+            // incluido. Tiene que quedarse igual de quieto y decirlo igual.
+            var sinClave = new Settings();
+            sinClave.Tmdb.Activo = true;
+
+            var sin = new PeliculasWindow(ficheros, raiz, sinClave);
+            if (((Button)sin.FindName("btnIdentificar")!).IsEnabled)
+                throw new Exception("encendido y sin clave: habría preguntado con las manos vacías");
+            if (((TextBlock)sin.FindName("lblTmdbApagado")!).Visibility != Visibility.Visible)
+                throw new Exception("sin clave y sin decirlo: el 401 habría parecido un fallo de red");
+            sin.Close();
 
             // Encendido y con clave. Cifrar es DPAPI y solo existe en Windows,
             // que es donde corre esta prueba —WPF no existe fuera—, así que aquí
