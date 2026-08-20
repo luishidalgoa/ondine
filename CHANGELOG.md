@@ -32,15 +32,7 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
-### Cambiado
-
-- **El repaso de películas pasa a la pantalla principal, con la forma del de series.** Antes era un
-  diálogo aparte con una lista simple, y lo que le faltaba no era información: era poder **decidir
-  fila a fila**. Aplicar era «las once o ninguna». Ahora cada película lleva **su casilla** —y solo
-  la llevan las que de verdad se pueden aplicar—, arriba están los mismos chips con recuento que
-  filtran la tabla (se colocan · se renombran · hay que mirar · ya están bien), y hay una columna
-  **«Por qué»** que dice el motivo en palabras en vez de solo un color. El aviso de lo que va a
-  costar el movimiento —cruzar de disco, entrar en una nube— cuenta solo lo que tengas marcado.
+## [1.10.0] - 2026-08-20
 
 ### Añadido
 
@@ -51,14 +43,42 @@ es un acuerdo de buena voluntad: está verificado.
   pero sirve para lo que existe ese reproductor: saber qué capítulo es. Lo mismo en **Recortes**, que
   ya no se queda sin previa: ahí **cortar siempre funcionó**, porque de eso se encarga ffmpeg.
 
+- **Las películas se pueden identificar contra TMDb, y la app dice por qué se lo cree.** Hasta ahora
+  los nombres salían solo del fichero y de su carpeta, así que un título mal escrito seguía mal
+  escrito. Encendiéndolo en **Preferencias → Películas**, la ventana de películas trae un botón que
+  pregunta a The Movie Database qué es cada una: acierta el título, **trae el año cuando el fichero
+  no lo tiene** —de una biblioteca de 75, 52 no lo traían— y sabe que «The commuter» y «El pasajero»
+  son la misma película. Cada fila enseña qué se encontró **y por qué señal**, y lo que no se pueda
+  identificar con confianza se enseña y **no se toca**: dos películas que encajan igual de bien y
+  nada que las separe no se resuelven a cara o cruz, porque una película mal identificada es peor
+  que una sin identificar.
+
+  **Viene encendido y con la clave puesta**, así que no hay que registrarse en ningún sitio ni ir a
+  buscar el ajuste. Aun así nunca se pregunta nada sin que pulses: identificar es un botón, la
+  pantalla dice que las va a buscar en TMDb, y se puede apagar en **Preferencias → Películas**. Ahí
+  hay además un campo para tu propia clave, con los pasos para sacarla y un botón que abre la página
+  de TMDb, si prefieres gastar tu cuota. **De tu equipo solo sale el título ya limpio y el año**
+  —nunca el nombre del fichero, que dice de dónde salió—, y las respuestas se guardan en disco: la
+  misma película no se pregunta dos veces y lo ya preguntado sigue valiendo sin conexión.
+
+### Cambiado
+
+- **El repaso de películas pasa a la pantalla principal, con la forma del de series.** Antes era un
+  diálogo aparte con una lista simple, y lo que le faltaba no era información: era poder **decidir
+  fila a fila**. Aplicar era «las once o ninguna». Ahora cada película lleva **su casilla** —y solo
+  la llevan las que de verdad se pueden aplicar—, arriba están los mismos chips con recuento que
+  filtran la tabla (se colocan · se renombran · hay que mirar · ya están bien), y hay una columna
+  **«Por qué»** que dice el motivo en palabras en vez de solo un color. El aviso de lo que va a
+  costar el movimiento —cruzar de disco, entrar en una nube— cuenta solo lo que tengas marcado.
+
 ### Corregido
 
 - **Ondine seguía sin saber leer una de las dos formas en que ella misma escribe un fichero con
-  varios episodios.** En marzo se arregló la forma con corchetes ——, pero la otra
-  plantilla pega el añadido **al número**: . De esos solo veía el primero, así que
+  varios episodios.** Se arregló la forma con corchetes —`[1262+1264]`—, pero la otra
+  plantilla pega el añadido **al número**: `S2004E9042f+9044`. De esos solo veía el
+  primero, así que
   «Qué falta» pedía un episodio que estaba dentro de ese mismo fichero, con su nombre delante. Ahora
   entiende las dos.
-
 
 - **«Ordenar por temporadas» ofrecía mover ficheros que ya no estaban ahí, y fallaba sin decir por qué.**
   Si aplicabas un renombrado y abrías la ventana de temporadas sin volver a analizar, la lista seguía
@@ -66,13 +86,11 @@ es un acuerdo de buena voluntad: está verificado.
   una palabra sobre el motivo. Ahora esas filas se marcan como **«ya no está ahí: vuelve a analizar la
   carpeta»** y no cuentan para el botón — «Mover 6» sobre seis fantasmas era una promesa falsa.
 
-
 - **La app se comía un 12% de un núcleo estando parada, sin hacer nada.** Dos animaciones decorativas
   que no paraban nunca: el latido del punto de «comprimiendo» —que corría **aunque la píldora
   estuviera oculta**, que es casi siempre— y la respiración del fondo, que al cambiar de opacidad
   obliga a repintar la ventana entera. Medido apagándolas una a una: **12,2% → 0,2%**. El latido
   ahora solo late cuando se le ve; el fondo hace su pasada al abrir y se queda quieto.
-
 
 - **Cuando un vídeo no se puede reproducir, ahora se dice qué códec es y qué hacer.** Antes salía
   «códec no soportado» y un número en hexadecimal, que no le dice a nadie qué hacer. Ahora se le
@@ -112,27 +130,6 @@ es un acuerdo de buena voluntad: está verificado.
 - **Las pestañas de Preferencias no se podían desplazar.** El alto de la ventana era fijo, así que lo
   que no cabía en una pestaña quedaba cortado y fuera de alcance —el botón del final de «Películas»,
   por ejemplo—. Ahora se desplazan.
-
-### Añadido
-
-- **Las películas se pueden identificar contra TMDb, y la app dice por qué se lo cree.** Hasta ahora
-  los nombres salían solo del fichero y de su carpeta, así que un título mal escrito seguía mal
-  escrito. Encendiéndolo en **Preferencias → Películas**, la ventana de películas trae un botón que
-  pregunta a The Movie Database qué es cada una: acierta el título, **trae el año cuando el fichero
-  no lo tiene** —de una biblioteca de 75, 52 no lo traían— y sabe que «The commuter» y «El pasajero»
-  son la misma película. Cada fila enseña qué se encontró **y por qué señal**, y lo que no se pueda
-  identificar con confianza se enseña y **no se toca**: dos películas que encajan igual de bien y
-  nada que las separe no se resuelven a cara o cruz, porque una película mal identificada es peor
-  que una sin identificar.
-
-  **Viene encendido y con la clave puesta**, así que no hay que registrarse en ningún sitio ni ir a
-  buscar el ajuste. Aun así nunca se pregunta nada sin que pulses: identificar es un botón, la
-  pantalla dice que las va a buscar en TMDb, y se puede apagar en **Preferencias → Películas**. Ahí
-  hay además un campo para tu propia clave, con los pasos para sacarla y un botón que abre la página
-  de TMDb, si prefieres gastar tu cuota. **De tu equipo solo sale el título ya limpio y el año**
-  —nunca el nombre del fichero, que dice de dónde salió—, y las respuestas se guardan en disco: la
-  misma película no se pregunta dos veces y lo ya preguntado sigue valiendo sin conexión.
-
 
 ## [1.9.2] - 2026-08-20
 
