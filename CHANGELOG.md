@@ -32,6 +32,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Marcar dos veces la misma historia duplicaba el nombre del fichero.** Apuntar que un fichero trae
+  también la historia de otro episodio no comprobaba nada: se podía apuntar dos veces la misma, o
+  apuntar la que ya era la historia propia del fichero. El resultado era un nombre con todo repetido
+  —y tan largo que se cortaba a media palabra—. Ahora una historia ya apuntada no se vuelve a añadir,
+  y la propia del fichero tampoco.
+
 ## [1.10.0] - 2026-08-20
 
 ### Añadido

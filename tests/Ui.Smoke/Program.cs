@@ -87,6 +87,7 @@ public static class Program
         LasDosPantallasNoSePisanNunca();
         LaPreviaDeLaBarraMideComoLaBarra();
         ElAvisoDeCodecDiceQueHacer();
+        UnaHistoriaNoSeApuntaDosVeces(cat);
         LasPreferenciasLleganHastaElFinal();
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
         ElVeredictoDelComplementoAvisaAlCambiar();
@@ -765,6 +766,70 @@ public static class Program
             var sinSaber = ReproductorWindow.MensajeDeCodec("");
             if (sinSaber.Length < 30 || sinSaber.Contains("AV1", StringComparison.Ordinal))
                 throw new Exception($"sin códec conocido el aviso no debería inventarse uno: {sinSaber}");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// Una historia no se apunta dos veces, ni se apunta la que ya es del fichero.
+    ///
+    /// <para>
+    /// Salió de un fichero real de una biblioteca real:
+    /// <c>S2004E510b+510b+511+511 - Mamá tiene un paraguas estupendo + Mamá tiene un
+    /// paraguas estupendo + ...</c>. El <c>510b</c> es la historia PROPIA del fichero y
+    /// estaba además apuntada como añadida; el <c>511</c> estaba dos veces. El nombre
+    /// salía con todo repetido y, de tan largo, cortado a media palabra.
+    /// </para>
+    /// <para>
+    /// La causa era que apuntar una historia no comprobaba nada: se añadía y ya. Dos
+    /// clics de más, o un clic sobre la propia, y el nombre quedaba así.
+    /// </para>
+    /// </summary>
+    private static void UnaHistoriaNoSeApuntaDosVeces(ReindexCatalog cat)
+    {
+        const string nombre = "una historia no se apunta dos veces ni se apunta la propia";
+        try
+        {
+            var uno = cat.Episodios.First(e => e.Num == 1);
+            var dos = cat.Episodios.First(e => e.Num == 2);
+
+            var resolucion = new ReindexResolution
+            {
+                Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "Serie S01E01b.mkv"), "Season 1"),
+                Estado = ReindexEstado.Limpio,
+                Episodio = uno,
+            };
+
+            var fila = new OrganizarRow(resolucion, cat, new LibraryTemplate("<serie> - S<temp>E<num> - <título>"));
+
+            // La propia del fichero: el episodio 1, historia «b». Apuntarla como
+            // añadida la pondría dos veces en el nombre.
+            fila.AnadirHistoria(uno, "b");
+            if (fila.Tambien.Count != 0)
+                throw new Exception("se apuntó como añadida la historia que YA es la del fichero");
+
+            // Otra distinta sí entra.
+            fila.AnadirHistoria(dos, null);
+            if (fila.Tambien.Count != 1)
+                throw new Exception("una historia de otro episodio debería entrar");
+
+            // Pero no dos veces.
+            fila.AnadirHistoria(dos, null);
+            if (fila.Tambien.Count != 1)
+                throw new Exception("la misma historia se apuntó dos veces: así salía «+511+511»");
+
+            // Y otra historia DEL MISMO episodio sí es distinta: no se confunde el
+            // episodio con la historia.
+            fila.AnadirHistoria(uno, "a");
+            if (fila.Tambien.Count != 2)
+                throw new Exception("otra historia del mismo episodio sí es otra cosa y debería entrar");
+
+            // Y el nombre no repite nada.
+            var propuesta = fila.NombreNuevo ?? "";
+            if (propuesta.Contains("+2+2", StringComparison.Ordinal))
+                throw new Exception($"el nombre salió con la historia repetida: {propuesta}");
 
             Bien(nombre);
         }

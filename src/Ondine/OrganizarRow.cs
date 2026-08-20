@@ -240,9 +240,25 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     /// </summary>
     public void AnadirHistoria(CatalogEpisode ep, string? seg)
     {
+        // Ni la que YA es la historia de este fichero, ni una que ya esté apuntada.
+        // Sin estas dos guardas salían nombres como
+        // «S2004E510b+510b+511+511 - Mamá tiene un paraguas estupendo + Mamá tiene un
+        // paraguas estupendo + ...»: el 510b duplicando al propio, el 511 dos veces, y
+        // el nombre tan largo que se cortaba a media palabra. Es un fichero real.
+        if (Igual(ep, seg, Res.Episodio, SegElegido ?? Res.Archivo.SubSegmento)) return;
+        if (_tambien.Any(h => Igual(ep, seg, h.Episodio, h.Segmento))) return;
+
         _tambien.Add(new LibraryTemplate.Historia(ep, seg));
         Recalcular();
     }
+
+    /// <summary>
+    /// La misma historia: mismo episodio y misma letra. Sin letra y con letra vacía son
+    /// lo mismo —las dos quieren decir «el episodio entero»—, y las mayúsculas no cuentan.
+    /// </summary>
+    private static bool Igual(CatalogEpisode a, string? segA, CatalogEpisode? b, string? segB)
+        => b is not null && a.Num == b.Num
+           && string.Equals(segA ?? "", segB ?? "", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Deshace las historias añadidas y deja la fila como un episodio normal.</summary>
     public void QuitarHistorias()
