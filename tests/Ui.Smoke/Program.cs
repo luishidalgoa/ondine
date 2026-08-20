@@ -727,6 +727,17 @@ public static class Program
             // mandar a instalar cosas a ciegas.
             Dice("theora", "theora");
 
+            // El codec se escribe como se escribe, no como lo da ffprobe: en minusculas
+            // dentro de una frase se lee como una errata («Este video es av1»).
+            if (ReproductorWindow.NombreDeCodec("av1") != "AV1")
+                throw new Exception("av1 deberia escribirse AV1");
+            if (!ReproductorWindow.NombreDeCodec("hevc").Contains("HEVC", StringComparison.Ordinal))
+                throw new Exception("hevc deberia escribirse HEVC");
+            // Uno que no esta en la lista se deja tal cual: inventarle mayusculas
+            // acertaria unas veces y otras no.
+            if (ReproductorWindow.NombreDeCodec("prores_ks") != "prores_ks")
+                throw new Exception("un codec desconocido no deberia reescribirse");
+
             // Y si ni siquiera se pudo averiguar, se dice eso, no se calla.
             var sinSaber = ReproductorWindow.MensajeDeCodec("");
             if (sinSaber.Length < 30 || sinSaber.Contains("AV1", StringComparison.Ordinal))

@@ -256,10 +256,12 @@ public partial class ReproductorWindow : Window
         {
             if (video.Position > TimeSpan.Zero) _cargando.Parar();
 
-            // Con el vídeo caído esperando a la nube, la duración no está y el resto del
-            // tic no aplica; pero hay que seguir mirando si ya terminó de bajar. Antes
-            // este return dejaba el reintento sin quien lo disparase.
-            if (_fallaMientrasBaja && ++_tics % 10 == 0) RevisarNube();
+            // Con el vídeo caído -esperando a la nube o recorriéndose a fotogramas- la
+            // duración no está y el resto del tic no aplica; pero hay que seguir mirando
+            // la nube. Antes este return dejaba el reintento sin quien lo disparase, y
+            // en modo fotogramas dejaba clavado el aviso de «descargando para verlo»
+            // aunque el fichero ya estuviera entero en el disco.
+            if ((_fallaMientrasBaja || _modoFotogramas) && ++_tics % 10 == 0) RevisarNube();
 
             if (_arrastrando || !video.NaturalDuration.HasTimeSpan) return;
             _desdeReloj = true;
@@ -451,7 +453,7 @@ public partial class ReproductorWindow : Window
 
         // Ya está entero en el disco y lo que falló fue solo eso: se reintenta sin
         // pedirle nada a nadie.
-        if (!enLaNube && _fallaMientrasBaja && !_cerrado)
+        if (!enLaNube && _fallaMientrasBaja && !_modoFotogramas && !_cerrado)
         {
             _fallaMientrasBaja = false;
             panelFallo.Visibility = Visibility.Collapsed;
@@ -525,7 +527,32 @@ public partial class ReproductorWindow : Window
                 string.Format(Textos.Instancia.ReproductorFaltaExtension, "HEVC (H.265)", "HEVC Video Extensions"),
             "vp9" => string.Format(Textos.Instancia.ReproductorFaltaExtension, "VP9", "VP9 Video Extensions"),
             "" => Textos.Instancia.ReproductorCodecSinSaber,
-            _ => string.Format(Textos.Instancia.ReproductorCodecDesconocido, c),
+            _ => string.Format(Textos.Instancia.ReproductorCodecDesconocido, NombreDeCodec(c)),
+        };
+    }
+
+    /// <summary>
+    /// El códec como se escribe, no como lo escribe ffprobe.
+    ///
+    /// <para>
+    /// ffprobe los da en minúsculas —<c>av1</c>, <c>hevc</c>— y ponerlo tal cual en una
+    /// frase da «Este vídeo es av1», que se lee como una errata. Los que no están en la
+    /// lista se dejan como vienen: inventarles mayúsculas acertaría unas veces y otras no.
+    /// </para>
+    /// </summary>
+    public static string NombreDeCodec(string codec)
+    {
+        var c = (codec ?? "").Trim();
+        return c.ToLowerInvariant() switch
+        {
+            "av1" => "AV1",
+            "hevc" or "h265" or "h.265" => "HEVC (H.265)",
+            "vp9" => "VP9",
+            "vp8" => "VP8",
+            "h264" or "avc" => "H.264",
+            "mpeg4" => "MPEG-4",
+            "mpeg2video" => "MPEG-2",
+            _ => c,
         };
     }
 
@@ -556,7 +583,7 @@ public partial class ReproductorWindow : Window
         // El aviso pasa a ser una franja abajo en vez de tapar el centro: ahora hay algo
         // que enseñar detrás. El botón del reproductor del sistema sigue estando.
         lblFallo.Text = codec.Length > 0
-            ? string.Format(Textos.Instancia.ReproductorModoFotogramas, codec)
+            ? string.Format(Textos.Instancia.ReproductorModoFotogramas, NombreDeCodec(codec))
             : Textos.Instancia.ReproductorCodecSinSaber;
         panelFallo.VerticalAlignment = VerticalAlignment.Bottom;
         panelFallo.Margin = new Thickness(0, 0, 0, 128);
