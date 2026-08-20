@@ -83,6 +83,7 @@ public static class Program
         Ondine.Reindex.Tests.TmdbTests.Todas();
         Ondine.Reindex.Tests.IdentificacionDePeliculaTests.Todas();
         Ondine.Reindex.Tests.CacheDePeliculasTests.Todas();
+        Ondine.Reindex.Tests.DecisionesDePeliculaTests.Todas();
         Ondine.Reindex.Tests.PlanDePeliculasTests.Todas();
         Ondine.Reindex.Tests.MudanzaTests.Todas();
         Ondine.Reindex.Tests.SidecarNoArrastraVideosTests.Todas();

@@ -2605,6 +2605,14 @@ public partial class OrganizarView : UserControl
 
     private Mudanza.Parte? _hechoPelis;
 
+    /// <summary>Las candidatas que devolvió TMDb por fichero, para poder elegir a mano.</summary>
+    private readonly Dictionary<string, IReadOnlyList<Tmdb.Candidato>> _candidatas =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Lo que el usuario ha decidido, y que manda sobre la cascada.</summary>
+    private readonly DecisionesDePelicula _decididas =
+        DecisionesDePelicula.Abrir(DecisionesDePelicula.Predeterminada());
+
     /// <summary>
     /// «Analizar» en modo Películas: monta la simulación y pasa a la revisión. No
     /// toca ni un fichero — para eso está el botón de aplicar, y con las filas
@@ -2613,6 +2621,7 @@ public partial class OrganizarView : UserControl
     private void AnalizarPeliculas()
     {
         _veredictos.Clear();
+        _candidatas.Clear();
         _hechoPelis = null;
         bandaPelis.Visibility = Visibility.Collapsed;
         btnDeshacerPelis.Visibility = Visibility.Collapsed;
@@ -2638,6 +2647,8 @@ public partial class OrganizarView : UserControl
                 Paso = paso,
                 Raiz = raiz,
                 Veredicto = _veredictos.TryGetValue(paso.Origen, out var v) ? v : null,
+                Candidatos = _candidatas.TryGetValue(paso.Origen, out var cs)
+                    ? cs : Array.Empty<Tmdb.Candidato>(),
             });
 
         PintarPeliculas();
@@ -2714,6 +2725,47 @@ public partial class OrganizarView : UserControl
     private void OnMarcarPelicula(object sender, RoutedEventArgs e) => PintarAplicarPeliculas();
 
     /// <summary>
+    /// «Es esta»: la decisión del usuario sobre una película. Se guarda en el acto —no
+    /// al cerrar— porque es una decisión suya y perderla por un cierre inesperado sería
+    /// pedirle que la vuelva a tomar.
+    /// </summary>
+    private void OnElegirPelicula(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe) return;
+        if (fe.DataContext is not Tmdb.Candidato elegida) return;
+        if (fe.Tag is not PeliculaFila fila) return;
+
+        _decididas.Recordar(fila.Paso.Origen, elegida);
+        _decididas.Volcar();
+
+        _veredictos[fila.Paso.Origen] = IdentificacionDePelicula.Decidir(
+            fila.Paso.Ficha ?? new TituloDePelicula.Ficha("", null),
+            _candidatas.TryGetValue(fila.Paso.Origen, out var cs) ? cs : Array.Empty<Tmdb.Candidato>(),
+            elegida);
+
+        Escribir(string.Format(Textos.Instancia.PeliculasLogElegida,
+                               Path.GetFileName(fila.Paso.Origen),
+                               TituloDePelicula.Canonico(new TituloDePelicula.Ficha(elegida.Titulo, elegida.Anio))));
+        RecalcularPeliculas();
+    }
+
+    /// <summary>Deshacer lo elegido: vuelve a mandar la cascada.</summary>
+    private void OnOlvidarPelicula(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.Tag is not PeliculaFila fila) return;
+
+        _decididas.Olvidar(fila.Paso.Origen);
+        _decididas.Volcar();
+
+        var candidatos = _candidatas.TryGetValue(fila.Paso.Origen, out var cs)
+            ? cs : Array.Empty<Tmdb.Candidato>();
+        _veredictos[fila.Paso.Origen] = IdentificacionDePelicula.Decidir(
+            fila.Paso.Ficha ?? new TituloDePelicula.Ficha("", null), candidatos);
+
+        RecalcularPeliculas();
+    }
+
+    /// <summary>
     /// La casilla del encabezado marca o desmarca todo lo <b>aplicable</b>. Lo que no
     /// lo es no se toca: marcarlo no lo haría entrar, y dejarlo marcado insinuaría
     /// que sí.
@@ -2783,6 +2835,11 @@ public partial class OrganizarView : UserControl
         // Se marca a mano en vez de recalcular: las rutas del plan son las de ANTES, y
         // volver a montarlo diría otra vez «se mueve» sobre ficheros que ya no están
         // ahí. Lo que se sabe de verdad es lo que devolvió la mudanza.
+        // La decisión sigue al fichero: si se quedara en la ruta vieja se perderia justo
+        // al aplicar lo que el usuario acaba de decidir.
+        foreach (var m in _hechoPelis.Movidos) _decididas.Renombrado(m.Origen, m.Destino);
+        _decididas.Volcar();
+
         var movidos = _hechoPelis.Movidos.Select(m => m.Origen).ToHashSet(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < _pelis.Count; i++)
             if (movidos.Contains(_pelis[i].Paso.Origen))
@@ -2881,7 +2938,9 @@ public partial class OrganizarView : UserControl
                 candidatos = traidos;
             }
 
-            var v = IdentificacionDePelicula.Decidir(ficha, candidatos);
+            _candidatas[paso.Origen] = candidatos;
+
+            var v = IdentificacionDePelicula.Decidir(ficha, candidatos, _decididas.Para(paso.Origen));
             _veredictos[paso.Origen] = v;
             if (v.SePuedeAplicar) seguras++; else dudas++;
             hechas++;

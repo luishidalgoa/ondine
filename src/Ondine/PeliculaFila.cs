@@ -33,6 +33,24 @@ public sealed class PeliculaFila : INotifyPropertyChanged
     /// <summary>Lo que dijo TMDb de esta película, si se preguntó.</summary>
     public IdentificacionDePelicula.Veredicto? Veredicto { get; init; }
 
+    /// <summary>
+    /// Las candidatas que devolvió TMDb, para poder elegir a mano cuando la cascada
+    /// se planta. Vacío si no se preguntó por este fichero.
+    /// </summary>
+    public IReadOnlyList<Tmdb.Candidato> Candidatos { get; init; } = Array.Empty<Tmdb.Candidato>();
+
+    /// <summary>
+    /// Si esta fila tiene algo que resolver a mano. Se despliega al seleccionarla,
+    /// igual que el resolutor de conflictos de las series.
+    /// </summary>
+    public bool TieneDetalle => Candidatos.Count > 0;
+
+    /// <summary>Lo elegiste tú: se puede deshacer.</summary>
+    public bool EsDecisionTuya =>
+        Veredicto?.Senal == IdentificacionDePelicula.Porque.LoDijisteTu;
+
+    public Visibility VerOlvidar => EsDecisionTuya ? Visibility.Visible : Visibility.Collapsed;
+
     private bool _marcado = true;
 
     /// <summary>
@@ -186,6 +204,7 @@ public sealed class PeliculaFila : INotifyPropertyChanged
         IdentificacionDePelicula.Porque.SoloTitulo => Textos.Instancia.PeliculasSenalSoloTitulo,
         IdentificacionDePelicula.Porque.Empate => Textos.Instancia.PeliculasSenalEmpate,
         IdentificacionDePelicula.Porque.TituloFlojo => Textos.Instancia.PeliculasSenalTituloFlojo,
+        IdentificacionDePelicula.Porque.LoDijisteTu => Textos.Instancia.PeliculasSenalLoDijisteTu,
         _ => Textos.Instancia.PeliculasSenalSinCandidatos,
     };
 }

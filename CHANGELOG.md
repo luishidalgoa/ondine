@@ -32,6 +32,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Cuando dos películas encajan igual de bien, ahora puedes elegir tú — y se recuerda.** La app se
+  planta a propósito cuando no lo tiene claro (dos «Psicosis», una de 1960 y otra de 1998, y el
+  fichero sin año), porque una película mal identificada es peor que una sin identificar. Pero si no
+  podías resolverlo tú, se plantaba **para siempre**. Ahora la fila se despliega con las candidatas,
+  eliges, y esa decisión **manda sobre lo que la app habría deducido** y no hay que volver a tomarla
+  en cada análisis. La elección **viaja con el fichero** cuando lo renombras o lo mueves, y se puede
+  deshacer.
+
 ### Corregido
 
 - **Marcar dos veces la misma historia duplicaba el nombre del fichero.** Apuntar que un fichero trae

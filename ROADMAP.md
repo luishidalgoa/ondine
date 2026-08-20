@@ -62,13 +62,18 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ⬜ Catálogos **compartibles**: exportar/importar sin duplicar trabajo.
 
 ## Organizar — más allá de las series ([epic #153](https://github.com/luishidalgoa/ondine/issues/153))
-- 🔜 **Tipo de biblioteca** (serie / película): hoy todo asume que son episodios, y una película no
-  tiene temporada ni número. ([#154](https://github.com/luishidalgoa/ondine/issues/154))
-- ⬜ **Películas sin catálogo**: identificarlas contra una base de datos pública, porque para las
-  películas no existe una lista que importar. El reto es que el nombre del fichero es una fuente
-  poco fiable. ([#155](https://github.com/luishidalgoa/ondine/issues/155))
-- ⬜ **Montar la estructura de carpetas**, no solo renombrar: hoy 200 capítulos sueltos se quedan
-  sueltos aunque queden bien nombrados. ([#156](https://github.com/luishidalgoa/ondine/issues/156))
+- ✅ **Tipo de biblioteca** (serie / película): se elige por carpeta y se recuerda. Las películas
+  tienen su propio flujo y su propio repaso —con casilla por fila—, no la pantalla de series con
+  piezas escondidas. ([#154](https://github.com/luishidalgoa/ondine/issues/154))
+- ✅ **Películas sin catálogo**: se identifican contra **TMDb**, con la confianza a la vista y
+  plantándose cuando dos encajan igual de bien — una película mal identificada es peor que una sin
+  identificar. Lo dudoso se elige a mano y **la elección se recuerda**. Lo consultado se guarda, así
+  que funciona sin red con lo ya preguntado.
+  ([#155](https://github.com/luishidalgoa/ondine/issues/155))
+- ✅ **Montar la estructura de carpetas**, no solo renombrar: «Ordenar por temporadas» lleva cada
+  capítulo a la suya, y las películas a su carpeta canónica. Con la simulación delante, los
+  compañeros (subtítulos, fichas) detrás, y deshacer.
+  ([#156](https://github.com/luishidalgoa/ondine/issues/156))
 
 ## Recortes
 - ✅ Línea de tiempo con miniaturas, marcar tramos y exportar uno por tramo.
@@ -100,5 +105,7 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **Capturas en el README** de las tres herramientas, con datos reales dentro.
 - ⬜ Firmar el instalador (evitar el aviso de SmartScreen).
 - ⬜ Rediseño visual (brief en [`docs/design-brief.md`](docs/design-brief.md)).
-- ⬜ **Linux / macOS**: WPF es solo Windows. Requiere migrar la interfaz a **Avalonia** (multiplataforma);
-  el motor (`Engine`/`Estimator`/`Reindex`) ya es portable. Es el paso grande pendiente.
+- 🔜 **Linux / macOS con interfaz**: hoy solo la CLI es multiplataforma. WPF es solo Windows, así que
+  hace falta migrar la interfaz a **Avalonia**; el motor (`Engine`/`Estimator`/`Reindex`) ya es
+  portable y las pruebas del motor ya corren en Linux. Es el paso grande pendiente, y es el que se
+  quiere dar.
