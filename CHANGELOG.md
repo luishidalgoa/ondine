@@ -46,8 +46,11 @@ es un acuerdo de buena voluntad: está verificado.
 
 - **Cuando un vídeo no se puede reproducir, ahora se dice qué códec es y qué hacer.** Antes salía
   «códec no soportado» y un número en hexadecimal, que no le dice a nadie qué hacer. Ahora se le
-  pregunta al analizador: si es **AV1**, **HEVC** o **VP9** te dice cuál es y qué extensión instalar
-  desde la Microsoft Store; si es otro, te dice su nombre y te manda al reproductor del sistema.
+  pregunta al analizador y se te dice cuál es —**AV1**, **HEVC**, **VP9** o el que sea— y se te manda
+  al reproductor del sistema, que es lo que de verdad lo abre. Ojo con esto, porque es contra
+  intuitivo: **instalar la extensión de vídeo de la Microsoft Store no hace que se vea dentro de
+  Ondine**. El reproductor de dentro va sobre la tubería clásica de Windows y esas extensiones son
+  para otra, así que se menciona solo por si tu reproductor del sistema tampoco lo abre.
 
 - **En el reproductor, pinchar en la barra te llevaba unos segundos antes de donde habías pinchado.**
   El globo que enseña la hora al pasar el cursor medía a ojo —posición partido por ancho— y la barra

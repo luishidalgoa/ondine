@@ -74,10 +74,19 @@ public sealed partial class Textos
         "Este fichero todavía se está bajando de la nube. Empezará solo en cuanto termine.");
 
     // Qué códec es y qué hacer. Un código en hexadecimal no le dice a nadie qué
-    // hacer; «es AV1, instala su extensión» sí. {0} = el códec · {1} = la extensión.
+    // hacer. {0} = el códec · {1} = la extensión de la Store.
+    //
+    // Y el orden importa: primero el reproductor del sistema, la extensión después.
+    // La primera versión de este aviso mandaba a instalar la extensión y ESO NO
+    // ARREGLA NADA aquí: se comprobó en una máquina con «AV1 Video Extension 2.0.30»
+    // instalada y el vídeo seguía sin abrirse. El motivo es que MediaElement de WPF va
+    // sobre la tubería clásica de Windows y las extensiones de la Store registran
+    // decodificadores para Media Foundation, que es otra: por eso «Películas y TV» sí
+    // lo abre. La extensión se menciona igual porque al reproductor del sistema sí le
+    // sirve, y es a donde se manda.
     public string ReproductorFaltaExtension => Idioma.Elegir(
-        "This video is {0}, and Windows does not ship that decoder. Install «{1}» from the Microsoft Store, or open it in the system player.",
-        "Este vídeo es {0}, y Windows no trae ese decodificador de fábrica. Instala «{1}» desde la Microsoft Store, o ábrelo en el reproductor del sistema.");
+        "This video is {0}. The player inside Ondine uses the classic Windows pipeline, which does not use the Microsoft Store video extensions even when they are installed. Open it in the system player; if it will not open there either, install «{1}» from the Store.",
+        "Este vídeo es {0}. El reproductor de dentro de Ondine usa la tubería clásica de Windows, que no aprovecha las extensiones de vídeo de la Microsoft Store ni aunque estén instaladas. Ábrelo en el reproductor del sistema; si allí tampoco abre, instala «{1}» desde la Store.");
 
     // {0} = el códec, tal y como lo llama ffprobe.
     public string ReproductorCodecDesconocido => Idioma.Elegir(
