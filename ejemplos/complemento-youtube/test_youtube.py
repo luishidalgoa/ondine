@@ -68,6 +68,11 @@ class DisponibilidadDeLaLista(unittest.TestCase):
 
 
 class DescargarLosElegidos(unittest.TestCase):
+    @staticmethod
+    def proceso(*lineas, codigo=0):
+        return SimpleNamespace(stdout=list(lineas), returncode=codigo,
+                               wait=lambda: codigo)
+
     def test_rechaza_un_id_que_no_sea_de_youtube(self):
         with tempfile.TemporaryDirectory() as destino:
             ids, carpeta, reparo = _peticion_de_descarga(
@@ -80,10 +85,11 @@ class DescargarLosElegidos(unittest.TestCase):
     def test_descarga_solo_los_ids_recibidos_y_devuelve_el_fichero(self):
         with tempfile.TemporaryDirectory() as destino:
             fichero = os.path.join(destino, "Episodio [abcdefghijk].mp4")
-            respuesta = SimpleNamespace(
-                returncode=0, stderr="", stdout="@@ONDINE_FILE@@" + fichero + "\n")
+            respuesta = self.proceso(
+                "@@ONDINE_PROGRESS@@ 42.5%\n",
+                "@@ONDINE_FILE@@" + fichero + "\n")
             with patch("youtube.shutil.which", return_value="yt-dlp"), \
-                 patch("youtube.subprocess.run", return_value=respuesta) as ejecutar, \
+                 patch("youtube.subprocess.Popen", return_value=respuesta) as ejecutar, \
                  patch("youtube.decir") as decir:
                 traer(["abcdefghijk", "--destino", destino])
 
@@ -92,17 +98,17 @@ class DescargarLosElegidos(unittest.TestCase):
         self.assertTrue(any("best[height<=480]" in argumento for argumento in orden))
         hecho = [c.kwargs for c in decir.call_args_list if c.kwargs.get("tipo") == "hecho"]
         self.assertEqual(hecho[0]["ficheros"], [fichero])
+        progresos = [c.kwargs for c in decir.call_args_list
+                     if c.kwargs.get("tipo") == "progreso"]
+        self.assertTrue(any(p.get("avance") == 0.425 for p in progresos))
 
     def test_un_bloqueado_no_impide_entregar_otro_que_si_bajo(self):
         with tempfile.TemporaryDirectory() as destino:
             fichero = os.path.join(destino, "Bueno [abcdefghijk].mp4")
-            bien = SimpleNamespace(returncode=0, stderr="",
-                                   stdout="@@ONDINE_FILE@@" + fichero + "\n")
-            bloqueado = SimpleNamespace(returncode=1,
-                                        stderr="ERROR: Video unavailable",
-                                        stdout="")
+            bien = self.proceso("@@ONDINE_FILE@@" + fichero + "\n")
+            bloqueado = self.proceso("ERROR: Video unavailable\n", codigo=1)
             with patch("youtube.shutil.which", return_value="yt-dlp"), \
-                 patch("youtube.subprocess.run", side_effect=[bien, bloqueado]), \
+                 patch("youtube.subprocess.Popen", side_effect=[bien, bloqueado]), \
                  patch("youtube.decir") as decir:
                 traer(["abcdefghijk", "lmnopqrstuv", "--destino", destino])
 

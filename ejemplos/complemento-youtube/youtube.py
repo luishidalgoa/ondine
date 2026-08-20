@@ -456,6 +456,7 @@ def _descripciones(exe, fuente, cuantos):
 
 _ID_VIDEO = re.compile(r"^[A-Za-z0-9_-]{11}$")
 _MARCA_FICHERO = "@@ONDINE_FILE@@"
+_MARCA_PROGRESO = "@@ONDINE_PROGRESS@@"
 
 
 def _peticion_de_descarga(argumentos):
@@ -495,34 +496,52 @@ def traer(argumentos):
         decir(tipo="progreso", avance=(i - 1) / total,
               texto=f"Descargando video {i} de {total}")
         orden = [
-            exe, "--no-playlist", "--no-warnings", "--no-progress",
+            exe, "--no-playlist", "--no-warnings", "--newline", "--progress",
             # Primero se intenta un formato completo: no necesita ffmpeg. Si no
             # existe, yt-dlp puede juntar video y audio. Nunca se elige mas de
             # 480p: es suficiente para este uso y evita bajar un original enorme.
             "--format", "best[height<=480]/bestvideo[height<=480]+bestaudio/best",
             "--merge-output-format", "mp4",
             "--output", os.path.join(destino, "%(title)s [%(id)s].%(ext)s"),
+            "--progress-template", "download:" + _MARCA_PROGRESO
+                                   + "%(progress._percent_str)s",
             "--print", "after_move:" + _MARCA_FICHERO + "%(filepath)s",
             "https://www.youtube.com/watch?v=" + ident,
         ]
         try:
-            salida = subprocess.run(
-                orden, capture_output=True, text=True, encoding="utf-8",
-                errors="replace", timeout=7200,
+            proc = subprocess.Popen(
+                orden, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, encoding="utf-8", errors="replace", bufsize=1,
             )
-        except subprocess.TimeoutExpired:
-            fallos.append(f"{ident}: ha tardado demasiado")
+        except OSError as ex:
+            fallos.append(f"{ident}: {ex}")
             continue
 
-        rutas = [linea[len(_MARCA_FICHERO):].strip()
-                 for linea in (salida.stdout or "").splitlines()
-                 if linea.startswith(_MARCA_FICHERO)]
-        if salida.returncode == 0 and rutas:
+        rutas = []
+        ultimas = []
+        for linea in proc.stdout:
+            limpia = linea.strip()
+            if limpia.startswith(_MARCA_PROGRESO):
+                numero = limpia[len(_MARCA_PROGRESO):].strip().rstrip("%").strip()
+                try:
+                    porcentaje = max(0.0, min(100.0, float(numero)))
+                except ValueError:
+                    continue
+                avance = ((i - 1) + porcentaje / 100.0) / total
+                decir(tipo="progreso", avance=avance,
+                      texto=f"Descargando video {i} de {total}: {porcentaje:.0f} %")
+            elif limpia.startswith(_MARCA_FICHERO):
+                rutas.append(limpia[len(_MARCA_FICHERO):].strip())
+            elif limpia:
+                ultimas.append(limpia)
+                ultimas = ultimas[-5:]
+        proc.wait()
+
+        if proc.returncode == 0 and rutas:
             ficheros.extend(rutas)
             continue
 
-        detalle = (salida.stderr or "").strip().splitlines()
-        fallos.append(f"{ident}: {detalle[-1] if detalle else 'no disponible'}")
+        fallos.append(f"{ident}: {ultimas[-1] if ultimas else 'no disponible'}")
 
     if not ficheros:
         error("No se ha podido descargar ningun video. " + "; ".join(fallos))
