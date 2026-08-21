@@ -33,6 +33,7 @@ public partial class MainWindow : Window
                     await Comprobacion.CorrerAyuda(this);
                     await Comprobacion.CorrerPreferencias(this);
                     await Comprobacion.CorrerCatalogo(this);
+                    await Comprobacion.CorrerReproductor(this);
                 }
                 catch (Exception ex) { Comprobacion.Resultados.Add($"REVENTO: {ex.Message}"); }
                 Close();

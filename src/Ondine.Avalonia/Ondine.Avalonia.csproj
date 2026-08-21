@@ -33,6 +33,10 @@
          el puerto va a traducirlo tal cual. Cambiar de mecanismo a la vez que de framework
          sería mezclar dos migraciones y no saber cuál rompió qué. -->
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- El manifiesto es lo que le permite al VideoView de LibVLC crear su ventana nativa
+         hija en Windows. Sin el, el reproductor cuelga la app al abrirse. Ver app.manifest. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

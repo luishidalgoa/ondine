@@ -139,6 +139,107 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// El reproductor, con un video de verdad hecho al vuelo.
+    ///
+    /// <para>
+    /// Con video de verdad y no con una ruta inventada porque lo que hay que comprobar es
+    /// que <b>LibVLC abre y reporta</b>: es la pieza que sustituye al MediaElement, y si no
+    /// arrancara, todo lo demas de esta pantalla daria igual. Se hace uno de dos segundos
+    /// con el ffmpeg que ya lleva la app.
+    /// </para>
+    /// <para>
+    /// Lo otro que se mira es lo que <b>solo se nota con el tiempo pasando</b>: que los
+    /// controles se aparten solos y vuelvan al mover el raton. Un puerto puede dejar eso
+    /// muerto sin que nada se queje — los controles se quedan puestos y parece una decision.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerReproductor(Window dueno)
+    {
+        var carpeta = Path.Combine(Path.GetTempPath(), "ondine-auto-repro");
+        Directory.CreateDirectory(carpeta);
+        var mp4 = Path.Combine(carpeta, "prueba.mp4");
+
+        try
+        {
+            if (!await HacerUnVideoDePrueba(mp4))
+            {
+                Dice(false, "no se pudo montar el video de prueba (¿falta ffmpeg?)");
+                return;
+            }
+
+            var v = new Reproductor(mp4);
+            v.Show(dueno);
+
+            // LibVLC tarda en arrancar: abre el fichero, negocia salida de video y solo
+            // entonces reporta duracion. Se le da margen de sobra.
+            await Task.Delay(2500);
+
+            var dur = v.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "lblDur");
+            var barra = v.GetVisualDescendants().OfType<Slider>().FirstOrDefault(s2 => s2.Name == "barra");
+            var fallo = v.GetVisualDescendants().OfType<StackPanel>().FirstOrDefault(p2 => p2.Name == "panelFallo");
+
+            Dice(fallo?.IsVisible == false, "el video abre: no sale el panel de fallo");
+            Dice(barra?.Maximum > 0.5, $"y LibVLC reporta la duracion ({barra?.Maximum:0.0}s)");
+            Dice(dur?.Text is { Length: > 0 } and not "0:00", $"que llega al rotulo ({dur?.Text})");
+
+            // La barra lleva su tema: sin el, el Slider de Fluent sale con otra forma y
+            // sin el tirador que la previa necesita medir.
+            var tirador = barra?.GetVisualDescendants().OfType<Thumb>().FirstOrDefault();
+            Dice(tirador is not null, "la barra lleva su tirador, que es lo que mide la previa");
+
+            // ── Los controles que se apartan ──
+            // Se miran las DOS direcciones y no solo una. El primer intento comprobaba «al
+            // abrir estan a la vista» y fallaba sobre un codigo correcto: LibVLC tarda mas
+            // de los 2,6 s del apagon en arrancar, asi que para cuando se miraba ya se
+            // habian escondido con toda la razon. Medir contra el reloj de arranque de otro
+            // no mide nada.
+            var abajo = v.GetVisualDescendants().OfType<Grid>().FirstOrDefault(g => g.Name == "capaInferior");
+
+            // Quieto: se esconden.
+            await Task.Delay(3200);
+            Dice(abajo?.Opacity < 0.1,
+                $"los controles se apartan solos tras un rato quieto ({abajo?.Opacity:0.00})");
+
+            // Y vuelven. Esta es la mitad que de verdad importa: unos controles que se
+            // esconden y no vuelven dejan la ventana inservible.
+            //
+            // Se despiertan con una tecla y no con el raton porque fabricar un movimiento de
+            // raton en Avalonia exige un IPointer, que no hay de donde sacar sin un
+            // dispositivo de verdad. La tecla entra por el mismo sitio -las dos llaman a
+            // Mostrar()-, asi que lo que se comprueba, que es la maquinaria de esconder y
+            // volver, es lo mismo. Lo que NO queda comprobado aqui es el filtro de los 2 px
+            // del raton; eso solo lo dice una mano.
+            v.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.M });
+            await Task.Delay(400);
+            Dice(abajo?.Opacity > 0.9,
+                $"y vuelven en cuanto se toca algo ({abajo?.Opacity:0.00})");
+
+            v.Close();
+        }
+        finally
+        {
+            try { Directory.Delete(carpeta, true); } catch { }
+        }
+    }
+
+    /// <summary>Dos segundos de patron de prueba, con el ffmpeg que ya lleva la app.</summary>
+    private static async Task<bool> HacerUnVideoDePrueba(string destino)
+    {
+        try
+        {
+            var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                Ondine.Engine.FfmpegPath,
+                $"-y -f lavfi -i testsrc=size=320x180:rate=10:duration=2 " +
+                $"-c:v libx264 -pix_fmt yuv420p \"{destino}\"")
+            { UseShellExecute = false, CreateNoWindow = true });
+            if (p is null) return false;
+            await p.WaitForExitAsync();
+            return File.Exists(destino) && new FileInfo(destino).Length > 0;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
     /// El explorador de catalogos: el buscador y el panel del JSON.
     ///
     /// <para>

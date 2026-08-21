@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Ondine.Ava.CirculosCargando">
+
+  <!--
+    La espera, en cuatro circulos que laten en cascada. Portado de CirculosCargando.cs.
+
+    Aqui solo esta la forma. El latido se monta en el code-behind, y no en un estilo de este
+    XAML, por el retraso en cascada: cada circulo va 0,3 s por detras del anterior, y eso es
+    lo unico que los distingue. Declarado en XAML harian falta cuatro bloques casi identicos
+    y cambiar el ritmo obligaria a tocarlo en ocho sitios.
+
+    El motivo de fondo del puerto esta escrito en el code-behind: en WPF habia que guardar la
+    lista de animaciones para poder pararlas, y una que se escapo costo un 11% de nucleo
+    para siempre.
+  -->
+
+  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+    <!-- Los cuatro se anaden en el code-behind, cada uno con su retraso. -->
+    <StackPanel Name="fila" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10"/>
+
+    <TextBlock Name="lblTexto" FontSize="12" Foreground="{StaticResource Neutral500}"
+               HorizontalAlignment="Center" TextAlignment="Center" Margin="0,22,0,0"
+               TextWrapping="Wrap" MaxWidth="300"/>
+  </StackPanel>
+</UserControl>
