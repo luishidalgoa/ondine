@@ -108,4 +108,6 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - 🔜 **Linux / macOS con interfaz**: hoy solo la CLI es multiplataforma. WPF es solo Windows, así que
   hace falta migrar la interfaz a **Avalonia**; el motor (`Engine`/`Estimator`/`Reindex`) ya es
   portable y las pruebas del motor ya corren en Linux. Es el paso grande pendiente, y es el que se
-  quiere dar.
+  quiere dar. **Estudiado y medido en [`docs/avalonia.md`](docs/avalonia.md)**: el 60% del C# ya es
+  portable, lo tedioso está concentrado en los dos temas, y el primer paso no es Avalonia sino
+  partir un `Ondine.Core` de verdad — que vale la pena aunque el puerto no se haga.
