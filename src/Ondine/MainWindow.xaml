@@ -433,7 +433,18 @@
                         ToolTip="{i:T MainCalidadTip}">
                 <ComboBoxItem Content="{i:T MainCalidadAuto}"/><ComboBoxItem Content="{i:T MainCalidad22}"/><ComboBoxItem Content="{i:T MainCalidad24}"/>
                 <ComboBoxItem Content="{i:T MainCalidad27}"/><ComboBoxItem Content="{i:T MainCalidad30}"/>
+                <ComboBoxItem Content="{i:T MainCalidadObjetivo}"/>
               </ComboBox>
+              <!-- Solo sale con «Tamaño objetivo…» elegido: un campo permanente que casi
+                   nunca se usa es ruido en la fila de ajustes. -->
+              <Grid x:Name="filaObjetivo" Visibility="Collapsed" Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="txtObjetivoMB" ToolTip="{i:T MainObjetivoTip}"/>
+                <TextBlock Grid.Column="1" Text="{i:T MainObjetivoMB}" FontSize="10.5" Margin="6,0,0,0"
+                           VerticalAlignment="Center" Foreground="{StaticResource Neutral600}"/>
+              </Grid>
             </StackPanel>
             <StackPanel Grid.Column="4" Margin="0,0,10,0">
               <TextBlock Text="{i:T MainResolucionMax}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>

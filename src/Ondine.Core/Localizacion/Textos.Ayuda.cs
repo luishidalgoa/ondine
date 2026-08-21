@@ -239,6 +239,23 @@ public sealed partial class Textos
         "Si el disco se llena, la tanda se pausa sola y sigue cuando liberas espacio. Puedes seguir el progreso desde cualquier pestaña con la píldora de la cabecera.");
 
     // ── Recortes ────────────────────────────────────────────────────────────
+    public string AyudaComprimirObjetivoTitulo => Idioma.Elegir(
+        "LANDING ON A SIZE", "LLEGAR A UN TAMAÑO");
+
+    public string AyudaComprimirObjetivo => Idioma.Elegir(
+        "In «Quality», the last option is «Target size…»: instead of picking a quality and " +
+        "seeing what it weighs, you say what it should weigh and the bitrate is worked out. " +
+        "It is per file — a short clip and a film need very different bitrates to land on the " +
+        "same size — and the result is approximate, because it is one pass and not two. If the " +
+        "size you ask for would leave the video unwatchable, you are told before encoding, " +
+        "along with the smallest size that would work.",
+        "En «Calidad», la última opción es «Tamaño objetivo…»: en vez de elegir calidad y ver " +
+        "qué pesa, dices cuánto debe pesar y el bitrate sale solo. Es por fichero —un clip " +
+        "corto y una película necesitan bitrates muy distintos para pesar lo mismo— y el " +
+        "resultado es aproximado, porque es una pasada y no dos. Si el tamaño que pides " +
+        "dejaría el vídeo ilegible, se te dice antes de codificar, junto con el tamaño más " +
+        "pequeño que sí valdría.");
+
     public string AyudaComprimirColaTitulo => Idioma.Elegir(
         "THE QUEUE: DIFFERENT SETTINGS PER JOB",
         "LA COLA: AJUSTES DISTINTOS POR TRABAJO");

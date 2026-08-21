@@ -203,6 +203,7 @@ public sealed class ColaDeTrabajos
         SubLangs = o.SubLangs is null ? null : [.. o.SubLangs],
         NoSubs = o.NoSubs,
         Quality = o.Quality,
+        BitrateVideoKbps = o.BitrateVideoKbps,
         MaxHeight = o.MaxHeight,
         AudioBitrate = o.AudioBitrate,
         Force = o.Force,

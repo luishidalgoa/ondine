@@ -32,6 +32,20 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Ya puedes decir cuánto quieres que pese, en vez de elegir calidad y ver qué sale.** En «Calidad»
+  hay una opción nueva, «Tamaño objetivo…», donde escribes los MB a los que debe quedar cada
+  fichero. El bitrate se calcula **por fichero**: un clip corto y una película necesitan bitrates
+  muy distintos para pesar lo mismo, así que un único número para todo el lote no serviría.
+
+  Y si el tamaño que pides no da, **se te dice antes de codificar** —con el tamaño mínimo que sí
+  valdría— en vez de entregarte un vídeo ilegible que técnicamente pesa lo pedido. Si ni el audio
+  cabe, también se dice, porque ahí bajar la calidad del vídeo no arreglaría nada.
+
+  El resultado es aproximado: es una pasada, no dos.
+
+
 ## [1.12.0] - 2026-08-21
 
 ### Añadido

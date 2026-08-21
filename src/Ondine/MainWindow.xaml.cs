@@ -115,6 +115,7 @@ public partial class MainWindow : Window
         btnScan.Click += async (_, _) => await ScanAsync();
         btnRun.Click += async (_, _) => await RunAsync();
         btnEncolar.Click += async (_, _) => await EncolarAsync();
+        cboQ.SelectionChanged += (_, _) => AlCambiarModoDeCalidad();
         btnCancel.Click += (_, _) => _cts?.Cancel();
         btnPause.Click += (_, _) => TogglePause();
         btnMarkAll.Click += (_, _) => lst.SelectAll();
@@ -1208,7 +1209,11 @@ public partial class MainWindow : Window
             case 6: opt.AudioOnly = true; opt.AudioFormat = "opus"; break;
             default: opt.Container = "mkv"; break;
         }
+        // El indice 5 es «Tamano objetivo…»: entonces no hay calidad constante, hay un
+        // tamano al que llegar. Las dos juntas no las obedece ffmpeg, asi que es una o la
+        // otra y aqui se decide cual.
         opt.Quality = cboQ.SelectedIndex switch { 1 => 22, 2 => 24, 3 => 27, 4 => 30, _ => 0 };
+        opt.TamanoObjetivoBytes = ObjetivoElegidoBytes();
         opt.MaxHeight = cboRes.SelectedIndex switch { 1 => 1080, 2 => 720, 3 => 480, _ => 0 };
         opt.AudioBitrate = cboAud.SelectedIndex switch { 1 => 192, 2 => 160, 3 => 128, 4 => 96, _ => 0 };
 
@@ -1331,6 +1336,25 @@ public partial class MainWindow : Window
 
         if (_cola.Quitar(id)) PintarCola();
         else lblProg.Text = Textos.Instancia.MainColaNoSeMueve;
+    }
+
+    /// <summary>Si esta elegido «Tamano objetivo…», los bytes pedidos. Cero si no.</summary>
+    private long ObjetivoElegidoBytes()
+    {
+        if (cboQ.SelectedIndex != 5) return 0;
+
+        // Se acepta con coma o con punto: en una maquina en espanol se escribe «1,5» sin
+        // pensarlo, y rechazarlo por eso seria pelearse con el teclado del usuario.
+        var texto = (txtObjetivoMB.Text ?? "").Trim().Replace(',', '.');
+        return double.TryParse(texto, System.Globalization.NumberStyles.Float,
+                               System.Globalization.CultureInfo.InvariantCulture, out var mb) && mb > 0
+            ? (long)(mb * 1024 * 1024)
+            : 0;
+    }
+
+    private void AlCambiarModoDeCalidad()
+    {
+        filaObjetivo.Visibility = cboQ.SelectedIndex == 5 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async Task RunAsync()
