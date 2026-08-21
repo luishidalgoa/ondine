@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.MainWindow"
+        Title="Ondine"
+        Width="900" Height="600"
+        Background="{StaticResource Bg}">
+
+  <!--
+    El esqueleto. Todavia no es la aplicacion: es el sitio donde va a caer, y la prueba de
+    que las tres piezas de las que depende todo lo demas funcionan de verdad.
+
+    1. Los colores salen del tema compartido -este panel usa Surface, Text y Accent-.
+    2. El texto sale del MISMO catalogo que la interfaz de WPF, por la extension {i:T}.
+    3. El motor esta enlazado y se le puede preguntar.
+
+    Las pantallas de verdad vienen detras, una a una, comparandolas con la de WPF que sigue
+    ahi al lado.
+  -->
+  <Border Margin="24" Padding="24" CornerRadius="8"
+          Background="{StaticResource Surface}"
+          BorderBrush="{StaticResource Divider}" BorderThickness="1">
+    <StackPanel Spacing="12">
+      <TextBlock Text="{i:T MainPaginaComprimir}" FontSize="20"
+                 Foreground="{StaticResource Accent400}"/>
+      <TextBlock Text="{i:T MainPaginaOrganizar}" Foreground="{StaticResource Text}"/>
+      <TextBlock Text="{i:T MainPaginaRecortes}" Foreground="{StaticResource Neutral500}"/>
+
+      <TextBlock x:Name="rotuloMotor" Foreground="{StaticResource Neutral600}"
+                 FontSize="11.5" TextWrapping="Wrap"/>
+    </StackPanel>
+  </Border>
+</Window>

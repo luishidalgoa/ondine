@@ -32,6 +32,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Empieza la interfaz para Linux y macOS.** Ondine solo corría en Windows porque su interfaz usa
+  WPF, que solo existe ahí. Ya hay una segunda interfaz en marcha —sobre **el mismo motor y el
+  mismo catálogo de textos**— y por primera vez **la parte gráfica publica para Linux y macOS**.
+
+  Todavía no sustituye a nada: es el esqueleto, y las pantallas van a ir portándose una a una
+  mientras las dos conviven. Para quien usa Ondine en Windows **no cambia nada**.
+
+
 ## [1.13.0] - 2026-08-21
 
 ### Añadido

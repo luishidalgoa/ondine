@@ -115,9 +115,14 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **Capturas en el README** de las tres herramientas, con datos reales dentro.
 - ⬜ Firmar el instalador (evitar el aviso de SmartScreen).
 - ⬜ Rediseño visual (brief en [`docs/design-brief.md`](docs/design-brief.md)).
-- 🔜 **Linux / macOS con interfaz**: hoy solo la CLI es multiplataforma. WPF es solo Windows, así que
-  hace falta migrar la interfaz a **Avalonia**; el motor (`Engine`/`Estimator`/`Reindex`) ya es
-  portable y las pruebas del motor ya corren en Linux. Es el paso grande pendiente, y es el que se
-  quiere dar. **Estudiado y medido en [`docs/avalonia.md`](docs/avalonia.md)**: el 60% del C# ya es
-  portable, lo tedioso está concentrado en los dos temas, y el primer paso no es Avalonia sino
-  partir un `Ondine.Core` de verdad — que vale la pena aunque el puerto no se haga.
+- 🔜 **Linux / macOS con interfaz** — EN MARCHA. El motor ya era portable; ahora existe
+  `src/Ondine.Avalonia` y **publica para Linux y macOS**. Va por fases y las dos interfaces
+  conviven mientras dure: el estudio medido está en [`docs/avalonia.md`](docs/avalonia.md) y las
+  dos incógnitas que podían cancelarlo se despejaron con código en `spike/avalonia`.
+  - ✅ Fase 0: el motor separado en `Ondine.Core`.
+  - ✅ Fase 1: reglas de Organizar bajadas al motor, con pruebas.
+  - ✅ Fase 2: la prueba de fuego —DataGrid con RowDetails y vídeo con LibVLC—, las dos salen.
+  - ✅ Fase 3a: el esqueleto, los 30 colores del tema y los textos del catálogo compartido.
+  - 🔜 Fase 3b: las plantillas de control y los 107 *triggers* a selectores.
+  - ⬜ Fase 4: las pantallas, de menos a más.
+  - ⬜ Fase 5: empaquetado, papelera y `.desktop`.

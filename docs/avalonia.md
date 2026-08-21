@@ -154,6 +154,25 @@ barata y es la que decide. De la 3 en adelante es cuando se gasta de verdad.
   lo que sugiere que hay bastante lógica mezclada.
 - **Si LibVLC es aceptable como dependencia.** Eso no lo decide el código.
 
+## Lo que ya está hecho (21/08/2026)
+
+El plan de abajo dejó de ser un plan. Al día de hoy:
+
+- **Fase 0** ✅ — el motor separado en `Ondine.Core`.
+- **Fase 1** ✅ — reglas de Organizar bajadas al motor, con pruebas.
+- **Fase 2** ✅ — la prueba de fuego, en `spike/avalonia`. **Las dos incógnitas salen que sí**: el
+  `DataGrid` con `RowDetails` aguanta el patrón de Organizar (y el binding de WPF vale tal cual), y
+  LibVLC busca donde se le pide y reproduce AV1 con decodificación por hardware.
+- **Fase 3a** ✅ — existe `src/Ondine.Avalonia`, **publica para Linux y macOS**, y comparte con la
+  interfaz de WPF los 30 colores del tema y el catálogo de textos entero.
+
+**La decisión de LibVLC está tomada: entra.** Era la única que quedaba y no era técnica. Es el
+primer paquete con binarios nativos del proyecto y entró con permiso explícito.
+
+Queda la 3b —las plantillas y los 107 *triggers*—, las pantallas y el empaquetado. Las dos
+interfaces conviven mientras dure: cambiar las dieciocho pantallas de golpe habría dejado la app
+sin poder publicarse durante semanas.
+
 ## La alternativa que existe, y por qué no la propongo
 
 **Avalonia XPF** corre XAML de WPF casi sin cambios. Es de pago y por aplicación. Ahorraría la
