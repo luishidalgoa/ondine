@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-08-21
+
 ### Añadido
 
 - **Cuando dos películas encajan igual de bien, ahora puedes elegir tú — y se recuerda.** La app se
