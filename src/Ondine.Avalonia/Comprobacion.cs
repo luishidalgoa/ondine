@@ -136,6 +136,61 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// «Quitar pistas», con tres pistas de mentira pero reglas de verdad.
+    ///
+    /// <para>
+    /// Lo que se comprueba no es que se vea: es que <b>las casillas siguen enganchadas</b>.
+    /// El enlace de IsChecked cambia de sintaxis al portar y, si se rompe, la ventana
+    /// sigue pintandose igual — solo que marcar no hace nada. Eso, en una pantalla que
+    /// borra pistas de un fichero, se descubre tarde.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerPistas(Window dueno)
+    {
+        var pistas = new List<Ondine.Pista>
+        {
+            new(0, Ondine.TipoPista.Video, "hevc", "", null, 4_000_000),
+            new(1, Ondine.TipoPista.Audio, "aac", "spa", 2, 128_000),
+            new(2, Ondine.TipoPista.Audio, "aac", "eng", 6, 384_000),
+        };
+
+        var v = new Pistas(new Ondine.Engine(), "peli.mkv", pistas, 3600);
+        v.Show(dueno);
+        await Task.Delay(300);
+
+        var casillas = v.GetVisualDescendants().OfType<CheckBox>().ToList();
+        var quitar = v.GetVisualDescendants().OfType<Button>()
+                      .FirstOrDefault(b => b.Name == "btnQuitar");
+        var aviso = v.GetVisualDescendants().OfType<TextBlock>()
+                     .FirstOrDefault(t => t.Name == "lblAviso");
+
+        Dice(casillas.Count == 3, $"una casilla por pista ({casillas.Count} de 3)");
+
+        // La regla de seguridad: la de video no se ofrece. Sin ella el resultado ya no es
+        // este video, asi que no es una opcion que se le pueda dar a nadie por error.
+        Dice(casillas.Count == 3 && casillas[0].IsEnabled == false,
+            "la de video no se puede quitar");
+        Dice(casillas.Count == 3 && casillas[1].IsEnabled && casillas[2].IsEnabled,
+            "y las de audio si");
+
+        Dice(quitar?.IsEnabled == false, "sin nada marcado no hay nada que quitar");
+
+        // Marcar una: si el enlace se rompio al portar, esto no despierta el boton.
+        casillas[1].IsChecked = true;
+        await Task.Delay(150);
+        Dice(quitar?.IsEnabled == true,
+            "marcar una despierta el boton — la casilla sigue enganchada al motor");
+        Dice(aviso?.IsVisible == false, "y con un audio todavia puesto no hay aviso");
+
+        // Marcar las dos: quedarse sin audio es legitimo, pero nadie lo espera.
+        casillas[2].IsChecked = true;
+        await Task.Delay(150);
+        Dice(aviso?.IsVisible == true, "quitar todo el audio avisa antes, no despues");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// «Que falta», abierta con un catalogo de verdad.
     ///
     /// <para>

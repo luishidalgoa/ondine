@@ -1,0 +1,91 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Pistas"
+        Title="{i:T PistasTitulo}"
+        Width="700" Height="560" MinWidth="480" MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!--
+    «Quitar pistas», portado de PistasWindow.xaml.
+
+    Lo que cambia respecto a WPF, y es lo unico de fondo: la casilla de cada fila.
+    En WPF iba `IsChecked="{Binding Quitar, Mode=TwoWay}"`; en Avalonia el enlace de
+    IsChecked YA es de ida y vuelta por defecto, asi que el Mode sobra -y ponerlo no
+    estorba, pero decirlo aqui evita que alguien lo copie pensando que hace falta-.
+  -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+      <Grid Grid.Row="0" Height="38">
+        <TextBlock Name="lblTitulo" Text="{i:T PistasTitulo}" FontSize="13.5" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <Button Name="btnCerrar" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" Margin="0,0,6,0" Content="✕"/>
+      </Grid>
+
+      <StackPanel Grid.Row="1" Margin="16,4,16,10">
+        <TextBlock Name="lblFichero" FontSize="12.5" Foreground="{StaticResource Text}"
+                   TextTrimming="CharacterEllipsis"/>
+        <TextBlock Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral500}"
+                   TextWrapping="Wrap" Text="{i:T PistasAyuda}"/>
+      </StackPanel>
+
+      <ListBox Name="lista" Grid.Row="2" Background="Transparent" BorderThickness="0" Margin="8,0,8,0"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox.Styles>
+          <!-- El ItemContainerStyle de WPF, traducido: una plantilla y un selector para
+               el raton. La pseudoclase sustituye al Trigger IsMouseOver. -->
+          <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Template">
+              <ControlTemplate>
+                <Border Name="b" Background="Transparent" CornerRadius="6" Padding="10,7">
+                  <ContentPresenter Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                </Border>
+              </ControlTemplate>
+            </Setter>
+          </Style>
+          <Style Selector="ListBoxItem:pointerover /template/ Border#b">
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+          </Style>
+        </ListBox.Styles>
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <!-- La de video no se puede quitar: sin ella el resultado ya no es este video. -->
+              <CheckBox IsChecked="{Binding Quitar}" IsEnabled="{Binding SePuedeQuitar}"
+                        VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <TextBlock Grid.Column="1" Text="{Binding Resumen}" FontSize="12.5"
+                         VerticalAlignment="Center" Foreground="{StaticResource Text}"/>
+              <TextBlock Grid.Column="2" Text="{Binding Nota}" FontSize="11"
+                         VerticalAlignment="Center" Foreground="{StaticResource Neutral500}"
+                         Margin="8,0,0,0"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <StackPanel Grid.Row="3" Margin="16,10,16,14">
+        <TextBlock Name="lblAviso" FontSize="11.5" Foreground="{StaticResource OrgWarn}"
+                   TextWrapping="Wrap" Margin="0,0,0,6" IsVisible="False"/>
+        <Grid>
+          <TextBlock Name="lblAhorro" FontSize="12" Foreground="{StaticResource Neutral400}"
+                     VerticalAlignment="Center" TextWrapping="Wrap"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Name="btnCancelar" Theme="{StaticResource BtnGhost}"
+                    Content="{i:T Cancelar}" FontSize="12"/>
+            <Button Name="btnQuitar" Theme="{StaticResource BtnPrimary}"
+                    Content="{i:T PistasQuitarMarcadas}" FontSize="12" Padding="12,5"
+                    IsEnabled="False"/>
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>
