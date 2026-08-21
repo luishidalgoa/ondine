@@ -23,6 +23,18 @@ public static class LibraryScan
     private const int OrdenRaiz = int.MaxValue;
 
     /// <summary>
+    /// Los especiales, tras las temporadas normales y antes de lo que no dice nada.
+    ///
+    /// <para>
+    /// Antes esto salía solo, porque «Especiales» no se reconocía como temporada y caía en
+    /// <see cref="OrdenSinNumero"/>. Ahora SÍ se reconoce —es la temporada 0, que es como la
+    /// llaman Plex y Jellyfin— y sin esto se ordenaría la PRIMERA, delante de la temporada 1.
+    /// Lo que era un efecto secundario pasa a estar dicho.
+    /// </para>
+    /// </summary>
+    private const int OrdenEspeciales = int.MaxValue - 2;
+
+    /// <summary>
     /// El rótulo de la banda de los vídeos sueltos. Deja de ser <c>const</c> porque
     /// ahora depende del idioma elegido, que se sabe en ejecución y no al compilar.
     /// </summary>
@@ -82,6 +94,9 @@ public static class LibraryScan
     public static int Orden(string grupo)
     {
         if (grupo.Length == 0) return OrdenRaiz;
-        return SignalExtractor.TemporadaDeCarpeta(grupo) ?? OrdenSinNumero;
+
+        var t = SignalExtractor.TemporadaDeCarpeta(grupo);
+        if (t is null) return OrdenSinNumero;
+        return t == 0 ? OrdenEspeciales : t.Value;
     }
 }

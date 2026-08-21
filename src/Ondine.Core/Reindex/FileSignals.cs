@@ -166,6 +166,24 @@ public static partial class SignalExtractor
     [GeneratedRegex(@"^(?:season|temporada|t|s)?\s*_?-?\s*(\d{1,4})\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex RxCarpetaTemporada();
 
+    // Con adornos detrás: «Season 3 (2011)», «Temporada 2 [1080p]», «S02 - 720p».
+    //
+    // EXIGE la palabra delante, y ahí está toda la seguridad de esto. Sin ella, «Los 4
+    // Fantásticos» pasaría a ser la temporada 4 — y un falso positivo es peor que no
+    // detectar nada: no detectar deja el hueco a la vista, detectar mal manda los capítulos
+    // a otra carpeta con toda la confianza.
+    //
+    // El número va pegado a la palabra, así que «Season Finale» no cuela y «Temporada de
+    // caza» tampoco.
+    [GeneratedRegex(@"^(?:season|temporada|s|t)\s*_?-?\s*(\d{1,4})\b", RegexOptions.IgnoreCase)]
+    private static partial Regex RxCarpetaTemporadaConAdornos();
+
+    // «Specials» / «Especiales» = temporada 0. Es la convención de Plex y Jellyfin, que es
+    // justo lo que Ondine viene a servir; antes daban null y esos capítulos se quedaban
+    // sin temporada.
+    [GeneratedRegex(@"^(?:specials?|especiales?)\s*$", RegexOptions.IgnoreCase)]
+    private static partial Regex RxCarpetaEspeciales();
+
     /// <summary>
     /// Separadores de multi-segmento del nombre. Cada web reparte las dos historias de un
     /// capítulo a su manera: «A ┃ B», «A | B», «A + B» o «A - B».
@@ -358,8 +376,18 @@ public static partial class SignalExtractor
     {
         if (string.IsNullOrWhiteSpace(carpeta)) return null;
 
-        var m = RxCarpetaTemporada().Match(carpeta.Trim());
+        var limpio = carpeta.Trim();
+
+        if (RxCarpetaEspeciales().IsMatch(limpio)) return 0;
+
+        // Primero el patrón estricto -el nombre ES la temporada- y solo si no cuadra, el
+        // que admite adornos. En ese orden porque «2005» a secas tiene que seguir siendo
+        // el año 2005 y no caer en el otro camino.
+        var m = RxCarpetaTemporada().Match(limpio);
         if (m.Success && int.TryParse(m.Groups[1].Value, out var t)) return t;
+
+        var mAdornos = RxCarpetaTemporadaConAdornos().Match(limpio);
+        if (mAdornos.Success && int.TryParse(mAdornos.Groups[1].Value, out var t2)) return t2;
 
         var mSE = RxSxxExx().Match(carpeta);
         return mSE.Success ? int.Parse(mSE.Groups[1].Value) : null;
