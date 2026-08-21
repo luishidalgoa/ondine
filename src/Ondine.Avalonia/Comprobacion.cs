@@ -139,6 +139,58 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// La Ayuda: que se cambie de tutorial y que el texto llegue a la pantalla.
+    ///
+    /// <para>
+    /// Que no falte ningun parrafo ya lo vigila AyudaPortadaTests comparando las dos
+    /// versiones. Lo que se mira aqui es lo otro: que el indice CAMBIE de pagina -son
+    /// cuatro paneles apilados y solo uno visible; si el enganche se cae, se queda siempre
+    /// el primero y parece que los otros tutoriales no existen- y que los textos partidos
+    /// en trozos con Run se pinten. Eso ultimo no es paranoia: un Run no es un control
+    /// normal y su texto podria quedarse vacio sin que nada se queje.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerAyuda(Window dueno)
+    {
+        var v = new Ayuda();
+        v.Show(dueno);
+        await Task.Delay(350);
+
+        string[] paginas = ["pagOrgComo", "pagOrgPasos", "pagComprimir", "pagRecortes"];
+        List<string> Visibles() =>
+            paginas.Where(p => v.FindControl<StackPanel>(p)?.IsVisible == true).ToList();
+
+        Dice(Visibles().SequenceEqual(["pagOrgComo"]),
+            $"al abrir se ve un solo tutorial, el primero ({string.Join(",", Visibles())})");
+
+        // Cambiar de entrada en el indice. Si el enganche se cayo al portar, se queda el
+        // primero y la Ayuda parece tener un unico tutorial.
+        v.FindControl<RadioButton>("navRecortes")!.IsChecked = true;
+        await Task.Delay(200);
+        Dice(Visibles().SequenceEqual(["pagRecortes"]),
+            $"elegir otro cambia de pagina y deja UNA sola ({string.Join(",", Visibles())})");
+
+        // Y volver: el grupo tiene que apagar la anterior. Dos visibles a la vez seria un
+        // tutorial pegado debajo del otro, que es peor que no cambiar.
+        v.FindControl<RadioButton>("navComprimir")!.IsChecked = true;
+        await Task.Delay(200);
+        Dice(Visibles().SequenceEqual(["pagComprimir"]),
+            $"y volver a cambiar no deja dos pegadas ({string.Join(",", Visibles())})");
+
+        // La leyenda de colores va partida en Runs -un punto de color y su explicacion,
+        // tres veces-. Es el unico texto de la app hecho asi.
+        v.FindControl<RadioButton>("navOrgComo")!.IsChecked = true;
+        await Task.Delay(200);
+        var conRuns = v.GetVisualDescendants().OfType<TextBlock>()
+                       .FirstOrDefault(t => t.Inlines is { Count: > 3 });
+        var leyenda = conRuns?.Inlines?.Text ?? "";
+        Dice(leyenda.Length > 20,
+            $"los textos partidos en Runs llegan pintados ({leyenda.Length} caracteres)");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// «Generar el catalogo con una IA»: los idiomas del encargo.
     ///
     /// <para>

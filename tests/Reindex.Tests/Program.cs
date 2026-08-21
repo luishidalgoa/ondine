@@ -127,6 +127,7 @@ public static class Program
         Ondine.Reindex.Tests.NumeracionDeLaCarpetaTests.Todas();
         Ondine.Reindex.Tests.NombrePobreNoEsPromesaTests.Todas();
         Ondine.Reindex.Tests.SugerenciasTests.Todas();
+        Ondine.Reindex.Tests.AyudaPortadaTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
