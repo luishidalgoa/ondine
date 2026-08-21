@@ -12,6 +12,7 @@
              suelto ahi dentro no compila, al contrario que en WPF. -->
         <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Colores.axaml"/>
         <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Botones.axaml"/>
+        <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Campos.axaml"/>
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

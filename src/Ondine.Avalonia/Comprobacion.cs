@@ -29,7 +29,13 @@ public static class Comprobacion
 
     public static void Correr(Window v)
     {
-        var botones = v.GetVisualDescendants().OfType<Button>().ToList();
+        // Solo los que llevan un Theme PUESTO por nosotros. La primera version contaba
+        // todos los Button del arbol, y al anadir un ComboBox empezo a contar tambien el
+        // que ese control trae dentro de su plantilla — que no usa el tema de Ondine ni
+        // tiene por que. La prueba fallaba por un boton que no era suyo.
+        var botones = v.GetVisualDescendants().OfType<Button>()
+                       .Where(b => b.Theme is not null)
+                       .ToList();
 
         Dice(botones.Count >= 5, $"los botones estan en el arbol visual: {botones.Count}");
         if (botones.Count == 0) return;
@@ -70,6 +76,63 @@ public static class Comprobacion
         var suCaja = apagado?.GetVisualDescendants().OfType<Border>().FirstOrDefault(x => x.Name == "b");
         Dice(suCaja is not null && suCaja.Opacity < 0.6,
             $"un boton apagado se atenua ({suCaja?.Opacity}) — y se atenua la caja, no el haz");
+    }
+
+    /// <summary>
+    /// Los campos: que lleven el tema de Ondine y no el de Fluent, y que sus estados
+    /// reaccionen.
+    ///
+    /// <para>
+    /// Van como estilos implicitos, asi que el riesgo aqui es el contrario que en los
+    /// botones: no que el selector no case, sino que el ControlTheme <b>no se aplique a
+    /// todos</b>. Un TextBox dentro de un popup o de una plantilla podria quedarse con el
+    /// de serie, y eso solo se ve mirando.
+    /// </para>
+    /// </summary>
+    public static void CorrerCampos(Window v)
+    {
+        var caja = v.GetVisualDescendants().OfType<TextBox>().FirstOrDefault();
+        var marco = caja?.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "caja");
+        Dice(marco is not null, "la caja de texto usa la plantilla de Ondine, no la de Fluent");
+        Dice(marco is not null && marco.CornerRadius.TopLeft == 6,
+            $"con su radio de esquina ({marco?.CornerRadius})");
+
+        // El texto de ayuda se ve con la caja vacia y se va al escribir. En WPF era un
+        // DataTrigger sobre Text.IsEmpty; aqui es la pseudoclase :empty.
+        var pista = caja?.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "pista");
+        Dice(pista is not null && pista.IsVisible,
+            "el texto de ayuda se ve con la caja vacia");
+
+        if (caja is not null)
+        {
+            caja.Text = "algo";
+            v.UpdateLayout();
+            Dice(pista is not null && !pista.IsVisible,
+                "y desaparece al escribir — la pseudoclase :empty hace lo del DataTrigger de WPF");
+            caja.Text = "";
+        }
+
+        // La casilla: el tic aparece al marcar.
+        var casilla = v.GetVisualDescendants().OfType<CheckBox>().FirstOrDefault();
+        var tic = casilla?.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>()
+                          .FirstOrDefault(p => p.Name == "tic");
+        Dice(tic is not null, "la casilla usa la plantilla de Ondine");
+        Dice(tic is not null && tic.IsVisible,
+            "y marcada enseña el tic");
+
+        if (casilla is not null)
+        {
+            casilla.IsChecked = false;
+            v.UpdateLayout();
+            Dice(tic is not null && !tic.IsVisible, "y desmarcada lo esconde");
+            casilla.IsChecked = true;
+        }
+
+        // El desplegable se viste con Setters, no con plantilla: aqui basta comprobar que
+        // los valores son los nuestros.
+        var combo = v.GetVisualDescendants().OfType<ComboBox>().FirstOrDefault();
+        Dice(combo is not null && combo.CornerRadius.TopLeft == 6,
+            $"el desplegable lleva los valores de Ondine ({combo?.CornerRadius})");
     }
 
     /// <summary>
