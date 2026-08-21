@@ -1260,76 +1260,78 @@ public partial class OrganizarView : UserControl
 
     // ─────────────────────────── contadores y filtro ───────────────────────────
 
+    /// <summary>
+    /// Pinta el resumen del lote. Lo que se DECIDE -cuantos hay de cada cosa, que se puede
+    /// pulsar, que promete el boton de aplicar- lo calcula <see cref="ResumenDelLote"/>, que
+    /// vive en el motor y tiene pruebas. Aqui solo se reparte por la pantalla.
+    /// </summary>
     private void ActualizarContadores()
     {
-        // EstadoVisible, no Res.Estado: lo ya aplicado cuenta como limpio — está bien en el
-        // disco y no queda nada que hacerle.
-        int limpios = _filas.Count(f => f.EstadoVisible == ReindexEstado.Limpio);
-        int corregidos = _filas.Count(f => f.EstadoVisible == ReindexEstado.Corregido);
-        int especiales = _filas.Count(f => f.EstadoVisible == ReindexEstado.Especial);
-        int conflictos = _filas.Count(f => f.EstadoVisible == ReindexEstado.Conflicto);
-        int errores = _filas.Count(f => f.EstadoVisible == ReindexEstado.Error);
+        var r = ResumenDelLote.De(_filas.Select(ComoFilaDelLote), _catalogoCargado != null);
 
-        runLimpios.Text = string.Format(Textos.Instancia.OrganizarChipCorrectos, limpios);
-        runCorregidos.Text = string.Format(Textos.Instancia.OrganizarChipConCambios, corregidos);
-        runEspeciales.Text = string.Format(Textos.Instancia.OrganizarChipEspeciales, especiales);
-        runConflictos.Text = string.Format(Textos.Instancia.OrganizarChipConflictos, conflictos);
-        runErrores.Text = string.Format(Textos.Instancia.OrganizarChipErrores, errores);
+        runLimpios.Text = string.Format(Textos.Instancia.OrganizarChipCorrectos, r.Limpios);
+        runCorregidos.Text = string.Format(Textos.Instancia.OrganizarChipConCambios, r.Corregidos);
+        runEspeciales.Text = string.Format(Textos.Instancia.OrganizarChipEspeciales, r.Especiales);
+        runConflictos.Text = string.Format(Textos.Instancia.OrganizarChipConflictos, r.Conflictos);
+        runErrores.Text = string.Format(Textos.Instancia.OrganizarChipErrores, r.Errores);
 
         ActualizarBotonCola();
 
-        chipEspeciales.IsEnabled = especiales > 0;
-        chipConflictos.IsEnabled = conflictos > 0;
-        chipErrores.IsEnabled = errores > 0;
-        btnConfirmarEspeciales.IsEnabled = especiales > 0;
+        chipEspeciales.IsEnabled = r.Especiales > 0;
+        chipConflictos.IsEnabled = r.Conflictos > 0;
+        chipErrores.IsEnabled = r.Errores > 0;
+        btnConfirmarEspeciales.IsEnabled = r.PuedeConfirmarEspeciales;
 
-        int listos = _filas.Count(f => f.ListoParaAplicar);
-        int marcados = _filas.Count(f => f.ListoParaAplicar && f.Marcado);
-        int dudas = _filas.Count(f => f.EsDuda);
-
-        // El botón dice EXACTAMENTE cuántos va a tocar. Si hay listos sin marcar, se nota
-        // en el propio texto («12 de 400»): aplicar nunca lleva sorpresa dentro.
-        lblAplicar.Text = marcados == 0 ? Textos.Instancia.Aplicar
-            : marcados == listos ? string.Format(Textos.Instancia.OrganizarAplicarMarcados, marcados)
-            : string.Format(Textos.Instancia.OrganizarAplicarDe, marcados, listos);
-        btnAplicar.IsEnabled = marcados > 0;
+        lblAplicar.Text = r.ModoAplicar switch
+        {
+            ModoDeAplicar.Nada => Textos.Instancia.Aplicar,
+            ModoDeAplicar.Todos => string.Format(Textos.Instancia.OrganizarAplicarMarcados, r.Marcados),
+            _ => string.Format(Textos.Instancia.OrganizarAplicarDe, r.Marcados, r.Listos),
+        };
+        btnAplicar.IsEnabled = r.PuedeAplicar;
         btnAplicar.ToolTip = Textos.Instancia.OrganizarAplicarAyudaDetalle;
-        btnAceptarVerdes.IsEnabled = listos > 0;
+        btnAceptarVerdes.IsEnabled = r.PuedeAceptarVerdes;
 
-        // Partir solo tiene sentido sobre lo YA identificado y con más de una historia dentro.
-        // Comparar con el catálogo solo tiene sentido cuando hay algo analizado.
-        btnQueFalta.IsEnabled = _catalogoCargado != null && _filas.Count > 0;
-
-        // Ordenar por temporadas pide lo mismo: sin catálogo no se sabe de qué
-        // temporada es cada fichero, y sin análisis no hay nada que ordenar.
-        btnReordenar.IsEnabled = _catalogoCargado != null && _filas.Count > 0;
+        btnQueFalta.IsEnabled = r.PuedeCompararCatalogo;
+        btnReordenar.IsEnabled = r.PuedeReordenar;
 
         ContarLasIguales();
 
-        int partibles = FilasPartibles().Count;
-        btnPartirSegmentos.IsEnabled = partibles > 0;
-        btnPartirSegmentos.Content = partibles > 0
-            ? string.Format(Textos.Instancia.OrganizarPartirSegmentosN, partibles)
+        btnPartirSegmentos.IsEnabled = r.PuedePartir;
+        btnPartirSegmentos.Content = r.PuedePartir
+            ? string.Format(Textos.Instancia.OrganizarPartirSegmentosN, r.Partibles)
             : Textos.Instancia.OrganizarPartirSegmentos;
 
-        // Los que ya estaban bien se dicen aparte: si no, «383 listos · 165 por despachar» sobre
-        // 548 deja 0 sin explicar y parece que se han perdido por el camino.
-        int hechos = _filas.Count(f => f.SinCambios);
-        lblEstadoOrg.Text = string.Format(Textos.Instancia.OrganizarResumen, _filas.Count, listos, dudas)
-                            + (hechos > 0
-                                ? string.Format(Textos.Instancia.OrganizarResumenYaBien, hechos) : "")
+        lblEstadoOrg.Text = string.Format(Textos.Instancia.OrganizarResumen, r.Total, r.Listos, r.Dudas)
+                            + (r.YaBien > 0
+                                ? string.Format(Textos.Instancia.OrganizarResumenYaBien, r.YaBien) : "")
                             + (_dudososEnNube > 0
                                 ? string.Format(Textos.Instancia.OrganizarResumenNube, _dudososEnNube) : "");
 
-        // Si la mayoría son dudas, se dice de frente en vez de dejar que lo descubra fila a fila
-        if (_filas.Count > 0 && dudas > _filas.Count / 2)
+        if (r.AvisarDeDudas)
         {
-            lblBannerAviso.Text = string.Format(Textos.Instancia.OrganizarBannerDudas, dudas, _filas.Count)
+            lblBannerAviso.Text = string.Format(Textos.Instancia.OrganizarBannerDudas, r.Dudas, r.Total)
                                   + ExplicarPorQueTantasDudas();
             bannerAviso.Visibility = Visibility.Visible;
         }
         else bannerAviso.Visibility = Visibility.Collapsed;
     }
+
+    /// <summary>
+    /// La fila, reducida a lo que el resumen cuenta.
+    ///
+    /// <para>
+    /// <c>EstadoVisible</c> y no <c>Res.Estado</c>: lo ya aplicado cuenta como limpio, porque
+    /// esta bien en el disco y no queda nada que hacerle.
+    /// </para>
+    /// </summary>
+    private static FilaDelLote ComoFilaDelLote(OrganizarRow f) => new(
+        f.EstadoVisible,
+        f.ListoParaAplicar,
+        f.Marcado,
+        f.EsDuda,
+        f.SinCambios,
+        EsPartible(f));
 
     private string ExplicarPorQueTantasDudas()
     {
@@ -1513,22 +1515,14 @@ public partial class OrganizarView : UserControl
         if (chipConflictos.IsChecked == true) estados.Add(ReindexEstado.Conflicto);
         if (chipErrores.IsChecked == true) estados.Add(ReindexEstado.Error);
 
-        // El texto filtra con la normalización del identificador: «sonrisa» encuentra
-        // «¡En busca de una sonrisa!» aunque el nombre lleve signos y tildes.
-        var q = TitleMatch.Norm(txtBuscarTabla.Text);
-        bool PasaTexto(OrganizarRow f)
-        {
-            if (q.Length == 0) return true;
-            // Una fila YA APLICADA solo se encuentra por su nombre nuevo: el viejo ya no
-            // existe en disco, y que siguiera apareciendo al buscarlo hacía dudar de si el
-            // renombrado había ocurrido de verdad.
-            if (f.Aplicado)
-                return TitleMatch.Norm(f.NombreNuevo ?? f.Original).Contains(q, StringComparison.Ordinal);
-            return TitleMatch.Norm(f.Original).Contains(q, StringComparison.Ordinal)
-                || TitleMatch.Norm(f.Propuesta).Contains(q, StringComparison.Ordinal);
-        }
+        // La regla de la busqueda -incluida la de que una fila ya aplicada solo se
+        // encuentra por su nombre nuevo- vive en el motor y tiene pruebas.
+        // Se normaliza UNA vez, no por fila: esto corre a cada tecla sobre la tabla entera.
+        var consulta = BusquedaDeFilas.Consulta.De(txtBuscarTabla.Text);
+        bool PasaTexto(OrganizarRow f) => BusquedaDeFilas.Pasa(
+            new FilaBuscable(f.Aplicado, f.Original, f.Propuesta, f.NombreNuevo), consulta);
 
-        if (estados.Count == 0 && !soloDudas && q.Length == 0)
+        if (estados.Count == 0 && !soloDudas && consulta.Vacia)
         { vista.Filter = null; RecalcularSeparadores(); return; }
 
         vista.Filter = o =>
@@ -1761,12 +1755,13 @@ public partial class OrganizarView : UserControl
     /// Las filas que se pueden partir: identificadas, sin tocar todavía y cuyo episodio trae más
     /// de una historia. Un fichero que ya es una sola historia no se parte.
     /// </summary>
-    private List<OrganizarRow> FilasPartibles() =>
-        _filas.Where(f => !f.Aplicado
-                          && f.Res.Episodio is { } ep && ep.TitulosSalida.Count > 1
-                          && f.Res.Archivo.SubSegmento == null
-                          && f.Res.Confianza == ReindexConfianza.Alta)
-              .ToList();
+    private static bool EsPartible(OrganizarRow f) =>
+        !f.Aplicado
+        && f.Res.Episodio is { } ep && ep.TitulosSalida.Count > 1
+        && f.Res.Archivo.SubSegmento == null
+        && f.Res.Confianza == ReindexConfianza.Alta;
+
+    private List<OrganizarRow> FilasPartibles() => _filas.Where(EsPartible).ToList();
 
     /// <summary>
     /// Deja un fichero por mini-historia, numeradas «1a», «1b», «1c». El reparto lo decide
