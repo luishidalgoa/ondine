@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    LA PRUEBA DE FUEGO. No es un producto y no entra en ninguna compilación: no lo
+    referencia nadie, no hay solución que lo arrastre y CI compila proyectos por ruta.
+
+    Existe para contestar DOS preguntas del estudio (docs/avalonia.md) antes de gastar
+    nada en el puerto, porque son las dos que pueden cancelarlo:
+
+      1. ¿El DataGrid de Avalonia aguanta la pantalla de Organizar? En concreto la
+         revisión por filas: RowDetails con una lista dentro y un botón que tiene que
+         alcanzar el DataContext de SU fila, no el del elemento de la lista.
+      2. ¿LibVLC sirve de reproductor? Reproducir, buscar por la línea de tiempo y que
+         la posición que pides sea la que sale.
+
+    Se responden con código que corre, no razonando. Si alguna falla, se sabe aquí y
+    no después de reescribir dieciocho pantallas.
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>prueba-de-fuego</AssemblyName>
+    <RootNamespace>Ondine.Spike</RootNamespace>
+    <!-- Sin compiled bindings: se quiere probar el binding de toda la vida, que es lo
+         que hay escrito en los XAML de hoy y lo que habría que traducir. -->
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+  </ItemGroup>
+
+  <!-- El vídeo. Va aparte a propósito: si esto no resuelve, la pregunta 1 sigue teniendo
+       respuesta y el estudio sigue sirviendo. -->
+  <ItemGroup>
+    <PackageReference Include="LibVLCSharp.Avalonia" Version="3.10.1" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
+  </ItemGroup>
+
+</Project>
