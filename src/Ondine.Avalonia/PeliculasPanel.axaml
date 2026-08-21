@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+             xmlns:o="clr-namespace:Ondine.Ava"
+             x:Class="Ondine.Ava.PeliculasPanel"
+             Foreground="{StaticResource Text}">
+
+  <!-- El flujo de peliculas es OTRO, no el de series con piezas escondidas. Aqui no hay
+       catalogo, ni plantilla, ni temporadas, ni segmentos: solo la carpeta y una accion.
+       Compartir la pantalla de series obligaba a ocultar media interfaz, y una pantalla
+       llena de huecos ensena a desconfiar de lo que queda. -->
+  <Grid Margin="16,0,16,0" RowDefinitions="*,Auto">
+
+    <Border Grid.Row="0" Background="{StaticResource SurfaceGlass}" CornerRadius="8" Padding="14,12">
+      <Grid RowDefinitions="Auto,*">
+
+        <TextBlock Grid.Row="0" Text="{i:T OrganizarFicheros}" FontSize="11" FontWeight="Medium"
+                   Foreground="{StaticResource Neutral500}" Margin="0,0,0,12"/>
+
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    MaxWidth="520">
+          <TextBlock Text="{i:T PeliculasCarpeta}" FontSize="11" FontWeight="Medium"
+                     Foreground="{StaticResource Neutral500}" Margin="0,0,0,6"/>
+
+          <Grid Margin="0,0,0,14" ColumnDefinitions="*,Auto">
+            <o:CampoTexto Name="txtCarpeta" Icono="M1.5 3.5h4l1.5 2h7.5v7h-13z"
+                          HorizontalAlignment="Stretch"/>
+            <Button Name="btnCarpeta" Grid.Column="1" Theme="{StaticResource BtnSecondary}"
+                    Width="34" Height="34" Padding="0" Margin="6,0,0,0"
+                    ToolTip.Tip="{i:T OrganizarCarpetaAyuda}">
+              <Path Width="15" Height="15" Stretch="Uniform"
+                    Data="M1.5 3.5h4l1.5 2h7.5v7h-13z" Stroke="{StaticResource Text}"
+                    StrokeThickness="1.3" StrokeJoin="Round"/>
+            </Button>
+          </Grid>
+
+          <TextBlock Name="lblFicheros" FontSize="13.5" TextWrapping="Wrap"
+                     TextAlignment="Center" Foreground="{StaticResource Text}"/>
+
+          <TextBlock Text="{i:T PeliculasNadaSinAprobar}" FontSize="11.5" TextWrapping="Wrap"
+                     TextAlignment="Center" Margin="0,10,0,0"
+                     Foreground="{StaticResource Neutral500}"/>
+
+          <!-- Lo que esta pantalla NO sabe hacer, dicho donde se decide usarla y no despues
+               de haberla usado. -->
+          <Border Name="cajaBaseDeDatos" Margin="0,14,0,0" Padding="10,7" CornerRadius="8"
+                  BorderThickness="1">
+            <TextBlock Name="lblBaseDeDatos" FontSize="11.5" TextWrapping="Wrap"/>
+          </Border>
+
+          <Button Name="btnOrdenar" Theme="{StaticResource BtnPrimary}" Margin="0,18,0,0"
+                  Padding="16,8" HorizontalAlignment="Center" IsEnabled="False"
+                  Content="{i:T OrganizarAnalizarCarpeta}"
+                  ToolTip.Tip="{i:T PeliculasAbrirAyuda}"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <TextBlock Name="lblPie" Grid.Row="1" Margin="0,10,0,8" FontSize="11"
+               Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>
+  </Grid>
+</UserControl>
