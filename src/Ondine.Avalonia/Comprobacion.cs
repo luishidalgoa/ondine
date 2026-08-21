@@ -347,7 +347,9 @@ public static class Comprobacion
             await Task.Delay(300);
 
             var lista = v.GetVisualDescendants().OfType<ListBox>().FirstOrDefault();
-            int Filas() => (lista?.ItemsSource as System.Collections.IEnumerable)?.Cast<object>().Count() ?? -1;
+            List<object> Todas() =>
+                (lista?.ItemsSource as System.Collections.IEnumerable)?.Cast<object>().ToList() ?? [];
+            int Filas() => Todas().Count;
 
             Dice(Filas() == 1, $"de serie solo enseña lo que se mueve ({Filas()} de 2)");
 
@@ -362,6 +364,15 @@ public static class Comprobacion
             chk!.IsChecked = false;
             await Task.Delay(150);
             Dice(Filas() == 2, $"quitar el filtro saca tambien el que se queda ({Filas()} de 2)");
+
+            // El color de la insignia se pide con TryFindResource, que si no encuentra el
+            // color devuelve gris en vez de tumbar la ventana. Eso es lo que se queria...
+            // y es lo que tapo que los once colores de estado no estuvieran en la paleta:
+            // TODAS las insignias salian grises y nada protestaba. Asi que se comprueba que
+            // el gris de reserva NO se este usando.
+            var insignia = (Todas().FirstOrDefault() as ReordenVista)?.Color;
+            Dice(insignia is not null && !ReferenceEquals(insignia, Avalonia.Media.Brushes.Gray),
+                "la insignia coge su color del tema y no el gris de reserva");
 
             var riesgo = v.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "cajaRiesgo");
             Dice(riesgo?.IsVisible == false,
