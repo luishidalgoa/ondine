@@ -1,0 +1,102 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Reordenar"
+        Title="{i:T ReordenarTitulo}"
+        Width="760" Height="620" MinWidth="520" MinHeight="380"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!-- «Ordenar por temporadas», portado de ReordenarWindow.xaml. -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+      <Grid Grid.Row="0" Height="38">
+        <TextBlock Text="{i:T ReordenarTitulo}" FontSize="13.5" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <Button Name="btnCerrar" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" Margin="0,0,6,0" Content="✕"/>
+      </Grid>
+
+      <StackPanel Grid.Row="1" Margin="16,4,16,10">
+        <!-- El idioma de la carpeta se elige AQUI y no en preferencias porque es
+             donde se ve el efecto: cambiarlo repinta la lista al momento. -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Spacing="8">
+          <TextBlock Text="{i:T ReordenarIdiomaCarpeta}" FontSize="12" VerticalAlignment="Center"
+                     Foreground="{StaticResource Neutral400}"/>
+          <ComboBox Name="cboIdioma" MinWidth="170" Height="30"/>
+        </StackPanel>
+
+        <TextBlock Name="lblResumen" FontSize="13" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
+
+        <!-- Lo que va a costar el movimiento. Va aqui arriba y no en el pie porque es lo
+             que puede hacerte cerrar la ventana sin mover nada, y una advertencia que se
+             lee despues de pulsar no es una advertencia. Oculto cuando no hay nada que
+             avisar: un hueco vacio permanente ensena a no mirar ahi. -->
+        <Border Name="cajaRiesgo" Margin="0,8,0,0" Padding="10,7" CornerRadius="8"
+                IsVisible="False"
+                Background="{StaticResource OrgWarnBg}"
+                BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
+          <TextBlock Name="lblRiesgo" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{StaticResource OrgWarn}"/>
+        </Border>
+
+        <CheckBox Name="chkSoloLosQueVan" Margin="0,8,0,0" FontSize="12" IsChecked="True"
+                  Foreground="{StaticResource Neutral400}"
+                  Content="{i:T ReordenarVerSoloLosQueVan}"/>
+      </StackPanel>
+
+      <ListBox Name="lista" Grid.Row="2" Background="Transparent" BorderThickness="0"
+               Margin="8,0,8,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox.Styles>
+          <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Template">
+              <ControlTemplate>
+                <Border Name="b" Background="Transparent" CornerRadius="6" Padding="10,7">
+                  <ContentPresenter Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                </Border>
+              </ControlTemplate>
+            </Setter>
+          </Style>
+          <Style Selector="ListBoxItem:pointerover /template/ Border#b">
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+          </Style>
+        </ListBox.Styles>
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel>
+                <TextBlock Text="{Binding Nombre}" FontSize="12.5" TextWrapping="Wrap"
+                           Foreground="{StaticResource Text}"/>
+                <TextBlock Text="{Binding Adonde}" FontFamily="{StaticResource FontMono}" FontSize="11"
+                           Margin="0,2,0,0" TextWrapping="Wrap"
+                           Foreground="{StaticResource Neutral500}"/>
+              </StackPanel>
+              <Border Grid.Column="1" Background="{StaticResource Field}" CornerRadius="6" Padding="7,2"
+                      VerticalAlignment="Top" Margin="8,0,0,0">
+                <TextBlock Text="{Binding Etiqueta}" FontSize="10.5" Foreground="{Binding Color}"/>
+              </Border>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <Grid Grid.Row="3" Margin="16,10,16,14">
+        <TextBlock Name="lblPie" FontSize="11" Foreground="{StaticResource Neutral500}"
+                   VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,150,0"
+                   Text="{i:T ReordenarPie}"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+          <Button Name="btnDeshacer" Theme="{StaticResource BtnGhostMuted}" FontSize="12" Padding="12,5"
+                  IsVisible="False" Content="{i:T ReordenarDeshacer}"/>
+          <Button Name="btnMover" Theme="{StaticResource BtnPrimary}" FontSize="12" Padding="14,5"
+                  Content="{i:T ReordenarBotonNada}" IsEnabled="False"/>
+        </StackPanel>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
