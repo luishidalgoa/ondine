@@ -65,6 +65,7 @@ public static class Program
         // único que corre en cada cambio. Una prueba que vive fuera del CI no
         // es un arnés, es una intención.
         TraduccionTests.Todas();
+        Ondine.Reindex.Tests.AyudaTests.Todas();
         DocumentacionTests.Todas();
         Ondine.Reindex.Tests.IdiomaElegidoTests.Todas();
         Ondine.Reindex.Tests.FichaDeWindowsTests.Todas();
