@@ -27,6 +27,7 @@ public partial class MainWindow : Window
                     await Comprobacion.CorrerDialogo(this);
                     await Comprobacion.CorrerFaltantes(this);
                     await Comprobacion.CorrerPistas(this);
+                    await Comprobacion.CorrerReordenar(this);
                 }
                 catch (Exception ex) { Comprobacion.Resultados.Add($"REVENTO: {ex.Message}"); }
                 Close();

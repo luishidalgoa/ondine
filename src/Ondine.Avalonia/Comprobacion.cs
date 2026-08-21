@@ -136,6 +136,97 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// «Ordenar por temporadas», con ficheros de verdad en una carpeta temporal.
+    ///
+    /// <para>
+    /// Con ficheros de verdad y no de mentira porque el motor pregunta al disco: el plan
+    /// mira si el origen sigue estando y si el destino esta ocupado. Inventar eso seria
+    /// comprobar otra cosa.
+    /// </para>
+    /// <para>
+    /// Lo que se vigila es la casilla de «ver solo los que van». Es un filtro, y un filtro
+    /// que se desengancha al portar no se nota: la lista sigue llena. Solo que enseña
+    /// TODO, incluido lo que no se va a mover, justo antes de que alguien pulse.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerReordenar(Window dueno)
+    {
+        var carpeta = Path.Combine(Path.GetTempPath(), "ondine-auto-reordenar");
+        Directory.CreateDirectory(carpeta);
+        var uno = Path.Combine(carpeta, "cap1.mkv");
+        var dos = Path.Combine(carpeta, "cap2.mkv");
+        File.WriteAllText(uno, "x");
+        File.WriteAllText(dos, "x");
+
+        try
+        {
+            var catalogo = Ondine.Reindex.ReindexCatalog.Parse("""
+            {
+              "esquema": "reindex/1.0",
+              "serie": "Serie de prueba",
+              "episodios": [ { "num": 1, "temporada": 1, "titulos": { "es": ["Uno"] } } ]
+            }
+            """);
+            var episodio = catalogo.Episodios[0];
+
+            var resoluciones = new List<Ondine.Reindex.ReindexResolution>
+            {
+                // Curado y con temporada: este SE MUEVE.
+                new()
+                {
+                    Archivo = new() { Path = uno, NombreArchivo = "cap1.mkv", Extension = ".mkv" },
+                    Estado = Ondine.Reindex.ReindexEstado.Limpio,
+                    Episodio = episodio,
+                },
+                // En conflicto: este se queda. No se sabe de que temporada es -por eso esta
+                // en conflicto- y moverlo a una carpeta decidida a medias es peor.
+                new()
+                {
+                    Archivo = new() { Path = dos, NombreArchivo = "cap2.mkv", Extension = ".mkv" },
+                    Estado = Ondine.Reindex.ReindexEstado.Conflicto,
+                    Episodio = episodio,
+                },
+            };
+
+            var v = new Reordenar(resoluciones, carpeta, new Ondine.Settings());
+            v.Show(dueno);
+            await Task.Delay(300);
+
+            var lista = v.GetVisualDescendants().OfType<ListBox>().FirstOrDefault();
+            int Filas() => (lista?.ItemsSource as System.Collections.IEnumerable)?.Cast<object>().Count() ?? -1;
+
+            Dice(Filas() == 1, $"de serie solo enseña lo que se mueve ({Filas()} de 2)");
+
+            var mover = v.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == "btnMover");
+            Dice(mover?.IsEnabled == true, "y el boton de mover esta vivo, porque hay uno que va");
+            Dice(mover?.Content?.ToString()?.Contains("1") == true,
+                $"con la cuenta en el rotulo ({mover?.Content})");
+
+            // La casilla es un filtro: si se desengancha al portar, la lista sigue llena
+            // y nadie lo nota. Aqui tiene que aparecer el que NO se mueve.
+            var chk = v.GetVisualDescendants().OfType<CheckBox>().FirstOrDefault();
+            chk!.IsChecked = false;
+            await Task.Delay(150);
+            Dice(Filas() == 2, $"quitar el filtro saca tambien el que se queda ({Filas()} de 2)");
+
+            var riesgo = v.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "cajaRiesgo");
+            Dice(riesgo?.IsVisible == false,
+                "y sin nada que avisar la caja de riesgos no ocupa sitio");
+
+            // El boton de deshacer no esta: no se ha movido nada todavia. Un boton que no
+            // hace nada al pulsarlo ensena a desconfiar del resto.
+            var deshacer = v.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == "btnDeshacer");
+            Dice(deshacer?.IsVisible == false, "ni hay que deshacer nada antes de mover");
+
+            v.Close();
+        }
+        finally
+        {
+            try { Directory.Delete(carpeta, true); } catch { }
+        }
+    }
+
+    /// <summary>
     /// «Quitar pistas», con tres pistas de mentira pero reglas de verdad.
     ///
     /// <para>
