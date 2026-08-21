@@ -1,0 +1,146 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+        x:Class="Ondine.Spike.MainWindow"
+        Title="Ondine · prueba de fuego de Avalonia"
+        Width="1000" Height="680">
+
+  <TabControl>
+
+    <!-- ══ 1. El DataGrid de Organizar ══════════════════════════════════════════ -->
+    <TabItem Header="1 · DataGrid con RowDetails">
+      <DockPanel Margin="12">
+
+        <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,10" Opacity="0.75">
+          Selecciona una fila para desplegar su panel. La de «Blade Runner» no tiene
+          candidatos y NO debe desplegar nada. El botón «Es esta» vive dentro de la lista
+          pero tiene que cambiar la FILA — que es el gesto que hace hoy Organizar.
+        </TextBlock>
+
+        <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="10"
+                Background="#14000000" CornerRadius="6">
+          <TextBlock x:Name="rotuloEstado" FontFamily="Consolas" TextWrapping="Wrap" />
+        </Border>
+
+        <DataGrid x:Name="tabla"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  GridLinesVisibility="Horizontal"
+                  RowDetailsVisibilityMode="VisibleWhenSelected">
+
+          <DataGrid.RowDetailsTemplate>
+            <DataTemplate>
+              <!-- IsVisible en vez de Visibility + converter. Un converter menos que
+                   portar, y son 12 usos de B2V en el XAML de hoy. -->
+              <Border x:Name="panelDetalle" Background="#18000000" Padding="16,12" IsVisible="{Binding TieneDetalle}">
+                <StackPanel>
+
+                  <Grid Margin="0,0,0,10">
+                    <TextBlock Text="¿Cuál de estas es?" FontSize="11" FontWeight="Medium" />
+                    <Button HorizontalAlignment="Right" FontSize="11" Padding="10,3"
+                            Content="Olvidar elección"
+                            IsVisible="{Binding HayEleccion}"
+                            Tag="{Binding}"
+                            Click="AlOlvidar" />
+                  </Grid>
+
+                  <ItemsControl ItemsSource="{Binding Candidatos}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,6" ColumnDefinitions="*,Auto,Auto">
+
+                          <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Titulo}" FontSize="12.5" />
+                            <TextBlock FontSize="11" Opacity="0.6"
+                                       Text="{Binding Original}" />
+                          </StackPanel>
+
+                          <!-- LA PREGUNTA. Este botón está dentro del ItemsControl, así que
+                               su DataContext es el CANDIDATO. Para actuar hace falta la fila.
+                               Se prueban las DOS formas, porque de eso depende cuánto cambia
+                               el XAML: la de la izquierda es la sintaxis propia de Avalonia,
+                               la de la derecha es la misma que ya está escrita en WPF. -->
+                          <Button Grid.Column="1" FontSize="11" Padding="12,4" Margin="0,0,6,0"
+                                  Content="Es esta ($parent)"
+                                  Tag="{Binding $parent[DataGridRow].DataContext}"
+                                  Click="AlElegir" />
+
+                          <Button Grid.Column="2" FontSize="11" Padding="12,4"
+                                  Content="Es esta (RelativeSource)"
+                                  Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGridRow}}"
+                                  Click="AlElegir" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </DataGrid.RowDetailsTemplate>
+
+          <DataGrid.Columns>
+            <DataGridTemplateColumn Header="" Width="44">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <CheckBox IsChecked="{Binding Marcada, Mode=TwoWay}"
+                            HorizontalAlignment="Center" />
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTextColumn Header="Fichero" Binding="{Binding Fichero}" Width="*" />
+            <DataGridTextColumn Header="Propuesta" Binding="{Binding Propuesta}" Width="*" />
+
+            <!-- El semáforo de confianza. En WPF es un Trigger sobre el valor; aquí se hace
+                 con Classes.* , que es la traducción directa. -->
+            <DataGridTemplateColumn Header="Confianza" Width="110">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border CornerRadius="9" Padding="8,2" HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Classes.segura="{Binding HayEleccion}"
+                          Classes.dudosa="{Binding !HayEleccion}">
+                    <Border.Styles>
+                      <Style Selector="Border.segura">
+                        <Setter Property="Background" Value="#2E7D32" />
+                      </Style>
+                      <Style Selector="Border.dudosa">
+                        <Setter Property="Background" Value="#B26A00" />
+                      </Style>
+                    </Border.Styles>
+                    <TextBlock Text="{Binding Confianza}" FontSize="11" Foreground="White" />
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </DockPanel>
+    </TabItem>
+
+    <!-- ══ 2. El vídeo ══════════════════════════════════════════════════════════ -->
+    <TabItem Header="2 · Vídeo con LibVLC">
+      <DockPanel Margin="12">
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8"
+                    Margin="0,0,0,10">
+          <Button x:Name="btnAbrir" Content="Abrir vídeo…" Click="AlAbrirVideo" />
+          <Button x:Name="btnPlay" Content="Reproducir / pausar" Click="AlPlayPausa" />
+          <TextBlock x:Name="rotuloVideo" VerticalAlignment="Center" Opacity="0.75"
+                     Text="Sin vídeo. Abre uno para probar la búsqueda por la línea de tiempo." />
+        </StackPanel>
+
+        <Grid DockPanel.Dock="Bottom" RowDefinitions="Auto,Auto" Margin="0,10,0,0">
+          <Slider x:Name="barra" Minimum="0" Maximum="1000" IsSnapToTickEnabled="False" />
+          <TextBlock x:Name="rotuloTiempo" Grid.Row="1" FontFamily="Consolas" FontSize="12" />
+        </Grid>
+
+        <Border Background="Black">
+          <vlc:VideoView x:Name="vista" />
+        </Border>
+      </DockPanel>
+    </TabItem>
+
+  </TabControl>
+</Window>
