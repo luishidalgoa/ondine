@@ -666,24 +666,29 @@ public sealed class Engine
                             AudioKbpsEstimado(opt, audio.Count), kbps).VideoKbps, opt.Velocidad)
                     : encArgs);
                 bool mp4 = opt.Container == "mp4";
+                // Que hacer con cada pista lo decide Audio.CodecDeAudio, que sabe que no
+                // todo cabe en todo y DICE cuando ha tenido que cambiar lo pedido. Antes
+                // esto era una cadena de condiciones aqui dentro que decidia en silencio.
                 for (int i = 0; i < audio.Count; i++)
                 {
-                    if (webm)   // WebM: audio siempre Opus
-                    {
-                        int wbr = opt.AudioBitrate > 0 ? opt.AudioBitrate : 160;
-                        a.AddRange(new[] { $"-c:a:{i}", "libopus", $"-b:a:{i}", $"{wbr}k" });
-                        continue;
-                    }
-                    var ac = audio[i].CodecName;
-                    bool copy = opt.AudioBitrate == 0 || LossyAudio.Contains(ac);
-                    if (mp4 && copy && !Mp4Audio.Contains(ac)) copy = false;   // MP4 no admite copiar este códec
-                    if (copy)
-                        a.AddRange(new[] { $"-c:a:{i}", "copy" });
-                    else
-                    {
-                        int br = opt.AudioBitrate > 0 ? opt.AudioBitrate : 192;
-                        a.AddRange(new[] { $"-c:a:{i}", "aac", $"-b:a:{i}", $"{br}k" });
-                    }
+                    var elegido = opt.AudioCodec;
+
+                    // Compatibilidad hacia atras: pedir un bitrate con «copiar» puesto
+                    // siempre habia significado «recodificalo a AAC». Se conserva, porque
+                    // hay presets guardados que cuentan con ello.
+                    if (elegido == Audio.AudioElegido.Copiar && opt.AudioBitrate > 0
+                        && !LossyAudio.Contains(audio[i].CodecName))
+                        elegido = Audio.AudioElegido.Aac;
+
+                    var d = Audio.CodecDeAudio.Decidir(opt.Container, elegido, audio[i].CodecName ?? "");
+
+                    // Se avisa UNA vez por fichero, no por pista: con seis idiomas dentro,
+                    // seis lineas iguales en el registro tapan todo lo demas.
+                    if (i == 0 && d.Porque != Audio.PorQueSeCambio.SeHizoLoPedido)
+                        rep.Log(string.Format(t.MotorAudioCambiado, d.Pedido, d.Codec, opt.Container));
+
+                    var br = opt.AudioBitrate > 0 ? opt.AudioBitrate : (webm ? 160 : 192);
+                    a.AddRange(Audio.CodecDeAudio.Argumentos(i, d, br));
                 }
                 if (withSubs && keptSubs.Count > 0) a.AddRange(new[] { "-c:s", mp4 ? "mov_text" : "copy" });
                 a.AddRange(new[] { "-disposition:a:0", "default" });

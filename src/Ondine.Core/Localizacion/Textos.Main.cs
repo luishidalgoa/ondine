@@ -233,6 +233,33 @@ public sealed partial class Textos
     // ── Cuánto se esmera el codificador ─────────────────────────────────────
     // Cinco pasos y no los diez de x265: nadie sabe qué hay entre «superfast» y
     // «veryfast», y ofrecerlo solo hace la elección más difícil sin mejorarla.
+    // ── El códec del audio ──────────────────────────────────────────────────
+    // «Sin tocar» primero porque es lo que la app hacía y sigue siendo lo mejor
+    // cuando el contenedor lo admite: copiar no pierde nada y no cuesta tiempo.
+    public string MainAudioCodec => Idioma.Elegir("Audio codec", "Códec de audio");
+
+    public string MainAudioCodecTip => Idioma.Elegir(
+        "What to do with each audio track. «Untouched» copies the bytes as they are — nothing " +
+        "lost, no time spent — whenever the container allows it. AC3 is what an older living-room " +
+        "receiver understands; Opus weighs about half for the same quality. If what you pick does " +
+        "not fit the chosen format, it is changed and said so in the log.",
+        "Qué hacer con cada pista de audio. «Sin tocar» copia los bytes tal cual —no se pierde " +
+        "nada ni cuesta tiempo— siempre que el contenedor lo admita. AC3 es lo que entiende un " +
+        "receptor de salón antiguo; Opus pesa como la mitad con la misma calidad. Si lo que " +
+        "eliges no cabe en el formato elegido, se cambia y se dice en el registro.");
+
+    public string MainAudioSinTocar => Idioma.Elegir("Untouched", "Sin tocar");
+
+    // Los nombres de los códecs no se traducen: son nombres propios. Pasan por el
+    // catálogo igual que MKV o MP4 —misma cadena en los dos idiomas— porque el arnés
+    // exige que TODO texto de pantalla salga de aquí, y esa regla vale justo porque no
+    // admite excepciones que luego alguien amplía.
+    public string MainAudioAac => Idioma.Elegir("AAC", "AAC");
+    public string MainAudioAc3 => Idioma.Elegir("AC3", "AC3");
+    public string MainAudioEac3 => Idioma.Elegir("E-AC3", "E-AC3");
+    public string MainAudioOpus => Idioma.Elegir("Opus", "Opus");
+    public string MainAudioFlac => Idioma.Elegir("FLAC", "FLAC");
+
     public string MainVelocidad => Idioma.Elegir("Effort", "Esmero");
 
     public string MainVelocidadTip => Idioma.Elegir(

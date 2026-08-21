@@ -22,6 +22,13 @@ public sealed partial class Textos
     public string MotorPistasFicheroDesaparecido =>
         Idioma.Elegir("The file is no longer there.", "El fichero ya no está.");
 
+    // {0} = lo que se pidio · {1} = lo que se va a hacer · {2} = el contenedor
+    // Se dice porque cambiarlo en silencio deja al usuario creyendo que tiene AC3
+    // cuando tiene AAC, y eso solo se descubre al reproducirlo en el sitio equivocado.
+    public string MotorAudioCambiado => Idioma.Elegir(
+        "Audio: {0} does not fit in {2}, using {1} instead.",
+        "Audio: {0} no cabe en {2}, se usa {1} en su lugar.");
+
     public string MotorPistasRemuxFallido =>
         Idioma.Elegir("ffmpeg could not repackage it.", "ffmpeg no pudo reempaquetarlo.");
 

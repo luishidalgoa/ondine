@@ -400,7 +400,7 @@
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
               <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
-              <ColumnDefinition Width="1.2*"/>
+              <ColumnDefinition Width="*"/><ColumnDefinition Width="1.2*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Margin="0,0,10,0">
@@ -464,6 +464,16 @@
               </ComboBox>
             </StackPanel>
             <StackPanel Grid.Column="6" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainAudioCodec}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <!-- El ORDEN esta acoplado a BuildOptions, como el resto de la fila. -->
+              <ComboBox x:Name="cboACodec" SelectedIndex="0"
+                        ToolTip="{i:T MainAudioCodecTip}">
+                <ComboBoxItem Content="{i:T MainAudioSinTocar}"/><ComboBoxItem Content="{i:T MainAudioAac}"/>
+                <ComboBoxItem Content="{i:T MainAudioAc3}"/><ComboBoxItem Content="{i:T MainAudioEac3}"/>
+                <ComboBoxItem Content="{i:T MainAudioOpus}"/><ComboBoxItem Content="{i:T MainAudioFlac}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="7" Margin="0,0,10,0">
               <TextBlock Text="{i:T MainAudio}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
               <ComboBox x:Name="cboAud" SelectedIndex="0"
                         ToolTip="{i:T MainAudioTip}">
@@ -471,7 +481,7 @@
                 <ComboBoxItem Content="{i:T MainAudioAac160}"/><ComboBoxItem Content="{i:T MainAudioAac128}"/><ComboBoxItem Content="{i:T MainAudioAac96}"/>
               </ComboBox>
             </StackPanel>
-            <StackPanel Grid.Column="7" Margin="4,0,0,0" Orientation="Vertical">
+            <StackPanel Grid.Column="8" Margin="4,0,0,0" Orientation="Vertical">
               <StackPanel.Resources><Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}"><Setter Property="Margin" Value="8,1"/></Style></StackPanel.Resources>
               <Border BorderBrush="{StaticResource Divider}" BorderThickness="1,0,0,0" Padding="10,0,0,0">
                 <StackPanel>

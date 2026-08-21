@@ -239,6 +239,23 @@ public sealed partial class Textos
         "Si el disco se llena, la tanda se pausa sola y sigue cuando liberas espacio. Puedes seguir el progreso desde cualquier pestaña con la píldora de la cabecera.");
 
     // ── Recortes ────────────────────────────────────────────────────────────
+    public string AyudaComprimirAudioTitulo => Idioma.Elegir(
+        "THE AUDIO CODEC", "EL CÓDEC DE AUDIO");
+
+    public string AyudaComprimirAudio => Idioma.Elegir(
+        "«Untouched» copies the audio bytes as they are: nothing lost, no time spent. That is " +
+        "the default and usually the right answer. Pick AC3 if an older living-room receiver has " +
+        "to understand it, or Opus if you want about half the weight for the same quality. Not " +
+        "everything fits everywhere —WebM only takes Opus, and MP4 will not hold FLAC in a way " +
+        "anything plays— so if your choice does not fit the format, it is changed and the log " +
+        "says so. It is never changed silently.",
+        "«Sin tocar» copia los bytes del audio tal cual: no se pierde nada ni cuesta tiempo. Es " +
+        "lo que viene puesto y casi siempre es la respuesta correcta. Elige AC3 si tiene que " +
+        "entenderlo un receptor de salón antiguo, u Opus si quieres la mitad de peso con la misma " +
+        "calidad. No todo cabe en todo —WebM solo admite Opus, y MP4 no guarda FLAC de forma que " +
+        "lo reproduzca nada— así que si lo tuyo no cabe en el formato, se cambia y el registro lo " +
+        "dice. Nunca se cambia en silencio.");
+
     public string AyudaComprimirEsmeroTitulo => Idioma.Elegir(
         "EFFORT: TIME AGAINST SIZE", "ESMERO: TIEMPO CONTRA TAMAÑO");
 
