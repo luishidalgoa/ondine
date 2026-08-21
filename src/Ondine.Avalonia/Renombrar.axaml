@@ -1,0 +1,196 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        xmlns:dg="using:Avalonia.Controls"
+        x:Class="Ondine.Ava.Renombrar"
+        Title="{i:T RenameTitulo}"
+        Width="820" Height="640" MinWidth="700" MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        SystemDecorations="None"
+        Background="Transparent" Foreground="{StaticResource Text}">
+
+  <!--
+    «Renombrar», portado de RenameWindow.xaml.
+
+    Dos piezas nuevas que no existian en Avalonia hasta esta pantalla:
+
+    - El desplegable de sugerencias. El Popup es el mismo concepto, pero se ancla con
+      PlacementTarget e IsOpen y no se cierra solo: lo cierra CajaDeSugerencias.
+    - La vista previa. En WPF era un ListView con GridView; aqui es un DataGrid, que es
+      OTRO control -por eso los temas TableView/ColHeader de WPF no se portan-. Se viste
+      con Setters sueltos: rehacer su plantilla entera para cambiar cuatro colores es
+      mucho codigo por poco.
+
+    8 px de radio: el mismo que recorta el sistema por fuera, para que el borde dibujado
+    y el recorte coincidan en vez de pelearse en la esquina.
+  -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+
+      <!-- cabecera (arrastrable) -->
+      <Grid Name="header" Grid.Row="0" Height="46" Background="Transparent">
+        <TextBlock Text="{i:T RenameTitulo}" FontSize="14" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="18,0,0,0"/>
+        <TextBlock Text="{i:T RenameSubtitulo}" FontSize="11"
+                   Foreground="{StaticResource Neutral600}" VerticalAlignment="Center"
+                   Margin="150,2,0,0"/>
+        <Button Name="btnX" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
+                Content="✕"/>
+      </Grid>
+
+      <!-- Buscar / Reemplazar -->
+      <Grid Grid.Row="1" Margin="18,0,18,12" ColumnDefinitions="*,14,*">
+        <StackPanel Grid.Column="0">
+          <TextBlock Text="{i:T RenameBuscar}" FontSize="11"
+                     Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+          <TextBox Name="txtSearch"/>
+          <Popup Name="popSearch" PlacementTarget="{Binding #txtSearch}" Placement="Bottom"
+                 IsLightDismissEnabled="False">
+            <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                    BorderThickness="1" CornerRadius="8" Padding="4" Margin="0,3,12,12"
+                    MinWidth="{Binding #txtSearch.Bounds.Width}">
+              <ListBox Name="lstSearch" MaxHeight="260" Background="Transparent" BorderThickness="0"
+                       ItemContainerTheme="{StaticResource SuggestItem}"
+                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel>
+                      <TextBlock Text="{Binding Text}" FontFamily="{StaticResource FontMono}"
+                                 FontSize="11.5" Foreground="{StaticResource Accent300}"/>
+                      <TextBlock Text="{Binding Desc}" FontSize="10.5"
+                                 Foreground="{StaticResource Neutral600}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Border>
+          </Popup>
+        </StackPanel>
+        <StackPanel Grid.Column="2">
+          <TextBlock Text="{i:T RenameReemplazarPor}" FontSize="11"
+                     Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+          <TextBox Name="txtReplace"/>
+          <Popup Name="popReplace" PlacementTarget="{Binding #txtReplace}" Placement="Bottom"
+                 IsLightDismissEnabled="False">
+            <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                    BorderThickness="1" CornerRadius="8" Padding="4" Margin="0,3,12,12"
+                    MinWidth="{Binding #txtReplace.Bounds.Width}">
+              <ListBox Name="lstReplace" MaxHeight="260" Background="Transparent" BorderThickness="0"
+                       ItemContainerTheme="{StaticResource SuggestItem}"
+                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel>
+                      <TextBlock Text="{Binding Text}" FontFamily="{StaticResource FontMono}"
+                                 FontSize="11.5" Foreground="{StaticResource Accent300}"/>
+                      <TextBlock Text="{Binding Desc}" FontSize="10.5"
+                                 Foreground="{StaticResource Neutral600}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Border>
+          </Popup>
+        </StackPanel>
+      </Grid>
+
+      <!-- Opciones -->
+      <Border Grid.Row="2" Margin="18,0,18,12" Background="{StaticResource Surface}"
+              CornerRadius="8" Padding="12,10">
+        <StackPanel>
+          <WrapPanel>
+            <CheckBox Name="chkRegex" Content="{i:T RenameUsarRegex}" Margin="0,0,18,6"/>
+            <CheckBox Name="chkCase" Content="{i:T RenameDistinguirMayusculas}" Margin="0,0,18,6"/>
+            <CheckBox Name="chkAll" Content="{i:T RenameTodasCoincidencias}" Margin="0,0,18,6"/>
+            <CheckBox Name="chkEnum" Content="{i:T RenameEnumerar}" Margin="0,0,18,6"/>
+            <CheckBox Name="chkRand" Content="{i:T RenameAleatorias}" Margin="0,0,0,6"/>
+          </WrapPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <TextBlock Text="{i:T RenameAplicarA}" FontSize="11"
+                       Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"
+                       Margin="0,0,8,0"/>
+            <ComboBox Name="cboTarget" Width="180" SelectedIndex="0"/>
+            <TextBlock Text="{i:T RenameFormatoTexto}" FontSize="11"
+                       Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"
+                       Margin="22,0,8,0"/>
+            <ComboBox Name="cboCase" Width="200" SelectedIndex="0"/>
+          </StackPanel>
+          <TextBlock Name="lblExtWarn" Text="{i:T RenameAvisoExtension}"
+                     FontSize="10.5" Foreground="#E0B341" TextWrapping="Wrap"
+                     Margin="0,8,0,0" IsVisible="False"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Variables disponibles -->
+      <Expander Grid.Row="3" Margin="18,0,18,10" Header="{i:T RenameVariablesTitulo}"
+                Foreground="{StaticResource Neutral500}" FontSize="11.5">
+        <Border Background="{StaticResource Field}" CornerRadius="6" Padding="12,10" Margin="0,6,0,0">
+          <StackPanel Spacing="6">
+            <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11"
+                       Foreground="{StaticResource Neutral400}" TextWrapping="Wrap"
+                       Text="{i:T RenameVariablesContadores}"/>
+            <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11"
+                       Foreground="{StaticResource Neutral400}" TextWrapping="Wrap"
+                       Text="{i:T RenameVariablesFecha}"/>
+            <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11"
+                       Foreground="{StaticResource Neutral400}" TextWrapping="Wrap"
+                       Text="{i:T RenameVariablesRegex}"/>
+            <TextBlock FontFamily="{StaticResource FontMono}" FontSize="11"
+                       Foreground="{StaticResource Neutral400}" TextWrapping="Wrap"
+                       Text="{i:T RenameVariablesAleatorio}"/>
+          </StackPanel>
+        </Border>
+      </Expander>
+
+      <!-- Vista previa -->
+      <Border Grid.Row="4" Margin="18,0,18,0" Background="{StaticResource Surface}"
+              CornerRadius="8" Padding="0,4">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" Margin="12,6,12,6">
+            <TextBlock Text="{i:T RenameVistaPrevia}" FontSize="10"
+                       Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+            <TextBlock Name="lblCount" HorizontalAlignment="Right" FontSize="11"
+                       Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+          </Grid>
+          <dg:DataGrid Name="lstPrev" AutoGenerateColumns="False" IsReadOnly="True"
+                       SelectionMode="Single" HeadersVisibility="Column"
+                       GridLinesVisibility="None" Background="Transparent"
+                       RowBackground="Transparent" BorderThickness="0"
+                       Foreground="{StaticResource Text}" FontSize="12">
+            <dg:DataGrid.Columns>
+              <dg:DataGridTextColumn Header="{i:T RenameColumnaOriginal}" Width="360"
+                                     Binding="{Binding Original}"/>
+              <dg:DataGridTemplateColumn Header="{i:T RenameColumnaNuevo}" Width="380">
+                <dg:DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Nuevo}" Foreground="{Binding Color}"
+                               VerticalAlignment="Center" Margin="12,0,0,0"/>
+                  </DataTemplate>
+                </dg:DataGridTemplateColumn.CellTemplate>
+              </dg:DataGridTemplateColumn>
+            </dg:DataGrid.Columns>
+          </dg:DataGrid>
+        </DockPanel>
+      </Border>
+
+      <!-- pie -->
+      <Border Grid.Row="5" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0"
+              Padding="18,12" Margin="0,12,0,0">
+        <Grid>
+          <Button Name="btnClear" Theme="{StaticResource BtnGhost}"
+                  Content="{i:T RenameQuitarRegla}" HorizontalAlignment="Left"
+                  ToolTip.Tip="{i:T RenameQuitarReglaAyuda}"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Name="btnCancel" Theme="{StaticResource BtnSecondary}"
+                    Content="{i:T Cancelar}" Width="100"/>
+            <Button Name="btnApply" Theme="{StaticResource BtnPrimary}"
+                    Content="{i:T Aplicar}" Width="110" IsDefault="True"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</Window>

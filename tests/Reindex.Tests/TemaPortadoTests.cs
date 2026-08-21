@@ -34,7 +34,6 @@ public static class TemaPortadoTests
         ["TableView"] = "la tabla pasa a ser un DataGrid: otro control, otro tema",
         ["RowStyle"] = "idem, va con el DataGrid",
         ["ColHeader"] = "idem, va con el DataGrid",
-        ["SuggestItem"] = "va con la caja de sugerencias, en su pantalla",
 
         // Las barras de desplazamiento de Avalonia ya son finas y oscuras con el tema
         // Fluent. Portar las de WPF antes de ver si hacen falta es adornar a ciegas.

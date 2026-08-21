@@ -131,4 +131,36 @@
     <Setter Property="Cursor" Value="Hand"/>
   </ControlTheme>
 
+  <!-- ══ Una fila del desplegable de sugerencias ═══════════════════════════════
+       Va con nombre y no como estilo implicito a proposito: se lo pone SOLO la lista de
+       sugerencias. Las demas listas de la app tienen su propia forma -filas de dos
+       lineas, insignias- y heredar esta las estropearia.
+
+       Sin esto la lista sale con el resaltado azul de Fluent, que no es de esta app.
+       El elegido lleva Accent900 y no el azul del sistema, igual que en WPF. -->
+  <ControlTheme x:Key="SuggestItem" TargetType="ListBoxItem">
+    <Setter Property="Padding" Value="8,5"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Cursor" Value="Hand"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b" Background="Transparent" CornerRadius="5"
+                Padding="{TemplateBinding Padding}">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource RowHover}"/>
+    </Style>
+    <!-- El elegido va DESPUES del raton: moverse con las flechas tiene que verse aunque
+         el raton se haya quedado parado encima de otra fila. -->
+    <Style Selector="^:selected /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource Accent900}"/>
+    </Style>
+  </ControlTheme>
+
 </ResourceDictionary>

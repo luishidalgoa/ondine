@@ -1,3 +1,5 @@
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.VisualTree;
@@ -133,6 +135,98 @@ public static class Comprobacion
         var combo = v.GetVisualDescendants().OfType<ComboBox>().FirstOrDefault();
         Dice(combo is not null && combo.CornerRadius.TopLeft == 6,
             $"el desplegable lleva los valores de Ondine ({combo?.CornerRadius})");
+    }
+
+    /// <summary>
+    /// «Renombrar», la pantalla con mas piezas nuevas del puerto.
+    ///
+    /// <para>
+    /// Se miran las dos que no existian hasta aqui. La <b>vista previa</b>, que ya no es un
+    /// ListView sino un DataGrid: si el enlace de las columnas no cuaja, la tabla sale
+    /// vacia o con las celdas en blanco y la ventana no protesta. Y el <b>desplegable de
+    /// sugerencias</b>, que en Avalonia necesita robarle las teclas al campo por la fase de
+    /// tunel — algo que no existe en WPF, donde bastaba con un «Preview…». Si el tunel no
+    /// engancha, la flecha abajo mueve el cursor en vez de abrir la lista, y nadie lo nota
+    /// hasta que le hace falta.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerRenombrar(Window dueno)
+    {
+        var ficheros = new List<(string, DateTime)>
+        {
+            ("Capitulo 01 1080p.mkv", new DateTime(2020, 1, 1)),
+            ("Capitulo 02 1080p.mkv", new DateTime(2020, 1, 2)),
+        };
+
+        var v = new Renombrar(new Ondine.RenameRule(), ficheros, [], []);
+        v.Show(dueno);
+        await Task.Delay(400);
+
+        // ── La vista previa ──────────────────────────────────────────────────
+        var tabla = v.GetVisualDescendants().OfType<DataGrid>().FirstOrDefault();
+        Dice(tabla?.Columns.Count == 2, $"la vista previa tiene sus dos columnas ({tabla?.Columns.Count})");
+
+        // Leido de las CELDAS PINTADAS, no de la lista que las alimenta. Esto se aprendio
+        // rompiendolo: con el enlace de una columna apuntando a una propiedad que no
+        // existe, mirar la lista sigue dando bien —los datos estan— y la tabla sale con la
+        // columna en blanco. Lo que hay que comprobar es lo que se ve.
+        List<string> Celdas() => tabla is null ? [] :
+            tabla.GetVisualDescendants().OfType<DataGridRow>()
+                 .SelectMany(f => f.GetVisualDescendants().OfType<TextBlock>())
+                 .Select(t => t.Text ?? "").Where(x => x.Length > 0).ToList();
+
+        List<object> Filas() =>
+            (tabla?.ItemsSource as System.Collections.IEnumerable)?.Cast<object>().ToList() ?? [];
+
+        Dice(Filas().Count == 2, $"y una fila por fichero ({Filas().Count} de 2)");
+
+        var celdas = Celdas();
+        Dice(celdas.Count >= 4,
+            $"con las cuatro celdas pintadas, no solo los datos detras ({celdas.Count})");
+        Dice(celdas.Any(c => c.Contains("Capitulo 01")),
+            "y la columna del nombre original trae el nombre");
+
+        string Nuevo(int i) => (Filas().ElementAtOrDefault(i) as RenamePreviewRow)?.Nuevo ?? "";
+
+        // Sin regla no cambia nada, y se DICE que no cambia: una columna vacia se lee como
+        // «se queda sin nombre».
+        Dice(!string.IsNullOrWhiteSpace(Nuevo(0)),
+            $"sin regla, la columna nueva dice que no cambia ({Nuevo(0)})");
+
+        // ── En vivo ──────────────────────────────────────────────────────────
+        var buscar = v.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(t => t.Name == "txtSearch");
+        var cambiar = v.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(t => t.Name == "txtReplace");
+        buscar!.Text = "1080p";
+        cambiar!.Text = "HD";
+        await Task.Delay(200);
+
+        Dice(Nuevo(0).Contains("HD"),
+            $"escribir repinta la vista previa al momento ({Nuevo(0)})");
+        Dice(Celdas().Any(c => c.Contains("HD")),
+            "y lo repintado llega a la celda, no se queda en el dato");
+
+        // ── El desplegable de sugerencias ────────────────────────────────────
+        // La flecha abajo tiene que ABRIR la lista, no mover el cursor. Es lo que prueba
+        // que el enganche por tunel esta puesto.
+        var pop = v.GetVisualDescendants().OfType<Popup>().FirstOrDefault(p => p.Name == "popSearch");
+        buscar.Focus();
+        await Task.Delay(150);
+        pop!.IsOpen = false;
+
+        buscar.RaiseEvent(new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = Key.Down,
+        });
+        await Task.Delay(150);
+        // Esto prueba que la flecha abre la lista. Lo que NO prueba —y conviene no
+        // presumirlo— es que el enganche por tunel le gane al campo de texto: disparar la
+        // tecla a mano no hace competir a nadie, y con un KeyDown normal pasa igual. Que
+        // el Enter acepte la sugerencia en vez de irse al boton por defecto solo lo dice
+        // un teclado de verdad; queda apuntado con lo demas que hay que probar en mano.
+        Dice(pop.IsOpen, "la flecha abajo abre las sugerencias");
+
+        v.Close();
     }
 
     /// <summary>
