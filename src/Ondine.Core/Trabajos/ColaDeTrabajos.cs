@@ -207,6 +207,7 @@ public sealed class ColaDeTrabajos
         TamanoObjetivoBytes = o.TamanoObjetivoBytes,
         Velocidad = o.Velocidad,
         AudioCodec = o.AudioCodec,
+        AudioMezcla = o.AudioMezcla,
         MaxHeight = o.MaxHeight,
         AudioBitrate = o.AudioBitrate,
         Force = o.Force,

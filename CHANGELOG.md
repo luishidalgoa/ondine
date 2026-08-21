@@ -34,6 +34,15 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Ya puedes bajar el audio 5.1 a estéreo.** Un ajuste nuevo, «Canales». Una pista 5.1 pesa como el
+  doble y no aporta nada en unos auriculares ni en la tele del cuarto: bajarla es lo que convierte
+  una película de 8 GB en una de 5 **sin tocar el vídeo**. Nunca va al revés, y pedir estéreo sobre
+  algo que ya lo es no hace nada.
+
+  Dos cosas se arreglan solas: mezclar obliga a recodificar la pista —no se puede copiar y mezclar a
+  la vez, y ffmpeg no avisaría: copiaría y se saltaría la mezcla— y **el bitrate sigue a los canales
+  con los que queda**, porque mantener el del 5.1 en una estéreo desperdiciaría media pista.
+
 - **Ya puedes elegir el códec de audio: AAC, AC3, E-AC3, Opus o FLAC.** Antes solo había dos
   caminos enterrados en el motor —copiar, o pasarlo a AAC— y ninguno se podía pedir. Ahora AC3 está
   a un clic si tiene que entenderlo el receptor del salón, y Opus si quieres la mitad de peso con la

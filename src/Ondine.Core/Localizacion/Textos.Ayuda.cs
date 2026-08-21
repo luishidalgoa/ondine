@@ -239,6 +239,24 @@ public sealed partial class Textos
         "Si el disco se llena, la tanda se pausa sola y sigue cuando liberas espacio. Puedes seguir el progreso desde cualquier pestaña con la píldora de la cabecera.");
 
     // ── Recortes ────────────────────────────────────────────────────────────
+    public string AyudaComprimirCanalesTitulo => Idioma.Elegir(
+        "CHANNELS: 5.1 OR STEREO", "CANALES: 5.1 O ESTÉREO");
+
+    public string AyudaComprimirCanales => Idioma.Elegir(
+        "A 5.1 track weighs about twice a stereo one and does nothing for headphones or the " +
+        "bedroom TV — mixing it down is what turns an 8 GB film into a 5 GB one without touching " +
+        "the video. It never goes the other way, and asking for stereo on something already " +
+        "stereo does nothing at all. Two things happen on their own: mixing forces the track to " +
+        "be re-encoded (it cannot be copied and mixed at once), and the bitrate follows the " +
+        "channels it ends up with — keeping the 5.1 figure on a stereo track would waste half " +
+        "of it.",
+        "Una pista 5.1 pesa como el doble que una estéreo y no aporta nada en unos auriculares ni " +
+        "en la tele del cuarto: bajarla es lo que convierte una película de 8 GB en una de 5 sin " +
+        "tocar el vídeo. Nunca va al revés, y pedir estéreo sobre algo que ya lo es no hace nada. " +
+        "Dos cosas pasan solas: mezclar obliga a recodificar la pista —no se puede copiar y " +
+        "mezclar a la vez— y el bitrate sigue a los canales con los que queda, porque mantener el " +
+        "del 5.1 en una pista estéreo desperdiciaría la mitad.");
+
     public string AyudaComprimirAudioTitulo => Idioma.Elegir(
         "THE AUDIO CODEC", "EL CÓDEC DE AUDIO");
 

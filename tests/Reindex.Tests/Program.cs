@@ -106,6 +106,7 @@ public static class Program
         Ondine.Reindex.Tests.ArgumentosDeBitrateTests.Todas();
         Ondine.Reindex.Tests.VelocidadDelCodificadorTests.Todas();
         Ondine.Reindex.Tests.CodecDeAudioTests.Todas();
+        Ondine.Reindex.Tests.MezclaDeAudioTests.Todas();
         Ondine.Reindex.Tests.DejarComoEstaLoteTests.Todas();
         Ondine.Reindex.Tests.VaraPorTemporadaTests.Todas();
         Ondine.Reindex.Tests.RelojYOmitirTests.Todas();

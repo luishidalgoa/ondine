@@ -250,6 +250,21 @@ public sealed partial class Textos
 
     public string MainAudioSinTocar => Idioma.Elegir("Untouched", "Sin tocar");
 
+    // ── La mezcla ───────────────────────────────────────────────────────────
+    public string MainMezcla => Idioma.Elegir("Channels", "Canales");
+
+    public string MainMezclaTip => Idioma.Elegir(
+        "A 5.1 track weighs about twice a stereo one and does nothing for headphones or the " +
+        "bedroom TV. Mixing it down is what turns an 8 GB film into a 5 GB one without touching " +
+        "the video. It never goes the other way: asking for stereo on something already stereo " +
+        "does nothing at all.",
+        "Una pista 5.1 pesa como el doble que una estéreo y no aporta nada en unos auriculares ni " +
+        "en la tele del cuarto. Bajarla es lo que convierte una película de 8 GB en una de 5 sin " +
+        "tocar el vídeo. Nunca va al revés: pedir estéreo sobre algo que ya lo es no hace nada.");
+
+    public string MainMezclaComoEste => Idioma.Elegir("As they come", "Como vengan");
+    public string MainMezclaEstereo => Idioma.Elegir("Down to stereo", "Bajar a estéreo");
+
     // Los nombres de los códecs no se traducen: son nombres propios. Pasan por el
     // catálogo igual que MKV o MP4 —misma cadena en los dos idiomas— porque el arnés
     // exige que TODO texto de pantalla salga de aquí, y esa regla vale justo porque no

@@ -25,6 +25,12 @@ public sealed partial class Textos
     // {0} = lo que se pidio · {1} = lo que se va a hacer · {2} = el contenedor
     // Se dice porque cambiarlo en silencio deja al usuario creyendo que tiene AC3
     // cuando tiene AAC, y eso solo se descubre al reproducirlo en el sitio equivocado.
+    // {0} = los canales que traia. Se dice porque mezclar obliga a recodificar, y
+    // quien pidio «sin tocar» el codec merece saber por que se le ha tocado.
+    public string MotorAudioMezclado => Idioma.Elegir(
+        "Audio: {0} channels mixed down to stereo, so the track had to be re-encoded.",
+        "Audio: {0} canales bajados a estéreo, así que la pista ha tenido que recodificarse.");
+
     public string MotorAudioCambiado => Idioma.Elegir(
         "Audio: {0} does not fit in {2}, using {1} instead.",
         "Audio: {0} no cabe en {2}, se usa {1} en su lugar.");
