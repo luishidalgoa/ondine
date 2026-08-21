@@ -265,6 +265,28 @@ public sealed partial class Textos
         "With the stretches already on disk, the app offers to send the original to the Recycle Bin (never without asking). It goes to its own bin: if something went wrong, Ctrl+Z brings it back straight away.",
         "Con los tramos ya en disco, la app ofrece mandar el original a la Papelera (nunca sin preguntar). Va a la papelera propia: si algo salió mal, Ctrl+Z lo recupera al instante.");
 
+    public string AyudaRecortesSinRecodificarTitulo => Idioma.Elegir(
+        "CUTTING WITHOUT RE-ENCODING",
+        "CORTAR SIN RECODIFICAR");
+
+    public string AyudaRecortesSinRecodificar => Idioma.Elegir(
+        "Tick «Cut without re-encoding» and the pieces come out by copying the video as it is: " +
+        "nothing at all is lost in quality and it takes seconds instead of minutes. The settings " +
+        "row switches off while it is ticked, because none of them applies when copying.",
+        "Marca «Cortar sin recodificar» y los trozos salen copiando el vídeo tal cual: no se " +
+        "pierde absolutamente nada de calidad y tarda segundos en vez de minutos. La fila de " +
+        "ajustes se apaga mientras está marcado, porque copiando no se aplica ninguno.");
+
+    public string AyudaRecortesSinRecodificarTrato => Idioma.Elegir(
+        "In exchange the cut can only land on a keyframe, so the start moves back to the nearest " +
+        "one — usually a fraction of a second. The app tells you how much before you cut, right " +
+        "next to the tick box, so there is no surprise afterwards. If you need the cut to the exact " +
+        "frame, leave it unticked.",
+        "A cambio, el corte solo puede caer en un fotograma clave, así que el arranque retrocede al " +
+        "más cercano — normalmente una fracción de segundo. La app te dice cuánto antes de cortar, " +
+        "justo al lado de la casilla, para que no haya sorpresa después. Si necesitas el corte al " +
+        "fotograma exacto, déjala sin marcar.");
+
     public string AyudaRecortesConOrganizarTitulo => Idioma.Elegir(
         "COMBINING IT WITH ORGANISE",
         "COMBINAR CON ORGANIZAR");

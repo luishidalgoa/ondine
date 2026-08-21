@@ -213,6 +213,9 @@
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesPaso3}"/>
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesPaso4}"/>
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaRecortesPapelera}"/>
+              <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaRecortesSinRecodificarTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesSinRecodificar}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesSinRecodificarTrato}"/>
               <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaRecortesConOrganizarTitulo}"/>
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaRecortesConOrganizar}"/>
             </StackPanel>
