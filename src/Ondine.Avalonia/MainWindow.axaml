@@ -38,6 +38,17 @@
         <Button Theme="{StaticResource BtnGhostMuted}" Content="{i:T MainDetener}"/>
         <Button Theme="{StaticResource BtnPrimary}" Content="{i:T Aplicar}" IsEnabled="False"/>
       </StackPanel>
+
+      <!-- Los campos, a pelo y sin Style: asi es como estan en el XAML de WPF, y asi es
+           como tienen que verse bien al portarlo. -->
+      <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+        <TextBox Name="campo" Width="200" Watermark="{i:T MainOrigen}"/>
+        <CheckBox Name="casilla" Content="{i:T MainSubcarpetas}" IsChecked="True"/>
+        <ComboBox Name="lista" Width="130" SelectedIndex="0">
+          <ComboBoxItem Content="{i:T MainFormatoMkv}"/>
+          <ComboBoxItem Content="{i:T MainFormatoMp4}"/>
+        </ComboBox>
+      </StackPanel>
     </StackPanel>
   </Border>
 </Window>

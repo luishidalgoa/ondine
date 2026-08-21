@@ -195,6 +195,17 @@ primer paquete con binarios nativos del proyecto y entró con permiso explícito
   es más honesto y quita el apaño que tenía la versión de WPF para que el foco no se comiera la
   tecla Intro.
 
+  Y el **tema de los campos** —caja de texto, casilla, desplegable—. Va como estilo **implícito**
+  y no con nombre, al revés que los botones, y el motivo es de presupuesto: en el XAML de WPF esos
+  tres se usan a pelo (`<TextBox/>`), así que si aquí pidieran un tema por nombre habría que tocar
+  cada uno de los cientos que hay en las dieciocho pantallas — y el que se olvidara saldría con el
+  aspecto de Fluent sin que nada lo dijera. Así, portar una pantalla es copiar su XAML y traducir
+  lo que cambia.
+
+  El desplegable se viste con *setters* y no con plantilla propia: la de Fluent ya trae el popup,
+  el desplazamiento y el teclado resueltos, y rehacerla para cambiar cuatro colores es mucho código
+  por poco. Los botones sí la necesitaban, porque el haz del foco no existe en ningún tema de serie.
+
 Quedan el resto de pantallas y el empaquetado. Las dos
 interfaces conviven mientras dure: cambiar las dieciocho pantallas de golpe habría dejado la app
 sin poder publicarse durante semanas.

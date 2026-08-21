@@ -130,5 +130,7 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
   - 🔜 Fase 4: las pantallas, de menos a más. Hecho el **diálogo compartido** —el que usan
     todas—, con su aviso y su confirmación. **Ojo al portar: en Avalonia mostrar un modal es
     asíncrono**, así que todo método que pregunte algo pasa a ser `async`; es el coste que
-    menos se ve venir.
+    menos se ve venir. Hecho también el **tema de los campos** —caja de texto, casilla y
+    desplegable—, que va como estilo implícito para que portar cada pantalla sea copiar su XAML
+    y no repasar control por control.
   - ⬜ Fase 5: empaquetado, papelera y `.desktop`.

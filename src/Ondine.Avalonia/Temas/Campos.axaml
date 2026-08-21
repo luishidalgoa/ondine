@@ -1,0 +1,134 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Los campos: caja de texto, casilla y desplegable.
+
+    Van como estilos IMPLICITOS -sin x:Key- y no como ControlTheme con nombre, al reves que
+    los botones. El motivo es que en el XAML de WPF estos tres se usan a pelo: `<TextBox/>`,
+    `<CheckBox .../>`, `<ComboBox .../>`, sin Style. Si aqui pidieran un Theme por nombre,
+    cada uno de los cientos que hay en las dieciocho pantallas habria que tocarlo al portar,
+    y el que se olvidara saldria con el aspecto de Fluent sin que nada lo dijera.
+
+    Asi el puerto de cada pantalla es copiar el XAML y traducir lo que cambia, no repasar
+    control por control.
+  -->
+
+  <!-- ══ Caja de texto ═════════════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox">
+    <Setter Property="Background" Value="{StaticResource Field}"/>
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Neutral800}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="8,6"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="MinHeight" Value="30"/>
+    <Setter Property="SelectionBrush" Value="{StaticResource Accent800}"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="caja"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="6">
+          <Panel>
+            <!-- El texto de ayuda: se ve solo con la caja vacia. En WPF esto era un
+                 DataTrigger sobre Text.IsEmpty; aqui hay una pseudoclase para ello. -->
+            <TextBlock Name="pista"
+                       Text="{TemplateBinding Watermark}"
+                       Margin="{TemplateBinding Padding}"
+                       Foreground="{StaticResource Neutral600}"
+                       IsVisible="False"
+                       VerticalAlignment="Center"/>
+            <TextPresenter Name="PART_TextPresenter"
+                           Text="{TemplateBinding Text, Mode=TwoWay}"
+                           CaretBrush="{TemplateBinding CaretBrush}"
+                           SelectionBrush="{TemplateBinding SelectionBrush}"
+                           SelectionStart="{TemplateBinding SelectionStart}"
+                           SelectionEnd="{TemplateBinding SelectionEnd}"
+                           TextWrapping="{TemplateBinding TextWrapping}"
+                           Margin="{TemplateBinding Padding}"
+                           VerticalAlignment="Center"/>
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:empty /template/ TextBlock#pista">
+      <Setter Property="IsVisible" Value="True"/>
+    </Style>
+
+    <Style Selector="^:pointerover /template/ Border#caja">
+      <Setter Property="BorderBrush" Value="{StaticResource Neutral700}"/>
+    </Style>
+
+    <!-- Con el foco, el acento. Es la unica pista de donde esta escribiendo uno cuando
+         hay seis campos en la misma fila, que es el caso de Comprimir. -->
+    <Style Selector="^:focus /template/ Border#caja">
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+
+    <Style Selector="^:disabled /template/ Border#caja">
+      <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Casilla ═══════════════════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="{x:Type CheckBox}" TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{StaticResource Neutral400}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Cursor" Value="Hand"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Orientation="Horizontal" Spacing="7" Background="Transparent">
+          <Border Name="marco" Width="15" Height="15" CornerRadius="4"
+                  VerticalAlignment="Center"
+                  Background="{StaticResource Field}"
+                  BorderBrush="{StaticResource Neutral700}" BorderThickness="1">
+            <Path Name="tic" Stretch="Uniform" Margin="3"
+                  Data="M 0,4 L 3,7 L 9,0"
+                  Stroke="{StaticResource Accent}" StrokeThickness="2"
+                  StrokeLineCap="Round" StrokeJoin="Round"
+                  IsVisible="False"/>
+          </Border>
+          <ContentPresenter Content="{TemplateBinding Content}" VerticalAlignment="Center"/>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:checked /template/ Path#tic">
+      <Setter Property="IsVisible" Value="True"/>
+    </Style>
+    <Style Selector="^:checked /template/ Border#marco">
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ Border#marco">
+      <Setter Property="BorderBrush" Value="{StaticResource Neutral500}"/>
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Desplegable ═══════════════════════════════════════════════════════════
+       Se viste con Setters y no con plantilla propia: la de Fluent ya trae el popup, el
+       desplazamiento y el teclado resueltos, y rehacerla entera para cambiar cuatro
+       colores es mucho codigo por poco. Los botones si la necesitaban porque su forma es
+       distinta -el haz del foco no existe en ningun tema de serie-. -->
+  <ControlTheme x:Key="{x:Type ComboBox}" TargetType="ComboBox">
+    <Setter Property="Background" Value="{StaticResource Field}"/>
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Neutral800}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="6"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="MinHeight" Value="30"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Cursor" Value="Hand"/>
+  </ControlTheme>
+
+</ResourceDictionary>

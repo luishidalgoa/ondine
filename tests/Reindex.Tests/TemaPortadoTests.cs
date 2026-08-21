@@ -55,7 +55,7 @@ public static class TemaPortadoTests
         ["BtnClose"] = "idem",
 
         ["ChipStyle"] = "los chips van con la pantalla de Organizar",
-        ["InlineTextBox"] = "va con la edición en línea de la tabla",
+        ["InlineTextBox"] = "la caja normal ya está; esta es la variante de edición en línea de la tabla",
         ["TextoRecortable"] = "un TextBlock con recorte; se resuelve con un Setter suelto",
         ["HazDeBorde"] = "ya está dentro del ControlTheme de los botones, no hace falta suelto",
     };
