@@ -1,0 +1,209 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Preferencias"
+        Title="{i:T PreferenciasTitulo}"
+        Width="580" Height="620" CanResize="False"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!--
+    Preferencias, portado de PreferencesWindow.xaml.
+
+    El alto es fijo y las pestanas se desplazan. En WPF el ScrollViewer venia dentro de la
+    plantilla del TabControl; aqui va uno por pestana, escrito. La regla de antes -«cada
+    linea nueva se paga en el Height de arriba»- se incumplio tres veces: el selector de
+    idioma dejo fuera la ultima casilla de «General», la pestana del modelo volvio a subir
+    el alto, y la de peliculas se salio otra vez. Con el desplazamiento puesto no hay que
+    acordarse de nada al anadir una linea.
+
+    Las dos claves van en TextBox con PasswordChar, porque Avalonia no tiene PasswordBox.
+    Lo que eso cambia esta escrito en el code-behind: no es solo el nombre del control.
+  -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,*,Auto">
+
+      <!-- cabecera (arrastrable) -->
+      <Grid Name="header" Grid.Row="0" Height="46" Background="Transparent">
+        <TextBlock Text="{i:T PreferenciasTitulo}" FontSize="14" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="18,0,0,0"/>
+        <Button Name="btnX" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
+                Content="✕"/>
+      </Grid>
+
+      <TabControl Name="pestanias" Grid.Row="1" Margin="18,0,18,0">
+
+        <!-- ══ General ══ -->
+        <TabItem Header="{i:T PreferenciasTabGeneral}">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="{i:T PreferenciasIdiomaApp}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <TextBlock Text="{i:T PreferenciasIdiomaAppAyuda}" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboIdioma" Width="200" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+
+              <TextBlock Text="{i:T PreferenciasPresetPorDefecto}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboDefPreset" Width="320" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+
+              <TextBlock Text="{i:T PreferenciasIdiomaAudio}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <TextBlock Text="{i:T PreferenciasIdiomaAudioAyuda}" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,0,0,4"/>
+              <TextBox Name="txtDefLang" Width="140" HorizontalAlignment="Left" Margin="0,0,0,18"/>
+
+              <CheckBox Name="chkRecurse" Content="{i:T PreferenciasSubcarpetas}" Margin="0,0,0,10"
+                        ToolTip.Tip="{i:T PreferenciasSubcarpetasAyuda}"/>
+              <CheckBox Name="chkUpdates" Content="{i:T PreferenciasBuscarActualizaciones}" Margin="0,0,0,14"/>
+
+              <!-- El menu del Explorador NO esta aqui, y no es un olvido: se explica en el
+                   code-behind. Va con la Fase 5, la del empaquetado. -->
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- ══ Al comprimir ══ -->
+        <TabItem Header="{i:T PreferenciasTabAlComprimir}">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="{i:T PreferenciasTrasComprimirTitulo}" FontSize="12" Foreground="{StaticResource Neutral400}" Margin="0,0,0,10"/>
+              <RadioButton Name="rbAsk" GroupName="after" Content="{i:T PreferenciasTrasComprimirPreguntar}"/>
+              <RadioButton Name="rbRecycle" GroupName="after" Content="{i:T PreferenciasTrasComprimirPapelera}"/>
+              <RadioButton Name="rbKeep" GroupName="after" Content="{i:T PreferenciasTrasComprimirConservar}"/>
+              <Border Background="{StaticResource Field}" CornerRadius="8" Padding="12,10" Margin="0,16,0,0">
+                <StackPanel>
+                  <TextBlock TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource Neutral500}"
+                             Text="{i:T PreferenciasPapeleraNota}"/>
+                  <TextBlock TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource Neutral500}" Margin="0,6,0,0"
+                             Text="{i:T PreferenciasBorradoNota}"/>
+                  <TextBlock TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource Neutral600}" Margin="0,6,0,0"
+                             Text="{i:T PreferenciasRutaNota}"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- ══ Rendimiento y disco ══ -->
+        <TabItem Header="{i:T PreferenciasTabRendimiento}">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="{i:T PreferenciasMargenDisco}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <TextBox Name="txtMinFree" Width="90" HorizontalAlignment="Left"/>
+                <TextBlock Text="{i:T PreferenciasUnidadMb}" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{StaticResource Neutral500}"/>
+              </StackPanel>
+              <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,0,0,18"
+                         Text="{i:T PreferenciasMargenDiscoAyuda}"/>
+
+              <CheckBox Name="chkHw" Content="{i:T PreferenciasAceleracion}"/>
+              <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,6,0,0"
+                         Text="{i:T PreferenciasAceleracionAyuda}"/>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- ══ Modelo de lenguaje (opcional) ══ -->
+        <TabItem Header="{i:T IaPestania}">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="{i:T IaTitulo}" FontSize="12" Foreground="{StaticResource Neutral400}" Margin="0,0,0,4"/>
+              <TextBlock Text="{i:T IaIntro}" TextWrapping="Wrap" FontSize="10.5"
+                         Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+              <CheckBox Name="chkIa" Content="{i:T IaActivo}" Margin="0,0,0,14"/>
+
+              <TextBlock Text="{i:T IaBaseUrl}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <TextBox Name="txtIaUrl" Margin="0,0,0,3"/>
+              <TextBlock Text="{i:T IaBaseUrlAyuda}" TextWrapping="Wrap" FontSize="10.5"
+                         Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+              <TextBlock Text="{i:T IaModelo}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <TextBox Name="txtIaModelo" Width="240" HorizontalAlignment="Left" Margin="0,0,0,3"/>
+              <TextBlock Text="{i:T IaModeloAyuda}" TextWrapping="Wrap" FontSize="10.5"
+                         Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+              <TextBlock Text="{i:T IaClave}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <!-- Con PasswordChar: no se ensena en pantalla. Lo que ya esta guardado no se
+                   rellena — se dice que lo hay, y escribir encima lo reemplaza. -->
+              <Grid Margin="0,0,0,3" ColumnDefinitions="*,Auto">
+                <TextBox Name="txtIaClave" PasswordChar="•"/>
+                <Button Name="btnIaOlvidar" Grid.Column="1" Theme="{StaticResource BtnGhostMuted}"
+                        Content="{i:T IaClaveBorrar}" FontSize="11" Padding="10,4" Margin="8,0,0,0"
+                        IsVisible="False"/>
+              </Grid>
+              <TextBlock Name="lblIaClaveNota" Text="{i:T IaClaveAyuda}" TextWrapping="Wrap" FontSize="10.5"
+                         Foreground="{StaticResource Neutral600}" Margin="0,0,0,14"/>
+
+              <StackPanel Orientation="Horizontal">
+                <Button Name="btnIaProbar" Theme="{StaticResource BtnSecondary}" Content="{i:T IaProbar}"
+                        FontSize="12" Padding="12,5"/>
+                <TextBlock Name="lblIaProbar" VerticalAlignment="Center" Margin="10,0,0,0"
+                           FontSize="11.5" TextWrapping="Wrap" MaxWidth="330"
+                           Foreground="{StaticResource Neutral500}"/>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- ══ Peliculas: identificar contra TMDb (opcional) ══ -->
+        <TabItem Header="{i:T TmdbPestania}">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="{i:T TmdbTitulo}" FontSize="12" Foreground="{StaticResource Neutral400}" Margin="0,0,0,4"/>
+              <TextBlock Text="{i:T TmdbIntro}" TextWrapping="Wrap" FontSize="10.5"
+                         Foreground="{StaticResource Neutral600}" Margin="0,0,0,12"/>
+
+              <CheckBox Name="chkTmdb" Content="{i:T TmdbActivo}" Margin="0,0,0,10"/>
+
+              <!-- Que sale de esta maquina. Va pegado al interruptor y no detras de un
+                   «saber mas»: es justo la informacion con la que se decide encenderlo, y
+                   leida despues ya no sirve para decidir. -->
+              <Border Padding="10,7" CornerRadius="8" Margin="0,0,0,16"
+                      Background="{StaticResource Field}">
+                <TextBlock Text="{i:T TmdbQueSeManda}" TextWrapping="Wrap" FontSize="10.5"
+                           Foreground="{StaticResource Neutral500}"/>
+              </Border>
+
+              <TextBlock Text="{i:T TmdbClave}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <Grid Margin="0,0,0,3" ColumnDefinitions="*,Auto">
+                <TextBox Name="txtTmdbClave" PasswordChar="•"/>
+                <Button Name="btnTmdbOlvidar" Grid.Column="1" Theme="{StaticResource BtnGhostMuted}"
+                        Content="{i:T TmdbClaveBorrar}" FontSize="11" Padding="10,4" Margin="8,0,0,0"
+                        IsVisible="False"/>
+              </Grid>
+              <TextBlock Name="lblTmdbClaveNota" TextWrapping="Wrap" FontSize="10.5"
+                         Foreground="{StaticResource Neutral600}" Margin="0,0,0,10"/>
+
+              <!-- CUAL se esta usando. Sin esta linea, «hay clave» y «funciona» se parecen
+                   demasiado: una copia compilada del repo sin el secreto no tiene ninguna,
+                   y eso hay que decirlo aqui, que es donde se arregla, y no como un fallo
+                   de red al primer intento. -->
+              <Border Name="cajaTmdbClave" Padding="10,7" CornerRadius="8" BorderThickness="1"
+                      Margin="0,0,0,16">
+                <TextBlock Name="lblTmdbOrigen" TextWrapping="Wrap" FontSize="11"/>
+              </Border>
+
+              <!-- Como sacar tu propia clave, paso a paso y con el enlace. Va aqui, delante
+                   del campo donde se pega, y no en la Ayuda: mandar a alguien a otra
+                   pantalla a leer como rellenar la que tiene abierta pierde a la mitad. -->
+              <TextBlock Text="{i:T TmdbComoTitulo}" FontSize="11" FontWeight="Medium"
+                         Foreground="{StaticResource Neutral500}" Margin="0,0,0,6"/>
+              <TextBlock Text="{i:T TmdbComoPasos}" TextWrapping="Wrap" FontSize="10.5" LineHeight="17"
+                         Foreground="{StaticResource Neutral600}" Margin="0,0,0,10"/>
+              <Button Name="btnTmdbAbrir" Theme="{StaticResource BtnSecondary}" FontSize="11"
+                      Padding="12,5" HorizontalAlignment="Left" Content="{i:T TmdbComoAbrir}"/>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
+
+      <!-- pie -->
+      <Border Grid.Row="2" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0" Padding="18,12">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+          <Button Name="btnCancel" Theme="{StaticResource BtnSecondary}" Content="{i:T Cancelar}" Width="100"/>
+          <Button Name="btnSave" Theme="{StaticResource BtnPrimary}" Content="{i:T Guardar}" Width="100" IsDefault="True"/>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</Window>

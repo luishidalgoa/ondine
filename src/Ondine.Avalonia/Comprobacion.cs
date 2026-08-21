@@ -139,6 +139,93 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// Preferencias: que lo que entra vuelva a salir.
+    ///
+    /// <para>
+    /// Aqui hay veinte controles y cada uno se carga y se guarda por su cuenta. El fallo
+    /// tipico de una pantalla asi no es que reviente: es que UNO se quede sin cablear al
+    /// portar, y entonces ese ajuste vuelve a su valor de fabrica cada vez que alguien abre
+    /// preferencias a tocar otra cosa. Nadie lo relaciona.
+    /// </para>
+    /// <para>
+    /// La comprobacion es un viaje de ida y vuelta: se abre con unos valores, se pulsa
+    /// guardar sin tocar nada, y tienen que salir los mismos.
+    /// </para>
+    /// <para>
+    /// <b>Y se hace DOS VECES, todo encendido y todo apagado.</b> Eso se aprendio
+    /// rompiendolo: con una sola pasada, desconectar la casilla de «buscar actualizaciones»
+    /// no hacia saltar nada, porque se estaba probando con ella apagada — y una casilla sin
+    /// cablear tambien sale apagada. Un booleano probado contra su propio valor de fabrica
+    /// no prueba nada. Con las dos pasadas, cualquiera que se quede suelto falla en una.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerPreferencias(Window dueno)
+    {
+        var idiomaAntes = Ondine.Localizacion.Idioma.Actual;
+        try
+        {
+            await UnViajeDeIdaYVuelta(dueno, true);
+            await UnViajeDeIdaYVuelta(dueno, false);
+        }
+        finally { Ondine.Localizacion.Idioma.Actual = idiomaAntes; }
+    }
+
+    private static async Task UnViajeDeIdaYVuelta(Window dueno, bool encendido)
+    {
+        var como = encendido ? "encendido" : "apagado";
+
+        var entra = new Ondine.Settings
+        {
+            DefaultLang = encendido ? "jpn" : "cat",
+            Recurse = encendido,
+            CheckUpdatesOnStart = encendido,
+            AfterCompress = encendido ? Ondine.AfterCompress.Keep : Ondine.AfterCompress.RecycleOriginal,
+            MinFreeMb = encendido ? 4321 : 1234,
+            UseHardware = encendido,
+        };
+        entra.Ia.Activo = encendido;
+        entra.Ia.BaseUrl = "http://ejemplo.invalido/v1";
+        entra.Ia.Modelo = "un-modelo-de-prueba";
+        entra.Tmdb.Activo = encendido;
+
+        // Algo que esta ventana NO edita: tiene que seguir ahi al volver. Es la regla de
+        // partir de los ajustes de entrada en vez de construir unos nuevos, que ya costo
+        // una vez el historial de renombrado entero.
+        entra.RenameSearchHistory = ["1080p", "BluRay"];
+
+        var v = new Preferencias(entra, ["Archivar", "Movil"]);
+        v.Show(dueno);
+        await Task.Delay(400);
+
+        // Guardar sin tocar nada.
+        v.GetVisualDescendants().OfType<Button>().First(b => b.Name == "btnSave")
+         .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        await Task.Delay(250);
+
+        var sale = v.Result;
+        Dice(sale is not null, $"guardar devuelve unos ajustes ({como})");
+        if (sale is null) return;
+
+        Dice(sale.DefaultLang == entra.DefaultLang,
+            $"el idioma de audio vuelve igual, {como} ({sale.DefaultLang})");
+        Dice(sale.Recurse == encendido, $"y la casilla de subcarpetas, {como}");
+        Dice(sale.CheckUpdatesOnStart == encendido, $"y la de buscar actualizaciones, {como}");
+        Dice(sale.AfterCompress == entra.AfterCompress,
+            $"y el que de los tres redondos estaba elegido ({sale.AfterCompress})");
+        Dice(sale.MinFreeMb == entra.MinFreeMb, $"y el margen de disco ({sale.MinFreeMb})");
+        Dice(sale.UseHardware == encendido, $"y la aceleracion, {como}");
+        Dice(sale.Ia.Activo == encendido && sale.Ia.BaseUrl == entra.Ia.BaseUrl
+             && sale.Ia.Modelo == entra.Ia.Modelo, $"y los tres del modelo, {como}");
+        Dice(sale.Tmdb.Activo == encendido, $"y el de peliculas, {como}");
+
+        // Lo que la ventana no edita sigue ahi: se parte de los ajustes de entrada.
+        Dice(sale.RenameSearchHistory.Count == 2,
+            $"y lo que esta ventana NO edita no se pierde ({sale.RenameSearchHistory.Count})");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// La Ayuda: que se cambie de tutorial y que el texto llegue a la pantalla.
     ///
     /// <para>
