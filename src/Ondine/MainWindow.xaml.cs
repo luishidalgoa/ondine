@@ -199,7 +199,7 @@ public partial class MainWindow : Window
         tabDetalle.MouseLeftButtonUp += (_, _) => ShowSideTab("detalle");
         tabEstim.MouseLeftButtonUp += (_, _) => ShowSideTab("estim");
 
-        foreach (var c in new[] { cboFmt, cboCodec, cboQ, cboRes, cboAud })
+        foreach (var c in new[] { cboFmt, cboCodec, cboQ, cboRes, cboAud, cboVel })
             c.SelectionChanged += (_, _) => UpdateEstimate();
 
         btnPreview.Click += async (_, _) => await OnPreviewAsync();
@@ -1214,6 +1214,16 @@ public partial class MainWindow : Window
         // otra y aqui se decide cual.
         opt.Quality = cboQ.SelectedIndex switch { 1 => 22, 2 => 24, 3 => 27, 4 => 30, _ => 0 };
         opt.TamanoObjetivoBytes = ObjetivoElegidoBytes();
+        // El orden del desplegable esta acoplado a este switch, igual que el resto de la
+        // fila: se traduce el rotulo, nunca se reordena la lista.
+        opt.Velocidad = cboVel.SelectedIndex switch
+        {
+            0 => Ondine.Objetivo.Velocidad.MuyRapido,
+            1 => Ondine.Objetivo.Velocidad.Rapido,
+            3 => Ondine.Objetivo.Velocidad.Lento,
+            4 => Ondine.Objetivo.Velocidad.MuyLento,
+            _ => Ondine.Objetivo.Velocidad.Equilibrado,
+        };
         opt.MaxHeight = cboRes.SelectedIndex switch { 1 => 1080, 2 => 720, 3 => 480, _ => 0 };
         opt.AudioBitrate = cboAud.SelectedIndex switch { 1 => 192, 2 => 160, 3 => 128, 4 => 96, _ => 0 };
 

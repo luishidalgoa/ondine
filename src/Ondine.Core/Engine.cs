@@ -301,10 +301,24 @@ public sealed class Engine
     /// Los argumentos del codificador. Con bitrate objetivo puesto manda ESE y se olvida la
     /// calidad constante: las dos juntas no las obedece ffmpeg.
     /// </summary>
-    private static List<string> EncoderArgs(string encoder, int quality, int bitrateKbps) =>
-        bitrateKbps > 0
-            ? [.. Objetivo.ArgumentosDeBitrate.Para(encoder, bitrateKbps)]
+    private static List<string> EncoderArgs(
+        string encoder, int quality, int bitrateKbps, Objetivo.Velocidad velocidad)
+    {
+        var args = bitrateKbps > 0
+            ? new List<string>(Objetivo.ArgumentosDeBitrate.Para(encoder, bitrateKbps))
             : EncoderArgs(encoder, quality);
+
+        // La velocidad SUSTITUYE al valor fijo que traia cada familia, no se anade: dos
+        // «-preset» en la misma orden y ffmpeg se queda con uno, y no siempre el ultimo.
+        var (bandera, valor) = (Objetivo.VelocidadDelCodificador.Para(encoder, velocidad) is var v2)
+            ? (v2[0], v2[1]) : ("", "");
+
+        var i = args.IndexOf(bandera);
+        if (i >= 0 && i + 1 < args.Count) args[i + 1] = valor;
+        else { args.Add(bandera); args.Add(valor); }
+
+        return args;
+    }
 
     private static List<string> EncoderArgs(string encoder, int quality) => encoder switch
     {
@@ -510,7 +524,7 @@ public sealed class Engine
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;   // WebM: VP9 (más compatible entre builds de FFmpeg)
         var encoder = await SelectEncoderAsync(vcodec);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
-        var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps);
+        var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps, opt.Velocidad);
         var t = Textos.Instancia;
         if (opt.AudioOnly) rep.Log(string.Format(t.MotorSoloAudioModo, opt.AudioFormat.ToUpperInvariant()));
         else
@@ -649,7 +663,7 @@ public sealed class Engine
                     ? EncoderArgs(encoder, quality,
                         Objetivo.TamanoObjetivo.Calcular(
                             opt.TamanoObjetivoBytes, durSec,
-                            AudioKbpsEstimado(opt, audio.Count), kbps).VideoKbps)
+                            AudioKbpsEstimado(opt, audio.Count), kbps).VideoKbps, opt.Velocidad)
                     : encArgs);
                 bool mp4 = opt.Container == "mp4";
                 for (int i = 0; i < audio.Count; i++)
@@ -783,7 +797,7 @@ public sealed class Engine
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;
         var encoder = await SelectEncoderAsync(vcodec);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
-        var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps);
+        var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps, opt.Velocidad);
 
         // repartimos las muestras por el 90% central (evita cabecera y créditos)
         samples = Math.Max(1, samples);

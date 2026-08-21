@@ -34,7 +34,8 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **Tamaño objetivo**: en «Calidad», dices los MB a los que debe quedar cada fichero y el
   bitrate sale solo, calculado **por fichero**. Si no da, se dice antes de codificar y con el
   mínimo que sí valdría.
-- 🔜 Preset de velocidad del codificador (ultrafast…slow) expuesto en la UI.
+- ✅ **Esmero del codificador**: cinco pasos de «lo más rápido» a «lo más lento», con el valor
+  que toca a cada familia elegido solo. «Equilibrado» es lo que se hacía antes.
 - ⬜ **Recorte (crop)** y **dimensiones exactas** (con anamórfico/relación de aspecto).
 - ⬜ **Filtros**: desentrelazado, denoise, deblock, nitidez, rotación.
 

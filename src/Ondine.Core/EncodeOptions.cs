@@ -37,6 +37,13 @@ public sealed class EncodeOptions
     /// </summary>
     public long TamanoObjetivoBytes { get; set; }
 
+    /// <summary>
+    /// Cuanto se esmera el codificador. Lo que habia antes de que esto se pudiera elegir es
+    /// <see cref="Objetivo.Velocidad.Equilibrado"/>, que es el valor por defecto: quien no
+    /// toque nada sigue obteniendo lo de siempre.
+    /// </summary>
+    public Objetivo.Velocidad Velocidad { get; set; } = Objetivo.Velocidad.Equilibrado;
+
     public bool Force { get; set; }
     public bool DryRun { get; set; }
     public RenameRule? NameRule { get; set; }   // renombrado del archivo de salida (estilo PowerRename)

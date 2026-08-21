@@ -166,22 +166,26 @@ public static class ColaDeTrabajosTests
 
         // A cada propiedad se le pone un valor DISTINTO del que trae de fábrica: si se le
         // pusiera el de por defecto, una propiedad olvidada en la copia seguiría cuadrando.
+        var sinCubrir = new List<string>();
+
         foreach (var p in props)
         {
-            object? valor = p.PropertyType switch
-            {
-                var tipo when tipo == typeof(string) => "cambiado",
-                var tipo when tipo == typeof(bool) => true,
-                var tipo when tipo == typeof(int) => 4242,
-                var tipo when tipo == typeof(double?) => 12.5d,
-                var tipo when tipo == typeof(List<string>) => new List<string> { "zzz" },
-                _ => null,
-            };
-            if (valor is null) continue;
+            var valor = ValorDistintoDelPorDefecto(p.PropertyType);
+            if (valor is null) { sinCubrir.Add($"{p.Name} ({Nombre(p.PropertyType)})"); continue; }
 
             p.SetValue(original, valor);
             puestas.Add(p.Name);
         }
+
+        // Y se dice lo que NO se pudo cubrir, en vez de callarlo. La lista de tipos era a
+        // mano y tenia dos huecos -los enum y los long-, asi que Velocidad y
+        // TamanoObjetivoBytes entraron sin que esto se enterara. Un guardian con un hueco
+        // silencioso es peor que ninguno: da la tranquilidad sin dar la cobertura.
+        Program.Assert(sinCubrir.Count == 0,
+            sinCubrir.Count == 0
+                ? "esta comprobacion sabe fabricar un valor para TODOS los tipos de EncodeOptions"
+                : $"no se sabe probar {sinCubrir.Count} opciones: {string.Join(", ", sinCubrir)}. " +
+                  "Ensena a ValorDistintoDelPorDefecto a fabricar ese tipo, o quedan sin vigilar.");
 
         Program.Assert(puestas.Count >= 10,
             $"la comprobación toca {puestas.Count} opciones: si fueran cuatro, no estaría midiendo nada");
@@ -210,4 +214,47 @@ public static class ColaDeTrabajosTests
                 : $"la copia se deja {olvidadas.Count}: {string.Join(", ", olvidadas)}. " +
                   "Añádelas a ColaDeTrabajos.Copiar o el trabajo encolado las ignorará en silencio.");
     }
+
+    /// <summary>
+    /// Un valor DISTINTO del que trae de fabrica, para cualquier tipo. Si se le pusiera el
+    /// de por defecto, una propiedad olvidada en la copia seguiria cuadrando y la
+    /// comprobacion no probaria nada.
+    ///
+    /// <para>
+    /// Devuelve null cuando no sabe fabricarlo, y quien llama lo DICE. Antes esto era un
+    /// switch de tipos escrito a mano —justo el antipatron que esta comprobacion existe para
+    /// evitar— y se callaba lo que no reconocia.
+    /// </para>
+    /// </summary>
+    private static object? ValorDistintoDelPorDefecto(Type t)
+    {
+        var real = Nullable.GetUnderlyingType(t) ?? t;
+
+        if (real == typeof(string)) return "cambiado";
+        if (real == typeof(bool)) return true;
+        if (real.IsEnum) return Enum.GetValues(real).Cast<object>().Skip(1).FirstOrDefault();
+        if (real == typeof(List<string>)) return new List<string> { "zzz" };
+
+        // Cualquier numero: int, long, double, float, decimal, short, byte…
+        try
+        {
+            if (real.IsPrimitive || real == typeof(decimal))
+                return Convert.ChangeType(42, real, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        catch { /* no es convertible desde 42: se dira que no se sabe */ }
+
+        // Una clase suya con constructor vacio: vale una instancia nueva. La copia la pasa
+        // por referencia, asi que comparar por Equals distingue «copiada» de «olvidada»
+        // -que se quedaria en null-. Asi entro NameRule, que llevaba sin vigilar desde el
+        // principio sin que nadie lo supiera.
+        if (real.IsClass && real.GetConstructor(Type.EmptyTypes) is not null)
+        {
+            try { return Activator.CreateInstance(real); } catch { }
+        }
+
+        return null;
+    }
+
+    private static string Nombre(Type t) =>
+        Nullable.GetUnderlyingType(t) is { } u ? $"{u.Name}?" : t.Name;
 }
