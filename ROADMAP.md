@@ -123,14 +123,31 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
   - ✅ Fase 1: reglas de Organizar bajadas al motor, con pruebas.
   - ✅ Fase 2: la prueba de fuego —DataGrid con RowDetails y vídeo con LibVLC—, las dos salen.
   - ✅ Fase 3a: el esqueleto, los 30 colores del tema y los textos del catálogo compartido.
-  - 🔜 Fase 3b: los estilos a selectores. Hecha la familia de **botones** (6), con el haz del
-    foco como animación de Avalonia. Los otros 18 están apuntados con su motivo, y la mayoría
-    no se portan: visten controles de WPF que en Avalonia son otros —la tabla pasa a DataGrid—
-    o van con su pantalla en la Fase 4.
-  - 🔜 Fase 4: las pantallas, de menos a más. Hecho el **diálogo compartido** —el que usan
-    todas—, con su aviso y su confirmación. **Ojo al portar: en Avalonia mostrar un modal es
-    asíncrono**, así que todo método que pregunte algo pasa a ser `async`; es el coste que
-    menos se ve venir. Hecho también el **tema de los campos** —caja de texto, casilla y
-    desplegable—, que va como estilo implícito para que portar cada pantalla sea copiar su XAML
-    y no repasar control por control.
+  - ✅ Fase 3b: los estilos a selectores. Hecha la familia de **botones**, la fila del
+    desplegable de sugerencias y las dos piezas compartidas con Organizar. Los demás están
+    apuntados con su motivo, y la mayoría no se portan: visten controles de WPF que en
+    Avalonia son otros —la tabla pasa a DataGrid— o van con su pantalla en la Fase 4.
+    **Aquí salió que el termómetro medía media habitación**: contaba solo `Theme.xaml` y hay
+    un segundo diccionario con doce estilos más. El de colores tenía el mismo agujero, y por
+    él once colores de estado no estaban portados — con las insignias de «ordenar por
+    temporadas» saliendo grises sin que nada avisara.
+  - 🔜 Fase 4: las pantallas, de menos a más. Hechas **ocho**: el diálogo compartido, «qué
+    falta», «quitar pistas», «ordenar por temporadas», «renombrar», el encargo para la IA,
+    la Ayuda, preferencias y el explorador de catálogos. Cada una con su comprobación de
+    arranque (`--auto`, 87 hoy), y cada comprobación confirmada en rojo rompiendo a propósito
+    lo que vigila.
+    - **Lo que más cuesta y menos se ve venir:** mostrar un modal es asíncrono, así que todo
+      método que pregunte algo pasa a ser `async` — y hay que apagar el botón *antes* de
+      preguntar, porque la ventana sigue viva mientras se decide.
+    - **Dos veces ha aparecido lógica pura viviendo dentro de una ventana de WPF** (el
+      autocompletado de renombrar y el coloreado del JSON). Las dos han bajado al motor con
+      pruebas antes de portar la pantalla: reescribir a ojo un cálculo de índices o un
+      autómata es reescribirlo con otro fallo.
+    - **Diferencias reales que quedan escritas, no arregladas:** el aviso de «esto está en
+      una nube» no salta fuera de Windows (lee el registro); las claves ya no van en un
+      `PasswordBox` porque no existe; en Linux el gestor de archivos abre la carpeta pero no
+      señala el fichero; y la casilla del menú del Explorador no se enseña en vez de
+      enseñarse sin hacer nada.
+    - Faltan: el reproductor, los complementos, el panel de películas, la ventana principal
+      y las dos grandes —Organizar y Recortes—.
   - ⬜ Fase 5: empaquetado, papelera y `.desktop`.
