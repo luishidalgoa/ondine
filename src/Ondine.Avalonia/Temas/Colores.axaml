@@ -44,4 +44,29 @@
   <SolidColorBrush x:Key="EstadoErr" Color="#F2777A"/>
   <SolidColorBrush x:Key="SurfaceGlass" Color="#DB232532"/>
 
+
+  <!-- ══ Los colores de estado de Organizar ════════════════════════════════════
+       Verde, ambar y rojo, cada uno con su version de relleno y de borde. Salen del
+       SEGUNDO diccionario de tema de WPF, ThemeOrganizar.xaml, que ni este guardian ni el
+       de estilos miraban. Doce colores fuera de la cuenta mientras la comprobacion decia
+       que no faltaba ninguno.
+
+       Estan copiados por script desde el tema de WPF, no a mano: la comprobacion que
+       exige que sean el MISMO color existe justo porque teclear un hex es donde se falla.
+
+       Lo que dicen: verde = se puede aplicar sin mirar; ambar = revisalo; rojo = conflicto,
+       no se toca. El estado NO depende solo del color -cada fila lleva su rotulo-, pero el
+       color es lo que se lee de un vistazo en una tabla de doscientas filas. -->
+  <SolidColorBrush x:Key="OrgAccentBg" Color="#1F968AE0"/>
+  <SolidColorBrush x:Key="OrgAccentBorder" Color="#4D968AE0"/>
+  <SolidColorBrush x:Key="OrgDanger" Color="#EC9AA0"/>
+  <SolidColorBrush x:Key="OrgDangerBg" Color="#1FEC9AA0"/>
+  <SolidColorBrush x:Key="OrgDangerBorder" Color="#4DEC9AA0"/>
+  <SolidColorBrush x:Key="OrgOk" Color="#86D8A6"/>
+  <SolidColorBrush x:Key="OrgOkBg" Color="#1F86D8A6"/>
+  <SolidColorBrush x:Key="OrgOkBorder" Color="#4D86D8A6"/>
+  <SolidColorBrush x:Key="OrgWarn" Color="#E3C36B"/>
+  <SolidColorBrush x:Key="OrgWarnBg" Color="#1FE3C36B"/>
+  <SolidColorBrush x:Key="OrgWarnBorder" Color="#4DE3C36B"/>
+
 </ResourceDictionary>

@@ -27,19 +27,30 @@ public static class TemaCompartidoTests
         Program.Seccion("Las dos interfaces pintan del mismo color");
 
         var raiz = LocalizarRaiz();
-        var wpf = Path.Combine(raiz, "src", "Ondine", "Theme.xaml");
+        // LOS DOS diccionarios. Esto miraba solo Theme.xaml y decía «ninguno se queda sin
+        // portar» con doce colores fuera: los Org* viven en ThemeOrganizar.xaml. Es el
+        // mismo agujero que tenía el termómetro de estilos, y por eso la pantalla de
+        // ordenar por temporadas se fusionó pintando sus insignias en gris sin que nada
+        // avisara. Se buscan por patrón para que un tercero entre solo.
+        var wpf = Directory.GetFiles(Path.Combine(raiz, "src", "Ondine"), "Theme*.xaml")
+                           .OrderBy(f => f).ToList();
         var avalonia = Path.Combine(raiz, "src", "Ondine.Avalonia", "Temas", "Colores.axaml");
 
-        if (!File.Exists(wpf) || !File.Exists(avalonia))
+        if (wpf.Count < 2 || !File.Exists(avalonia))
         {
             Program.Assert(false, "no encuentro uno de los dos temas: ¿se ha movido alguno?");
             return;
         }
 
-        var deWpf = Leer(wpf);
+        var deWpf = new Dictionary<string, string>();
+        foreach (var f in wpf)
+            foreach (var (k, v2) in Leer(f)) deWpf[k] = v2;
+
+        Program.Assert(wpf.Count >= 2,
+            $"se miran los {wpf.Count} diccionarios de tema: {string.Join(", ", wpf.Select(Path.GetFileName))}");
         var deAvalonia = Leer(avalonia);
 
-        Program.Assert(deWpf.Count >= 25,
+        Program.Assert(deWpf.Count >= 35,
             $"el tema de WPF tiene {deWpf.Count} colores: si fueran cuatro, esto no estaría midiendo nada");
 
         // ── Ninguno se queda sin portar ───────────────────────────────────────────
