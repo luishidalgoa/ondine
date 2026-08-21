@@ -381,9 +381,24 @@
             Padding="12,10" BorderBrush="{StaticResource Divider}" BorderThickness="1">
       <Grid>
         <Grid.RowDefinitions>
-          <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
+
+        <!-- Copiar en vez de recodificar. Va ARRIBA del todo y no escondido en un menú
+             porque cambia la naturaleza de lo que va a pasar, no un ajuste: decide si el
+             trozo es idéntico al original o una recodificación. Al marcarlo, la fila de
+             ajustes de abajo se apaga entera — copiando no se aplica ninguno, y dejarlos
+             encendidos haría creer que sí. -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+          <CheckBox x:Name="chkSinRecodificar" VerticalAlignment="Center"
+                    Content="{i:T RecortesSinRecodificar}"
+                    ToolTip="{i:T RecortesSinRecodificarTip}"/>
+          <TextBlock x:Name="lblSinRecodificar" Margin="12,0,0,0" VerticalAlignment="Center"
+                     FontSize="11" Foreground="{StaticResource Neutral500}"
+                     TextTrimming="CharacterEllipsis" MaxWidth="720" Text=""/>
+        </StackPanel>
+
+        <Grid x:Name="filaAjustes" Grid.Row="1">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
@@ -410,7 +425,7 @@
           </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,10,0,0">
+        <Grid Grid.Row="2" Margin="0,10,0,0">
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock x:Name="lblEst" FontSize="15" FontWeight="Medium"
                        Foreground="{StaticResource Accent200}" Text="—" VerticalAlignment="Center"/>

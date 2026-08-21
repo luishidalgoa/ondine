@@ -32,6 +32,19 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Recortes ya puede cortar sin recodificar.** Marcando «Cortar sin recodificar», los trozos salen
+  copiando los paquetes tal cual: **no se pierde nada de calidad** y tarda segundos en vez de
+  minutos, en lugar de volver a codificar el vídeo entero. Es lo que Organizar ya hacía al partir un
+  capítulo en sus historias, y a Recortes le faltaba.
+
+  A cambio, el corte **solo puede caer en un fotograma clave**, así que el arranque retrocede al más
+  cercano. La app **te dice cuánto se va a mover antes de cortar** —«el primer tramo arranca 0,4 s
+  antes»— en vez de que lo descubras mirando el fichero. Y como copiando no se aplican, los ajustes
+  de formato, códec, calidad, resolución y audio se apagan solos mientras está marcado: dejarlos
+  encendidos haría creer que hacen algo.
+
 ## [1.11.0] - 2026-08-21
 
 ### Añadido

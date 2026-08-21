@@ -209,6 +209,42 @@ public sealed partial class Textos
 
     public string RecortesDeteniendo => Idioma.Elegir("Stopping…", "Deteniendo…");
 
+    // ── Cortar sin recodificar ──────────────────────────────────────────────
+    // El trato, dicho entero y en la propia pantalla: no se pierde calidad y tarda
+    // un suspiro, pero el corte solo puede caer en un fotograma clave. Quien elige
+    // esto lo elige a sabiendas, asi que se le dice antes y no despues.
+    public string RecortesSinRecodificar =>
+        Idioma.Elegir("Cut without re-encoding", "Cortar sin recodificar");
+
+    public string RecortesSinRecodificarTip => Idioma.Elegir(
+        "Copies the packets as they are: no quality is lost and it takes seconds instead of minutes. " +
+        "In exchange the cut can only land on a keyframe, so the start moves back to the nearest one " +
+        "and the output keeps the original format — the options on this row stop applying.",
+        "Copia los paquetes tal cual: no se pierde calidad y tarda segundos en vez de minutos. " +
+        "A cambio el corte solo puede caer en un fotograma clave, asi que el arranque retrocede al " +
+        "mas cercano y la salida conserva el formato original — las opciones de esta fila dejan de aplicarse.");
+
+    // Se enseña cuando esta marcado, en lugar de la estimacion de tamano: copiando
+    // no hay nada que estimar, el trozo pesa lo que pesa su parte del original.
+    public string RecortesSinRecodificarActivo => Idioma.Elegir(
+        "Exact copy · same format, same quality",
+        "Copia exacta · mismo formato, misma calidad");
+
+    // {0} = segundos que se mueve el arranque, con un decimal.
+    public string RecortesSinRecodificarDesfase => Idioma.Elegir(
+        "The first segment starts {0} s earlier: that is where its nearest keyframe is.",
+        "El primer tramo arranca {0} s antes: ahi esta su fotograma clave mas cercano.");
+
+    public string RecortesSinRecodificarSinDesfase => Idioma.Elegir(
+        "The cuts fall exactly where you put them.",
+        "Los cortes caen justo donde los has puesto.");
+
+    // Cuando el formato de salida elegido no es el del original. Copiar significa meter
+    // los mismos paquetes en otra caja, y no todo cabe en todo.
+    public string RecortesSinRecodificarOtroFormato => Idioma.Elegir(
+        "Not available: copying keeps the original format, and another one was chosen.",
+        "No disponible: copiar conserva el formato original, y se ha elegido otro.");
+
     public string RecortesExportar => Idioma.Elegir("Export", "Exportar");
 
     public string RecortesExportarUnTramo => Idioma.Elegir("Export 1 segment", "Exportar 1 tramo");

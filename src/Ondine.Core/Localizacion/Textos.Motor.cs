@@ -25,6 +25,14 @@ public sealed partial class Textos
     public string MotorPistasRemuxFallido =>
         Idioma.Elegir("ffmpeg could not repackage it.", "ffmpeg no pudo reempaquetarlo.");
 
+    // Cuando ni siquiera se pudo LANZAR la herramienta: no esta instalada, no esta en el
+    // PATH, o el instalador no llego a bajarla. Es distinto de que fallara al procesar, y
+    // se dice distinto: aqui lo que hay que hacer es reinstalar, no cambiar de fichero.
+    // {0} = la ruta o el nombre con el que se intento.
+    public string MotorNoSePudoLanzar =>
+        Idioma.Elegir("Could not start «{0}». Check that ffmpeg is installed.",
+                      "No se pudo iniciar «{0}». Comprueba que ffmpeg esta instalado.");
+
     // ── Cabecera del registro ───────────────────────────────────────────────
     public string MotorSoloAudioModo =>
         Idioma.Elegir("Audio only mode → {0}", "Modo solo audio → {0}");

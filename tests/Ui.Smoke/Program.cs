@@ -91,6 +91,7 @@ public static class Program
         LasPreferenciasLleganHastaElFinal();
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
         ElVeredictoDelComplementoAvisaAlCambiar();
+        RecortesSinRecodificarApagaLosAjustes();
 
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
@@ -880,6 +881,49 @@ public static class Program
 
     private static void Vaciar() =>
         Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+
+    /// <summary>
+    /// Copiando en vez de recodificar, la fila de ajustes tiene que APAGARSE.
+    ///
+    /// <para>
+    /// No es cosmetica: copiando no se aplica ninguno de esos cinco ajustes -formato,
+    /// codec, calidad, resolucion, audio-. Dejarlos encendidos haria creer que si, y el
+    /// trozo saldria distinto de lo que la fila promete. Es justo el tipo de cableado que
+    /// se rompe sin que falle nada.
+    /// </para>
+    /// </summary>
+    private static void RecortesSinRecodificarApagaLosAjustes()
+    {
+        const string nombre = "copiar apaga los ajustes que dejan de aplicarse";
+        try
+        {
+            var vista = new RecortesView();
+            var chk = (CheckBox)vista.FindName("chkSinRecodificar")!;
+            var fila = (FrameworkElement)vista.FindName("filaAjustes")!;
+
+            vista.Measure(new Size(1280, 800));
+            vista.Arrange(new Rect(0, 0, 1280, 800));
+            vista.UpdateLayout();
+
+            if (!fila.IsEnabled)
+                throw new Exception("de entrada los ajustes tienen que estar disponibles");
+
+            chk.IsChecked = true;
+            vista.UpdateLayout();
+            if (fila.IsEnabled)
+                throw new Exception("al marcar «sin recodificar» los ajustes siguen encendidos, " +
+                                    "y ninguno se va a aplicar");
+
+            chk.IsChecked = false;
+            vista.UpdateLayout();
+            if (!fila.IsEnabled)
+                throw new Exception("al desmarcar, los ajustes tienen que volver: si no, " +
+                                    "la pantalla se queda muerta sin decir por que");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
 
     private static void Bien(string q)
     {
