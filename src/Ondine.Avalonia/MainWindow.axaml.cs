@@ -18,9 +18,13 @@ public partial class MainWindow : Window
         // honesta: en Avalonia un selector que no casa NO da error, asi que compilar no
         // dice nada sobre si el tema se aplico.
         if (Environment.GetCommandLineArgs().Contains("--auto"))
-            Opened += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            Opened += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
             {
-                try { Comprobacion.Correr(this); }
+                try
+                {
+                    Comprobacion.Correr(this);
+                    await Comprobacion.CorrerDialogo(this);
+                }
                 catch (Exception ex) { Comprobacion.Resultados.Add($"REVENTO: {ex.Message}"); }
                 Close();
             }, Avalonia.Threading.DispatcherPriority.Background);

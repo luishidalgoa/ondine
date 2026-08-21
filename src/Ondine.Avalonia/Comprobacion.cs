@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using System.Threading.Tasks;
 
 namespace Ondine.Ava;
 
@@ -69,5 +70,62 @@ public static class Comprobacion
         var suCaja = apagado?.GetVisualDescendants().OfType<Border>().FirstOrDefault(x => x.Name == "b");
         Dice(suCaja is not null && suCaja.Opacity < 0.6,
             $"un boton apagado se atenua ({suCaja?.Opacity}) — y se atenua la caja, no el haz");
+    }
+
+    /// <summary>
+    /// El dialogo, abierto de verdad y contestado desde el codigo.
+    ///
+    /// <para>
+    /// Lo que se mide no es que se vea: es que <b>devuelva lo que se pulso</b> y que
+    /// cerrarlo con Esc cuente como «no». Esa segunda parte es la que importa, porque
+    /// Confirmar se usa antes de tocar ficheros y un «cancelar» que se leyera como «si»
+    /// borraria cosas.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerDialogo(Window dueno)
+    {
+        // Aceptar
+        var tarea = Dialogo.Confirmar(dueno, "prueba", "un mensaje con una ruta: C:/algo");
+        await Task.Delay(300);
+
+        var d = dueno.OwnedWindows.OfType<Dialogo>().FirstOrDefault();
+        if (d is null) { Dice(false, "el dialogo no llego a abrirse"); return; }
+
+        Dice(true, "el dialogo se abre como modal de su ventana");
+
+        var titulo = d.GetVisualDescendants().OfType<TextBlock>()
+                      .FirstOrDefault(t => t.Name == "lblTitulo");
+        Dice(titulo?.Text == "prueba", $"y lleva el titulo que se le paso ({titulo?.Text})");
+
+        var si = d.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == "btnSi");
+        Dice(si is not null && si.IsVisible, "el boton de aceptar esta puesto");
+
+        // Los rotulos salen del catalogo compartido, no de una cadena suelta.
+        Dice(si?.Content?.ToString() == Ondine.Localizacion.Textos.Instancia.Si,
+            $"y su rotulo sale del catalogo, igual que en WPF ({si?.Content})");
+
+        si!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dice(await tarea, "pulsar aceptar devuelve true");
+
+        // ══ Y LO QUE IMPORTA: cerrar sin aceptar es «no» ═════════════════════════
+        var otra = Dialogo.Confirmar(dueno, "prueba", "esta se cierra sin contestar");
+        await Task.Delay(300);
+
+        var d2 = dueno.OwnedWindows.OfType<Dialogo>().FirstOrDefault();
+
+        // Se pulsa ESC de verdad, no se llama a Close(). Llamar a Close() sin argumento
+        // devuelve false por el framework, no por este codigo: la comprobacion habria
+        // pasado igual con el manejador de Esc borrado o puesto en true. Es el mismo
+        // error que ya se colo una vez en la escala del codificador — una prueba que no
+        // puede fallar por culpa del codigo que dice verificar.
+        d2?.RaiseEvent(new Avalonia.Input.KeyEventArgs
+        {
+            RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent,
+            Key = Avalonia.Input.Key.Escape,
+        });
+
+        Dice(!await otra,
+            "cerrar con Esc cuenta como NO — se pregunta antes de tocar ficheros, " +
+            "y un «cancelar» leido como «si» borraria cosas");
     }
 }
