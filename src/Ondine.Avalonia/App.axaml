@@ -11,6 +11,7 @@
              Va anidado en MergedDictionaries y no suelto: en Avalonia un ResourceInclude
              suelto ahi dentro no compila, al contrario que en WPF. -->
         <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Colores.axaml"/>
+        <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Botones.axaml"/>
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

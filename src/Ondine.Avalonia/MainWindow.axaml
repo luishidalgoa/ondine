@@ -28,6 +28,16 @@
 
       <TextBlock x:Name="rotuloMotor" Foreground="{StaticResource Neutral600}"
                  FontSize="11.5" TextWrapping="Wrap"/>
+
+      <!-- Los botones portados, para poder verlos al lado de los de WPF. Tabula sobre
+           ellos y el haz del foco se enciende, como en la version de Windows. -->
+      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+        <Button Theme="{StaticResource BtnPrimary}" Content="{i:T MainAnalizar}"/>
+        <Button Theme="{StaticResource BtnSecondary}" Content="{i:T MainPausar}"/>
+        <Button Theme="{StaticResource BtnGhost}" Content="{i:T MainAbrirDestino}"/>
+        <Button Theme="{StaticResource BtnGhostMuted}" Content="{i:T MainDetener}"/>
+        <Button Theme="{StaticResource BtnPrimary}" Content="{i:T Aplicar}" IsEnabled="False"/>
+      </StackPanel>
     </StackPanel>
   </Border>
 </Window>
