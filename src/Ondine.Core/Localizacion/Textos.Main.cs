@@ -557,6 +557,64 @@ public sealed partial class Textos
         "Compresses the videos selected in the table. The originals are not touched unless you allow it in the warning beforehand.",
         "Comprime los vídeos seleccionados en la tabla. Los originales no se tocan salvo que lo autorices en el aviso previo.");
 
+    // ── La cola de trabajos ─────────────────────────────────────────────────
+    // Cada trabajo se lleva SUS ajustes. Sin esto, para comprimir dos cosas con
+    // opciones distintas habia que esperar a que acabase la primera.
+    public string MainEncolar => Idioma.Elegir("Add to queue", "Añadir a la cola");
+
+    public string MainEncolarTip => Idioma.Elegir(
+        "Puts the ticked files in the queue with the settings as they are RIGHT NOW, and leaves " +
+        "you free to change them for the next job. The queue runs one job after another.",
+        "Mete los ficheros marcados en la cola con los ajustes tal y como están AHORA, y te deja " +
+        "libre para cambiarlos para el trabajo siguiente. La cola va despachando uno tras otro.");
+
+    public string MainColaTitulo => Idioma.Elegir("Queue", "Cola");
+
+    // {0} = trabajos que esperan · {1} = ficheros que quedan, contando el que corre
+    public string MainColaResumen => Idioma.Elegir(
+        "{0} waiting · {1} files to go",
+        "{0} esperando · {1} ficheros por hacer");
+
+    public string MainColaVacia => Idioma.Elegir(
+        "Nothing queued. Tick some files, set them up and press «Add to queue».",
+        "Nada en la cola. Marca ficheros, ajústalos y pulsa «Añadir a la cola».");
+
+    // {0} = cuantos ficheros trae el trabajo · {1} = codec · {2} = calidad
+    public string MainColaTrabajo => Idioma.Elegir(
+        "{0} files · {1} · quality {2}",
+        "{0} ficheros · {1} · calidad {2}");
+
+    public string MainColaTrabajoUno => Idioma.Elegir(
+        "1 file · {1} · quality {2}",
+        "1 fichero · {1} · calidad {2}");
+
+    public string MainColaEstadoPendiente => Idioma.Elegir("waiting", "esperando");
+    public string MainColaEstadoEnCurso => Idioma.Elegir("running", "en curso");
+    public string MainColaEstadoHecho => Idioma.Elegir("done", "hecho");
+    public string MainColaEstadoFallido => Idioma.Elegir("failed", "falló");
+    public string MainColaEstadoCancelado => Idioma.Elegir("cancelled", "cancelado");
+
+    // {0} = los que salieron · {1} = los que no
+    public string MainColaEstadoAMedias => Idioma.Elegir(
+        "{0} out, {1} failed", "{0} salieron, {1} no");
+
+    public string MainColaSubir => Idioma.Elegir("Move up", "Subir");
+    public string MainColaBajar => Idioma.Elegir("Move down", "Bajar");
+    public string MainColaQuitar => Idioma.Elegir("Remove", "Quitar");
+
+    public string MainColaNoSeMueve => Idioma.Elegir(
+        "The job that is running does not move: it is already writing to disk.",
+        "El trabajo en curso no se mueve: ya está escribiendo en el disco.");
+
+    // {0} = los ficheros repetidos, separados por comas
+    public string MainColaYaEnCola => Idioma.Elegir(
+        "These are already queued: {0}. Queuing them twice is allowed —two formats of the same " +
+        "original, for instance— but the second job would read a file the first one may have " +
+        "sent to the bin. Add them anyway?",
+        "Estos ya están en la cola: {0}. Encolarlos dos veces se puede —dos formatos del mismo " +
+        "original, por ejemplo— pero el segundo trabajo leería un fichero que el primero puede " +
+        "haber mandado a la papelera. ¿Se añaden igual?");
+
     public string MainPausar => Idioma.Elegir("Pause", "Pausar");
     public string MainReanudar => Idioma.Elegir("Resume", "Reanudar");
 

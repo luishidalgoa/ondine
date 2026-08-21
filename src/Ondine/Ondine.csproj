@@ -48,6 +48,16 @@
     <ProjectReference Include="..\Ondine.Core\Ondine.Core.csproj" />
   </ItemGroup>
 
+  <!-- El arnes de humo entra por los mismos caminos que la pantalla, no por copias de
+       ellos. Para eso necesita ver los enganches internos -encolar sin pasar por la
+       seleccion de WPF, por ejemplo-. Se abre a el y a nadie mas: hacerlos publicos seria
+       inventar una API que nadie ha disenado. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>ui-smoke</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
   </ItemGroup>

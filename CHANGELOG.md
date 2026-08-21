@@ -34,6 +34,18 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Cola de trabajos: ya puedes comprimir varias cosas con ajustes distintos sin esperar.** Hasta
+  ahora todos los ficheros de una tanda compartían las mismas opciones, así que para pasar una serie
+  a H.265 y una película a AV1 había que esperar a que acabase la primera. Con «**Añadir a la
+  cola**», los ficheros marcados se apartan como un trabajo **con los ajustes tal y como están en
+  ese momento**; luego cambias lo que quieras y encolas otro. Cada trabajo conserva los suyos, así
+  que no te cambian por debajo.
+
+  La cola arranca sola si no había nada en marcha y va despachando uno tras otro. Los que esperan se
+  pueden subir, bajar o sacar; el que está en curso no se mueve —ya está escribiendo en el disco— y
+  «Detener» para la cola entera. Si encolas un fichero que ya estaba esperando, se avisa antes: el
+  segundo trabajo leería algo que el primero puede haber mandado a la papelera.
+
 - **Recortes ya puede cortar sin recodificar.** Marcando «Cortar sin recodificar», los trozos salen
   copiando los paquetes tal cual: **no se pierde nada de calidad** y tarda segundos en vez de
   minutos, en lugar de volver a codificar el vídeo entero. Es lo que Organizar ya hacía al partir un

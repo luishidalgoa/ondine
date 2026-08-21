@@ -239,6 +239,27 @@ public sealed partial class Textos
         "Si el disco se llena, la tanda se pausa sola y sigue cuando liberas espacio. Puedes seguir el progreso desde cualquier pestaña con la píldora de la cabecera.");
 
     // ── Recortes ────────────────────────────────────────────────────────────
+    public string AyudaComprimirColaTitulo => Idioma.Elegir(
+        "THE QUEUE: DIFFERENT SETTINGS PER JOB",
+        "LA COLA: AJUSTES DISTINTOS POR TRABAJO");
+
+    public string AyudaComprimirCola => Idioma.Elegir(
+        "«Add to queue» takes the ticked files with the settings as they are right now and puts " +
+        "them aside as a job. Then you can change the settings and queue another one: each job " +
+        "keeps the settings it was queued with, so they never change under you. The queue runs " +
+        "one job after another, and starts on its own if nothing was running.",
+        "«Añadir a la cola» coge los ficheros marcados con los ajustes tal y como están en ese " +
+        "momento y los aparta como un trabajo. Luego puedes cambiar los ajustes y encolar otro: " +
+        "cada trabajo conserva los suyos, así que nunca te cambian por debajo. La cola va " +
+        "despachando uno tras otro, y arranca sola si no había nada en marcha.");
+
+    public string AyudaComprimirColaOrden => Idioma.Elegir(
+        "Waiting jobs can be moved up and down or taken out. The one that is running does not " +
+        "move —it is already writing to disk— and «Stop» stops the whole queue, not just that job.",
+        "Los trabajos que esperan se pueden subir, bajar o sacar. El que está en curso no se " +
+        "mueve —ya está escribiendo en el disco— y «Detener» para la cola entera, no solo ese " +
+        "trabajo.");
+
     public string AyudaRecortesTitulo => Idioma.Elegir(
         "Trim: splitting a video or cutting a piece out of it",
         "Recortes: partir un vídeo o quitarle un trozo");

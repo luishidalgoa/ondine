@@ -88,7 +88,9 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **Papelera propia con Ctrl+Z**: lo que la app manda a la papelera se recupera al instante, y se finaliza en la Papelera de Windows al cerrar, por antigüedad o al acumularse.
 - ✅ **Tutoriales dentro de la app** (Ayuda → «Tutoriales»), con el diagrama de cómo decide Organizar.
 - ✅ Ordenar las tablas por columna; conmutador de páginas compacto.
-- 🔜 **Cola de trabajos** con ajustes distintos por trabajo (hoy todos comparten opciones).
+- ✅ **Cola de trabajos**: «Añadir a la cola» aparta lo marcado con los ajustes de ese momento, y
+  cada trabajo conserva los suyos. Arranca sola, despacha uno tras otro, y los que esperan se
+  reordenan o se sacan.
 - ⬜ **Previsualización** (muestra corta del resultado antes de codificar todo).
 - ⬜ «Al terminar»: no hacer nada / apagar / suspender.
 

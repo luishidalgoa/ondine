@@ -14,6 +14,7 @@ using Ondine.Reindex;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using Ondine.Localizacion;
+using Ondine.Trabajos;
 
 namespace Ondine;
 
@@ -113,6 +114,7 @@ public partial class MainWindow : Window
         btnOpen.Click += (_, _) => OpenDestination();
         btnScan.Click += async (_, _) => await ScanAsync();
         btnRun.Click += async (_, _) => await RunAsync();
+        btnEncolar.Click += async (_, _) => await EncolarAsync();
         btnCancel.Click += (_, _) => _cts?.Cancel();
         btnPause.Click += (_, _) => TogglePause();
         btnMarkAll.Click += (_, _) => lst.SelectAll();
@@ -1217,6 +1219,120 @@ public partial class MainWindow : Window
         return opt;
     }
 
+    // ── La cola de trabajos ─────────────────────────────────────────────────────
+    // Las reglas -que las opciones se copian, quien puede moverse, que estado queda-
+    // viven en ColaDeTrabajos, en el motor, y tienen pruebas. Aqui solo se pinta y se
+    // despacha.
+
+    private readonly ColaDeTrabajos _cola = new();
+
+    /// <summary>
+    /// Mete lo marcado en la cola con los ajustes de AHORA, y deja la pantalla libre para
+    /// preparar el siguiente trabajo con otros distintos. Es todo el sentido de la cola.
+    /// </summary>
+    private async Task EncolarAsync()
+    {
+        var filas = SelectedRows();
+        if (filas.Count == 0)
+        {
+            DialogWindow.Aviso(this, Textos.Instancia.MainPaginaComprimir,
+                               Textos.Instancia.MainComprimirSinSeleccion);
+            return;
+        }
+
+        var rutas = filas.Select(r => r.Path).ToList();
+
+        // Encolar el mismo fichero dos veces no se prohibe -pueden querer dos formatos del
+        // mismo original- pero se avisa: el segundo trabajo leeria un fichero que el primero
+        // puede haber mandado a la papelera, y descubrirlo a mitad de cola es tardisimo.
+        var repes = _cola.YaEnCola(rutas);
+        if (repes.Count > 0)
+        {
+            var nombres = string.Join(", ", repes.Take(4).Select(Path.GetFileName));
+            if (!DialogWindow.Confirmar(this, Textos.Instancia.MainColaTitulo,
+                    string.Format(Textos.Instancia.MainColaYaEnCola, nombres)))
+                return;
+        }
+
+        var opt = BuildOptions();
+        _cola.Encolar(rutas, opt, EffectiveOutput());
+        PintarCola();
+
+        // Si no habia nada corriendo, la cola arranca sola: encolar y que no pase nada
+        // obligaria a pulsar otra cosa, y entonces el boton no seria «anadir a la cola»
+        // sino «preparar algo que ya veremos».
+        if (!_running) await DespacharColaAsync();
+    }
+
+    /// <summary>
+    /// Va sacando trabajos hasta vaciar la cola. Uno cada vez, a proposito: dos ffmpeg a la
+    /// vez sobre el mismo disco tardan mas que en fila, y ademas se pelean por el espacio de
+    /// los temporales.
+    /// </summary>
+    private async Task DespacharColaAsync()
+    {
+        while (_cola.Siguiente() is { } t && !_running)
+        {
+            _cola.Empezar(t.Id);
+            PintarCola();
+
+            var r = await ComprimirTandaAsync(t.Ficheros, t.Opciones);
+
+            // Cancelar detiene la cola entera, no solo el trabajo: quien pulsa «Detener»
+            // quiere parar, no pasar al siguiente.
+            if (r.Cancelado) { _cola.Cancelar(t.Id); PintarCola(); return; }
+
+            _cola.Terminar(t.Id, r.Salieron, r.Fallaron);
+            PintarCola();
+        }
+    }
+
+    /// <summary>
+    /// Encolar sin pasar por la seleccion ni por los dialogos, para el arnes de humo.
+    ///
+    /// <para>
+    /// Existe porque la alternativa era que la prueba manipulara la tabla y la lista de
+    /// seleccion de WPF para llegar al mismo sitio: mas codigo de prueba que de producto, y
+    /// atado a como esta montada la pantalla hoy. Esto entra por el MISMO camino -la cola y
+    /// su pintura- que es lo que se quiere comprobar.
+    /// </para>
+    /// </summary>
+    internal void EncolarParaPruebas(IReadOnlyList<string> ficheros)
+    {
+        _cola.Encolar(ficheros, BuildOptions(), EffectiveOutput());
+        PintarCola();
+    }
+
+    private void PintarCola()
+    {
+        var vivos = _cola.Trabajos;
+        panelCola.Visibility = vivos.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        listaCola.ItemsSource = vivos.Select(ColaFila.De).ToList();
+        lblCola.Text = string.Format(Textos.Instancia.MainColaResumen,
+                                     _cola.Pendientes, _cola.FicherosPorHacer);
+    }
+
+    private void OnColaSubir(object remitente, RoutedEventArgs e) => MoverEnCola(remitente, arriba: true);
+    private void OnColaBajar(object remitente, RoutedEventArgs e) => MoverEnCola(remitente, arriba: false);
+
+    private void MoverEnCola(object remitente, bool arriba)
+    {
+        if (remitente is not Button { Tag: int id }) return;
+
+        var pudo = arriba ? _cola.Subir(id) : _cola.Bajar(id);
+        if (pudo) PintarCola();
+        else lblProg.Text = Textos.Instancia.MainColaNoSeMueve;
+    }
+
+    private void OnColaQuitar(object remitente, RoutedEventArgs e)
+    {
+        if (remitente is not Button { Tag: int id }) return;
+
+        if (_cola.Quitar(id)) PintarCola();
+        else lblProg.Text = Textos.Instancia.MainColaNoSeMueve;
+    }
+
     private async Task RunAsync()
     {
         var selRows = SelectedRows();
@@ -1243,6 +1359,30 @@ public partial class MainWindow : Window
             else deleteOriginals = _settings.AfterCompress == AfterCompress.RecycleOriginal;
         }
 
+        await ComprimirTandaAsync(sel, opt, selRows, deleteOriginals);
+    }
+
+    /// <summary>Como fue una tanda. Lo que la cola necesita saber para cerrar el trabajo.</summary>
+    private readonly record struct FinDeTanda(bool Cancelado, int Salieron, int Fallaron);
+
+    /// <summary>
+    /// Ejecuta UNA tanda: unos ficheros con unas opciones. Sin preguntar nada.
+    ///
+    /// <para>
+    /// Se separo de <c>RunAsync</c> para que la cola pudiera reutilizar exactamente este
+    /// camino. Una segunda ruta de codificacion para los trabajos encolados habria sido dos
+    /// caminos que mantener, y el que menos se usa se pudre.
+    /// </para>
+    /// </summary>
+    private async Task<FinDeTanda> ComprimirTandaAsync(
+        IReadOnlyList<string> sel, EncodeOptions opt,
+        IReadOnlyList<VideoRow>? filas = null, bool deleteOriginals = false)
+    {
+        // Viniendo de la cola no llegan filas: el trabajo guarda rutas, no controles. Se
+        // recuperan de la tabla, que es donde el informador pinta el progreso.
+        var selRows = filas ?? sel.Select(ruta => _rows.FirstOrDefault(r => r.Path == ruta))
+                                  .Where(r => r is not null).Select(r => r!).ToList();
+
         _cts = new CancellationTokenSource();
         _running = true;
         btnRun.IsEnabled = false; btnCancel.IsEnabled = true; btnPause.IsEnabled = true;
@@ -1257,6 +1397,7 @@ public partial class MainWindow : Window
         var reporter = new Reporter(this, deleteOriginals, selRows);
         // «ok» vive fuera del try porque el resumen de subtítulos lo consulta al terminar
         var ok = new List<FileResult>();
+        var cancelado = false;
         try
         {
             // Task.Run: los trozos síncronos del motor (candados, sondeos, espacio) no
@@ -1274,7 +1415,7 @@ public partial class MainWindow : Window
             }
             else lblProg.Text = Textos.Instancia.MainTerminado;
         }
-        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainCancelado; }
+        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainCancelado; cancelado = true; }
         // «Error» sale de Comun; los dos puntos son puntuación, no texto que traducir.
         catch (Exception ex) { lblProg.Text = Textos.Instancia.Error + ": " + ex.Message; AppendLog("ERROR: " + ex); }
         finally
@@ -1291,6 +1432,8 @@ public partial class MainWindow : Window
 
         // Con la ventana ya en reposo: si se han quedado subtítulos fuera, decirlo.
         WarnAboutLostSubtitles(ok);
+
+        return new FinDeTanda(cancelado, ok.Count, sel.Count - ok.Count);
     }
 
     // ---------- presets ----------
