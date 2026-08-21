@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="Ondine.Avalonia.app"/>
+
+  <!-- La app corre como usuario normal (no requiere admin) -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v2">
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <!-- DPI-aware para que la interfaz se vea nítida en pantallas de alta resolución -->
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+
+  <!--
+    ESTO NO ES OPCIONAL, y no se deduce de ninguna documentación: sin la lista de sistemas
+    soportados, el VideoView de LibVLC no arranca. Avalonia lo aloja en una ventana nativa
+    hija, y crearla falla con «Unable to create child window for native control host.
+    Application manifest with supported OS list might be required.». La app se queda colgada
+    al abrir el reproductor.
+
+    Se descubrió porque la comprobación de arranque dejó de terminar. En Linux y macOS este
+    fichero no pinta nada — pero el proyecto también se compila para Windows, y ahí sí.
+  -->
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+    </application>
+  </compatibility>
+</assembly>

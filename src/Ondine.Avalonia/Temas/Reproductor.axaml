@@ -1,0 +1,214 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Lo que viste el reproductor: las dos barras y los dos botones.
+
+    Las barras NO son una traduccion del tema de WPF, y no por gusto. Alli la plantilla del
+    Slider se escribia sobre un Track con DecreaseRepeatButton / IncreaseRepeatButton /
+    Thumb, que son piezas de WPF; el Slider de Avalonia tiene las suyas
+    -PART_DecreaseButton, PART_IncreaseButton, PART_Track- y no casan una a una. Copiar la
+    forma de WPF aqui daria una plantilla que compila y no pinta.
+
+    Asi que estan reescritas con las piezas de Avalonia, respetando lo que importa del
+    diseno: 3 px de alto, lo recorrido en el acento, la bola blanca que crece al pasar por
+    encima, y la zona pulsable mas alta que la barra para que no haya que afinar con el raton.
+  -->
+
+  <!-- ══ Barra de posicion del video ═══════════════════════════════════════════ -->
+  <ControlTheme x:Key="BarraVideo" TargetType="Slider">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Height" Value="18"/>
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="Minimum" Value="0"/>
+    <Setter Property="Orientation" Value="Horizontal"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <!-- Fondo transparente y no nulo: es lo que hace que los 18 px de alto reciban el
+             raton, no solo los 3 de la barra pintada. -->
+        <Grid Background="Transparent">
+          <Border Height="3" CornerRadius="2" Background="#2EFFFFFF" VerticalAlignment="Center"/>
+          <Track Name="PART_Track" Minimum="{TemplateBinding Minimum}"
+                 Maximum="{TemplateBinding Maximum}"
+                 Value="{TemplateBinding Value, Mode=TwoWay}"
+                 Orientation="Horizontal">
+            <Track.DecreaseButton>
+              <RepeatButton Name="PART_DecreaseButton" Focusable="False">
+                <RepeatButton.Template>
+                  <ControlTemplate>
+                    <Border Height="3" CornerRadius="2" VerticalAlignment="Center"
+                            Background="{StaticResource Accent}"/>
+                  </ControlTemplate>
+                </RepeatButton.Template>
+              </RepeatButton>
+            </Track.DecreaseButton>
+            <Track.IncreaseButton>
+              <RepeatButton Name="PART_IncreaseButton" Focusable="False">
+                <RepeatButton.Template>
+                  <ControlTemplate><Border Background="Transparent"/></ControlTemplate>
+                </RepeatButton.Template>
+              </RepeatButton>
+            </Track.IncreaseButton>
+            <Thumb Name="thumb" Width="18" Height="18" Background="Transparent">
+              <Thumb.Template>
+                <ControlTemplate>
+                  <Panel Background="Transparent">
+                    <Ellipse Name="bola" Width="11" Height="11" Fill="White"/>
+                  </Panel>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
+          </Track>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- La bola crece al pasar por encima de LA BARRA, no solo de la bola: con 11 px de
+         diametro, exigir acertarle antes de que crezca es exigir punteria.
+
+         Se hace escalando el tirador y no cambiando el tamano de la elipse, y el motivo es
+         de Avalonia: un selector NO puede atravesar dos plantillas -«/template/» dos veces
+         da «ControlTemplate styles cannot contain multiple template selectors»-. Desde el
+         Slider solo se alcanza el Thumb, no lo que hay dentro de el. Escalar sale igual y
+         encima interpola. -->
+    <Style Selector="^ /template/ Thumb#thumb">
+      <Setter Property="RenderTransform" Value="scale(1)"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.09"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="^:pointerover /template/ Thumb#thumb">
+      <Setter Property="RenderTransform" Value="scale(1.36)"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Barra de volumen ══════════════════════════════════════════════════════
+       La misma idea, mas pequena y mas corta. Va aparte y no como variante porque lo que
+       cambia es el tamano de todo, no un color. -->
+  <ControlTheme x:Key="BarraVolumen" TargetType="Slider">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Width" Value="78"/>
+    <Setter Property="Height" Value="16"/>
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="Orientation" Value="Horizontal"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent">
+          <Border Height="3" CornerRadius="2" Background="#2EFFFFFF" VerticalAlignment="Center"/>
+          <Track Name="PART_Track" Minimum="{TemplateBinding Minimum}"
+                 Maximum="{TemplateBinding Maximum}"
+                 Value="{TemplateBinding Value, Mode=TwoWay}"
+                 Orientation="Horizontal">
+            <Track.DecreaseButton>
+              <RepeatButton Name="PART_DecreaseButton" Focusable="False">
+                <RepeatButton.Template>
+                  <ControlTemplate>
+                    <Border Height="3" CornerRadius="2" VerticalAlignment="Center"
+                            Background="#D6D9E8"/>
+                  </ControlTemplate>
+                </RepeatButton.Template>
+              </RepeatButton>
+            </Track.DecreaseButton>
+            <Track.IncreaseButton>
+              <RepeatButton Name="PART_IncreaseButton" Focusable="False">
+                <RepeatButton.Template>
+                  <ControlTemplate><Border Background="Transparent"/></ControlTemplate>
+                </RepeatButton.Template>
+              </RepeatButton>
+            </Track.IncreaseButton>
+            <Thumb Name="thumb" Width="14" Height="14" Background="Transparent">
+              <Thumb.Template>
+                <ControlTemplate>
+                  <Panel Background="Transparent">
+                    <Ellipse Name="bola" Width="9" Height="9" Fill="White"/>
+                  </Panel>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
+          </Track>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^ /template/ Thumb#thumb">
+      <Setter Property="RenderTransform" Value="scale(1)"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.09"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="^:pointerover /template/ Thumb#thumb">
+      <Setter Property="RenderTransform" Value="scale(1.33)"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Boton de icono ════════════════════════════════════════════════════════
+       Redondo, transparente, se ilumina al pasar por encima. Es lo que llevan el volumen,
+       los saltos y la pantalla completa: sobre el video no puede haber cajas. -->
+  <ControlTheme x:Key="BtnIcono" TargetType="Button">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="#D6D9E8"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Width" Value="34"/>
+    <Setter Property="Height" Value="34"/>
+    <Setter Property="Padding" Value="0"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b" Background="{TemplateBinding Background}" CornerRadius="17">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="#22FFFFFF"/>
+    </Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+    <Style Selector="^:pressed /template/ Border#b">
+      <Setter Property="Background" Value="#33FFFFFF"/>
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.4"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Boton de play ═════════════════════════════════════════════════════════
+       El unico que no es transparente: es la accion principal de la pantalla y tiene que
+       encontrarse sin buscarla, encima de una imagen de cualquier color. -->
+  <ControlTheme x:Key="BtnPlay" TargetType="Button">
+    <Setter Property="Background" Value="{StaticResource Accent}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Width" Value="52"/>
+    <Setter Property="Height" Value="52"/>
+    <Setter Property="Padding" Value="0"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b" Background="{TemplateBinding Background}" CornerRadius="26">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource HoverPrimary}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource PressedPrimary}"/>
+    </Style>
+  </ControlTheme>
+
+</ResourceDictionary>

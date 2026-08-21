@@ -41,12 +41,7 @@ public static class TemaPortadoTests
         ["ScrollThumbH"] = "idem",
         ["ScrollNoop"] = "idem",
 
-        // Estos tres son de Recortes y del reproductor, que van con LibVLC en la Fase 4.
-        ["TimelineSlider"] = "va con Recortes, en la Fase 4",
-        ["BarraVideo"] = "va con el reproductor, en la Fase 4",
-        ["BarraVolumen"] = "va con el reproductor, en la Fase 4",
-        ["BtnIcono"] = "va con el reproductor, en la Fase 4",
-        ["BtnPlay"] = "va con el reproductor, en la Fase 4",
+        ["TimelineSlider"] = "va con Recortes, que es de las ultimas",
 
         // La barra de título propia. Se decide al portar la ventana principal, porque en
         // Avalonia no es WindowChrome sino ExtendClientAreaToDecorationsHint.

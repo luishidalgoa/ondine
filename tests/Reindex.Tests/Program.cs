@@ -129,6 +129,7 @@ public static class Program
         Ondine.Reindex.Tests.SugerenciasTests.Todas();
         Ondine.Reindex.Tests.AyudaPortadaTests.Todas();
         Ondine.Reindex.Tests.ColoreadoDeJsonTests.Todas();
+        Ondine.Reindex.Tests.PosicionEnLaBarraTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;

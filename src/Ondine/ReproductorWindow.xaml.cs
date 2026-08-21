@@ -486,14 +486,12 @@ public partial class ReproductorWindow : Window
     }
 
     /// <summary>
-    /// La cuenta, aparte para poder comprobarla sin una ventana. Es la misma que hace
-    /// <c>Track</c>: el recorrido va de medio tirador a ancho menos medio tirador.
+    /// La cuenta vive en el motor —<see cref="PosicionEnLaBarra"/>— porque las dos
+    /// interfaces tienen la misma barra con el mismo globo. Aquí se conserva el nombre
+    /// para no tocar quien ya la llamaba.
     /// </summary>
-    public static double SegundosDeX(double x, double ancho, double pulgar, double maximo)
-    {
-        double util = Math.Max(1, ancho - pulgar);
-        return Math.Clamp((x - pulgar / 2) / util, 0, 1) * maximo;
-    }
+    public static double SegundosDeX(double x, double ancho, double pulgar, double maximo) =>
+        PosicionEnLaBarra.SegundosDeX(x, ancho, pulgar, maximo);
 
     /// <summary>El códec de vídeo del fichero, o vacío si no se pudo averiguar.</summary>
     private async Task<string> CodecDelVideo()
