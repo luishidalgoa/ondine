@@ -44,6 +44,12 @@ public sealed class EncodeOptions
     /// </summary>
     public Objetivo.Velocidad Velocidad { get; set; } = Objetivo.Velocidad.Equilibrado;
 
+    /// <summary>
+    /// Que hacer con el audio. Por defecto <see cref="Audio.AudioElegido.Copiar"/>, que es
+    /// lo que la app venia haciendo cuando no se pedia un bitrate.
+    /// </summary>
+    public Audio.AudioElegido AudioCodec { get; set; } = Audio.AudioElegido.Copiar;
+
     public bool Force { get; set; }
     public bool DryRun { get; set; }
     public RenameRule? NameRule { get; set; }   // renombrado del archivo de salida (estilo PowerRename)

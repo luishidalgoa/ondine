@@ -34,6 +34,15 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Ya puedes elegir el códec de audio: AAC, AC3, E-AC3, Opus o FLAC.** Antes solo había dos
+  caminos enterrados en el motor —copiar, o pasarlo a AAC— y ninguno se podía pedir. Ahora AC3 está
+  a un clic si tiene que entenderlo el receptor del salón, y Opus si quieres la mitad de peso con la
+  misma calidad. **«Sin tocar» sigue siendo lo que viene puesto**, que es copiar los bytes tal cual.
+
+  Y si lo que eliges no cabe en el formato —WebM solo admite Opus, MP4 no guarda FLAC de forma que
+  lo reproduzca nada— **se cambia y se dice en el registro**, en vez de cambiarlo en silencio y
+  dejarte creyendo que tienes AC3 cuando tienes AAC.
+
 - **Ya puedes decidir cuánto se esmera el codificador.** Un ajuste nuevo, «Esmero», con cinco pasos
   de «lo más rápido» a «lo más lento». Más lento significa más pequeño con la misma calidad — ese es
   todo el intercambio. **«Equilibrado» es lo que la app hacía hasta ahora**, así que si no lo tocas

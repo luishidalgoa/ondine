@@ -41,7 +41,8 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 
 ## Comprimir — audio y subtítulos
 - ✅ Copiar original o recodificar a AAC (por bitrate).
-- 🔜 **Codecs de audio** elegibles: AAC / AC3 / E-AC3 / Opus / FLAC / passthrough.
+- ✅ **Códecs de audio** elegibles: sin tocar / AAC / AC3 / E-AC3 / Opus / FLAC. Lo que no cabe
+  en el contenedor se cambia y **se dice**, nunca en silencio.
 - 🔜 **Mezcla** (downmix a estéreo, mantener 5.1) y bitrate/samplerate por pista.
 - ⬜ Ganancia y compresión de rango dinámico (DRC).
 - ⬜ Subtítulos: **quemar (burn-in)**, marcar *forced*, importar `.srt` externos.
