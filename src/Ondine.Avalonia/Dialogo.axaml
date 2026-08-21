@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Dialogo"
+        Title="{i:T DialogoTituloVentana}"
+        SizeToContent="Height" Width="460" MinWidth="360"
+        CanResize="False" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}"
+        Foreground="{StaticResource Text}">
+
+  <!--
+    El dialogo de la app, portado de DialogWindow.xaml.
+
+    La barra propia: en WPF era WindowChrome; en Avalonia es SystemDecorations="None". No
+    hay equivalente de CaptionHeight, asi que la ventana no se arrastra por el titulo — y
+    para un modal de 460 px que se cierra con Esc o Intro eso no hace falta.
+  -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,Auto,Auto">
+
+      <TextBlock Name="lblTitulo" Grid.Row="0" Margin="20,18,20,0"
+                 FontSize="15" FontWeight="Medium"
+                 Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
+
+      <!-- Seleccionable a proposito, igual que en WPF: muchos avisos traen una ruta o el
+           texto de un error, y copiarlo es justo lo que hace falta para poder buscarlo.
+
+           En Avalonia esto es un SelectableTextBlock y no un TextBox de solo lectura, que
+           es mas honesto: no finge ser un campo editable, y de paso no roba el foco al
+           boton por defecto — el apaño del PreviewKeyDown de la version de WPF aqui no
+           hace falta. -->
+      <ScrollViewer Grid.Row="1" MaxHeight="320" Margin="20,10,20,0"
+                    HorizontalScrollBarVisibility="Disabled">
+        <SelectableTextBlock Name="lblMensaje"
+                             Foreground="{StaticResource Neutral300}"
+                             FontSize="13" TextWrapping="Wrap"/>
+      </ScrollViewer>
+
+      <StackPanel Grid.Row="2" Margin="20,20,20,18" Orientation="Horizontal"
+                  HorizontalAlignment="Right" Spacing="8">
+        <Button Name="btnNo" Theme="{StaticResource BtnSecondary}" IsVisible="False" IsCancel="True"/>
+        <Button Name="btnSi" Theme="{StaticResource BtnPrimary}" IsDefault="True" MinWidth="96"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

@@ -182,7 +182,20 @@ primer paquete con binarios nativos del proyecto y entró con permiso explícito
   casa no da error** — el control sale con el aspecto de fábrica y nadie lo dice —, así que el
   proyecto trae un `--auto` que abre la ventana y comprueba que el tema se aplicó de verdad.
 
-Quedan las pantallas y el empaquetado. Las dos
+- **Fase 4** 🔜 — el **diálogo compartido** portado: modal, centrado, Esc cancela, Intro acepta y
+  el mensaje se puede copiar. Lo usan todas las pantallas, así que desbloquea el resto.
+
+  **La diferencia que menos se ve venir: en Avalonia mostrar un modal es asíncrono.** En WPF
+  `ShowDialog()` devuelve el resultado ahí mismo y quien pregunta sigue en la línea siguiente; en
+  Avalonia devuelve una tarea. Eso obliga a que **todo método que pregunte algo pase a ser
+  `async`**, y en `OrganizarView` eso son bastantes. Conviene contarlo en el presupuesto de la
+  fase, porque no aparece en ninguna tabla de equivalencias.
+
+  De propina, el mensaje pasa de ser un `TextBox` de solo lectura a un `SelectableTextBlock`, que
+  es más honesto y quita el apaño que tenía la versión de WPF para que el foco no se comiera la
+  tecla Intro.
+
+Quedan el resto de pantallas y el empaquetado. Las dos
 interfaces conviven mientras dure: cambiar las dieciocho pantallas de golpe habría dejado la app
 sin poder publicarse durante semanas.
 

@@ -127,5 +127,8 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
     foco como animación de Avalonia. Los otros 18 están apuntados con su motivo, y la mayoría
     no se portan: visten controles de WPF que en Avalonia son otros —la tabla pasa a DataGrid—
     o van con su pantalla en la Fase 4.
-  - ⬜ Fase 4: las pantallas, de menos a más.
+  - 🔜 Fase 4: las pantallas, de menos a más. Hecho el **diálogo compartido** —el que usan
+    todas—, con su aviso y su confirmación. **Ojo al portar: en Avalonia mostrar un modal es
+    asíncrono**, así que todo método que pregunte algo pasa a ser `async`; es el coste que
+    menos se ve venir.
   - ⬜ Fase 5: empaquetado, papelera y `.desktop`.
