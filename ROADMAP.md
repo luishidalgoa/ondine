@@ -62,7 +62,9 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
   - ✅ Decidir a mano qué historias trae un fichero, desde **cualquier** fila.
   - ✅ Combinar historias de episodios distintos (`E1b+2b`), con nombre compuesto honesto.
 - ✅ **Generar el catálogo con una IA**: la app arma el encargo con el formato y las reglas dentro.
-- 🔜 Detección de **temporadas por carpeta** más lista cuando el nombre no la dice.
+- ✅ Detección de **temporadas por carpeta** con adornos: «Season 3 (2011)», «Temporada 2
+  [1080p]», «S02 - 720p». Y «Especiales» es la temporada 0, como en Plex. Sin tragarse falsos
+  positivos: «Los 4 Fantásticos» sigue sin ser la temporada 4.
 - ⬜ Leer el título del **metadato** del contenedor como una señal más.
 - ⬜ Catálogos **compartibles**: exportar/importar sin duplicar trabajo.
 

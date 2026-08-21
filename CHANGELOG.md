@@ -34,6 +34,18 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Organizar reconoce muchas más carpetas de temporada.** Antes el nombre tenía que ser *solo* la
+  temporada: «Season 3» sí, «Season 3 (2011)» no. En una biblioteca real los añadidos son la norma
+  —el año, la resolución, «Completa»— y cada carpeta no reconocida dejaba sus capítulos sin
+  temporada. Ahora «Season 03 - Complete», «Temporada 2 [1080p]» o «S02 - 720p» se entienden bien.
+
+  Y **«Especiales» pasa a ser la temporada 0**, que es como la llaman Plex y Jellyfin; antes esos
+  capítulos se quedaban sin temporada. En la tabla siguen apareciendo tras las temporadas normales.
+
+  Lo que **no** ha cambiado: una carpeta como «Los 4 Fantásticos» sigue sin ser la temporada 4. Un
+  falso positivo es peor que no detectar nada, porque manda los capítulos a otro sitio con toda la
+  confianza.
+
 - **Ya puedes bajar el audio 5.1 a estéreo.** Un ajuste nuevo, «Canales». Una pista 5.1 pesa como el
   doble y no aporta nada en unos auriculares ni en la tele del cuarto: bajarla es lo que convierte
   una película de 8 GB en una de 5 **sin tocar el vídeo**. Nunca va al revés, y pedir estéreo sobre

@@ -107,6 +107,7 @@ public static class Program
         Ondine.Reindex.Tests.VelocidadDelCodificadorTests.Todas();
         Ondine.Reindex.Tests.CodecDeAudioTests.Todas();
         Ondine.Reindex.Tests.MezclaDeAudioTests.Todas();
+        Ondine.Reindex.Tests.TemporadaDeCarpetaTests.Todas();
         Ondine.Reindex.Tests.DejarComoEstaLoteTests.Todas();
         Ondine.Reindex.Tests.VaraPorTemporadaTests.Todas();
         Ondine.Reindex.Tests.RelojYOmitirTests.Todas();
@@ -2216,7 +2217,11 @@ public static class Program
         Eq(3, SignalExtractor.TemporadaDeCarpeta("Temporada 3"), "«Temporada 3»");
         Eq(3, SignalExtractor.TemporadaDeCarpeta("S03"), "«S03»");
         Eq(2007, SignalExtractor.TemporadaDeCarpeta("2007"), "un año a secas");
-        Eq(null, SignalExtractor.TemporadaDeCarpeta("Especiales"), "«Especiales» no es un número");
+        // Cambiado a proposito: «Especiales» ES la temporada 0, que es como la llaman Plex
+        // y Jellyfin — y servirles bien es lo que Ondine viene a hacer. Antes daba null y
+        // esos capitulos se quedaban sin temporada. Que siga ordenandose casi al final ya
+        // no es un efecto secundario de ese null: lo dice LibraryScan.OrdenEspeciales.
+        Eq(0, SignalExtractor.TemporadaDeCarpeta("Especiales"), "«Especiales» es la temporada 0");
 
         // ── el recorrido de verdad, sobre disco: es el que se rompió ──
         var tmp = Path.Combine(Path.GetTempPath(), "shrinkvideo-scan-" + Guid.NewGuid().ToString("N"));
