@@ -139,6 +139,93 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// El explorador de catalogos: el buscador y el panel del JSON.
+    ///
+    /// <para>
+    /// Lo que se vigila del JSON no es que aparezca: es que <b>lo pintado sea el JSON</b>.
+    /// El panel tiene al lado un boton de copiar que copia el texto de verdad, asi que si
+    /// el coloreado se comiera un trozo, lo que se ve y lo que se pega dirian cosas
+    /// distintas — y de las dos, la que se cree es la que se ve.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerCatalogo(Window dueno)
+    {
+        var catalogo = Ondine.Reindex.ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0",
+          "serie": "Serie de prueba",
+          "episodios": [
+            { "num": 1, "temporada": 1, "titulos": { "es": ["El planeta espejo"] } },
+            { "num": 2, "temporada": 1, "titulos": { "es": ["La playa", "El armario"] } },
+            { "num": 3, "temporada": 2, "titulos": { "es": ["Otra cosa"] } }
+          ]
+        }
+        """);
+
+        var v = new Catalogo(catalogo);
+        v.Show(dueno);
+        await Task.Delay(400);
+
+        var lista = v.GetVisualDescendants().OfType<ListBox>().FirstOrDefault();
+        List<object> Filas() =>
+            (lista?.ItemsSource as System.Collections.IEnumerable)?.Cast<object>().ToList() ?? [];
+
+        Dice(Filas().Count == 3, $"salen los tres episodios ({Filas().Count})");
+
+        // Sin carpeta analizada detras, el filtro de «los que faltan» no se ofrece: seria
+        // decir que faltan todos sin haber mirado ningun disco.
+        var soloFaltan = v.GetVisualDescendants().OfType<CheckBox>().FirstOrDefault();
+        Dice(soloFaltan?.IsVisible == false,
+            "y sin carpeta detras no se ofrece filtrar por «los que faltan»");
+
+        // El de dos historias trae DOS lineas, cada una con su letra. Es la razon de ser de
+        // esta pantalla: que se vea que el capitulo trae dos y no un titulo larguisimo.
+        var dos = Filas().OfType<EpisodioVista>().First(e => e.Ep.Num == 2);
+        Dice(dos.Segmentos.Count == 2 && dos.Segmentos[0].Codigo == "E2a",
+            $"el de dos historias sale con una linea por historia ({dos.Segmentos[0].Codigo})");
+
+        // ── El buscador ──
+        var buscar = v.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(t => t.Name == "txtBuscar");
+        buscar!.Text = "armario";
+        await Task.Delay(250);
+        Dice(Filas().Count == 1, $"buscar acota la lista ({Filas().Count})");
+
+        var cuenta = v.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "lblCuenta");
+        Dice(cuenta?.Text?.Contains("1") == true, $"y la cuenta lo dice ({cuenta?.Text})");
+
+        // ── El panel del JSON ──
+        buscar.Text = "";
+        await Task.Delay(200);
+        lista!.SelectedIndex = 0;
+        await Task.Delay(300);
+
+        var borde = v.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "bordeJson");
+        Dice(borde?.IsVisible == true, "elegir una fila abre el panel del JSON");
+
+        var caja = v.GetVisualDescendants().OfType<SelectableTextBlock>().FirstOrDefault();
+        var pintado = string.Concat(caja?.Inlines?.OfType<Avalonia.Controls.Documents.Run>()
+                                        .Select(r => r.Text) ?? []);
+        Dice(pintado.Contains("planeta espejo") && pintado.TrimStart().StartsWith('{'),
+            $"y lo pintado es el JSON del episodio ({pintado.Length} caracteres)");
+
+        // Mas de un color: si todo saliera del mismo, el coloreado no estaria pasando por
+        // el motor y nadie lo notaria — el JSON se lee igual de gris.
+        var colores = caja?.Inlines?.OfType<Avalonia.Controls.Documents.Run>()
+                          .Select(r => r.Foreground?.ToString()).Distinct().Count() ?? 0;
+        Dice(colores >= 3, $"con varios colores y no todo del mismo ({colores})");
+
+        // Y cerrar el panel deselecciona: si la fila siguiera elegida, volver a pincharla no
+        // dispararia el cambio de seleccion y el panel no reapareceria.
+        v.GetVisualDescendants().OfType<Button>().First(b => b.Name == "btnCerrarJson")
+         .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        await Task.Delay(200);
+        Dice(borde?.IsVisible == false && lista.SelectedItem is null,
+            "cerrar el panel tambien deselecciona, para poder volver a abrirlo");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// Preferencias: que lo que entra vuelva a salir.
     ///
     /// <para>
