@@ -113,12 +113,16 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 
 - **CHANGELOG por versión, no por commit.** Formato *Keep a Changelog*, en
   castellano de cara al usuario. Los triviales (typo, formato, refactor) no
-  entran. Al cortar versión: subir `<Version>` en **los dos** `.csproj`, cerrar
-  la sección del CHANGELOG y etiquetar `vX.Y.Z`. El CI **verifica el contrato
+  entran. Al cortar versión: subir `<Version>` en **los tres** `.csproj` -app,
+  motor y CLI-, cerrar la sección del CHANGELOG y etiquetar `vX.Y.Z`. El CI **verifica el contrato
   del CHANGELOG antes de compilar** y no publica si no cuadra.
-- **El motor es compartido, no duplicado.** `src/Ondine.Cli` enlaza los ficheros
-  de `src/Ondine`, carpetas enteras y no listas a mano: una lista concreta vuelve
-  a romper la CLI la próxima vez que el motor use un tipo nuevo. Ya pasó.
+- **El motor es un proyecto, no un puñado de ficheros prestados.** Vive en
+  `src/Ondine.Core` (`net9.0`, sin interfaz) y la app, la CLI y las pruebas lo
+  **referencian**. Antes se enlazaban sus fuentes desde el proyecto WPF y había
+  que acordarse de apuntar cada carpeta nueva en dos sitios; la avería llegó -al
+  añadir `Pistas/` la CLI dejó de compilar en las cinco plataformas-. Con una
+  referencia no hay lista que mantener. **Nada de interfaz entra ahí**: si algo
+  del motor necesita WPF, es que no era del motor.
 - **Nunca se tocan los originales** salvo petición explícita, y entonces van a la
   papelera, no a borrado. Todo ocurre en la máquina del usuario.
 - **Rama y PR por tarea.** Nunca empujar directo a `main`.
@@ -132,9 +136,10 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 
 | Carpeta | Qué es |
 |---|---|
-| `src/Ondine/` | App WPF. `Engine.cs` es el motor; el resto es interfaz y autoactualización. |
-| `src/Ondine/Localizacion/` | La espina de la traducción y los textos por pantalla. |
-| `src/Ondine.Cli/` | Terminal multiplataforma. Enlaza el motor. |
+| `src/Ondine.Core/` | **El motor**: comprimir, estimar, reindexar, identificar. `net9.0` a secas, sin interfaz: compila y corre en Windows, Linux y macOS. |
+| `src/Ondine.Core/Localizacion/` | La espina de la traducción y los textos por pantalla. Está en el motor porque el motor también escribe texto de interfaz. |
+| `src/Ondine/` | App WPF: ventanas, tema y autoactualización. Solo Windows. |
+| `src/Ondine.Cli/` | Terminal multiplataforma. Referencia el motor. |
 | `tests/Reindex.Tests/` | Las pruebas del motor y de los textos. Sin dependencias externas ni WPF: corren en Linux. |
 | `tests/Ui.Smoke/` | Que cada pantalla se construya y se mida sin reventar. Necesita Windows (WPF), así que va aparte. |
 | `web/` | El sitio de [ondine.hdglabs.com](https://ondine.hdglabs.com), en Astro, también bilingüe. |
@@ -152,6 +157,7 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | Ejecutar la app | `dotnet run --project src/Ondine` |
 | Ejecutar la CLI | `dotnet run --project src/Ondine.Cli -- --help` |
 | Pruebas | `dotnet run --project tests/Reindex.Tests` |
+| Compilar solo el motor | `dotnet build src/Ondine.Core` |
 | Humo de la interfaz (Windows) | `dotnet run --project tests/Ui.Smoke` |
 | Instalador completo | `pwsh -File build.ps1` |
 | Sitio web | `cd web && npm run dev` |

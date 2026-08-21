@@ -26,31 +26,16 @@
   </PropertyGroup>
 
   <!--
-    El motor se comparte con la app WPF ENLAZANDO los ficheros, no copiándolos:
-    así no hay dos versiones que se desincronicen. Se excluye todo lo de interfaz
-    (ventanas, tema) porque WPF solo existe en Windows.
+    El motor es un proyecto y se referencia.
+
+    Antes se ENLAZABAN sus ficheros uno a uno desde la app WPF, que era la dueña de las
+    fuentes. Aquello obligaba a acordarse de apuntar aquí cada carpeta nueva del motor, y
+    la avería llegó: al añadir Pistas/ (quitar audio o subtítulos) el motor empezó a usar
+    sus tipos y la CLI dejó de compilar en las cinco plataformas. Con una referencia de
+    proyecto no hay lista que mantener y no puede repetirse.
   -->
   <ItemGroup>
-    <Compile Include="..\Ondine\Engine.cs"        Link="Engine.cs" />
-    <Compile Include="..\Ondine\EncodeOptions.cs" Link="EncodeOptions.cs" />
-    <Compile Include="..\Ondine\Estimator.cs"     Link="Estimator.cs" />
-    <Compile Include="..\Ondine\RenameRule.cs"    Link="RenameRule.cs" />
-    <Compile Include="..\Ondine\VideoRow.cs"      Link="VideoRow.cs" />
-    <Compile Include="..\Ondine\Native.cs"        Link="Native.cs" />
-    <!-- El motor escribe en el registro textos de interfaz, así que ya no compila sin el
-         catálogo. Se enlazan `Idioma.cs` y los `Textos.*.cs`, NO la carpeta entera: `T.cs`
-         es la extensión de marcado de XAML y depende de WPF. Mismo patrón que el arnés. -->
-    <Compile Include="..\Ondine\Localizacion\Idioma.cs" LinkBase="Localizacion" />
-    <Compile Include="..\Ondine\Localizacion\Textos.*.cs" LinkBase="Localizacion" />
-    <!-- Las carpetas ENTERAS, no los ficheros que hoy hacen falta: el motor ya tira de
-         Reindex.LibraryTemplate y Reindex.Tramos, y una lista a mano vuelve a romper la
-         CLI la próxima vez que alguien use otro. Es código multiplataforma a propósito —
-         los tests lo compilan igual para Linux.
-         Pasó de verdad: al añadir Pistas/ (quitar audio o subtítulos) el motor empezó a usar
-         sus tipos y la CLI dejó de compilar en las cinco plataformas. -->
-    <Compile Include="..\Ondine\Reindex\*.cs" LinkBase="Reindex" />
-    <Compile Include="..\Ondine\Pistas\*.cs" LinkBase="Pistas" />
-    <Compile Include="..\Ondine\Rutas\*.cs" LinkBase="Rutas" />
+    <ProjectReference Include="..\Ondine.Core\Ondine.Core.csproj" />
   </ItemGroup>
 
 </Project>
