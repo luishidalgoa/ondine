@@ -204,6 +204,8 @@ public sealed class ColaDeTrabajos
         NoSubs = o.NoSubs,
         Quality = o.Quality,
         BitrateVideoKbps = o.BitrateVideoKbps,
+        TamanoObjetivoBytes = o.TamanoObjetivoBytes,
+        Velocidad = o.Velocidad,
         MaxHeight = o.MaxHeight,
         AudioBitrate = o.AudioBitrate,
         Force = o.Force,

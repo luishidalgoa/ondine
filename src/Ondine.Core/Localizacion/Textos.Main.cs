@@ -230,6 +230,25 @@ public sealed partial class Textos
     // saca la calidad. No son dos ajustes: son dos formas de pedir lo mismo.
     public string MainCalidadObjetivo => Idioma.Elegir("Target size…", "Tamaño objetivo…");
 
+    // ── Cuánto se esmera el codificador ─────────────────────────────────────
+    // Cinco pasos y no los diez de x265: nadie sabe qué hay entre «superfast» y
+    // «veryfast», y ofrecerlo solo hace la elección más difícil sin mejorarla.
+    public string MainVelocidad => Idioma.Elegir("Effort", "Esmero");
+
+    public string MainVelocidadTip => Idioma.Elegir(
+        "How hard the encoder works. Slower means smaller at the same quality — nothing else " +
+        "changes. Each codec family has its own scale; this picks the right one for whichever " +
+        "ends up being used.",
+        "Cuánto trabaja el codificador. Más lento significa más pequeño con la misma calidad, y " +
+        "nada más cambia. Cada familia de códecs tiene su propia escala; esto elige la que toca " +
+        "al que acabe usándose.");
+
+    public string MainVelocidadMuyRapido => Idioma.Elegir("Fastest", "Lo más rápido");
+    public string MainVelocidadRapido => Idioma.Elegir("Fast", "Rápido");
+    public string MainVelocidadEquilibrado => Idioma.Elegir("Balanced", "Equilibrado");
+    public string MainVelocidadLento => Idioma.Elegir("Slow", "Lento");
+    public string MainVelocidadMuyLento => Idioma.Elegir("Slowest", "Lo más lento");
+
     public string MainObjetivoMB => Idioma.Elegir("MB per file", "MB por fichero");
 
     public string MainObjetivoTip => Idioma.Elegir(

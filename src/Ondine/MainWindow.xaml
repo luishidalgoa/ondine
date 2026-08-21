@@ -399,7 +399,8 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
-              <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="1.2*"/>
+              <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="1.2*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Margin="0,0,10,0">
@@ -447,13 +448,22 @@
               </Grid>
             </StackPanel>
             <StackPanel Grid.Column="4" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainVelocidad}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox x:Name="cboVel" SelectedIndex="2"
+                        ToolTip="{i:T MainVelocidadTip}">
+                <ComboBoxItem Content="{i:T MainVelocidadMuyRapido}"/><ComboBoxItem Content="{i:T MainVelocidadRapido}"/>
+                <ComboBoxItem Content="{i:T MainVelocidadEquilibrado}"/><ComboBoxItem Content="{i:T MainVelocidadLento}"/>
+                <ComboBoxItem Content="{i:T MainVelocidadMuyLento}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="5" Margin="0,0,10,0">
               <TextBlock Text="{i:T MainResolucionMax}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
               <ComboBox x:Name="cboRes" SelectedIndex="0"
                         ToolTip="{i:T MainResolucionTip}">
                 <ComboBoxItem Content="{i:T MainResolucionSinCambio}"/><ComboBoxItem Content="{i:T MainResolucion1080}"/><ComboBoxItem Content="{i:T MainResolucion720}"/><ComboBoxItem Content="{i:T MainResolucion480}"/>
               </ComboBox>
             </StackPanel>
-            <StackPanel Grid.Column="5" Margin="0,0,10,0">
+            <StackPanel Grid.Column="6" Margin="0,0,10,0">
               <TextBlock Text="{i:T MainAudio}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
               <ComboBox x:Name="cboAud" SelectedIndex="0"
                         ToolTip="{i:T MainAudioTip}">
@@ -461,7 +471,7 @@
                 <ComboBoxItem Content="{i:T MainAudioAac160}"/><ComboBoxItem Content="{i:T MainAudioAac128}"/><ComboBoxItem Content="{i:T MainAudioAac96}"/>
               </ComboBox>
             </StackPanel>
-            <StackPanel Grid.Column="6" Margin="4,0,0,0" Orientation="Vertical">
+            <StackPanel Grid.Column="7" Margin="4,0,0,0" Orientation="Vertical">
               <StackPanel.Resources><Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}"><Setter Property="Margin" Value="8,1"/></Style></StackPanel.Resources>
               <Border BorderBrush="{StaticResource Divider}" BorderThickness="1,0,0,0" Padding="10,0,0,0">
                 <StackPanel>

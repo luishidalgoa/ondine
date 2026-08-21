@@ -34,6 +34,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Ya puedes decidir cuánto se esmera el codificador.** Un ajuste nuevo, «Esmero», con cinco pasos
+  de «lo más rápido» a «lo más lento». Más lento significa más pequeño con la misma calidad — ese es
+  todo el intercambio. **«Equilibrado» es lo que la app hacía hasta ahora**, así que si no lo tocas
+  todo sigue igual.
+
+  Cada familia de códecs cuenta esto de una forma distinta —y dos de ellas cuentan al revés— así que
+  el valor que toca al codificador que acabe usándose se elige solo.
+
 - **Ya puedes decir cuánto quieres que pese, en vez de elegir calidad y ver qué sale.** En «Calidad»
   hay una opción nueva, «Tamaño objetivo…», donde escribes los MB a los que debe quedar cada
   fichero. El bitrate se calcula **por fichero**: un clip corto y una película necesitan bitrates

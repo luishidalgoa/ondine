@@ -239,6 +239,21 @@ public sealed partial class Textos
         "Si el disco se llena, la tanda se pausa sola y sigue cuando liberas espacio. Puedes seguir el progreso desde cualquier pestaña con la píldora de la cabecera.");
 
     // ── Recortes ────────────────────────────────────────────────────────────
+    public string AyudaComprimirEsmeroTitulo => Idioma.Elegir(
+        "EFFORT: TIME AGAINST SIZE", "ESMERO: TIEMPO CONTRA TAMAÑO");
+
+    public string AyudaComprimirEsmero => Idioma.Elegir(
+        "«Effort» decides how hard the encoder works. Slower means smaller at the same " +
+        "quality — that is the whole trade, nothing else changes. «Balanced» is what the app " +
+        "did before this could be chosen, so leaving it alone keeps what you had. Each codec " +
+        "family counts this differently, and two of them count backwards; the right value for " +
+        "whichever encoder ends up being used is picked for you.",
+        "«Esmero» decide cuánto trabaja el codificador. Más lento significa más pequeño con la " +
+        "misma calidad — ese es todo el intercambio, no cambia nada más. «Equilibrado» es lo " +
+        "que hacía la app antes de que esto se pudiera elegir, así que dejarlo quieto mantiene " +
+        "lo que tenías. Cada familia de códecs cuenta esto de una forma, y dos de ellas cuentan " +
+        "al revés; el valor que toca al codificador que acabe usándose se elige solo.");
+
     public string AyudaComprimirObjetivoTitulo => Idioma.Elegir(
         "LANDING ON A SIZE", "LLEGAR A UN TAMAÑO");
 
