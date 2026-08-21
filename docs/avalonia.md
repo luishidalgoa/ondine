@@ -169,7 +169,20 @@ El plan de abajo dejó de ser un plan. Al día de hoy:
 **La decisión de LibVLC está tomada: entra.** Era la única que quedaba y no era técnica. Es el
 primer paquete con binarios nativos del proyecto y entró con permiso explícito.
 
-Queda la 3b —las plantillas y los 107 *triggers*—, las pantallas y el empaquetado. Las dos
+- **Fase 3b** 🔜 — la familia de **botones** portada (6 estilos) con el haz del foco como
+  animación de Avalonia, y **los otros 18 apuntados con su motivo**. La mayoría no se portan y esa
+  es la conclusión útil: `TableView`, `RowStyle` y `ColHeader` visten un `ListView`+`GridView` que
+  en Avalonia **es un `DataGrid`**, así que portarlos sería trabajo tirado; y los del reproductor
+  van con Recortes en la Fase 4. Lo vigila `TemaPortadoTests`, que exige que cada estilo esté en
+  una de las dos listas.
+
+  **La traducción de fondo**, para quien siga: un `<Style x:Key>` de WPF es un `ControlTheme` en
+  Avalonia, y los `<Trigger Property="IsMouseOver">` son selectores `^:pointerover`. Las partes de
+  la plantilla se apuntan con `/template/ Border#b` en vez de `TargetName`. **Un selector que no
+  casa no da error** — el control sale con el aspecto de fábrica y nadie lo dice —, así que el
+  proyecto trae un `--auto` que abre la ventana y comprueba que el tema se aplicó de verdad.
+
+Quedan las pantallas y el empaquetado. Las dos
 interfaces conviven mientras dure: cambiar las dieciocho pantallas de golpe habría dejado la app
 sin poder publicarse durante semanas.
 

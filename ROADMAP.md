@@ -123,6 +123,9 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
   - ✅ Fase 1: reglas de Organizar bajadas al motor, con pruebas.
   - ✅ Fase 2: la prueba de fuego —DataGrid con RowDetails y vídeo con LibVLC—, las dos salen.
   - ✅ Fase 3a: el esqueleto, los 30 colores del tema y los textos del catálogo compartido.
-  - 🔜 Fase 3b: las plantillas de control y los 107 *triggers* a selectores.
+  - 🔜 Fase 3b: los estilos a selectores. Hecha la familia de **botones** (6), con el haz del
+    foco como animación de Avalonia. Los otros 18 están apuntados con su motivo, y la mayoría
+    no se portan: visten controles de WPF que en Avalonia son otros —la tabla pasa a DataGrid—
+    o van con su pantalla en la Fase 4.
   - ⬜ Fase 4: las pantallas, de menos a más.
   - ⬜ Fase 5: empaquetado, papelera y `.desktop`.

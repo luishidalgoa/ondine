@@ -109,6 +109,7 @@ public static class Program
         Ondine.Reindex.Tests.MezclaDeAudioTests.Todas();
         Ondine.Reindex.Tests.TemporadaDeCarpetaTests.Todas();
         Ondine.Reindex.Tests.TemaCompartidoTests.Todas();
+        Ondine.Reindex.Tests.TemaPortadoTests.Todas();
         Ondine.Reindex.Tests.DejarComoEstaLoteTests.Todas();
         Ondine.Reindex.Tests.VaraPorTemporadaTests.Todas();
         Ondine.Reindex.Tests.RelojYOmitirTests.Todas();

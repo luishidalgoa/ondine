@@ -1,0 +1,146 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Los botones de Ondine, portados de Theme.xaml.
+
+    LA TRADUCCION DE FONDO: en WPF un estilo con nombre es `<Style x:Key="..">` con
+    `<Trigger Property="IsMouseOver">` dentro. Avalonia no tiene triggers; tiene selectores
+    tipo CSS. El equivalente de un estilo con nombre es `ControlTheme`, y los estados van
+    como selectores anidados con `^`:
+
+        WPF:      <Trigger Property="IsMouseOver" Value="True">
+        Avalonia: <Style Selector="^:pointerover">
+
+        WPF:      <Trigger Property="IsPressed" Value="True">
+        Avalonia: <Style Selector="^:pressed">
+
+        WPF:      <Trigger Property="IsEnabled" Value="False">
+        Avalonia: <Style Selector="^:disabled">
+
+    Y el nombre de las partes: en WPF se apunta al hijo por `TargetName="b"`; en Avalonia el
+    selector baja por `/template/ Border#b`. Es la diferencia que mas cuesta al portar,
+    porque un selector que no case NO da error: el estilo simplemente no se aplica y el
+    boton sale con el aspecto de fabrica.
+  -->
+
+  <!-- ══ La base ═══════════════════════════════════════════════════════════════
+       Lo que comparten los ocho. En WPF esto era `BtnBase` y los demas heredaban con
+       BasedOn; aqui se hace igual, con BasedOn sobre el ControlTheme. -->
+  <ControlTheme x:Key="BtnBase" TargetType="Button">
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="12,7"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Cursor" Value="Hand"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <!-- El haz: un borde con degradado que gira al enfocar con el teclado. En WPF
+               era un Storyboard con RepeatBehavior="Forever"; aqui es una animacion de
+               Avalonia, y se enciende con el selector de foco de mas abajo.
+
+               Nace invisible a proposito: encendido siempre seria una animacion corriendo
+               en cada boton de la pantalla, y eso se paga en CPU aunque no se vea. Ya
+               costo medirlo una vez en la version de WPF. -->
+          <Border Name="haz" Opacity="0" CornerRadius="9.5" BorderThickness="1">
+            <Border.BorderBrush>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#00968AE0" Offset="0.00"/>
+                <GradientStop Color="#33968AE0" Offset="0.34"/>
+                <GradientStop Color="#FFD2CEFD" Offset="0.50"/>
+                <GradientStop Color="#33968AE0" Offset="0.66"/>
+                <GradientStop Color="#00968AE0" Offset="1.00"/>
+              </LinearGradientBrush>
+            </Border.BorderBrush>
+          </Border>
+
+          <Border Name="b"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="8"
+                  Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="Center"/>
+          </Border>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- Apagado: se atenua la caja, no el haz. Atenuar el Panel entero apagaria tambien
+         el borde y el boton perderia su forma. -->
+    <Style Selector="^:disabled /template/ Border#b">
+      <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+
+    <!-- El haz solo con el foco del TECLADO, no con el raton: es una ayuda para quien
+         navega con tabulador, y encendiendolo al pasar por encima seria un adorno que
+         distrae y consume. -->
+    <Style Selector="^:focus-visible /template/ Border#haz">
+      <Setter Property="Opacity" Value="1"/>
+      <Setter Property="Transitions">
+        <Transitions><DoubleTransition Property="Opacity" Duration="0:0:0.18"/></Transitions>
+      </Setter>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Primario ══ El de las acciones que importan. -->
+  <ControlTheme x:Key="BtnPrimary" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource HoverPrimary}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource PressedPrimary}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Secundario ══ Acompaña al primario sin competir con él. -->
+  <ControlTheme x:Key="BtnSecondary" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+    <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="#14E9E9ED"/>
+    </Style>
+    <Style Selector="^:pressed /template/ Border#b">
+      <Setter Property="Background" Value="#24E9E9ED"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Cristal ══ Sobre fondos con imagen detrás. -->
+  <ControlTheme x:Key="BtnCristal" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+    <Setter Property="BorderBrush" Value="#3DE9E9ED"/>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="#1FE9E9ED"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Fantasma ══ Sin caja, para acciones de segunda fila. -->
+  <ControlTheme x:Key="BtnGhost" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+    <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+    <Setter Property="Padding" Value="6,4"/>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="#1A968AE0"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Fantasma apagado ══ El mismo, pero que no pida atención. -->
+  <ControlTheme x:Key="BtnGhostMuted" TargetType="Button" BasedOn="{StaticResource BtnGhost}">
+    <Setter Property="Foreground" Value="{StaticResource Neutral400}"/>
+    <Setter Property="FontWeight" Value="Normal"/>
+    <Setter Property="FontSize" Value="12"/>
+  </ControlTheme>
+
+</ResourceDictionary>

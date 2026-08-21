@@ -38,8 +38,8 @@ es un acuerdo de buena voluntad: está verificado.
   WPF, que solo existe ahí. Ya hay una segunda interfaz en marcha —sobre **el mismo motor y el
   mismo catálogo de textos**— y por primera vez **la parte gráfica publica para Linux y macOS**.
 
-  Todavía no sustituye a nada: es el esqueleto, y las pantallas van a ir portándose una a una
-  mientras las dos conviven. Para quien usa Ondine en Windows **no cambia nada**.
+  Todavía no sustituye a nada: es el esqueleto y los botones, y las pantallas van a ir portándose
+  una a una mientras las dos conviven. Para quien usa Ondine en Windows **no cambia nada**.
 
 
 ## [1.13.0] - 2026-08-21
