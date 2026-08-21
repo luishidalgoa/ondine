@@ -46,15 +46,6 @@ public static class MedidaDelCapitulo
     /// </summary>
     public const double Margen = 0.35;
 
-    /// <summary>
-    /// Lo que dura una historia en esta serie: la mediana de (duración ÷ historias)
-    /// entre los ficheros que se pudieron medir. <c>null</c> si no hay bastantes.
-    /// </summary>
-    /// <param name="observaciones">
-    /// Pares (lo que dura el fichero, cuántas historias trae el episodio que le tocó).
-    /// Solo deben entrar los identificados con confianza: aprender de las dudas es
-    /// aprender del error.
-    /// </param>
     /// <summary>Contra qué se compara la duración de un fichero en esta serie.</summary>
     public enum Molde
     {
@@ -180,7 +171,6 @@ public static class MedidaDelCapitulo
             && d.TotalSeconds <= esperado * (1 + Margen);
     }
 
-    /// <summary>Cuántas historias dice el reloj que trae este fichero. Null si no se sabe.</summary>
     /// <summary>
     /// Cuántas historias dice el reloj que trae este fichero.
     ///
@@ -196,6 +186,15 @@ public static class MedidaDelCapitulo
             ? null
             : HistoriasQueSugiere(duracion, vara.Unidad);
 
+    /// <summary>
+    /// Lo que dura una historia en esta serie: la mediana de (duración ÷ historias)
+    /// entre los ficheros que se pudieron medir. <c>null</c> si no hay bastantes.
+    /// </summary>
+    /// <param name="observaciones">
+    /// Pares (lo que dura el fichero, cuántas historias trae el episodio que le tocó).
+    /// Solo deben entrar los identificados con confianza: aprender de las dudas es
+    /// aprender del error.
+    /// </param>
     public static TimeSpan? Unidad(IEnumerable<(TimeSpan Duracion, int Historias)> observaciones)
     {
         var porHistoria = observaciones

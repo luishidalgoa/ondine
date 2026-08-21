@@ -18,7 +18,6 @@ namespace Ondine.Reindex;
 /// </summary>
 public static class CatalogPrompt
 {
-    /// <summary>Idiomas que se ofrecen, con su etiqueta para la interfaz.</summary>
     /// <summary>
     /// La lista de idiomas vive en <see cref="IsoLanguages"/>, que es la norma ISO entera.
     /// Aquí había siete a mano, y dos ni siquiera eran códigos de idioma.

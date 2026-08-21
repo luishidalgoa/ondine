@@ -473,20 +473,6 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     /// <summary>La prosa completa del motor, para el tooltip de la fila.</summary>
     public string Explicacion => Res.Motivo;
 
-    /// <summary>¿Merece la pena desplegar el resolutor bajo esta fila?</summary>
-    /// <summary>
-    /// Si la fila se puede desplegar.
-    ///
-    /// <para>
-    /// También las verdes. El motor les vacía las alternativas a propósito -ofrecer
-    /// candidatos peores en una fila ya resuelta es ruido que invita a un clic
-    /// equivocado-, y de rebote se quedaban sin poder abrirse: si la app acertaba pero
-    /// no era lo que tú querías, no había por dónde cambiarlo. Se abren igual; lo que
-    /// no traen es la lista de candidatos ni el botón de confirmar uno, que ahí no
-    /// significa nada. Quedan las dos salidas que sí valen: elegir otro episodio a mano
-    /// y dejarlo como está.
-    /// </para>
-    /// </summary>
     // ───────────────────────── columna DURACIÓN ─────────────────────────
 
     /// <summary>
@@ -507,6 +493,19 @@ public sealed class OrganizarRow : INotifyPropertyChanged
             ? (u.TotalHours >= 1 ? $"{(int)u.TotalHours}:{u.Minutes:00}:{u.Seconds:00}" : $"{u.Minutes}:{u.Seconds:00}")
             : "?");
 
+    /// <summary>
+    /// Si la fila se puede desplegar.
+    ///
+    /// <para>
+    /// También las verdes. El motor les vacía las alternativas a propósito -ofrecer
+    /// candidatos peores en una fila ya resuelta es ruido que invita a un clic
+    /// equivocado-, y de rebote se quedaban sin poder abrirse: si la app acertaba pero
+    /// no era lo que tú querías, no había por dónde cambiarlo. Se abren igual; lo que
+    /// no traen es la lista de candidatos ni el botón de confirmar uno, que ahí no
+    /// significa nada. Quedan las dos salidas que sí valen: elegir otro episodio a mano
+    /// y dejarlo como está.
+    /// </para>
+    /// </summary>
     public bool TieneDetalle => Res.Alternativas.Count > 0 || Res.EsDuda || Res.Episodio != null;
 
     /// <summary>

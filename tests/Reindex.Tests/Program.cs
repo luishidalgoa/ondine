@@ -65,6 +65,7 @@ public static class Program
         // único que corre en cada cambio. Una prueba que vive fuera del CI no
         // es un arnés, es una intención.
         TraduccionTests.Todas();
+        DocumentacionTests.Todas();
         Ondine.Reindex.Tests.IdiomaElegidoTests.Todas();
         Ondine.Reindex.Tests.FichaDeWindowsTests.Todas();
         Ondine.Reindex.Tests.MedidaDelCapituloTests.Todas();
@@ -2464,7 +2465,6 @@ public static class Program
         else { _fallos++; Console.WriteLine($"  ✗ {descripcion}\n      esperado: «{esperado}»\n      real:     «{real}»"); }
     }
 
-    /// <summary>Como <see cref="Lanza{T}"/>, pero devuelve la excepción para mirarle el mensaje.</summary>
     // ────────────────── Cortes por segmento (partir un episodio) ──────────────────
 
     private static void CortesPorSegmento()
@@ -3032,6 +3032,7 @@ public static class Program
         else { _fallos++; Console.WriteLine($"  ✗ {descripcion} (esperaba {esperado:0.00}, salió {real:0.00})"); }
     }
 
+    /// <summary>Como <see cref="Lanza{T}"/>, pero devuelve la excepción para mirarle el mensaje.</summary>
     private static T? Lanzado<T>(Action accion, string descripcion) where T : Exception
     {
         try { accion(); _fallos++; Console.WriteLine($"  ✗ {descripcion} (no lanzó nada)"); return null; }

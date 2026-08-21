@@ -26,10 +26,6 @@ public static partial class TitleMatch
     private static partial Regex RxDoblaje();
 
     /// <summary>
-    /// norm(s): quita sufijos de doblaje → minúsculas → sin diacríticos (á→a, ñ→n) →
-    /// todo lo que no sea [a-z0-9] pasa a espacio, colapsado y recortado.
-    /// </summary>
-    /// <summary>
     /// «primera parte», «parte segunda», «2 parte»… — todas las formas de numerar una
     /// parte, en cualquiera de los dos órdenes. Se aplica sobre el texto YA limpio
     /// (minúsculas, sin diacríticos, espacios simples), así que aquí «2.ª parte» ya
@@ -53,6 +49,10 @@ public static partial class TitleMatch
         ["i"] = "1", ["ii"] = "2", ["iii"] = "3", ["iv"] = "4", ["v"] = "5",
     };
 
+    /// <summary>
+    /// norm(s): quita sufijos de doblaje → minúsculas → sin diacríticos (á→a, ñ→n) →
+    /// todo lo que no sea [a-z0-9] pasa a espacio, colapsado y recortado.
+    /// </summary>
     public static string Norm(string? s)
     {
         if (string.IsNullOrWhiteSpace(s)) return "";

@@ -365,7 +365,6 @@ public static partial class SignalExtractor
         return mSE.Success ? int.Parse(mSE.Groups[1].Value) : null;
     }
 
-    /// <summary>Quita separadores sobrantes de los bordes y espacios repetidos.</summary>
     /// <summary>
     /// El título es lo que va DESPUÉS del marcador de episodio: delante está el nombre de
     /// la serie («Doraemon (2005) - S17E485 - Título»). Quitando solo el marcador quedaba
@@ -389,6 +388,7 @@ public static partial class SignalExtractor
     /// </summary>
     public static string SinMorralla(string s) => LimpiarTitulo(s);
 
+    /// <summary>Quita separadores sobrantes de los bordes y espacios repetidos.</summary>
     private static string LimpiarTitulo(string s)
     {
         // La morralla de descarga («…_AMZN_WEB_DLtrialeng…», «…x265_1080p») se corta desde su

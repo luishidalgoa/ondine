@@ -560,13 +560,6 @@ public partial class OrganizarView : UserControl
     }
 
     /// <summary>
-    /// Cuenta los vídeos de la carpeta Y DE SUS SUBCARPETAS. No lee metadatos: eso es «Simular».
-    ///
-    /// El recorrido baja porque así está montada una biblioteca: se apunta a la carpeta de la
-    /// serie y las temporadas cuelgan dentro. Quedándose en el primer nivel, una serie entera
-    /// se veía como «no hay vídeos».
-    /// </summary>
-    /// <summary>
     /// Pone una carpeta en el campo Y la cuenta. Escribir solo el texto no basta: lo que habilita
     /// «Analizar» es la cuenta de ficheros, así que una carpeta puesta por la app —la vinculada al
     /// catálogo, o la elegida en el menú de vínculos— dejaba el botón apagado y la pantalla
@@ -652,11 +645,6 @@ public partial class OrganizarView : UserControl
         cboTipo.SelectedIndex == 1 ? TipoDeBiblioteca.Pelicula : TipoDeBiblioteca.Serie;
 
     /// <summary>
-    /// Trae de vuelta lo que se eligió para esta carpeta. Sin esto habría que
-    /// decirle en cada análisis que la carpeta de pelis es de pelis, que es la
-    /// clase de pregunta repetida que la app ya se ahorra con el catálogo.
-    /// </summary>
-    /// <summary>
     /// Coloca el desplegable con el tipo recordado de esa carpeta.
     ///
     /// <para>
@@ -667,6 +655,11 @@ public partial class OrganizarView : UserControl
     /// esto y el arreglo del final va el recorrido del disco, que con ficheros en la
     /// nube tarda: ahí es donde salían «cosas raras al elegir carpeta».
     /// </para>
+    /// <para>
+    /// Trae de vuelta lo que se eligió para esta carpeta. Sin esto habría que
+    /// decirle en cada análisis que la carpeta de pelis es de pelis, que es la
+    /// clase de pregunta repetida que la app ya se ahorra con el catálogo.
+    /// </para>
     /// </summary>
     private void CargarTipoDeCarpeta(string carpeta)
     {
@@ -676,17 +669,6 @@ public partial class OrganizarView : UserControl
         MostrarInicio();
     }
 
-    /// <summary>
-    /// Cambia de vista según el tipo de biblioteca. No se esconden trozos sueltos:
-    /// se cambia de pantalla.
-    ///
-    /// <para>
-    /// La primera versión ocultaba el desplegable de serie y la plantilla, y
-    /// dejaba a la vista el panel de catálogos, «Partir en segmentos» y «Ordenar
-    /// por temporadas» — cosas que a una película no le aplican. Una pantalla
-    /// llena de huecos enseña a desconfiar de lo que queda.
-    /// </para>
-    /// </summary>
     /// <summary>En qué punto del recorrido está la pantalla.</summary>
     private enum Fase
     {
@@ -708,6 +690,13 @@ public partial class OrganizarView : UserControl
     /// pintaba media pantalla de series ENCIMA de la de películas. Con las seis
     /// piezas decididas aquí, en una sola pasada, no hay forma de que dos queden
     /// visibles a la vez.
+    /// </para>
+    /// <para>
+    /// No se esconden trozos sueltos: se cambia de pantalla. La primera versión
+    /// ocultaba el desplegable de serie y la plantilla, y dejaba a la vista el
+    /// panel de catálogos, «Partir en segmentos» y «Ordenar por temporadas» —
+    /// cosas que a una película no le aplican. Una pantalla llena de huecos
+    /// enseña a desconfiar de lo que queda.
     /// </para>
     /// </summary>
     private void AplicarTipo()
@@ -735,6 +724,13 @@ public partial class OrganizarView : UserControl
 
     private string CarpetaActual() => txtCarpeta.Text?.Trim() ?? "";
 
+    /// <summary>
+    /// Cuenta los vídeos de la carpeta Y DE SUS SUBCARPETAS. No lee metadatos: eso es «Simular».
+    ///
+    /// El recorrido baja porque así está montada una biblioteca: se apunta a la carpeta de la
+    /// serie y las temporadas cuelgan dentro. Quedándose en el primer nivel, una serie entera
+    /// se veía como «no hay vídeos».
+    /// </summary>
     private void RevisarCarpeta()
     {
         var carpeta = txtCarpeta.Text?.Trim() ?? "";
@@ -902,11 +898,6 @@ public partial class OrganizarView : UserControl
     }
 
     /// <summary>
-    /// Guarda un catálogo de ejemplo VÁLIDO para editar. Partir de algo que ya funciona
-    /// evita el peor arranque posible: escribir el JSON a ciegas y que el primer intento
-    /// de importar sea una lista de errores.
-    /// </summary>
-    /// <summary>
     /// Abre el generador del encargo para la IA. Se le sugiere el nombre de la serie que
     /// tengas elegida, que es el caso más común: ampliar un catálogo que ya usas.
     /// </summary>
@@ -917,6 +908,11 @@ public partial class OrganizarView : UserControl
         ventana.ShowDialog();
     }
 
+    /// <summary>
+    /// Guarda un catálogo de ejemplo VÁLIDO para editar. Partir de algo que ya funciona
+    /// evita el peor arranque posible: escribir el JSON a ciegas y que el primer intento
+    /// de importar sea una lista de errores.
+    /// </summary>
     private void GuardarEjemplo()
     {
         var dlg = new SaveFileDialog
@@ -2443,10 +2439,6 @@ public partial class OrganizarView : UserControl
     }
 
     /// <summary>
-    /// Reproductor INTEGRADO en modo focus, no una ventana del sistema: la pregunta es
-    /// «¿qué capítulo es?» y la respuesta debe estar a un Esc de distancia.
-    /// </summary>
-    /// <summary>
     /// Abre el reproductor, avisando antes si el fichero solo está en la nube.
     ///
     /// <para>
@@ -2460,6 +2452,10 @@ public partial class OrganizarView : UserControl
     /// No se prohíbe: se dice el tamaño y de qué nube es, y se ofrece la salida
     /// —verlo en su web, que todas la traen—. Prohibirlo sería decidir por quien
     /// a lo mejor sí quiere el fichero aquí.
+    /// </para>
+    /// <para>
+    /// Reproductor INTEGRADO en modo focus, no una ventana del sistema: la pregunta
+    /// es «¿qué capítulo es?» y la respuesta debe estar a un Esc de distancia.
     /// </para>
     /// </summary>
     private void ReproducirFila(OrganizarRow? fila)

@@ -609,11 +609,6 @@ public static class ReindexEngine
     // ────────────────────────── reglas de lote ──────────────────────────
 
     /// <summary>
-    /// Regla 2: dos ficheros que apuntan al MISMO destino no pueden estar los dos bien.
-    /// Gana el de mayor score; los demás pasan a conflicto. Sin esto, aplicar el lote
-    /// machacaría un fichero con otro.
-    /// </summary>
-    /// <summary>
     /// Hay ficheros que emparejan dos historias que el catálogo cuenta como episodios
     /// DISTINTOS. Ponerles el número de uno pierde al otro: el fichero sigue conteniéndolo,
     /// pero ya no hay nada que lo diga, y quien lo mire dentro de un año no lo sabrá. Eso lo
@@ -968,6 +963,11 @@ public static class ReindexEngine
         }
     }
 
+    /// <summary>
+    /// Regla 2: dos ficheros que apuntan al MISMO destino no pueden estar los dos bien.
+    /// Gana el de mayor score; los demás pasan a conflicto. Sin esto, aplicar el lote
+    /// machacaría un fichero con otro.
+    /// </summary>
     private static void Deduplicar(List<ReindexResolution> resoluciones)
     {
         var porDestino = resoluciones

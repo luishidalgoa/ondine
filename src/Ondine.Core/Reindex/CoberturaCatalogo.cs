@@ -51,30 +51,6 @@ public static class CoberturaCatalogo
     }
 
     /// <summary>
-    /// Qué historias de <paramref name="ep"/> tapa de verdad este fichero.
-    ///
-    /// <para>
-    /// La regla de siempre —<b>sin letra de segmento, tapa el episodio entero</b>—
-    /// es la buena para una biblioteca sin partir, y sigue siendo el respaldo.
-    /// Pero se rompía en el caso más común: <c>S1986E985 - El controlador del
-    /// mar</c> cuando el 985 trae dos historias. Sin letra se daba por completo, y
-    /// entonces el cotejo de una lista de fuera contestaba «ya lo tienes» sobre un
-    /// vídeo que traía justo la historia que falta.
-    /// </para>
-    /// <para>
-    /// El nombre ya lo dice: nombra una de las dos. Así que <b>si el título del
-    /// fichero se parece a algunas de las historias y no al episodio entero, tapa
-    /// solo esas</b>. Y si no se parece a ninguna no se deduce nada: convertir un
-    /// fichero completo en «te falta la mitad» es el error contrario, y también
-    /// cuesta —te vuelves a bajar lo que ya tienes—.
-    /// </para>
-    /// <para>
-    /// Está aquí y no repartido porque la misma cuenta la hacían tres sitios: el
-    /// informe de «qué falta», el distintivo del explorador y el cotejo de listas.
-    /// Tres copias de una regla son tres criterios en cuanto alguien toca una.
-    /// </para>
-    /// </summary>
-    /// <summary>
     /// Todo lo que cubre un fichero: su episodio y, si el nombre es compuesto
     /// —«[1262+1264]»—, también las historias de los OTROS episodios que trae.
     ///
@@ -111,6 +87,30 @@ public static class CoberturaCatalogo
         }
     }
 
+    /// <summary>
+    /// Qué historias de <paramref name="ep"/> tapa de verdad este fichero.
+    ///
+    /// <para>
+    /// La regla de siempre —<b>sin letra de segmento, tapa el episodio entero</b>—
+    /// es la buena para una biblioteca sin partir, y sigue siendo el respaldo.
+    /// Pero se rompía en el caso más común: <c>S1986E985 - El controlador del
+    /// mar</c> cuando el 985 trae dos historias. Sin letra se daba por completo, y
+    /// entonces el cotejo de una lista de fuera contestaba «ya lo tienes» sobre un
+    /// vídeo que traía justo la historia que falta.
+    /// </para>
+    /// <para>
+    /// El nombre ya lo dice: nombra una de las dos. Así que <b>si el título del
+    /// fichero se parece a algunas de las historias y no al episodio entero, tapa
+    /// solo esas</b>. Y si no se parece a ninguna no se deduce nada: convertir un
+    /// fichero completo en «te falta la mitad» es el error contrario, y también
+    /// cuesta —te vuelves a bajar lo que ya tienes—.
+    /// </para>
+    /// <para>
+    /// Está aquí y no repartido porque la misma cuenta la hacían tres sitios: el
+    /// informe de «qué falta», el distintivo del explorador y el cotejo de listas.
+    /// Tres copias de una regla son tres criterios en cuanto alguien toca una.
+    /// </para>
+    /// </summary>
     public static HashSet<int> HistoriasQueCubre(ReindexResolution r, CatalogEpisode ep)
     {
         int cuantas = Math.Max(1, ep.TitulosSalida.Count);
@@ -220,14 +220,6 @@ public static class CoberturaCatalogo
         return mapa;
     }
 
-    /// <summary>
-    /// Compara el catálogo con lo identificado.
-    ///
-    /// Por defecto solo se miran las temporadas de las que hay ALGO: si tienes la 1 y el catálogo
-    /// trae 16, listar las otras 15 enteras no informa de nada — ya sabes que no las tienes. Con
-    /// <paramref name="soloTemporadasConAlgo"/> a false salen todas, para cuando lo que quieres es
-    /// justo saber qué te queda por conseguir.
-    /// </summary>
     /// <summary>Las temporadas del catálogo, en orden, para ofrecerlas donde haga falta elegir.</summary>
     public static IReadOnlyList<int> TemporadasDe(ReindexCatalog catalogo) =>
         catalogo.Regulares.Where(e => e.Temporada.HasValue).Select(e => e.Temporada!.Value)
@@ -244,6 +236,14 @@ public static class CoberturaCatalogo
         return t.Count > 0 && t.All(x => x >= 1900 && x <= 2200);
     }
 
+    /// <summary>
+    /// Compara el catálogo con lo identificado.
+    ///
+    /// Por defecto solo se miran las temporadas de las que hay ALGO: si tienes la 1 y el catálogo
+    /// trae 16, listar las otras 15 enteras no informa de nada — ya sabes que no las tienes. Con
+    /// <paramref name="soloTemporadasConAlgo"/> a false salen todas, para cuando lo que quieres es
+    /// justo saber qué te queda por conseguir.
+    /// </summary>
     /// <param name="temporada">
     /// Si se indica, se mira SOLO esa temporada y las cuentas son suyas. Con 16 temporadas, «qué
     /// falta» en bloque no dice mucho; lo útil es saber qué queda de la que estás completando.

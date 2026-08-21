@@ -222,11 +222,11 @@ public sealed class Engine
     public static bool AlreadyCompressed(string codec, int totalKbps) =>
         (codec is "hevc" or "av1") && totalKbps > 0 && totalKbps < 2500;
 
-    /// <summary>Extrae un fotograma como miniatura JPG. Devuelve true si lo consiguió.</summary>
     /// <summary>
     /// Un fotograma del segundo pedido. <paramref name="ancho"/> por defecto es el del
     /// globo de la barra; el visor de fotogramas lo pide grande porque llena la ventana.
     /// </summary>
+    /// <returns>true si lo consiguió.</returns>
     public static async Task<bool> MakeThumbnailAsync(string video, string destJpg, int atSec, int ancho = 480)
     {
         var (code, _, _) = await RunAsync(Ffmpeg, new[]
