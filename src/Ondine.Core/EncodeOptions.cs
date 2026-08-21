@@ -50,6 +50,12 @@ public sealed class EncodeOptions
     /// </summary>
     public Audio.AudioElegido AudioCodec { get; set; } = Audio.AudioElegido.Copiar;
 
+    /// <summary>
+    /// Que hacer con los canales. Por defecto sin tocar, que es lo que la app venia
+    /// haciendo. Bajar a estereo IMPIDE copiar la pista: mezclar es rehacer los bytes.
+    /// </summary>
+    public Audio.Mezcla AudioMezcla { get; set; } = Audio.Mezcla.SinTocar;
+
     public bool Force { get; set; }
     public bool DryRun { get; set; }
     public RenameRule? NameRule { get; set; }   // renombrado del archivo de salida (estilo PowerRename)

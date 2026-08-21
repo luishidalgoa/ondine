@@ -43,7 +43,8 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ Copiar original o recodificar a AAC (por bitrate).
 - ✅ **Códecs de audio** elegibles: sin tocar / AAC / AC3 / E-AC3 / Opus / FLAC. Lo que no cabe
   en el contenedor se cambia y **se dice**, nunca en silencio.
-- 🔜 **Mezcla** (downmix a estéreo, mantener 5.1) y bitrate/samplerate por pista.
+- ✅ **Mezcla**: bajar a estéreo o dejar los canales como vengan. El bitrate sigue a los canales
+  con los que queda la pista, y mezclar fuerza recodificar porque no se puede copiar y mezclar.
 - ⬜ Ganancia y compresión de rango dinámico (DRC).
 - ⬜ Subtítulos: **quemar (burn-in)**, marcar *forced*, importar `.srt` externos.
 

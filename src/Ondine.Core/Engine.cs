@@ -680,15 +680,31 @@ public sealed class Engine
                         && !LossyAudio.Contains(audio[i].CodecName))
                         elegido = Audio.AudioElegido.Aac;
 
+                    // La mezcla se decide ANTES que el codec: bajar a estereo impide
+                    // copiar, y ffmpeg no avisa de eso — copiaria y se saltaria la mezcla
+                    // en silencio, dejando el 5.1 intacto pese a que la app decia estereo.
+                    var m = Audio.MezclaDeAudio.Decidir(opt.AudioMezcla, audio[i].Channels ?? 2);
+                    if (!Audio.MezclaDeAudio.SePuedeCopiar(m) && elegido == Audio.AudioElegido.Copiar)
+                        elegido = Audio.AudioElegido.Aac;
+
                     var d = Audio.CodecDeAudio.Decidir(opt.Container, elegido, audio[i].CodecName ?? "");
 
                     // Se avisa UNA vez por fichero, no por pista: con seis idiomas dentro,
                     // seis lineas iguales en el registro tapan todo lo demas.
                     if (i == 0 && d.Porque != Audio.PorQueSeCambio.SeHizoLoPedido)
                         rep.Log(string.Format(t.MotorAudioCambiado, d.Pedido, d.Codec, opt.Container));
+                    if (i == 0 && m.HayQueMezclar)
+                        rep.Log(string.Format(t.MotorAudioMezclado, audio[i].Channels ?? 2));
 
-                    var br = opt.AudioBitrate > 0 ? opt.AudioBitrate : (webm ? 160 : 192);
+                    // El bitrate sigue a los canales de DESPUES de la mezcla: mantener el
+                    // del 5.1 al bajar a estereo desperdicia media pista, y al reves suena
+                    // mal. Un bitrate puesto a mano manda sobre todo esto.
+                    var br = opt.AudioBitrate > 0
+                        ? opt.AudioBitrate
+                        : (webm ? 160 : Audio.MezclaDeAudio.BitratePorDefecto(m.CanalesFinales));
+
                     a.AddRange(Audio.CodecDeAudio.Argumentos(i, d, br));
+                    a.AddRange(Audio.MezclaDeAudio.Argumentos(i, m));
                 }
                 if (withSubs && keptSubs.Count > 0) a.AddRange(new[] { "-c:s", mp4 ? "mov_text" : "copy" });
                 a.AddRange(new[] { "-disposition:a:0", "default" });
