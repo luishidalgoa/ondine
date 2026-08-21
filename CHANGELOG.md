@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-08-21
+
 ### Añadido
 
 - **Cola de trabajos: ya puedes comprimir varias cosas con ajustes distintos sin esperar.** Hasta
