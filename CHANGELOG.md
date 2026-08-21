@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-08-21
+
 ### Añadido
 
 - **Organizar reconoce muchas más carpetas de temporada.** Antes el nombre tenía que ser *solo* la
