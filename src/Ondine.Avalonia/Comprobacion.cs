@@ -1,3 +1,4 @@
+using Visual = Avalonia.Visual;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Controls;
@@ -135,6 +136,65 @@ public static class Comprobacion
         var combo = v.GetVisualDescendants().OfType<ComboBox>().FirstOrDefault();
         Dice(combo is not null && combo.CornerRadius.TopLeft == 6,
             $"el desplegable lleva los valores de Ondine ({combo?.CornerRadius})");
+    }
+
+    /// <summary>
+    /// «Generar el catalogo con una IA»: los idiomas del encargo.
+    ///
+    /// <para>
+    /// Lo que se vigila es <b>el boton que vive dentro de una plantilla</b>. En WPF llevaba
+    /// el codigo duplicado en un Tag; aqui sale del DataContext de la fila. Si eso no
+    /// llegara, pulsar no haria nada — y «no hace nada» es justo lo que no se distingue de
+    /// «lo he pulsado mal».
+    /// </para>
+    /// </summary>
+    public static async Task CorrerEncargo(Window dueno)
+    {
+        var v = new Encargo("Doraemon");
+        v.Show(dueno);
+        await Task.Delay(350);
+
+        var chips = v.GetVisualDescendants().OfType<ItemsControl>()
+                     .FirstOrDefault(c => c.Name == "listaSeleccionados");
+        int Chips() => (chips?.ItemsSource as System.Collections.IEnumerable)?.Cast<object>().Count() ?? -1;
+
+        var prompt = v.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(t => t.Name == "txtPrompt");
+        var aviso = v.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "lblAviso");
+
+        Dice(Chips() == 2, $"arranca con los dos idiomas de casa ({Chips()})");
+        Dice(prompt?.Text?.Contains("Doraemon") == true, "y el encargo ya lleva el nombre de la serie");
+
+        // Abrir el emergente. El boton no lo abre por codigo: lo abre el enlace de dos
+        // sentidos entre su IsChecked y el IsOpen del emergente, asi que marcarlo tambien
+        // comprueba ese enlace — que si se rompe deja un boton que no hace nada.
+        var mas = v.GetVisualDescendants().OfType<ToggleButton>()
+                   .FirstOrDefault(b => b.Name == "btnAnadirIdioma");
+        var pop = v.FindControl<Popup>("popIdiomas");
+        mas!.IsChecked = true;
+        await Task.Delay(300);
+
+        Dice(pop?.IsOpen == true, "marcar el «+» abre el emergente: el enlace de dos sentidos esta puesto");
+
+        // Y aqui una diferencia de Avalonia que cuesta una tarde: el contenido de un Popup
+        // NO cuelga de la ventana, vive en su propio arbol visual. Buscar desde la ventana
+        // no encuentra nada y parece que la lista esta vacia. Se busca desde su hijo.
+        var dentro = pop?.Child as Visual;
+        var filas = dentro is null ? [] : dentro.GetVisualDescendants().OfType<Button>()
+                     .Where(b => b.Name == "btnAlternarIdioma").ToList();
+        Dice(filas.Count > 50, $"la lista de idiomas se puebla ({filas.Count})");
+
+        // El de la primera fila que NO este ya elegido: pulsarlo tiene que anadir uno.
+        var libre = filas.FirstOrDefault(b => b.DataContext is IdiomaFila { Elegido: false });
+        var comoSeLlama = (libre?.DataContext as IdiomaFila)?.Nombre ?? "";
+        libre?.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        await Task.Delay(200);
+
+        Dice(Chips() == 3,
+            $"pulsar una fila anade el idioma ({comoSeLlama} → {Chips()} insignias)");
+        Dice(aviso?.Text?.Contains("3") == true,
+            $"y el aviso lleva la cuenta nueva ({aviso?.Text})");
+
+        v.Close();
     }
 
     /// <summary>

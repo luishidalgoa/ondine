@@ -1,0 +1,174 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Encargo"
+        Title="{i:T PromptTitulo}"
+        Width="760" Height="640" MinWidth="620" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!--
+    «Generar el catalogo con una IA», portado de PromptWindow.xaml.
+
+    La redaccion del encargo vive en CatalogPrompt, que es codigo puro y con pruebas: aqui
+    solo se recogen datos y se copia el resultado.
+
+    Dos cosas que cambian y no son cosmeticas:
+
+    - Los botones de dentro de las plantillas. En WPF llevaban Click="OnAlternarIdioma" y
+      Tag="{Binding Codigo}", y el manejador leia el Tag del remitente. Aqui el Click se
+      cablea igual, pero el codigo se saca del DataContext de la fila: es lo que Avalonia
+      pone ahi, y no hay que duplicar el dato en un Tag para volver a leerlo.
+    - El emergente. En WPF se ataba con IsOpen enlazado en dos sentidos al IsChecked del
+      boton. Aqui va igual, pero el foco del buscador NO se puede pedir durante Opened -el
+      emergente todavia no puede recibirlo-, asi que se aplaza con el Dispatcher. Es la
+      misma trampa que en WPF, con otro nombre.
+  -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+
+      <Grid Grid.Row="0" Height="38">
+        <TextBlock Text="{i:T PromptTitulo}" FontSize="13.5" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <Button Name="btnCerrar" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" Margin="0,0,6,0" Content="✕"/>
+      </Grid>
+
+      <TextBlock Grid.Row="1" Margin="16,0,16,14" TextWrapping="Wrap" FontSize="12.5"
+                 LineHeight="19" Foreground="{StaticResource Neutral400}"
+                 Text="{i:T PromptExplicacion}"/>
+
+      <Grid Grid.Row="2" Margin="16,0,16,12"
+            ColumnDefinitions="*,12,*" RowDefinitions="Auto,Auto">
+
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
+          <TextBlock Text="{i:T PromptSerie}" Theme="{StaticResource OrgLabel}"/>
+          <TextBox Name="txtSerie"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
+          <TextBlock Text="{i:T PromptIdiomaSalida}" Theme="{StaticResource OrgLabel}"/>
+          <ComboBox Name="cboSalida" Height="32" MaxDropDownHeight="260"
+                    ToolTip.Tip="{i:T PromptIdiomaSalidaAyuda}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate><TextBlock Text="{Binding Nombre}"/></DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="0">
+          <TextBlock Text="{i:T PromptFuente}" Theme="{StaticResource OrgLabel}"/>
+          <TextBox Name="txtFuente" ToolTip.Tip="{i:T PromptFuenteAyuda}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="2">
+          <!-- El rotulo viejo decia «Idiomas para reconocer los ficheros», que se leia como
+               si fuera el idioma del programa. Es el idioma DEL TITULO QUE YA TIENEN. -->
+          <TextBlock Text="{i:T PromptIdiomasFicheros}" Theme="{StaticResource OrgLabel}"
+                     TextTrimming="CharacterEllipsis"
+                     ToolTip.Tip="{i:T PromptIdiomasFicherosAyuda}"/>
+
+          <!-- Los elegidos a la vista y la lista en un emergente. Tenerla siempre abierta
+               se comia media ventana y acababa pisando la vista previa: son 183 idiomas, y
+               lo normal es tocar esto una vez y olvidarse. -->
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                  BorderThickness="1" CornerRadius="8" Padding="8,6" MinHeight="46">
+            <Grid ColumnDefinitions="*,Auto">
+
+              <ItemsControl Name="listaSeleccionados" VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Background="{StaticResource Accent900}"
+                            BorderBrush="{StaticResource Accent700}"
+                            BorderThickness="1" CornerRadius="6" Padding="7,2" Margin="0,2,5,2">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Nombre}" FontSize="11.5"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource Accent200}"/>
+                        <Button Name="btnQuitarIdioma" Theme="{StaticResource BtnGhostMuted}" Click="OnQuitarIdioma"
+                                Content="&#x2715;" FontSize="9" Padding="4,1" Margin="5,0,-4,0"
+                                ToolTip.Tip="{i:T PromptQuitarIdioma}"/>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <!-- El «+» es decoracion y se queda aqui; lo que se traduce es el verbo. -->
+              <ToggleButton Name="btnAnadirIdioma" Grid.Column="1"
+                            Theme="{StaticResource FiltroChip}"
+                            VerticalAlignment="Center" Margin="6,0,0,0" Padding="9,3"
+                            FontSize="11.5" ToolTip.Tip="{i:T PromptAnadirIdiomaAyuda}">
+                <TextBlock><Run Text="+ "/><Run Text="{i:T PromptAnadirIdioma}"/></TextBlock>
+              </ToggleButton>
+
+              <Popup Name="popIdiomas" PlacementTarget="{Binding #btnAnadirIdioma}"
+                     Placement="Bottom" HorizontalOffset="-232"
+                     IsOpen="{Binding #btnAnadirIdioma.IsChecked, Mode=TwoWay}">
+                <Border Background="{StaticResource Surface}"
+                        BorderBrush="{StaticResource Neutral800}"
+                        BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,4,12,12"
+                        Width="320">
+                  <StackPanel>
+                    <TextBox Name="txtBuscarIdioma" Margin="0,0,0,6"
+                             ToolTip.Tip="{i:T PromptBuscarIdiomaAyuda}"/>
+                    <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                      <ItemsControl Name="listaResultados">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Button Name="btnAlternarIdioma" Click="OnAlternarIdioma"
+                                    Theme="{StaticResource BtnGhostMuted}"
+                                    HorizontalContentAlignment="Stretch" Padding="8,4"
+                                    HorizontalAlignment="Stretch">
+                              <Grid ColumnDefinitions="16,*,Auto">
+                                <TextBlock Text="{Binding Marca}" FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource Accent}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Nombre}" FontSize="12"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Codigo}" FontSize="11"
+                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                           FontFamily="{StaticResource FontMono}"
+                                           Foreground="{StaticResource Neutral500}"/>
+                              </Grid>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                    <TextBlock Name="lblSinResultados" FontSize="11.5" Margin="4,4,0,2"
+                               Foreground="{StaticResource Neutral500}" IsVisible="False"
+                               Text="{i:T PromptSinIdiomas}"/>
+                  </StackPanel>
+                </Border>
+              </Popup>
+            </Grid>
+          </Border>
+        </StackPanel>
+      </Grid>
+
+      <Border Grid.Row="3" Margin="16,0,16,12" Background="{StaticResource Field}" CornerRadius="8">
+        <TextBox Name="txtPrompt" IsReadOnly="True" Background="Transparent" BorderThickness="0"
+                 Foreground="{StaticResource Neutral300}" FontFamily="{StaticResource FontMono}"
+                 FontSize="11" Padding="12,10" AcceptsReturn="True" TextWrapping="Wrap"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+      </Border>
+
+      <Grid Grid.Row="4" Margin="16,0,16,14" ColumnDefinitions="*,Auto">
+        <TextBlock Name="lblAviso" VerticalAlignment="Center" FontSize="12"
+                   Foreground="{StaticResource Neutral500}" TextTrimming="CharacterEllipsis"/>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+          <Button Name="btnAbrirFuente" Theme="{StaticResource BtnSecondary}"
+                  Content="{i:T PromptAbrirFuente}" ToolTip.Tip="{i:T PromptAbrirFuenteAyuda}"/>
+          <Button Name="btnCopiar" Theme="{StaticResource BtnPrimary}" Content="{i:T PromptCopiar}"/>
+        </StackPanel>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
