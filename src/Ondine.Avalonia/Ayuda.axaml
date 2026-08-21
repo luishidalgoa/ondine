@@ -1,0 +1,256 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Ayuda"
+        Title="{i:T AyudaTitulo}"
+        Width="900" Height="680" MinWidth="720" MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!--
+    La Ayuda, portada de AyudaWindow.xaml.
+
+    Es la pantalla con MENOS logica del puerto -no tiene ninguna: solo explica- y aun asi
+    es la que mas cuidado pide, porque su contenido es el contrato con el usuario. Si aqui
+    se cae un parrafo al traducir el XAML, nadie lo nota: la pantalla sigue abriendo.
+    De eso se encarga la comprobacion, que cuenta los parrafos de las dos versiones.
+
+    Los cuatro estilos locales -el indice, H2, H3, P y el chip- pasan a ControlTheme. El
+    del indice necesita ademas selectores: sus dos Triggers -raton y elegido- no existen.
+  -->
+  <Window.Resources>
+    <ControlTheme x:Key="NavItem" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{StaticResource Neutral400}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Padding" Value="12,9"/>
+      <Setter Property="Margin" Value="0,1"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="b" Background="Transparent" CornerRadius="7"
+                  Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              VerticalAlignment="Center"/>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:pointerover /template/ Border#b">
+        <Setter Property="Background" Value="#14E9E9ED"/>
+      </Style>
+      <!-- El elegido va DESPUES del raton: si no, pasar el raton por encima de otra
+           entrada borraria de la vista en cual estas. -->
+      <Style Selector="^:checked /template/ Border#b">
+        <Setter Property="Background" Value="{StaticResource Surface}"/>
+      </Style>
+      <Style Selector="^:checked">
+        <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="H2" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="17"/><Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="Foreground" Value="{StaticResource Text}"/><Setter Property="Margin" Value="0,0,0,10"/>
+    </ControlTheme>
+    <ControlTheme x:Key="H3" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="Foreground" Value="{StaticResource Neutral300}"/><Setter Property="Margin" Value="0,18,0,8"/>
+    </ControlTheme>
+    <ControlTheme x:Key="P" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12.5"/><Setter Property="LineHeight" Value="20"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Foreground" Value="{StaticResource Neutral400}"/><Setter Property="Margin" Value="0,0,0,8"/>
+    </ControlTheme>
+    <ControlTheme x:Key="Chip" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+      <Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="11,7"/>
+    </ControlTheme>
+  </Window.Resources>
+
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}" BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="38,*">
+
+      <!-- ═ barra de título ═ -->
+      <Grid Grid.Row="0">
+        <!-- La marca, igual que en la ventana principal: mismo dibujo, sin contenedor. -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+          <Viewbox Width="18" Height="18" VerticalAlignment="Center">
+            <Canvas Width="64" Height="64">
+              <Canvas.Styles>
+                <Style Selector="Path">
+                  <Setter Property="Stroke" Value="#B5ABFC"/>
+                  <Setter Property="StrokeThickness" Value="6"/>
+                  <!-- WPF distingue el remate del principio y el del final de la linea;
+                       Avalonia tiene uno solo, StrokeLineCap, y el de la union se llama
+                       StrokeJoin. Es la marca de la app, asi que vale la pena dejarlo
+                       apuntado: aparece igual en la ventana principal. -->
+                  <Setter Property="StrokeLineCap" Value="Round"/>
+                  <Setter Property="StrokeJoin" Value="Round"/>
+                </Style>
+              </Canvas.Styles>
+              <Path Data="M7,17 C15.5,9 26.5,25 35,17 C43.5,9 48.5,25 57,17"/>
+              <Path Data="M7,32 C16,28 26,36 35,32 C44,28 48,36 57,32"/>
+              <Path Data="M7,47 L57,47"/>
+            </Canvas>
+          </Viewbox>
+          <TextBlock Text="{i:T AyudaTitulo}" FontSize="13.5" FontWeight="Medium" VerticalAlignment="Center" Margin="9,0,0,0"/>
+        </StackPanel>
+        <Button Name="btnCerrar" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" Margin="0,0,6,0" Content="✕"/>
+      </Grid>
+
+      <Grid Grid.Row="1" ColumnDefinitions="212,*">
+
+        <!-- ═ índice lateral ═ -->
+        <Border Grid.Column="0" Background="#151725" BorderBrush="{StaticResource Divider}" BorderThickness="0,0,1,0">
+          <StackPanel Margin="10,14">
+            <TextBlock Text="{i:T AyudaNavCabecera}" FontSize="11" Foreground="{StaticResource Neutral600}" Margin="12,0,0,8"/>
+            <RadioButton Name="navOrgComo" Theme="{StaticResource NavItem}" GroupName="pag" IsChecked="True" Content="{i:T AyudaNavOrgComo}"/>
+            <RadioButton Name="navOrgPasos" Theme="{StaticResource NavItem}" GroupName="pag" Content="{i:T AyudaNavOrgPasos}"/>
+            <RadioButton Name="navComprimir" Theme="{StaticResource NavItem}" GroupName="pag" Content="{i:T AyudaNavComprimir}"/>
+            <RadioButton Name="navRecortes" Theme="{StaticResource NavItem}" GroupName="pag" Content="{i:T AyudaNavRecortes}"/>
+          </StackPanel>
+        </Border>
+
+        <!-- ═ contenido ═ -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="26,22,26,26">
+          <Grid>
+
+            <!-- ── Organizar · cómo funciona ── -->
+            <StackPanel Name="pagOrgComo">
+              <TextBlock Theme="{StaticResource H2}" Text="{i:T AyudaOrgComoTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgComoIntro}"/>
+
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaOrgComoLeeTitulo}"/>
+              <WrapPanel>
+                <Border Theme="{StaticResource Chip}" Margin="0,0,8,8">
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipNombre}" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="{i:T AyudaOrgComoChipNombreSub}" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
+                </Border>
+                <Border Theme="{StaticResource Chip}" Margin="0,0,8,8">
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipCarpeta}" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="{i:T AyudaOrgComoChipCarpetaSub}" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
+                </Border>
+                <Border Theme="{StaticResource Chip}" Margin="0,0,8,8">
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipMetadato}" FontSize="13" Foreground="{StaticResource Text}"/><TextBlock Text="{i:T AyudaOrgComoChipMetadatoSub}" FontSize="11" Foreground="{StaticResource Neutral600}"/></StackPanel>
+                </Border>
+                <Border Theme="{StaticResource Chip}" Margin="0,0,8,8" Background="{StaticResource Accent900}" BorderBrush="{StaticResource Accent700}">
+                  <StackPanel><TextBlock Text="{i:T AyudaOrgComoChipCatalogo}" FontSize="13" Foreground="{StaticResource Accent200}"/><TextBlock Text="{i:T AyudaOrgComoChipCatalogoSub}" FontSize="11" Foreground="{StaticResource Accent300}"/></StackPanel>
+                </Border>
+              </WrapPanel>
+              <TextBlock Theme="{StaticResource P}" Margin="0,4,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}"
+                         Text="{i:T AyudaOrgComoNotaMetadato}"/>
+
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaOrgComoReglasTitulo}"/>
+              <StackPanel>
+                <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgOkBg}" BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1">
+                  <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="0" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla0Etiqueta}" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla0}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                </Border>
+                <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgOkBg}" BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1">
+                  <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="1" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaSeguro}" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla1}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                </Border>
+                <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgOkBg}" BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1">
+                  <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="2" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaSeguro}" FontSize="12" Foreground="{StaticResource OrgOk}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla2}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                </Border>
+                <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgWarnBg}" BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
+                  <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="3" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaRevisar}" FontSize="12" Foreground="{StaticResource OrgWarn}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla3}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                </Border>
+                <Border CornerRadius="8" Padding="12,9" Margin="0,0,0,7" Background="{StaticResource OrgWarnBg}" BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1">
+                  <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="4" FontSize="12" Foreground="{StaticResource Neutral400}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaRevisar}" FontSize="12" Foreground="{StaticResource OrgWarn}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoRegla4}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                </Border>
+                <Border CornerRadius="8" Padding="12,9" Background="{StaticResource OrgDangerBg}" BorderBrush="{StaticResource OrgDangerBorder}" BorderThickness="1">
+                  <DockPanel><Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource Surface}" DockPanel.Dock="Left" Margin="0,0,12,0"><TextBlock Text="◆" FontSize="11" Foreground="{StaticResource OrgDanger}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <TextBlock Text="{i:T AyudaOrgComoEtiquetaConflicto}" FontSize="12" Foreground="{StaticResource OrgDanger}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i:T AyudaOrgComoConflicto}" FontSize="13.5" Foreground="{StaticResource Text}" VerticalAlignment="Center"/></DockPanel>
+                </Border>
+              </StackPanel>
+              <TextBlock Theme="{StaticResource P}" Margin="0,10,0,0" FontSize="11.5">
+                <Run Foreground="{StaticResource OrgOk}" Text="●"/><Run Foreground="{StaticResource Neutral500}" Text="{i:T AyudaOrgComoLeyendaVerde}"/>
+                <Run Foreground="{StaticResource OrgWarn}" Text="●"/><Run Foreground="{StaticResource Neutral500}" Text="{i:T AyudaOrgComoLeyendaAmbar}"/>
+                <Run Foreground="{StaticResource OrgDanger}" Text="●"/><Run Foreground="{StaticResource Neutral500}" Text="{i:T AyudaOrgComoLeyendaRojo}"/>
+              </TextBlock>
+
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaOrgComoRequisitosTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgComoRequisito1}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgComoRequisito2}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgComoRequisito3}"/>
+            </StackPanel>
+
+            <!-- ── Organizar · paso a paso ── -->
+            <StackPanel Name="pagOrgPasos" IsVisible="False">
+              <TextBlock Theme="{StaticResource H2}" Text="{i:T AyudaOrgPasosTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgPaso1}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgPaso2}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosVinculadas}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgPaso3}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgPaso4}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosCorregirFila}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosFueraCatalogo}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosHistoriasMezcladas}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaOrgPaso5}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosQueFalta}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosRepetido}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosSegmentos}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosReordenar}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosTipo}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaOrgPasosOrdenar}"/>
+            </StackPanel>
+
+            <!-- ── Comprimir ── -->
+            <StackPanel Name="pagComprimir" IsVisible="False">
+              <TextBlock Theme="{StaticResource H2}" Text="{i:T AyudaComprimirTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirPaso1}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirPaso2}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirPaso3}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirPaso4}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirPaso5}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirPapelera}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirQuitarPistas}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirDiscoLleno}"/>
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaComprimirCanalesTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirCanales}"/>
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaComprimirAudioTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirAudio}"/>
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaComprimirEsmeroTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirEsmero}"/>
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaComprimirObjetivoTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirObjetivo}"/>
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaComprimirColaTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirCola}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaComprimirColaOrden}"/>
+            </StackPanel>
+
+            <!-- ── Recortes ── -->
+            <StackPanel Name="pagRecortes" IsVisible="False">
+              <TextBlock Theme="{StaticResource H2}" Text="{i:T AyudaRecortesTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaRecortesPaso1}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaRecortesPaso2}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaRecortesPaso3}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaRecortesPaso4}"/>
+              <TextBlock Theme="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaRecortesPapelera}"/>
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaRecortesSinRecodificarTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaRecortesSinRecodificar}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaRecortesSinRecodificarTrato}"/>
+              <TextBlock Theme="{StaticResource H3}" Text="{i:T AyudaRecortesConOrganizarTitulo}"/>
+              <TextBlock Theme="{StaticResource P}" Text="{i:T AyudaRecortesConOrganizar}"/>
+            </StackPanel>
+
+          </Grid>
+        </ScrollViewer>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
