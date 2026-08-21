@@ -322,17 +322,6 @@ public partial class RecortesView : UserControl
         }
     }
 
-    /// <summary>
-    /// Ya se sabe cuánto dura: la pista puede dibujarse y pedir sus fotogramas. La duración
-    /// llega por dos caminos —el reproductor al abrir y el sondeo— y además el reproductor
-    /// se recarga al acabar una exportación, así que esto se ejecuta varias veces sobre el
-    /// mismo vídeo. Los tramos solo se rehacen si de verdad es otro material; si no, volver
-    /// de exportar borraría los cortes que el usuario acaba de hacer.
-    /// </summary>
-    /// <summary>
-    /// La pista mide el ancho del visor por el aumento. A 1× cabe entera; a 8× hay que
-    /// desplazarse, y cada segundo ocupa ocho veces más — que es de lo que se trata.
-    /// </summary>
     private bool _ajustandoAncho;
 
     // ── deshacer / rehacer ──
@@ -343,6 +332,10 @@ public partial class RecortesView : UserControl
     private readonly Stack<List<Tramo>> _adelante = new();
     private bool _pausadaExp;
 
+    /// <summary>
+    /// La pista mide el ancho del visor por el aumento. A 1× cabe entera; a 8× hay que
+    /// desplazarse, y cada segundo ocupa ocho veces más — que es de lo que se trata.
+    /// </summary>
     private void AjustarAnchoPista()
     {
         // Pestillo: cambiar el ancho fuerza un relayout, ese relayout puede mover el
@@ -392,6 +385,13 @@ public partial class RecortesView : UserControl
         lblZoom.Text = _zoom <= 1.01 ? "" : $"×{_zoom:0.#}";
     }
 
+    /// <summary>
+    /// Ya se sabe cuánto dura: la pista puede dibujarse y pedir sus fotogramas. La duración
+    /// llega por dos caminos —el reproductor al abrir y el sondeo— y además el reproductor
+    /// se recarga al acabar una exportación, así que esto se ejecuta varias veces sobre el
+    /// mismo vídeo. Los tramos solo se rehacen si de verdad es otro material; si no, volver
+    /// de exportar borraría los cortes que el usuario acaba de hacer.
+    /// </summary>
     private void Duracion(double segundos)
     {
         if (segundos <= 0) return;
@@ -426,11 +426,11 @@ public partial class RecortesView : UserControl
         if (d.ShowDialog() == true) Cargar(d.FileName);
     }
 
-    /// <summary>Carga un vídeo. Público porque Organizar abre aquí el fichero de una fila.</summary>
     /// <summary>
     /// Carga un vídeo. Con <paramref name="partirPorLaMitad"/> llega ya con una junta puesta
     /// en el centro: es el caso de «este fichero trae dos episodios», donde lo único que
     /// falta es arrastrarla al sitio exacto.
+    /// <para>Público porque Organizar abre aquí el fichero de una fila.</para>
     /// </summary>
     public async void Cargar(string ruta, bool partirPorLaMitad = false)
     {
@@ -567,11 +567,6 @@ public partial class RecortesView : UserControl
     private double XDe(double segundo) =>
         _duracion <= 0 ? 0 : segundo / _duracion * pista.ActualWidth;
 
-    /// <summary>
-    /// De una x de la PISTA a una x de lo que se ve. Con la pista ampliada las dos dejan de
-    /// coincidir, y el globo y el botón de cortar viven fuera del visor: sin restar el
-    /// desplazamiento saldrían corridos justo cuando más precisión hace falta.
-    /// </summary>
     /// <summary>Cuántos tramos hay preparados. Solo para las pruebas.</summary>
     internal int NumTramos => _tramos.Count;
 
@@ -581,6 +576,11 @@ public partial class RecortesView : UserControl
     /// <summary>Enciende la capa de «exportando» sin exportar. Solo para las pruebas.</summary>
     internal void MostrarCapaExportando(bool si) => PintarExportando(si);
 
+    /// <summary>
+    /// De una x de la PISTA a una x de lo que se ve. Con la pista ampliada las dos dejan de
+    /// coincidir, y el globo y el botón de cortar viven fuera del visor: sin restar el
+    /// desplazamiento saldrían corridos justo cuando más precisión hace falta.
+    /// </summary>
     private double XVisible(double xPista) => xPista - visorPista.HorizontalOffset;
 
     /// <summary>
@@ -1157,8 +1157,6 @@ public partial class RecortesView : UserControl
         if (SiguienteHueco() >= 0) _esperaPrevia.Start();
     }
 
-    /// <summary>Al desplazarse hay celdas nuevas a la vista: se tienden con un respiro.</summary>
-    /// <summary>Ctrl+Z: vuelve al estado anterior de los tramos.</summary>
     /// <summary>Suspende o reanuda ffmpeg donde va. Reanudar sigue, no reempieza.</summary>
     private void AlternarPausaExp()
     {
@@ -1197,7 +1195,6 @@ public partial class RecortesView : UserControl
         _cancelar?.Cancel();
     }
 
-    /// <summary>La cara de «se está exportando»: la capa sobre el vídeo y los botones.</summary>
     // ── chivato de fluidez ──
     // «La app va a tirones al exportar» es real para quien lo ve e invisible en un banco: aquí
     // no se reprodujo nunca (arrastrar sin exportar y arrastrar exportando dan lo MISMO). Así
@@ -1327,6 +1324,7 @@ public partial class RecortesView : UserControl
         return t;
     }
 
+    /// <summary>La cara de «se está exportando»: la capa sobre el vídeo y los botones.</summary>
     private void PintarExportando(bool si)
     {
         capaExportando.Visibility = si ? Visibility.Visible : Visibility.Collapsed;
@@ -1336,6 +1334,7 @@ public partial class RecortesView : UserControl
         VigilarBloqueos(si);
     }
 
+    /// <summary>Ctrl+Z: vuelve al estado anterior de los tramos.</summary>
     private void Deshacer()
     {
         if (_exportando || _atras.Count == 0) return;
@@ -1353,6 +1352,7 @@ public partial class RecortesView : UserControl
         Log?.Invoke(Textos.Instancia.RecortesLogRehecho);
     }
 
+    /// <summary>Al desplazarse hay celdas nuevas a la vista: se tienden con un respiro.</summary>
     private void AlDesplazarPista()
     {
         Cabezal(video.Position.TotalSeconds);

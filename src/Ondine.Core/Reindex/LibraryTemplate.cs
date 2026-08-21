@@ -5,19 +5,19 @@ using Ondine.Localizacion;
 namespace Ondine.Reindex;
 
 /// <summary>
-/// La convención canónica de nombres de la biblioteca: «&lt;serie&gt; - S&lt;temp&gt;E&lt;num&gt; - &lt;título&gt;».
-///
-/// OJO: no es lo mismo que el «Renombrado libre» (la herramienta tipo PowerRename). Aquel
-/// transforma el nombre que ya hay con búsqueda/reemplazo; este CONSTRUYE el nombre desde
-/// el catálogo. Son dos sistemas distintos y el diseño decide no unificarlos.
-/// </summary>
-/// <summary>
 /// Una marca de la plantilla, con lo necesario para ofrecerla en la interfaz. Vive junto al
 /// código que la sustituye: separarlas garantizaría que un día la lista diga una cosa y el
 /// renderizado haga otra.
 /// </summary>
 public sealed record MarcaPlantilla(string Marca, string Nombre, string Descripcion, string Ejemplo);
 
+/// <summary>
+/// La convención canónica de nombres de la biblioteca: «&lt;serie&gt; - S&lt;temp&gt;E&lt;num&gt; - &lt;título&gt;».
+///
+/// OJO: no es lo mismo que el «Renombrado libre» (la herramienta tipo PowerRename). Aquel
+/// transforma el nombre que ya hay con búsqueda/reemplazo; este CONSTRUYE el nombre desde
+/// el catálogo. Son dos sistemas distintos y el diseño decide no unificarlos.
+/// </summary>
 public sealed class LibraryTemplate
 {
     public const string PatronPorDefecto = "<serie> - S<temp>E<num> - <título>";

@@ -225,11 +225,6 @@ public static class Program
     }
 
     /// <summary>
-    /// Construye, mide y coloca. La medida importa tanto como la construcción:
-    /// es cuando se aplican las plantillas de control y se resuelven los
-    /// recursos que solo nombra el estilo, no el elemento.
-    /// </summary>
-    /// <summary>
     /// El repaso de películas tiene la forma del de series, y el botón de
     /// identificar dice si se puede pulsar.
     ///
@@ -848,6 +843,11 @@ public static class Program
         return null;
     }
 
+    /// <summary>
+    /// Construye, mide y coloca. La medida importa tanto como la construcción:
+    /// es cuando se aplican las plantillas de control y se resuelven los
+    /// recursos que solo nombra el estilo, no el elemento.
+    /// </summary>
     private static void Probar(string nombre, Func<FrameworkElement> hacer)
     {
         try

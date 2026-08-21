@@ -5,11 +5,6 @@ using Ondine.Reindex;
 
 namespace Ondine;
 
-/// <summary>
-/// Arma el encargo para que una IA convierta un anexo de episodios en un catálogo.
-/// La redacción vive en <see cref="CatalogPrompt"/>, que es código puro y con tests;
-/// aquí solo se recogen los datos y se copia el resultado.
-/// </summary>
 /// <summary>Un idioma tal y como se pinta en la lista de resultados.</summary>
 public sealed class IdiomaFila
 {
@@ -20,6 +15,11 @@ public sealed class IdiomaFila
     public string Marca => Elegido ? "✓" : "";
 }
 
+/// <summary>
+/// Arma el encargo para que una IA convierta un anexo de episodios en un catálogo.
+/// La redacción vive en <see cref="CatalogPrompt"/>, que es código puro y con tests;
+/// aquí solo se recogen los datos y se copia el resultado.
+/// </summary>
 public partial class PromptWindow : Window
 {
     /// <summary>Códigos elegidos, en el orden en que se fueron marcando.</summary>
