@@ -95,6 +95,8 @@ public static class Program
         Ondine.Reindex.Tests.ModeloConectadoTests.Todas();
         Ondine.Reindex.Tests.PuenteDelModeloTests.Todas();
         Ondine.Reindex.Tests.CausaDeConflictoTests.Todas();
+        Ondine.Reindex.Tests.ResumenDelLoteTests.Todas();
+        Ondine.Reindex.Tests.BusquedaDeFilasTests.Todas();
         Ondine.Reindex.Tests.DejarComoEstaLoteTests.Todas();
         Ondine.Reindex.Tests.VaraPorTemporadaTests.Todas();
         Ondine.Reindex.Tests.RelojYOmitirTests.Todas();
