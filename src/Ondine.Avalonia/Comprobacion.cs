@@ -136,6 +136,73 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// «Que falta», abierta con un catalogo de verdad.
+    ///
+    /// <para>
+    /// Lo que se comprueba es que la ventana <b>pinte lo que dice el motor</b>, no que se
+    /// vea. El catalogo de la prueba tiene 3 episodios y solo uno resuelto, asi que tienen
+    /// que salir 2 huecos: si saliera otra cifra, la pantalla estaria contando por su
+    /// cuenta en vez de preguntarle a CoberturaCatalogo — que es justo lo que la Fase 1
+    /// vino a evitar.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerFaltantes(Window dueno)
+    {
+        var catalogo = Ondine.Reindex.ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0",
+          "serie": "Serie de prueba",
+          "episodios": [
+            { "num": 1, "temporada": 1, "titulos": { "es": ["Uno"] } },
+            { "num": 2, "temporada": 1, "titulos": { "es": ["Dos"] } },
+            { "num": 3, "temporada": 1, "titulos": { "es": ["Tres"] } }
+          ]
+        }
+        """);
+
+        var v = new Faltantes(catalogo, []);
+        v.Show(dueno);
+        await Task.Delay(300);
+
+        var lista = v.GetVisualDescendants().OfType<ListBox>().FirstOrDefault();
+        int Huecos() => (lista?.ItemsSource as System.Collections.IEnumerable)?.Cast<object>().Count() ?? -1;
+
+        // Sin una sola resolucion no hay ninguna temporada EMPEZADA, y de serie solo se
+        // miran las empezadas: lo normal es tener media biblioteca y querer saber que falta
+        // de lo que ya tienes, no que te listen entera una serie que no has tocado.
+        Dice(Huecos() == 0,
+            $"de serie solo mira lo empezado, y aqui no hay nada empezado: {Huecos()} huecos");
+
+        var chk0 = v.GetVisualDescendants().OfType<CheckBox>().FirstOrDefault();
+        chk0!.IsChecked = true;
+        await Task.Delay(150);
+
+        Dice(Huecos() == 3,
+            $"y al pedir el catalogo entero salen los 3 que dice el motor ({Huecos()})");
+
+        var titulo = v.GetVisualDescendants().OfType<TextBlock>()
+                      .FirstOrDefault(t => t.Name == "lblTitulo");
+        Dice(titulo?.Text?.Contains("Serie de prueba") == true,
+            $"y el titulo lleva el nombre de la serie ({titulo?.Text})");
+
+        // La casilla se apaga al elegir una temporada concreta: ya estas mirando una, este
+        // empezada o no, asi que «incluir las que no he empezado» no pinta nada.
+        var cbo = v.GetVisualDescendants().OfType<ComboBox>().FirstOrDefault();
+        var chk = v.GetVisualDescendants().OfType<CheckBox>().FirstOrDefault();
+        Dice(chk?.IsEnabled == true, "con «todas» la casilla esta disponible");
+
+        if (cbo is not null && cbo.ItemCount > 1)
+        {
+            cbo.SelectedIndex = 1;
+            await Task.Delay(150);
+            Dice(chk?.IsEnabled == false,
+                "y al elegir una temporada concreta se apaga, porque ya no decide nada");
+        }
+
+        v.Close();
+    }
+
+    /// <summary>
     /// El dialogo, abierto de verdad y contestado desde el codigo.
     ///
     /// <para>

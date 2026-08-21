@@ -1,0 +1,86 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Faltantes"
+        Title="{i:T FaltantesTitulo}"
+        Width="720" Height="600" MinWidth="480" MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!--
+    «Que falta», portado de FaltantesWindow.xaml.
+
+    Se porta entera y facil porque LA LOGICA NO ESTA AQUI: quien decide que falta es
+    CoberturaCatalogo, que vive en el motor. Esta ventana solo pregunta y pinta. Es la
+    prueba de que la Fase 1 -bajar reglas al motor- se paga sola al portar.
+  -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+      <Grid Grid.Row="0" Height="38">
+        <TextBlock Name="lblTitulo" FontSize="13.5" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <Button Name="btnCerrar" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" Margin="0,0,6,0" Content="✕"/>
+      </Grid>
+
+      <StackPanel Grid.Row="1" Margin="16,4,16,10">
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Spacing="8">
+          <TextBlock Name="lblTemporada" FontSize="12" VerticalAlignment="Center"
+                     Foreground="{StaticResource Neutral400}"/>
+          <ComboBox Name="cboTemporada" MinWidth="150"/>
+        </StackPanel>
+        <TextBlock Name="lblResumen" FontSize="13" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
+        <TextBlock Name="lblEspeciales" FontSize="11.5" Margin="0,3,0,0"
+                   Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>
+        <CheckBox Name="chkTodas" Margin="0,8,0,0"
+                  Content="{i:T FaltantesIncluirNoEmpezadas}"/>
+      </StackPanel>
+
+      <!-- El resaltado al pasar por encima era un Trigger sobre IsMouseOver dentro del
+           ItemContainerStyle; aqui es un selector sobre el contenedor. -->
+      <ListBox Name="lista" Grid.Row="2" Background="Transparent" BorderThickness="0"
+               Margin="8,0,8,0">
+        <ListBox.Styles>
+          <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="Transparent"/>
+          </Style>
+          <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+          </Style>
+        </ListBox.Styles>
+
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="120,*,Auto">
+              <TextBlock Text="{Binding Codigo}" FontFamily="Consolas" FontSize="12"
+                         Foreground="{StaticResource EstadoErr}" VerticalAlignment="Top"
+                         TextWrapping="Wrap"/>
+              <TextBlock Grid.Column="1" Text="{Binding Titulos}" FontSize="12.5"
+                         TextWrapping="Wrap" Foreground="{StaticResource Text}"/>
+              <!-- «entero» frente a «a medias» es la diferencia que importa: uno hay que
+                   conseguirlo y el otro puede estar ahi sin partir. -->
+              <Border Grid.Column="2" Background="{StaticResource Field}" CornerRadius="6"
+                      Padding="7,2" VerticalAlignment="Top" Margin="8,0,0,0">
+                <TextBlock Text="{Binding Etiqueta}" FontSize="10.5"
+                           Foreground="{StaticResource Neutral400}"/>
+              </Border>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <Grid Grid.Row="3" Margin="16,10,16,14">
+        <TextBlock Name="lblPie" FontSize="11" Foreground="{StaticResource Neutral500}"
+                   VerticalAlignment="Center" TextWrapping="Wrap" Text="{i:T FaltantesPie}"/>
+        <Button Name="btnCopiar" Theme="{StaticResource BtnSecondary}" HorizontalAlignment="Right"
+                Content="{i:T FaltantesCopiarLista}" FontSize="12" Padding="12,5"/>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
