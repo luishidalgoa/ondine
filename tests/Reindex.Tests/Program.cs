@@ -98,6 +98,8 @@ public static class Program
         Ondine.Reindex.Tests.CausaDeConflictoTests.Todas();
         Ondine.Reindex.Tests.ResumenDelLoteTests.Todas();
         Ondine.Reindex.Tests.BusquedaDeFilasTests.Todas();
+        Ondine.Reindex.Tests.CorteSinRecodificarTests.Todas();
+        Ondine.Reindex.Tests.RutaDeSalidaTests.Todas();
         Ondine.Reindex.Tests.DejarComoEstaLoteTests.Todas();
         Ondine.Reindex.Tests.VaraPorTemporadaTests.Todas();
         Ondine.Reindex.Tests.RelojYOmitirTests.Todas();

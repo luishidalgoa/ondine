@@ -12,6 +12,7 @@ using Rectangle = System.Windows.Shapes.Rectangle;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Ondine.Localizacion;
+using Ondine.Recortes;
 using Ondine.Reindex;
 
 namespace Ondine;
@@ -145,6 +146,9 @@ public partial class RecortesView : UserControl
         };
 
         LlenarDesplegables();
+        chkSinRecodificar.Checked += (_, _) => AlCambiarSinRecodificar();
+        chkSinRecodificar.Unchecked += (_, _) => AlCambiarSinRecodificar();
+
         foreach (var c in new[] { cboFmt, cboCodec, cboQ, cboRes, cboAud })
         {
             c.SelectedIndex = 0;
@@ -1418,6 +1422,58 @@ public partial class RecortesView : UserControl
         cboFmt.SelectedIndex, cboCodec.SelectedIndex, cboQ.SelectedIndex,
         cboRes.SelectedIndex, cboAud.SelectedIndex);
 
+    /// <summary>Si se va a copiar en vez de recodificar.</summary>
+    private bool SinRecodificar => chkSinRecodificar.IsChecked == true;
+
+    /// <summary>
+    /// La extension que tendria la salida con los ajustes de la fila. Copiar exige que sea la
+    /// misma del original: los mismos paquetes en otra caja no siempre caben.
+    /// </summary>
+    private string ExtensionElegida() => "." + OpcionesSalida.Formatos[cboFmt.SelectedIndex].ToLowerInvariant();
+
+    private void AlCambiarSinRecodificar()
+    {
+        // Copiando no se aplica NINGUNO de esos ajustes. Dejarlos encendidos haria creer
+        // que si, y el trozo saldria distinto de lo que la fila prometia.
+        filaAjustes.IsEnabled = !SinRecodificar;
+        RefrescarEstimacion();
+        _ = AvisarDelDesfaseAsync();
+    }
+
+    /// <summary>
+    /// Dice de antemano cuanto se va a mover el arranque del primer tramo.
+    ///
+    /// <para>
+    /// Es la mitad del valor de esta funcion: cortar sin recodificar es rapido y exacto en
+    /// calidad, pero el corte solo cae en un fotograma clave. Enterarse DESPUES, mirando el
+    /// fichero, es lo que hace desconfiar de una herramienta.
+    /// </para>
+    /// </summary>
+    private async Task AvisarDelDesfaseAsync()
+    {
+        if (!SinRecodificar || _fuente == null || _tramos.Count == 0)
+        { lblSinRecodificar.Text = ""; return; }
+
+        if (!CorteSinRecodificar.SePuedeCopiar(Path.GetExtension(_fuente.Path), ExtensionElegida()))
+        { lblSinRecodificar.Text = Textos.Instancia.RecortesSinRecodificarOtroFormato; return; }
+
+        var inicio = _tramos[0].Inicio;
+        var ruta = _fuente.Path;
+
+        // El indice se lee de una ventana, no del fichero entero, asi que esto es inmediato
+        // incluso en una pelicula larga.
+        var claves = await Task.Run(() => FotogramasClave.AntesDeAsync(ruta, inicio));
+
+        // Mientras se leia, el usuario ha podido desmarcar o mover el tramo.
+        if (!SinRecodificar || _tramos.Count == 0 || _tramos[0].Inicio != inicio) return;
+
+        var cae = CorteSinRecodificar.DondeCae(claves, inicio);
+        lblSinRecodificar.Text = !cae.SeSabe ? ""
+            : cae.SeMueve
+                ? string.Format(Textos.Instancia.RecortesSinRecodificarDesfase, cae.Desfase.ToString("0.0"))
+                : Textos.Instancia.RecortesSinRecodificarSinDesfase;
+    }
+
     /// <summary>
     /// La estimación es la MISMA que la de Comprimir, escalada a lo que se va a exportar: si
     /// de 20 minutos se guardan 10, sale la mitad. Nada de una segunda fórmula.
@@ -1429,6 +1485,16 @@ public partial class RecortesView : UserControl
         {
             lblEst.Text = "—";
             lblEstDet.Text = Textos.Instancia.RecortesEstimacionSinVideo;
+            return;
+        }
+
+        // Copiando no hay nada que estimar: el trozo pesa lo que pesa su parte del original.
+        // Enseñar aquí una estimación de compresión sería inventarse un número.
+        if (SinRecodificar)
+        {
+            double trozo = _tramos.Sum(t => t.Duracion) / _duracion;
+            lblEst.Text = "≈ " + Humano((long)((_fuente.Bytes) * trozo));
+            lblEstDet.Text = Textos.Instancia.RecortesSinRecodificarActivo;
             return;
         }
 
@@ -1609,6 +1675,8 @@ public partial class RecortesView : UserControl
         var rep = new Reportero(this);
         var hechos = new List<string>();
         var fallidos = new List<string>();
+        // Los nombres que esta tanda ya ha pedido. Dos tramos llamados igual no se pisan.
+        var reservadas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         int n = 0;
         bool salioTodo = false;
 
@@ -1631,6 +1699,28 @@ public partial class RecortesView : UserControl
                     Textos.Instancia.RecortesTramoEnCurso, n, _tramos.Count, t.Nombre);
                 lblProgreso.Text = _tramoActual;
                 foreach (var f in _tramos) f.EnCurso = ReferenceEquals(f, t);
+                // ── Copiando: ni motor, ni estimacion, ni opciones ──────────────
+                // Es otro camino entero a proposito. Pasarlo por CompressAsync con un
+                // «-c copy» metido dentro obligaria a que el motor supiera de esto, y el
+                // motor es de comprimir. Aqui se corta y se copia, que es otra cosa.
+                if (SinRecodificar)
+                {
+                    var salidaCopia = RutaDeSalida.Libre(
+                        destino, t.Nombre, Path.GetExtension(rutaOriginal),
+                        File.Exists, reservadas);
+
+                    var rc = await CortadorSinRecodificar.CortarAsync(
+                        rutaOriginal, salidaCopia, t.Inicio, t.Duracion, _cancelar.Token);
+
+                    if (rc.Ok) hechos.Add(Path.GetFileName(rc.Salida));
+                    else
+                    {
+                        fallidos.Add(t.Nombre);
+                        if (rc.Error is { Length: > 0 }) Log?.Invoke(rc.Error);
+                    }
+                    continue;
+                }
+
                 var opt = Opciones();
                 opt.Output = destino;
                 opt.Desde = t.Inicio;
