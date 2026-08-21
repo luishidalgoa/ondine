@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    La interfaz multiplataforma. Es lo que va a permitir que Ondine corra en Linux y macOS:
+    WPF solo existe en Windows y el motor ya es portable desde que se separó en Ondine.Core.
+
+    Convive con la de WPF mientras dure el puerto, a propósito. Cambiar las dieciocho
+    pantallas de golpe habría dejado la app sin poder publicarse durante semanas; así cada
+    trozo portado se puede comparar con el original que sigue ahí al lado.
+
+    El estudio con lo que cuesta y en qué orden está en docs/avalonia.md, y las dos
+    incógnitas que podían cancelarlo se despejaron con código que corre: spike/avalonia.
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Ondine.Avalonia</AssemblyName>
+    <RootNamespace>Ondine.Ava</RootNamespace>
+
+    <!-- La misma versión que el resto. El flujo `verificar-version` lo comprueba en cada
+         tag: si se sube una y no las otras, la publicación falla. -->
+    <Version>1.13.0</Version>
+    <Product>Ondine</Product>
+    <Company>luishidalgoa</Company>
+    <Authors>luishidalgoa</Authors>
+    <Description>Ondine: la interfaz multiplataforma, sobre el mismo motor.</Description>
+
+    <!-- Sin compiled bindings: lo que hay escrito en los XAML de WPF es binding normal, y
+         el puerto va a traducirlo tal cual. Cambiar de mecanismo a la vez que de framework
+         sería mezclar dos migraciones y no saber cuál rompió qué. -->
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ondine.Core\Ondine.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <!-- El DataGrid va en su propio paquete: en WPF venía en la caja. Es el que sostiene la
+         revisión por filas de Organizar, y el spike comprobó que aguanta ese patrón. -->
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+  </ItemGroup>
+
+  <!--
+    El vídeo. Avalonia no tiene MediaElement y no está previsto que lo tenga, así que la
+    salida es LibVLC. Es el primer paquete con binarios nativos del proyecto y entró con
+    permiso explícito, no de tapadillo.
+
+    De propina resuelve una deuda vieja: MediaElement va sobre DirectShow y con AV1 no puede
+    por mucha extensión que se instale. LibVLC lo abre, y con decodificación por hardware.
+  -->
+  <ItemGroup>
+    <PackageReference Include="LibVLCSharp.Avalonia" Version="3.10.1" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
+  </ItemGroup>
+
+</Project>

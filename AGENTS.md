@@ -113,8 +113,8 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 
 - **CHANGELOG por versión, no por commit.** Formato *Keep a Changelog*, en
   castellano de cara al usuario. Los triviales (typo, formato, refactor) no
-  entran. Al cortar versión: subir `<Version>` en **los tres** `.csproj` -app,
-  motor y CLI-, cerrar la sección del CHANGELOG y etiquetar `vX.Y.Z`. El CI **verifica el contrato
+  entran. Al cortar versión: subir `<Version>` en **los cuatro** `.csproj` -app,
+  motor, CLI e interfaz de Avalonia-, cerrar la sección del CHANGELOG y etiquetar `vX.Y.Z`. El CI **verifica el contrato
   del CHANGELOG antes de compilar** y no publica si no cuadra.
 - **El motor es un proyecto, no un puñado de ficheros prestados.** Vive en
   `src/Ondine.Core` (`net9.0`, sin interfaz) y la app, la CLI y las pruebas lo
@@ -149,6 +149,7 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | `src/Ondine.Core/` | **El motor**: comprimir, estimar, reindexar, identificar. `net9.0` a secas, sin interfaz: compila y corre en Windows, Linux y macOS. |
 | `src/Ondine.Core/Localizacion/` | La espina de la traducción y los textos por pantalla. Está en el motor porque el motor también escribe texto de interfaz. |
 | `src/Ondine/` | App WPF: ventanas, tema y autoactualización. Solo Windows. |
+| `src/Ondine.Avalonia/` | La interfaz **multiplataforma**, sobre el mismo motor y el mismo catálogo de textos. Conviven mientras dure el puerto; el plan está en [`docs/avalonia.md`](docs/avalonia.md). |
 | `src/Ondine.Cli/` | Terminal multiplataforma. Referencia el motor. |
 | `tests/Reindex.Tests/` | Las pruebas del motor y de los textos. Sin dependencias externas ni WPF: corren en Linux. |
 | `tests/Ui.Smoke/` | Que cada pantalla se construya y se mida sin reventar. Necesita Windows (WPF), así que va aparte. |

@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Los colores de Ondine. Son EXACTAMENTE los mismos que los de Theme.xaml, y eso lo
+    vigila `TemaCompartidoTests`: mientras las dos interfaces convivan, un color que se
+    cambie en una y no en la otra deja la app con dos aspectos segun la version, y eso no
+    se ve en una captura ni falla en ningun sitio.
+
+    Se copiaron de alli con un script, no a mano, por el mismo motivo.
+
+    La sintaxis de SolidColorBrush es identica en WPF y en Avalonia, asi que esta parte
+    del tema es la unica que porta 1:1. Lo caro son las plantillas y los triggers, que van
+    en su propio cambio.
+  -->
+  <SolidColorBrush x:Key="Bg" Color="#161826"/>
+  <SolidColorBrush x:Key="Surface" Color="#232532"/>
+  <SolidColorBrush x:Key="Field" Color="#292B31"/>
+  <SolidColorBrush x:Key="Text" Color="#E9E9ED"/>
+  <SolidColorBrush x:Key="Neutral300" Color="#CFD3E5"/>
+  <SolidColorBrush x:Key="Neutral400" Color="#B2B6CA"/>
+  <SolidColorBrush x:Key="Neutral500" Color="#9397AB"/>
+  <SolidColorBrush x:Key="Neutral600" Color="#75798C"/>
+  <SolidColorBrush x:Key="Neutral700" Color="#595D6C"/>
+  <SolidColorBrush x:Key="Neutral800" Color="#3F424D"/>
+  <SolidColorBrush x:Key="Divider" Color="#29E9E9ED"/>
+  <SolidColorBrush x:Key="Accent" Color="#968AE0"/>
+  <SolidColorBrush x:Key="Accent200" Color="#E7E5FE"/>
+  <SolidColorBrush x:Key="Accent300" Color="#D2CEFD"/>
+  <SolidColorBrush x:Key="Accent400" Color="#B5ABFC"/>
+  <SolidColorBrush x:Key="Accent600" Color="#796CBF"/>
+  <SolidColorBrush x:Key="Accent700" Color="#5D5294"/>
+  <SolidColorBrush x:Key="Accent800" Color="#423A6A"/>
+  <SolidColorBrush x:Key="Accent900" Color="#2B2741"/>
+  <SolidColorBrush x:Key="HoverPrimary" Color="#25263C"/>
+  <SolidColorBrush x:Key="PressedPrimary" Color="#333250"/>
+  <SolidColorBrush x:Key="RowSelected" Color="#232338"/>
+  <SolidColorBrush x:Key="RowHover" Color="#1F2130"/>
+  <SolidColorBrush x:Key="MenuHighlight" Color="#5D5294"/>
+  <SolidColorBrush x:Key="MenuGesture" Color="#9397AB"/>
+  <SolidColorBrush x:Key="MenuDisabled" Color="#75798C"/>
+  <SolidColorBrush x:Key="MenuSeparator" Color="#3A3E4E"/>
+  <SolidColorBrush x:Key="EstadoOk" Color="#7BD88F"/>
+  <SolidColorBrush x:Key="EstadoErr" Color="#F2777A"/>
+  <SolidColorBrush x:Key="SurfaceGlass" Color="#DB232532"/>
+
+</ResourceDictionary>
