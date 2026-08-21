@@ -123,6 +123,16 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
   añadir `Pistas/` la CLI dejó de compilar en las cinco plataformas-. Con una
   referencia no hay lista que mantener. **Nada de interfaz entra ahí**: si algo
   del motor necesita WPF, es que no era del motor.
+- **Tocar un flujo obliga a actualizar su tutorial en el MISMO cambio.** Si
+  cambia lo que hace Comprimir, Organizar o Recortes, su apartado de
+  *Ayuda → Tutoriales* se actualiza con ello. Un tutorial que describe la
+  pantalla de la versión pasada es **peor que no tenerlo**: se lee, se cree, y
+  manda a buscar cosas que ya no están donde dice. Esto era costumbre y no
+  estaba escrito, así que se cayó en cuanto nadie se acordó —pasó con «cortar
+  sin recodificar»—. Ahora lo vigila `AyudaTests`, que **congela cuántas
+  opciones tiene cada pantalla**: si aparece una nueva, la cifra deja de cuadrar
+  y hay que mirar la Ayuda antes de seguir. No comprueba que la Ayuda sea buena
+  —eso no lo puede comprobar una máquina—, comprueba que alguien la haya mirado.
 - **Nunca se tocan los originales** salvo petición explícita, y entonces van a la
   papelera, no a borrado. Todo ocurre en la máquina del usuario.
 - **Rama y PR por tarea.** Nunca empujar directo a `main`.
