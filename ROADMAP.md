@@ -31,7 +31,9 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **Códec elegible**: H.265 / H.264 / **AV1** (hardware si hay, si no software).
 - ✅ Modo calidad (CRF/CQ) por presets de calidad.
 - ✅ **Pausar / Reanudar** y **Detener** limpios (suspender/continuar FFmpeg; al detener se corta y se borra el temporal).
-- 🔜 Modo **bitrate objetivo** (VBR de N kbps / tamaño objetivo) además de calidad.
+- ✅ **Tamaño objetivo**: en «Calidad», dices los MB a los que debe quedar cada fichero y el
+  bitrate sale solo, calculado **por fichero**. Si no da, se dice antes de codificar y con el
+  mínimo que sí valdría.
 - 🔜 Preset de velocidad del codificador (ultrafast…slow) expuesto en la UI.
 - ⬜ **Recorte (crop)** y **dimensiones exactas** (con anamórfico/relación de aspecto).
 - ⬜ **Filtros**: desentrelazado, denoise, deblock, nitidez, rotación.
@@ -98,7 +100,7 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **Pronóstico** de tamaño final y ahorro (GB y %) por vídeo, en la pestaña *Estimación*.
 - ✅ **Valoración calidad↔ahorro** en barras (0–5) para vídeo y audio, recalculada al cambiar las opciones.
 - ✅ **Limpieza de temporales**: el `.tmp` se borra al terminar/cancelar; las miniaturas se liberan al cerrar.
-- 🔜 Modo bitrate/tamaño objetivo (llegar a un tamaño concreto) — se apoya en el mismo modelo de estimación.
+- ✅ Modo tamaño objetivo (llegar a un tamaño concreto) — comparte el suelo de bitrate con el estimador.
 
 ## Transversal
 - ✅ **FFmpeg**: el instalador lo detecta y, si falta, lo descarga e instala junto a la app (el usuario no configura nada).

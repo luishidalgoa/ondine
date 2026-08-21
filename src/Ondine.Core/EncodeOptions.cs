@@ -15,6 +15,28 @@ public sealed class EncodeOptions
     public int Quality { get; set; }        // 0 = automático
     public int MaxHeight { get; set; }      // 0 = sin reescalar
     public int AudioBitrate { get; set; }   // 0 = copiar audio original
+    /// <summary>
+    /// Bitrate de video objetivo, en kbps. Cero = calidad constante, que es el modo de
+    /// siempre.
+    ///
+    /// <para>
+    /// Manda sobre <see cref="Quality"/> cuando se pone, y NO se combinan: con las dos
+    /// puestas ffmpeg no obedece a ninguna. Lo decide <c>ArgumentosDeBitrate</c>.
+    /// </para>
+    /// </summary>
+    public int BitrateVideoKbps { get; set; }
+
+    /// <summary>
+    /// Tamano al que se quiere llegar, en bytes. Cero = sin objetivo.
+    ///
+    /// <para>
+    /// Es POR FICHERO, no por lote: cada uno dura distinto, asi que el bitrate que hace
+    /// falta lo deriva el motor cuando ya sabe la duracion. Por eso esto no se puede
+    /// convertir a <see cref="BitrateVideoKbps"/> desde la pantalla.
+    /// </para>
+    /// </summary>
+    public long TamanoObjetivoBytes { get; set; }
+
     public bool Force { get; set; }
     public bool DryRun { get; set; }
     public RenameRule? NameRule { get; set; }   // renombrado del archivo de salida (estilo PowerRename)

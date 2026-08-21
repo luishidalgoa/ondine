@@ -93,6 +93,7 @@ public static class Program
         ElVeredictoDelComplementoAvisaAlCambiar();
         RecortesSinRecodificarApagaLosAjustes();
         LaColaAparaceConSuPrimerTrabajo();
+        ElTamanoObjetivoSoloSaleEnSuModo();
 
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
@@ -962,6 +963,47 @@ public static class Program
                 .Cast<object>().Count() ?? 0;
             if (cuantas != 1)
                 throw new Exception($"la lista pinta {cuantas} filas y deberia pintar 1");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// El campo del tamano objetivo solo sale con ese modo elegido.
+    ///
+    /// <para>
+    /// Un campo permanente que casi nadie usa es ruido en una fila de ajustes que ya va
+    /// apretada. Y al reves: si se eligiera el modo y el campo no apareciera, no habria
+    /// donde escribir el tamano y la opcion seria un callejon sin salida.
+    /// </para>
+    /// </summary>
+    private static void ElTamanoObjetivoSoloSaleEnSuModo()
+    {
+        const string nombre = "el campo del tamaño objetivo sale solo con ese modo";
+        try
+        {
+            var v = new MainWindow();
+            var cbo = (ComboBox)v.FindName("cboQ")!;
+            var fila = (FrameworkElement)v.FindName("filaObjetivo")!;
+
+            v.Measure(new Size(1400, 900));
+            v.Arrange(new Rect(0, 0, 1400, 900));
+            v.UpdateLayout();
+
+            if (fila.Visibility == Visibility.Visible)
+                throw new Exception("con «Automática» elegida el campo ya ocupaba sitio");
+
+            cbo.SelectedIndex = 5;   // «Tamaño objetivo…»
+            v.UpdateLayout();
+            if (fila.Visibility != Visibility.Visible)
+                throw new Exception("elegido el modo, no hay donde escribir el tamaño: " +
+                                    "la opción sería un callejón sin salida");
+
+            cbo.SelectedIndex = 0;
+            v.UpdateLayout();
+            if (fila.Visibility == Visibility.Visible)
+                throw new Exception("al volver a una calidad, el campo se queda estorbando");
 
             Bien(nombre);
         }

@@ -224,6 +224,34 @@ public sealed partial class Textos
     // estimación: es la misma idea, y en la estimación el hueco es de 54 px.
     public string MainCalidad => Idioma.Elegir("Quality", "Calidad");
 
+    // ── Llegar a un tamaño concreto ─────────────────────────────────────────
+    // Va como una opción más del desplegable de calidad porque es lo mismo dicho
+    // al revés: o eliges calidad y ves qué pesa, o eliges cuánto pesa y el motor
+    // saca la calidad. No son dos ajustes: son dos formas de pedir lo mismo.
+    public string MainCalidadObjetivo => Idioma.Elegir("Target size…", "Tamaño objetivo…");
+
+    public string MainObjetivoMB => Idioma.Elegir("MB per file", "MB por fichero");
+
+    public string MainObjetivoTip => Idioma.Elegir(
+        "The size each file should end up at. The bitrate is worked out per file, because a " +
+        "short clip and a film need very different ones to land on the same size. The result " +
+        "is approximate: it is a single pass, not two.",
+        "El tamaño al que debe quedar cada fichero. El bitrate se calcula por fichero, porque " +
+        "un clip corto y una película necesitan bitrates muy distintos para pesar lo mismo. El " +
+        "resultado es aproximado: es una pasada, no dos.");
+
+    // {0} = los MB que harían falta como mínimo
+    public string MainObjetivoNoCabe => Idioma.Elegir(
+        "{0} MB is not enough for this: the video would come out unwatchable. It needs at least {1} MB.",
+        "Con {0} MB no da: el vídeo saldría ilegible. Hacen falta al menos {1} MB.");
+
+    public string MainObjetivoNoCabeNiElAudio => Idioma.Elegir(
+        "Not even the audio fits in {0} MB. Lowering the video quality would not help — take " +
+        "audio tracks out, or aim higher.",
+        "En {0} MB no cabe ni el audio. Bajar la calidad del vídeo no arreglaría nada: quita " +
+        "pistas de audio, o apunta más alto.");
+
+
     public string MainCalidadTip => Idioma.Elegir(
         "Target quality (CRF): a lower number = better picture and a bigger file. It does not fix the size, it fixes the quality, so the final weight depends on how complex the video is. “Automatic” uses 27, balanced.",
         "Calidad objetivo (CRF): número más bajo = mejor imagen y archivo más grande. No fija el tamaño, fija la calidad, así que el peso final depende de lo complejo que sea el vídeo. «Automática» usa 27, equilibrado.");

@@ -203,6 +203,8 @@
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirPapelera}"/>
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirQuitarPistas}"/>
               <TextBlock Style="{StaticResource P}" Margin="0,6,0,0" FontSize="11.5" Foreground="{StaticResource Neutral600}" Text="{i:T AyudaComprimirDiscoLleno}"/>
+              <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaComprimirObjetivoTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirObjetivo}"/>
               <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaComprimirColaTitulo}"/>
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirCola}"/>
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirColaOrden}"/>

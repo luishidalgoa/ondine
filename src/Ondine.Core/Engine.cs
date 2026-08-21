@@ -281,6 +281,31 @@ public sealed class Engine
         return code == 0 && File.Exists(dest) ? dest : null;
     }
 
+    /// <summary>
+    /// Lo que se va a llevar el audio, para descontarlo del objetivo.
+    ///
+    /// <para>
+    /// Recodificando se sabe exacto. COPIANDO no: habria que sumar el bitrate real de cada
+    /// pista, y en ese caso se usa una cifra tipica por pista. Es una estimacion y se dice:
+    /// quedarse corto aqui hace que el fichero se pase un poco del objetivo, que es
+    /// preferible a recortar el video de mas por un audio que igual pesaba menos.
+    /// </para>
+    /// </summary>
+    private static int AudioKbpsEstimado(EncodeOptions opt, int pistas)
+    {
+        var porPista = opt.AudioBitrate > 0 ? opt.AudioBitrate : 192;
+        return porPista * Math.Max(1, pistas);
+    }
+
+    /// <summary>
+    /// Los argumentos del codificador. Con bitrate objetivo puesto manda ESE y se olvida la
+    /// calidad constante: las dos juntas no las obedece ffmpeg.
+    /// </summary>
+    private static List<string> EncoderArgs(string encoder, int quality, int bitrateKbps) =>
+        bitrateKbps > 0
+            ? [.. Objetivo.ArgumentosDeBitrate.Para(encoder, bitrateKbps)]
+            : EncoderArgs(encoder, quality);
+
     private static List<string> EncoderArgs(string encoder, int quality) => encoder switch
     {
         "hevc_qsv" or "h264_qsv" or "av1_qsv" =>
@@ -485,7 +510,7 @@ public sealed class Engine
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;   // WebM: VP9 (más compatible entre builds de FFmpeg)
         var encoder = await SelectEncoderAsync(vcodec);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
-        var encArgs = EncoderArgs(encoder, quality);
+        var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps);
         var t = Textos.Instancia;
         if (opt.AudioOnly) rep.Log(string.Format(t.MotorSoloAudioModo, opt.AudioFormat.ToUpperInvariant()));
         else
@@ -617,7 +642,15 @@ public sealed class Engine
                 if (withSubs) foreach (var s in keptSubs) a.AddRange(new[] { "-map", $"0:{s.Index}" });
                 if (opt.MaxHeight > 0 && (video.Height ?? 0) > opt.MaxHeight)
                     a.AddRange(new[] { "-vf", $"scale=-2:{opt.MaxHeight}" });
-                a.AddRange(encArgs);
+                // Con tamano objetivo, el bitrate se calcula AQUI y no fuera del bucle:
+                // depende de la duracion, y cada fichero dura lo suyo. Fuera saldria el
+                // mismo bitrate para un corto y para una pelicula.
+                a.AddRange(opt.TamanoObjetivoBytes > 0
+                    ? EncoderArgs(encoder, quality,
+                        Objetivo.TamanoObjetivo.Calcular(
+                            opt.TamanoObjetivoBytes, durSec,
+                            AudioKbpsEstimado(opt, audio.Count), kbps).VideoKbps)
+                    : encArgs);
                 bool mp4 = opt.Container == "mp4";
                 for (int i = 0; i < audio.Count; i++)
                 {
@@ -750,7 +783,7 @@ public sealed class Engine
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;
         var encoder = await SelectEncoderAsync(vcodec);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
-        var encArgs = EncoderArgs(encoder, quality);
+        var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps);
 
         // repartimos las muestras por el 90% central (evita cabecera y créditos)
         samples = Math.Max(1, samples);
