@@ -79,7 +79,8 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ Línea de tiempo con miniaturas, marcar tramos y exportar uno por tramo.
 - ✅ Integración con Organizar: un fichero con dos episodios se abre aquí con el corte ya puesto.
 - ✅ El original solo se borra si salen **todos** los tramos, y va a la Papelera.
-- 🔜 Corte **sin recodificar** también aquí (hoy recodifica; Organizar ya corta con `-c copy`).
+- ✅ Corte **sin recodificar**: copia el vídeo tal cual, sin perder calidad y en segundos. El corte
+  solo puede caer en un fotograma clave, y **la app dice cuánto se va a mover antes de cortar**.
 - ⬜ Ajuste fino del corte fotograma a fotograma.
 
 ## Flujo de trabajo
