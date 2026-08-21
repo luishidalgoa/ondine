@@ -1345,16 +1345,6 @@ public partial class OrganizarView : UserControl
     }
 
     /// <summary>
-    /// Marca qué fila abre cada temporada, que es la que lleva encima la banda separadora.
-    ///
-    /// Se calcula sobre la vista YA FILTRADA, no sobre <c>_filas</c>: si escondes las limpias,
-    /// la banda tiene que salir sobre la primera que quede —no sobre una que no se ve— y el
-    /// recuento tiene que ser el de las visibles.
-    ///
-    /// Solo se separa si hay más de una carpeta: con una sola, la banda repetiría lo que ya
-    /// dice el cuadro de la carpeta y se comería una fila por nada.
-    /// </summary>
-    /// <summary>
     /// Volver a pinchar una fila ya abierta la cierra. Sin esto, el resolutor se queda
     /// desplegado y la única forma de recogerlo es abrir otra fila.
     ///
@@ -1471,6 +1461,16 @@ public partial class OrganizarView : UserControl
         vista?.SortDescriptions.Clear();
     }
 
+    /// <summary>
+    /// Marca qué fila abre cada temporada, que es la que lleva encima la banda separadora.
+    ///
+    /// Se calcula sobre la vista YA FILTRADA, no sobre <c>_filas</c>: si escondes las limpias,
+    /// la banda tiene que salir sobre la primera que quede —no sobre una que no se ve— y el
+    /// recuento tiene que ser el de las visibles.
+    ///
+    /// Solo se separa si hay más de una carpeta: con una sola, la banda repetiría lo que ya
+    /// dice el cuadro de la carpeta y se comería una fila por nada.
+    /// </summary>
     /// <returns>Cuántas temporadas han quedado separadas. 0 = no hay nada que separar.</returns>
     private int RecalcularSeparadores()
     {
