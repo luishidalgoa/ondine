@@ -1,0 +1,172 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        x:Class="Ondine.Ava.Catalogo"
+        Title="{i:T CatalogoTitulo}"
+        Width="920" Height="620" MinWidth="560" MinHeight="380"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!--
+    Explorador del catalogo, portado de CatalogoWindow.xaml.
+
+    Dos cosas nuevas aqui:
+
+    - El panel del JSON. En WPF era un RichTextBox con un FlowDocument, que Avalonia no
+      tiene. Va con un SelectableTextBlock y sus Inlines, que es MENOS maquinaria para lo
+      mismo: se sigue pudiendo seleccionar y copiar a mano. De paso desaparece la trampa
+      que tenia el original -reemplazar el Document dejaba al lector de accesibilidad
+      leyendo el viejo-, porque aqui no hay documento que reemplazar.
+    - El distintivo de «lo tengo». Apunta a un fichero y al pulsarlo lo ensena. Lo que
+      cambia esta en el code-behind: «ensenar un fichero seleccionado» es de Windows.
+  -->
+  <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+          BorderThickness="1" CornerRadius="8">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+      <Grid Grid.Row="0" Height="38">
+        <TextBlock Name="lblTitulo" Text="{i:T CatalogoTitulo}" FontSize="13.5" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <Button Name="btnCerrar" Theme="{StaticResource BtnGhostMuted}"
+                HorizontalAlignment="Right" Margin="0,0,6,0" Content="✕"/>
+      </Grid>
+
+      <Grid Grid.Row="1" Margin="16,0,16,10" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+        <TextBox Name="txtBuscar" ToolTip.Tip="{i:T CatalogoBuscarAyuda}"/>
+        <TextBlock Name="lblCuenta" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0"
+                   FontSize="11.5" Foreground="{StaticResource Neutral500}"/>
+        <!-- Solo aparece cuando hay una carpeta analizada detras: sin eso, «los que faltan»
+             serian todos y el filtro mentiria. -->
+        <CheckBox Name="chkSoloFaltan" Grid.Row="1" Grid.ColumnSpan="2" Margin="2,8,0,0"
+                  FontSize="11.5" IsVisible="False"
+                  Foreground="{StaticResource Neutral400}"
+                  Content="{i:T CatalogoSoloLosQueFaltan}"/>
+      </Grid>
+
+      <!-- La columna del JSON se abre y se cierra por codigo. Se llega por el Grid y no
+           por el nombre de la columna: una ColumnDefinition no es un control, asi que
+           FindControl no la alcanza -en WPF si, con x:Name-. -->
+      <Grid Name="zonaLista" Grid.Row="2" Margin="16,0,16,10" ColumnDefinitions="*,0">
+
+        <ListBox Name="lista" Grid.Column="0" Background="Transparent" BorderThickness="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+          <ListBox.Styles>
+            <Style Selector="ListBoxItem">
+              <Setter Property="Padding" Value="0"/>
+              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+              <Setter Property="Template">
+                <ControlTemplate>
+                  <Border Name="b" Background="Transparent" CornerRadius="6" Padding="10,7">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                  </Border>
+                </ControlTemplate>
+              </Setter>
+            </Style>
+            <Style Selector="ListBoxItem:pointerover /template/ Border#b">
+              <Setter Property="Background" Value="{StaticResource RowHover}"/>
+            </Style>
+            <!-- El elegido va DESPUES del raton: si no, pasar por encima de otra fila
+                 borraria de la vista cual estas mirando. -->
+            <Style Selector="ListBoxItem:selected /template/ Border#b">
+              <Setter Property="Background" Value="{StaticResource RowSelected}"/>
+            </Style>
+          </ListBox.Styles>
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                  <!-- Una linea por mini-historia, cada una con su codigo («E1a», «E1b»…): es
+                       como las numeran los anexos de referencia, y asi se ve de un vistazo que
+                       el capitulo trae tres historias y no un titulo kilometrico. -->
+                  <ItemsControl ItemsSource="{Binding Segmentos}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,1" ColumnDefinitions="62,*">
+                          <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource FontMono}"
+                                     FontSize="12" Foreground="{StaticResource Accent}"
+                                     VerticalAlignment="Top" Margin="0,1,0,0"/>
+                          <TextBlock Grid.Column="1" Text="{Binding Titulo}" FontSize="12.5"
+                                     TextWrapping="Wrap" Foreground="{StaticResource Text}"/>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <!-- En WPF eran tres Run pegados. Aqui es un solo texto que ya viene
+                       montado: menos piezas para lo mismo, y una menos que se puede quedar
+                       sin pintar. -->
+                  <TextBlock Text="{Binding DetalleYCuantas}" FontSize="11" Margin="62,2,0,0"
+                             Foreground="{StaticResource Neutral500}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                  <!-- ¿Lo tengo? El distintivo APUNTA al fichero: pulsarlo lo ensena. Un
+                       distintivo que solo dice «lo tienes» te deja a ti la tarea de
+                       encontrarlo, que es justo lo que venias a evitar. -->
+                  <Button Name="btnIrAlFichero" Theme="{StaticResource BtnGhostMuted}"
+                          Cursor="{Binding TenenciaCursor}" Padding="7,2" Margin="0,0,6,0"
+                          FontSize="10.5"
+                          Background="{Binding TenenciaFondo}" Foreground="{Binding TenenciaColor}"
+                          Content="{Binding TenenciaEtiqueta}" ToolTip.Tip="{Binding TenenciaTip}"
+                          IsVisible="{Binding TenenciaVisible}"
+                          Click="OnIrAlFichero"/>
+                  <Border Background="{StaticResource Accent900}" CornerRadius="6" Padding="7,2"
+                          IsVisible="{Binding EsEspecial}">
+                    <TextBlock Text="{i:T CatalogoEspecial}" FontSize="10.5"
+                               Foreground="{StaticResource Accent200}"/>
+                  </Border>
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- El JSON del episodio elegido, tal y como esta en el catalogo: la referencia
+             final cuando la vista bonita no basta. Emerge al elegir una fila. -->
+        <Border Name="bordeJson" Grid.Column="1" Margin="10,0,0,0" Background="{StaticResource Field}"
+                BorderBrush="{StaticResource Divider}" BorderThickness="1" CornerRadius="8"
+                IsVisible="False">
+          <Grid RowDefinitions="Auto,*">
+            <Grid Margin="12,9,10,4">
+              <TextBlock Name="lblJsonTitulo" FontSize="12" FontWeight="Medium"
+                         Foreground="{StaticResource Accent300}" VerticalAlignment="Center"/>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+                <Button Name="btnCopiarJson" Theme="{StaticResource BtnGhostMuted}"
+                        Content="{i:T CatalogoCopiar}" FontSize="11" Padding="7,2"/>
+                <!-- El glifo no cambia de idioma; lo que se lee es su ToolTip. -->
+                <Button Name="btnCerrarJson" Theme="{StaticResource BtnGhostMuted}" Content="✕"
+                        FontSize="10" Padding="6,2" ToolTip.Tip="{i:T CatalogoCerrarJson}"/>
+              </StackPanel>
+            </Grid>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Auto" Padding="6,0,6,8">
+              <!-- SelectableTextBlock y no TextBox: sabe pintar cada trozo de un color con
+                   sus Inlines, y se sigue pudiendo seleccionar para copiar a mano. -->
+              <SelectableTextBlock Name="txtJson" FontFamily="{StaticResource FontMono}"
+                                   FontSize="11.5"/>
+            </ScrollViewer>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <TextBlock Name="lblPie" Grid.Row="3" Margin="16,0,16,12" FontSize="11.5" TextWrapping="Wrap"
+                 Foreground="{StaticResource Neutral500}" Text="{i:T CatalogoPie}"/>
+
+      <!-- Pregunta de historia (solo en modo elegir, con episodios multi-historia) -->
+      <Border Name="overlayHistoria" Grid.RowSpan="4" Background="#CC161826" IsVisible="False">
+        <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                BorderThickness="1" CornerRadius="8" MaxWidth="500"
+                VerticalAlignment="Center" HorizontalAlignment="Center"
+                Padding="18,16" Margin="24">
+          <StackPanel>
+            <TextBlock Name="lblHistoriaTitulo" FontSize="13" FontWeight="Medium" TextWrapping="Wrap"/>
+            <TextBlock Margin="0,6,0,12" FontSize="12" Foreground="{StaticResource Neutral500}"
+                       TextWrapping="Wrap" LineHeight="18"
+                       Text="{i:T CatalogoHistoriaAyuda}"/>
+            <StackPanel Name="panelHistorias"/>
+          </StackPanel>
+        </Border>
+      </Border>
+    </Grid>
+  </Border>
+</Window>
