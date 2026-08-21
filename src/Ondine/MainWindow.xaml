@@ -40,6 +40,7 @@
         <RowDefinition Height="Auto"/><!-- opciones -->
         <RowDefinition Height="*"/><!-- tabla+lateral -->
         <RowDefinition Height="Auto"/><!-- progreso -->
+        <RowDefinition Height="Auto"/><!-- cola -->
         <RowDefinition Height="Auto"/><!-- acciones -->
         <RowDefinition Height="Auto"/><!-- log -->
       </Grid.RowDefinitions>
@@ -694,8 +695,60 @@
         <ProgressBar x:Name="bar" Minimum="0" Maximum="1" Value="0"/>
       </Grid>
 
+      <!-- ══ La cola ══
+           Nace oculta y aparece con el primer trabajo: una cola vacia ocupando sitio
+           permanente es ruido para quien no la use, que hoy es todo el mundo. -->
+      <Border x:Name="panelCola" Grid.Row="6" Margin="16,8,16,0" Visibility="Collapsed"
+              Background="{StaticResource Surface}" CornerRadius="8" Padding="12,10"
+              BorderBrush="{StaticResource Divider}" BorderThickness="1">
+        <StackPanel>
+          <Grid Margin="0,0,0,8">
+            <TextBlock Text="{i:T MainColaTitulo}" FontSize="11" FontWeight="Medium"
+                       Foreground="{StaticResource Accent400}" VerticalAlignment="Center"/>
+            <TextBlock x:Name="lblCola" HorizontalAlignment="Right" FontSize="11"
+                       Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <ItemsControl x:Name="listaCola">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,0,0,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" CornerRadius="9" Padding="8,2" Margin="0,0,10,0"
+                          Background="{Binding ColorEstado}" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Estado}" FontSize="10.5" Foreground="White"/>
+                  </Border>
+
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Resumen}" FontSize="12.5"
+                               Foreground="{StaticResource Text}"/>
+                    <TextBlock Text="{Binding Destino}" FontSize="10.5"
+                               Foreground="{StaticResource Neutral600}"
+                               TextTrimming="CharacterEllipsis" MaxWidth="520"/>
+                  </StackPanel>
+
+                  <Button Grid.Column="3" Style="{StaticResource BtnGhostMuted}" FontSize="11"
+                          Padding="8,3" Content="↑" ToolTip="{i:T MainColaSubir}"
+                          Tag="{Binding Id}" Click="OnColaSubir"/>
+                  <Button Grid.Column="4" Style="{StaticResource BtnGhostMuted}" FontSize="11"
+                          Padding="8,3" Content="↓" ToolTip="{i:T MainColaBajar}"
+                          Tag="{Binding Id}" Click="OnColaBajar"/>
+                  <Button Grid.Column="5" Style="{StaticResource BtnGhostMuted}" FontSize="11"
+                          Padding="8,3" Content="✕" ToolTip="{i:T MainColaQuitar}"
+                          Tag="{Binding Id}" Click="OnColaQuitar"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
       <!-- ══ Acciones ══ -->
-      <Grid x:Name="rowAcciones" Grid.Row="6" Margin="16,10,16,8">
+      <Grid x:Name="rowAcciones" Grid.Row="7" Margin="16,10,16,8">
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <!-- WrapPanel: al estrechar, los botones bajan a otra linea en vez de recortarse.
              Es lo que hace que la ventana pueda encoger sin perder ninguna accion. -->
@@ -714,6 +767,8 @@
               <TextBlock Text="{i:T MainComprimirSeleccion}" VerticalAlignment="Center"/>
             </StackPanel>
           </Button>
+          <Button x:Name="btnEncolar" Style="{StaticResource BtnSecondary}" Margin="0,0,8,0"
+                  Content="{i:T MainEncolar}" ToolTip="{i:T MainEncolarTip}"/>
           <Button x:Name="btnPause" Style="{StaticResource BtnSecondary}" Content="{i:T MainPausar}" IsEnabled="False" Margin="0,0,8,0"
                   ToolTip="{i:T MainPausarTip}"/>
           <Button x:Name="btnCancel" Style="{StaticResource BtnSecondary}" Content="{i:T MainDetener}" IsEnabled="False" Margin="0,0,8,0"
@@ -741,7 +796,7 @@
       <local:RecortesView x:Name="pageRecortes" Grid.Row="2" Grid.RowSpan="5" Visibility="Collapsed"/>
 
       <!-- ══ Registro ══ -->
-      <StackPanel Grid.Row="7" Margin="16,0,16,10">
+      <StackPanel Grid.Row="8" Margin="16,0,16,10">
         <Rectangle Height="1" Fill="{StaticResource FadedRule}" Margin="0,0,0,6"/>
         <ToggleButton x:Name="tglLog" Cursor="Hand" HorizontalAlignment="Left" Background="Transparent" BorderThickness="0">
           <ToggleButton.Template>

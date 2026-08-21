@@ -92,6 +92,7 @@ public static class Program
         LaPantallaDeSeriesNoVuelveEnModoPeliculas();
         ElVeredictoDelComplementoAvisaAlCambiar();
         RecortesSinRecodificarApagaLosAjustes();
+        LaColaAparaceConSuPrimerTrabajo();
 
         // Fuera a propósito, y dicho en voz alta para que no parezca cobertura:
         //   · DialogWindow      — constructor privado, solo se llega por ShowDialog.
@@ -919,6 +920,48 @@ public static class Program
             if (!fila.IsEnabled)
                 throw new Exception("al desmarcar, los ajustes tienen que volver: si no, " +
                                     "la pantalla se queda muerta sin decir por que");
+
+            Bien(nombre);
+        }
+        catch (Exception ex) { Mal(nombre, ex); }
+    }
+
+    /// <summary>
+    /// La cola nace oculta y aparece con el primer trabajo.
+    ///
+    /// <para>
+    /// Una cola vacia ocupando sitio permanente es ruido para quien no la use, que hoy es
+    /// todo el mundo. Y al reves: si apareciera y no se viera, el usuario no sabria que su
+    /// trabajo esta esperando en algun sitio.
+    /// </para>
+    /// </summary>
+    private static void LaColaAparaceConSuPrimerTrabajo()
+    {
+        const string nombre = "la cola nace oculta y aparece con el primer trabajo";
+        try
+        {
+            var v = new MainWindow();
+            var panel = (FrameworkElement)v.FindName("panelCola")!;
+            var lista = (ItemsControl)v.FindName("listaCola")!;
+
+            v.Measure(new Size(1280, 900));
+            v.Arrange(new Rect(0, 0, 1280, 900));
+            v.UpdateLayout();
+
+            if (panel.Visibility == Visibility.Visible)
+                throw new Exception("con la cola vacia el panel ya ocupaba sitio");
+
+            // Se encola de verdad, por el mismo camino que el boton.
+            v.EncolarParaPruebas(["uno.mkv", "dos.mkv"]);
+            v.UpdateLayout();
+
+            if (panel.Visibility != Visibility.Visible)
+                throw new Exception("con un trabajo dentro, la cola sigue sin verse");
+
+            var cuantas = (lista.ItemsSource as System.Collections.IEnumerable)?
+                .Cast<object>().Count() ?? 0;
+            if (cuantas != 1)
+                throw new Exception($"la lista pinta {cuantas} filas y deberia pintar 1");
 
             Bien(nombre);
         }

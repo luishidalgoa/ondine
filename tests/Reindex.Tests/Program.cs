@@ -101,6 +101,7 @@ public static class Program
         Ondine.Reindex.Tests.BusquedaDeFilasTests.Todas();
         Ondine.Reindex.Tests.CorteSinRecodificarTests.Todas();
         Ondine.Reindex.Tests.RutaDeSalidaTests.Todas();
+        Ondine.Reindex.Tests.ColaDeTrabajosTests.Todas();
         Ondine.Reindex.Tests.DejarComoEstaLoteTests.Todas();
         Ondine.Reindex.Tests.VaraPorTemporadaTests.Todas();
         Ondine.Reindex.Tests.RelojYOmitirTests.Todas();
