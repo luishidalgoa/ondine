@@ -40,22 +40,12 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- La clave de TMDb, horneada SOLO si se pasa. Viaja como metadato del
-       ensamblado, igual que UpdateRepo, y la lee ClaveDeTmdb.
-       En CI sale de un secreto por la variable de entorno ONDINE_TMDB_KEY; en
-       local se puede pasar con -p:TmdbKey=...  Sin ella la app compila y arranca
-       igual: la identificacion queda apagada y lo dice, y quien quiera usarla
-       pone su propia clave en Preferencias. Es lo que hace que clonar el repo y
-       compilar no deje una funcion muerta sin explicacion. -->
-  <PropertyGroup Condition="'$(TmdbKey)' == ''">
-    <TmdbKey>$(ONDINE_TMDB_KEY)</TmdbKey>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(TmdbKey)' != ''">
-    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
-      <_Parameter1>TmdbKey</_Parameter1>
-      <_Parameter2>$(TmdbKey)</_Parameter2>
-    </AssemblyAttribute>
+  <!-- El motor. Antes vivia aqui dentro y la CLI y las pruebas lo tomaban prestado
+       fichero a fichero; ahora es un proyecto y se referencia. La clave de TMDb se
+       hornea ALLI, no aqui: quien la lee es ClaveDeTmdb, que esta en el motor y la
+       busca en su propio ensamblado. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Ondine.Core\Ondine.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

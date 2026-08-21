@@ -58,7 +58,7 @@ jobs:
             || { echo "::error::Falta en CHANGELOG.md la sección «## [$VER] - AAAA-MM-DD»"; exit 1; }
 
           # 3) todos los .csproj declaran esa misma versión
-          for p in src/Ondine/Ondine.csproj src/Ondine.Cli/Ondine.Cli.csproj; do
+          for p in src/Ondine/Ondine.csproj src/Ondine.Core/Ondine.Core.csproj src/Ondine.Cli/Ondine.Cli.csproj; do
             PV=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$p" | head -1)
             [[ "$PV" == "$VER" ]] \
               || { echo "::error::$p declara <Version>$PV</Version> pero se publica $VER"; exit 1; }

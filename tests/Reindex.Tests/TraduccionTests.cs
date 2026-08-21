@@ -20,8 +20,26 @@ namespace Ondine.Reindex.Tests;
 public static class TraduccionTests
 {
     private static readonly string Raiz = LocalizarRaiz();
+
+    /// <summary>La app WPF. Es la única que tiene XAML.</summary>
     private static string App => Path.Combine(Raiz, "src", "Ondine");
-    private static string Loc => Path.Combine(App, "Localizacion");
+
+    /// <summary>El motor. Aquí viven los textos y la mayor parte del código.</summary>
+    private static string Motor => Path.Combine(Raiz, "src", "Ondine.Core");
+
+    private static string Loc => Path.Combine(Motor, "Localizacion");
+
+    /// <summary>
+    /// Las dos carpetas con código, para las comprobaciones que barren <c>*.cs</c>.
+    ///
+    /// <para>
+    /// Son dos y no una desde que el motor se separó en <c>Ondine.Core</c>. Mirar solo la
+    /// app dejaría fuera <c>Reindex/</c>, <c>Peliculas/</c> y todo lo demás — y la
+    /// comprobación seguiría pasando, que es lo peligroso: un guardián que ya no mira
+    /// donde hace falta no avisa de nada y encima tranquiliza.
+    /// </para>
+    /// </summary>
+    private static string[] Fuentes => [App, Motor];
 
     public static void Todas()
     {
@@ -90,7 +108,7 @@ public static class TraduccionTests
         };
 
         var excesos = new List<string>();
-        foreach (var f in Ficheros(App, "*.cs"))
+        foreach (var f in Fuentes.SelectMany(c => Ficheros(c, "*.cs")))
         {
             if (f.Contains($"{Path.DirectorySeparatorChar}Localizacion{Path.DirectorySeparatorChar}")) continue;
 
@@ -165,7 +183,8 @@ public static class TraduccionTests
     private static string LocalizarRaiz()
     {
         var d = new DirectoryInfo(AppContext.BaseDirectory);
-        while (d is not null && !Directory.Exists(Path.Combine(d.FullName, "src", "Ondine")))
+        while (d is not null && !(Directory.Exists(Path.Combine(d.FullName, "src", "Ondine"))
+                              && Directory.Exists(Path.Combine(d.FullName, "src", "Ondine.Core"))))
             d = d.Parent;
         return d?.FullName ?? "";
     }

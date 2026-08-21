@@ -13,34 +13,15 @@
   </PropertyGroup>
 
   <!--
-    Se ENLAZAN las fuentes del motor en vez de referenciar el proyecto WPF: Ondine
-    apunta a net9.0-windows y no compila fuera de Windows, mientras que estas reglas sí.
-    Mismo patrón que Ondine.Cli, y sin paquetes NuGet para que CI no restaure nada.
+    Se referencia el motor. Antes se enlazaban sus fuentes fichero a fichero desde el
+    proyecto WPF, porque `Ondine` apunta a net9.0-windows y no compila fuera de Windows
+    mientras que estas reglas sí. Ahora el motor es `Ondine.Core`, que ya es net9.0 a
+    secas: la referencia vale y desaparece la lista que había que mantener a mano.
+
+    Sigue sin haber un solo paquete NuGet, para que CI no restaure nada.
   -->
   <ItemGroup>
-    <Compile Include="..\..\src\Ondine\Reindex\*.cs" LinkBase="Reindex" />
-    <!-- Igual que Reindex: lógica sin WPF ni ffmpeg, así que entra en el arnés y corre en CI. -->
-    <Compile Include="..\..\src\Ondine\Pistas\*.cs" LinkBase="Pistas" />
-    <!-- El resumen de una pista es texto de interfaz y sale del catálogo, así que las fuentes
-         de Pistas ya no compilan sin él. Se enlazan `Idioma.cs` y los `Textos.*.cs` uno a uno
-         y NO la carpeta entera: `T.cs` es la extensión de marcado y depende de WPF. -->
-    <Compile Include="..\..\src\Ondine\Localizacion\Idioma.cs" LinkBase="Localizacion" />
-    <Compile Include="..\..\src\Ondine\Settings.cs" LinkBase="Ajustes" />
-    <Compile Include="..\..\src\Ondine\RenameRule.cs" LinkBase="Ajustes" />
-    <Compile Include="..\..\src\Ondine\Preset.cs" LinkBase="Ajustes" />
-    <Compile Include="..\..\src\Ondine\Complementos\*.cs" LinkBase="Complementos" />
-    <!-- La conexión a un modelo por API: HttpClient y JSON, nada de WPF. Sus reglas
-         -la URL, la respuesta, a dónde puede ir la clave- son justo lo que hay que
-         probar sin hablar con ningún servidor. -->
-    <Compile Include="..\..\src\Ondine\Ia\*.cs" LinkBase="Ia" />
-    <Compile Include="..\..\src\Ondine\Localizacion\Textos.*.cs" LinkBase="Localizacion" />
-    <!-- Dónde viven los datos del usuario, y la mudanza de la carpeta al cambiar de nombre.
-         ReindexStore depende de esto: sin enlazarlo no compila ni el arnés ni la CLI. -->
-    <Compile Include="..\..\src\Ondine\Rutas\*.cs" LinkBase="Rutas" />
-    <!-- Identificar una pelicula contra TMDb: la clave, la peticion, la cascada de
-         confianza y la cache. HttpClient y JSON, nada de WPF, asi que se prueba
-         entero sin hablar con ningun servidor. -->
-    <Compile Include="..\..\src\Ondine\Peliculas\*.cs" LinkBase="Peliculas" />
+    <ProjectReference Include="..\..\src\Ondine.Core\Ondine.Core.csproj" />
   </ItemGroup>
 
 </Project>

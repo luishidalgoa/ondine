@@ -53,6 +53,17 @@ public static class ClaveDeTmdbTests
         Program.Assert(ClaveDeTmdb.Empotrada is null,
             "este arnés se compila sin secreto, así que aquí no hay clave horneada");
 
+        // ── Que el que hornea y el que lee sean el MISMO ensamblado ───────────
+        // `Empotrada` busca el metadato con `Assembly.GetExecutingAssembly()`, así
+        // que el atributo tiene que plantarlo el .csproj de ESTE proyecto. Si se
+        // planta en otro -pasó a un paso de pasar al separar el motor de la app,
+        // porque el atributo llevaba años en Ondine.csproj-, la búsqueda devuelve
+        // null, la identificación se apaga sola y dice que no hay clave. Nadie ve
+        // un error: la comprobación de arriba seguiría en verde, porque también
+        // espera null. Por eso hace falta esta.
+        Program.Assert(typeof(ClaveDeTmdb).Assembly.GetName().Name == "Ondine.Core",
+            "la clave se hornea en Ondine.Core.csproj, que es donde vive quien la lee");
+
         // ── Por dónde viaja: nunca en la URL si es un token v4 ────────────────
         // TMDb da DOS credenciales distintas en la misma página de ajustes: la
         // «API Key (v3)», que va en la query, y el «API Read Access Token (v4)»,

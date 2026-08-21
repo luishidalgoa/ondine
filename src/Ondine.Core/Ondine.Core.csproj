@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    El motor de Ondine: comprimir, estimar, reindexar, identificar. Sin interfaz.
+
+    Existe porque antes NO existía: la app WPF era la dueña de las fuentes y tanto
+    `Ondine.Cli` como `Reindex.Tests` las tomaban prestadas con <Compile Include="..\Ondine\...">.
+    Aquello funcionaba con dos consumidores, y el propio .csproj contaba la avería que
+    provocó -al añadir Pistas/ el motor empezó a usar sus tipos y la CLI dejó de compilar
+    en las cinco plataformas-. Con un tercer consumidor, la app de Avalonia, cada tipo
+    nuevo habría que apuntarlo en tres sitios; y el que se rompe es siempre el que nadie
+    compila en local.
+
+    `net9.0` a secas, sin `-windows`: esto compila y corre en Windows, Linux y macOS. Lo
+    que sí es de Windows -la papelera, la ficha del Explorador, los marcadores de nube-
+    se queda dentro pero avisando en su documentación, igual que antes.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Ondine.Core</AssemblyName>
+    <RootNamespace>Ondine</RootNamespace>
+
+    <!-- La misma versión que la app y la CLI. El flujo `verificar-version` comprueba en
+         cada tag que los tres .csproj declaran lo mismo, así que esto no se puede olvidar
+         a medias: si se sube uno y no otro, la publicación falla. -->
+    <Version>1.10.0</Version>
+    <Product>Ondine</Product>
+    <Company>luishidalgoa</Company>
+    <Authors>luishidalgoa</Authors>
+    <Description>Ondine: el motor. Compresión, estimación, reindexado e identificación, sin interfaz.</Description>
+  </PropertyGroup>
+
+  <!--
+    La clave de TMDb, horneada SOLO si se pasa. Vive AQUÍ y no en la app porque quien la
+    lee es `ClaveDeTmdb`, que está en este proyecto y la busca con
+    `Assembly.GetExecutingAssembly()`: dejándola en Ondine.csproj el atributo acabaría en
+    otro ensamblado y la búsqueda devolvería null en silencio — la identificación se
+    apagaría sola y diría que no hay clave, que es exactamente el fallo que no se ve.
+
+    En CI sale de un secreto por la variable de entorno ONDINE_TMDB_KEY; en local se puede
+    pasar con -p:TmdbKey=... Sin ella todo compila y arranca igual: la identificación queda
+    apagada y lo dice, y quien quiera usarla pone su propia clave en Preferencias.
+  -->
+  <PropertyGroup Condition="'$(TmdbKey)' == ''">
+    <TmdbKey>$(ONDINE_TMDB_KEY)</TmdbKey>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TmdbKey)' != ''">
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>TmdbKey</_Parameter1>
+      <_Parameter2>$(TmdbKey)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!--
+    Los tipos `internal` del motor -ProcessControl, RecycleBin, los contextos de JSON…-
+    los usaba la app cuando compartían ensamblado. Se les abre la puerta en vez de hacerlos
+    públicos: publicarlos sería inventar una API que nadie ha diseñado, y esto deja a la
+    vista que es una consecuencia de la mudanza y no una decisión de diseño.
+  -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Ondine</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>ondine</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>reindex-tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>
