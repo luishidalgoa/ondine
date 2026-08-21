@@ -1,0 +1,66 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Lo que se comparte entre la pantalla del encargo y la de Organizar.
+
+    Estos dos estaban en ThemeOrganizar.xaml, el segundo diccionario de tema de WPF -el
+    que el termometro no miraba-. Se portan aqui y no en Botones/Campos porque no son
+    controles de base: son piezas de las pantallas de Organizar, y tenerlos juntos dice de
+    donde vienen.
+  -->
+
+  <!-- ══ Chip de filtro ════════════════════════════════════════════════════════
+       Un ToggleButton que se rellena al estar activo. El rotulo lleva su propio color de
+       estado, asi que el filtro activo NO depende del color para leerse: tambien cambia
+       el relleno y el borde. -->
+  <ControlTheme x:Key="FiltroChip" TargetType="ToggleButton">
+    <Setter Property="FontSize" Value="11.5"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Padding" Value="9,3"/>
+    <Setter Property="Margin" Value="0,0,7,0"/>
+    <Setter Property="Foreground" Value="{StaticResource Neutral400}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="1" CornerRadius="7"
+                Padding="{TemplateBinding Padding}">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Opacity" Value="0.82"/>
+    </Style>
+    <Style Selector="^:checked /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource Accent800}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+    <Style Selector="^:disabled /template/ Border#b">
+      <Setter Property="Opacity" Value="0.4"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Rotulo de campo ═══════════════════════════════════════════════════════
+       El texto pequeno que va encima de cada caja.
+
+       En WPF heredaba de TextoRecortable, un estilo que le pone al TextBlock un tooltip
+       con su propio texto para cuando se recorta. Eso NO se hereda aqui: Avalonia si
+       distingue si el texto se ha recortado de verdad, asi que poner el tooltip a todo lo
+       que PUEDE recortarse -que es lo que hacia WPF, y luego lo cancelaba midiendo a
+       mano- sobra. Queda pendiente en su sitio, no colado dentro de este. -->
+  <ControlTheme x:Key="OrgLabel" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource Neutral500}"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="Margin" Value="0,0,0,4"/>
+  </ControlTheme>
+
+</ResourceDictionary>

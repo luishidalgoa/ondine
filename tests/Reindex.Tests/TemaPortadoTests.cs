@@ -77,10 +77,6 @@ public static class TemaPortadoTests
         ["OrgRow"] = "idem, va con el DataGrid",
         ["OrgGrid"] = "idem, va con el DataGrid",
 
-        // Estos dos no son de Organizar solo: los usa también la pantalla del encargo,
-        // que es la siguiente. Se portan con ella y salen de aquí.
-        ["FiltroChip"] = "lo necesita la pantalla del encargo; se porta con ella",
-        ["OrgLabel"] = "idem, lo necesita la pantalla del encargo",
     };
 
     public static void Todas()
