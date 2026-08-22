@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:o="clr-namespace:Ondine.Ava">
 
   <!--
     Los campos: caja de texto, casilla y desplegable.
@@ -160,6 +161,70 @@
          el raton se haya quedado parado encima de otra fila. -->
     <Style Selector="^:selected /template/ Border#b">
       <Setter Property="Background" Value="{StaticResource Accent900}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Caja de texto con icono ═══════════════════════════════════════════════
+       El CampoTexto: un TextBox de verdad con un dibujo a la izquierda. Va como estilo
+       implicito, igual que los demas campos, para que ponerlo en una pantalla sea escribir
+       el control y ya.
+
+       LO QUE NO SE PORTA, y conviene decirlo: en WPF este campo llevaba un «haz» de foco
+       -un degradado girando por el borde, con cache de mapa de bits y un desenfoque
+       encima-. Eso es maquinaria de WPF y su equivalente aqui seria una animacion escrita a
+       mano para un adorno. El foco se marca con el acento, igual que en el resto de campos
+       de esta interfaz: la pantalla queda coherente consigo misma, que importa mas que
+       quedar identica a la otra. -->
+  <ControlTheme x:Key="{x:Type o:CampoTexto}" TargetType="o:CampoTexto">
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
+    <Setter Property="Background" Value="{StaticResource Surface}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="10,0"/>
+    <Setter Property="Height" Value="34"/>
+    <Setter Property="MinWidth" Value="110"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="8">
+          <Grid Margin="{TemplateBinding Padding}" ColumnDefinitions="Auto,*">
+            <!-- Sin icono no se reserva su hueco: el texto empieza donde el de un campo
+                 normal. En WPF era un Trigger sobre Icono = null; aqui basta con atar la
+                 visibilidad a que haya algo que dibujar. -->
+            <Path Name="icono" Width="14" Height="14" Margin="0,0,8,0"
+                  VerticalAlignment="Center" Stretch="Uniform"
+                  Data="{TemplateBinding Icono}"
+                  Stroke="{StaticResource Neutral500}" StrokeThickness="1.4"
+                  StrokeJoin="Round"
+                  IsVisible="{Binding Icono, RelativeSource={RelativeSource TemplatedParent},
+                                      Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            <TextPresenter Name="PART_TextPresenter" Grid.Column="1"
+                           Text="{TemplateBinding Text, Mode=TwoWay}"
+                           CaretBrush="{TemplateBinding CaretBrush}"
+                           SelectionBrush="{StaticResource Accent800}"
+                           SelectionStart="{TemplateBinding SelectionStart}"
+                           SelectionEnd="{TemplateBinding SelectionEnd}"
+                           VerticalAlignment="Center"/>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="BorderBrush" Value="{StaticResource Neutral700}"/>
+    </Style>
+    <Style Selector="^:focus /template/ Border#b">
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+    <Style Selector="^:disabled /template/ Border#b">
+      <Setter Property="Opacity" Value="0.45"/>
     </Style>
   </ControlTheme>
 

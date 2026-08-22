@@ -139,6 +139,75 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// El panel de peliculas: los cuatro estados del rotulo.
+    ///
+    /// <para>
+    /// Es la pantalla mas simple del puerto —una carpeta y una accion— y aun asi tiene una
+    /// trampa: el rotulo cambia segun no haya carpeta, no haya videos, haya uno o haya
+    /// varios. Cuatro frases distintas para cuatro situaciones, y en castellano el singular
+    /// no es la plural con un uno delante. La unica manera de que se caiga una es no
+    /// mirarlas.
+    /// </para>
+    /// <para>
+    /// Tambien se mira que el CAMPO CON ICONO pinte su icono. Es un control propio y su
+    /// propiedad se registra distinto en Avalonia: si el enlace no la encuentra, el campo
+    /// sale igual pero sin dibujo, <b>y no da ningun error</b>.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerPeliculas(Window dueno)
+    {
+        var panel = new PeliculasPanel();
+        var v = new Window
+        {
+            Width = 640, Height = 420,
+            Content = panel,
+        };
+        v.Show(dueno);
+        await Task.Delay(300);
+
+        var ficheros = panel.GetVisualDescendants().OfType<TextBlock>()
+                            .FirstOrDefault(t => t.Name == "lblFicheros");
+        var boton = panel.GetVisualDescendants().OfType<Button>()
+                         .FirstOrDefault(b => b.Name == "btnOrdenar");
+
+        // Sin carpeta: se pide elegir una, y no hay nada que analizar.
+        panel.Poner("", []);
+        await Task.Delay(150);
+        var sinCarpeta = ficheros?.Text ?? "";
+        Dice(sinCarpeta.Length > 0, $"sin carpeta se dice que hay que elegir una ({sinCarpeta})");
+        Dice(boton?.IsEnabled == false, "y el boton de analizar esta apagado");
+
+        // Carpeta que existe pero sin videos: OTRA cosa distinta de no tener carpeta.
+        panel.Poner(Path.GetTempPath(), []);
+        await Task.Delay(150);
+        var sinVideos = ficheros?.Text ?? "";
+        Dice(sinVideos != sinCarpeta,
+            $"«no hay videos» no se dice igual que «elige carpeta» ({sinVideos})");
+        Dice(boton?.IsEnabled == false, "y sigue sin haber nada que analizar");
+
+        // Con una: el singular tiene su propia frase.
+        panel.Poner(Path.GetTempPath(), ["una.mkv"]);
+        await Task.Delay(150);
+        var conUna = ficheros?.Text ?? "";
+        Dice(boton?.IsEnabled == true, "con una pelicula el boton se enciende");
+
+        // Con varias: otra frase, no la misma con un numero.
+        panel.Poner(Path.GetTempPath(), ["una.mkv", "otra.mkv", "y otra.mkv"]);
+        await Task.Delay(150);
+        var conVarias = ficheros?.Text ?? "";
+        Dice(conVarias != conUna,
+            $"y con varias cambia la frase, no solo el numero ({conVarias})");
+        Dice(conVarias.Contains('3'), "con la cuenta dentro");
+
+        // El campo con icono: es un control propio y su propiedad se registra distinto.
+        var campo = panel.GetVisualDescendants().OfType<CampoTexto>().FirstOrDefault();
+        Dice(campo?.Icono is not null, "el campo de la carpeta lleva su icono");
+        Dice(campo?.Text == Path.GetTempPath(), "y la ruta puesta");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// El reproductor, con un video de verdad hecho al vuelo.
     ///
     /// <para>
