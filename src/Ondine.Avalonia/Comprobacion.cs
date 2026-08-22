@@ -139,6 +139,59 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// El panel de complementos: el indice que se retira y los tres estados de la derecha.
+    ///
+    /// <para>
+    /// Lo que se vigila es el <b>indice que se encoge</b>. A 290 px fijos, en un panel de 460
+    /// dejan al detalle 170: ahi la descripcion cae a seis lineas y los elementos se ven en
+    /// miniaturas sin titulo. Si al portar se rompiera, el panel estrecho no protesta —sale
+    /// apretado y punto—, y quien lo mire pensara que la pantalla es asi.
+    /// </para>
+    /// <para>
+    /// Y que solo haya UNA cosa encima a la vez. En WPF cada boton tocaba visibilidades por
+    /// su cuenta y se podia acabar con la lista y la tienda pintadas juntas; eso se resolvio
+    /// dejando que un solo sitio decida. Aqui se comprueba que sigue siendo asi.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerComplementos(Window dueno)
+    {
+        // Sin catalogo ni carpeta analizada: es el estado en que se abre normalmente.
+        var panel = new ComplementosPanel(() => new ComplementosPanel.EstadoDeOrganizar(null, [], ""));
+        var v = new Window { Width = 900, Height = 560, Content = panel };
+        v.Show(dueno);
+        await Task.Delay(400);
+
+        Control? Cual(string n) => panel.GetVisualDescendants().OfType<Control>()
+                                        .FirstOrDefault(c => c.Name == n);
+
+        // Ancho: con 900 px el indice esta puesto.
+        var rejilla = panel.GetVisualDescendants().OfType<Grid>().FirstOrDefault(g => g.Name == "rejilla");
+        Dice(Cual("cajaIndice")?.IsVisible == true, "con sitio, el indice de la izquierda esta");
+        Dice(rejilla?.ColumnDefinitions[0].Width.Value > 200,
+            $"y ocupa su columna ({rejilla?.ColumnDefinitions[0].Width.Value})");
+
+        // Estrecho: se retira. El indice sirve para SALTAR entre complementos, y con dos o
+        // tres eso se hace una vez; lo que se mira todo el rato es el detalle.
+        v.Width = 500;
+        await Task.Delay(400);
+        Dice(Cual("cajaIndice")?.IsVisible == false, "al estrecharse, el indice se retira");
+        Dice(rejilla?.ColumnDefinitions[0].Width.Value == 0,
+            "y su columna se queda a cero, sin dejar un hueco muerto");
+
+        v.Width = 900;
+        await Task.Delay(400);
+        Dice(Cual("cajaIndice")?.IsVisible == true, "y vuelve al ensancharse");
+
+        // Una sola cosa encima a la vez: sin complemento elegido, el hueco central dice lo
+        // que hay que hacer y ni la lista ni la tienda estan pintadas.
+        int encima = new[] { "lista", "listaTienda" }.Count(n => Cual(n)?.IsVisible == true);
+        Dice(encima == 0 && Cual("cajaEstado")?.IsVisible == true,
+            $"sin nada elegido solo esta el mensaje del medio ({encima} listas encima)");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// El panel de peliculas: los cuatro estados del rotulo.
     ///
     /// <para>

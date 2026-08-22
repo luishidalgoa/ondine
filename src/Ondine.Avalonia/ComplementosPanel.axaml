@@ -1,0 +1,314 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+             x:Class="Ondine.Ava.ComplementosPanel"
+             MinWidth="360"
+             Foreground="{StaticResource Text}" Background="Transparent">
+
+  <!-- Maestro-detalle y no una tabla ancha. Una tabla es para comparar muchas filas por sus
+       columnas; aqui hay pocos complementos y de cada uno importa LO SUYO, no como se compara
+       con los demas. La lista de la izquierda es el indice; a la derecha vive el que estes
+       mirando.
+
+       SIN fondo propio ni borde de tarjeta: eso era de cuando flotaba como ventana. Acoplado,
+       un fondo opaco recorta un rectangulo dentro de la ventana y lo convierte en una lamina
+       pegada encima. Dejandolo pasar, la luz de ambiente cruza tambien por detras y lo que se
+       ve es una ventana con una zona mas, no dos superficies distintas. -->
+  <!-- En Avalonia el estirado del contenido NO es del ListBox: es de cada ListBoxItem. En
+       WPF se ponia HorizontalContentAlignment en la lista y bajaba a los hijos; aqui hay que
+       decirlo con un estilo, o las filas quedan encogidas a su contenido y las insignias de
+       la derecha se juntan en el medio. -->
+  <UserControl.Styles>
+    <Style Selector="ListBoxItem">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Border Background="Transparent">
+    <!-- La columna del indice se encoge por codigo: se llega por el Grid, porque una
+         ColumnDefinition no es un control y FindControl no la alcanza. -->
+    <Grid Name="rejilla" RowDefinitions="Auto,*" ColumnDefinitions="290,*">
+
+      <!-- ══ cabecera ══ -->
+      <Grid Name="header" Grid.Row="0" Grid.ColumnSpan="2" Height="52" Background="Transparent">
+        <TextBlock Text="{i:T ComplementosTitulo}" FontSize="15" FontWeight="Medium"
+                   VerticalAlignment="Center" Margin="22,0,0,0"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Margin="0,0,12,0">
+          <Button Name="btnX" Theme="{StaticResource BtnGhostMuted}" Content="✕"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- ══ columna izquierda: el índice ══ -->
+      <Border Name="cajaIndice" Grid.Row="1" Grid.Column="0" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,1,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <StackPanel Grid.Row="0" Margin="16,16,16,8">
+            <TextBlock Text="{i:T ComplementosInstalados}" FontFamily="{StaticResource FontMono}"
+                       FontSize="10" Foreground="{StaticResource Neutral600}"/>
+          </StackPanel>
+
+          <ListBox Name="listaInstalados" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                   Margin="8,0,8,0"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="6,9">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding Nombre}" FontSize="13.5" Foreground="{StaticResource Text}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Donde}" FontFamily="{StaticResource FontMono}" FontSize="9.5"
+                               Margin="0,3,0,0" Foreground="{StaticResource Neutral600}"/>
+                  </StackPanel>
+                  <!-- El interruptor manda: un complemento apagado sigue instalado.
+                       Desinstalar para dejar de usarlo un rato es perder los ajustes. -->
+                  <CheckBox Grid.Column="1" VerticalAlignment="Center" Margin="8,0,2,0"
+                            IsChecked="{Binding Activo, Mode=TwoWay}"
+                            ToolTip.Tip="{i:T ComplementosActivar}"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <!-- Lo que no pudo entrar, al fondo y en aviso. Ni escondido ni robando
+               el sitio de lo que sí funciona. -->
+          <StackPanel Name="cajaDescartados" Grid.Row="2" IsVisible="False"
+                      Margin="16,10,16,14">
+            <TextBlock Text="{i:T ComplementosDescartados}" FontFamily="{StaticResource FontMono}"
+                       FontSize="9.5" Foreground="{StaticResource Accent300}" Margin="0,0,0,6"/>
+            <ItemsControl Name="listaDescartados">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,4"
+                             Foreground="{StaticResource Neutral600}" Text="{Binding}"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ══ columna derecha: la página del que estés mirando ══ -->
+      <Border Grid.Row="1" Grid.Column="1" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <!-- la ficha del complemento -->
+          <StackPanel Name="ficha" Grid.Row="0" Margin="26,22,26,0" IsVisible="False">
+            <!-- Un solo TextBlock con dos Run y no dos TextBlock en fila: así el
+                 nombre y la versión comparten línea base de VERDAD. Alinearlos por
+                 su caja los deja bailando cuando cambia el tamaño de uno.
+                 («Baseline» NO es un valor de VerticalAlignment en WPF -eso es de
+                 CSS-, y ponerlo revienta la ventana al abrirse, no al compilar.) -->
+            <!-- Un solo TextBlock y no dos en fila: asi el nombre y la version comparten
+                 linea base DE VERDAD; alinearlos por su caja los deja bailando cuando cambia
+                 el tamano de uno. Los dos trozos se montan en el code-behind porque en
+                 Avalonia un Run no es un control y FindControl no lo alcanza — con un nombre
+                 puesto en el XAML no daria error, simplemente no se encontraria. -->
+            <TextBlock Name="lblFicha"/>
+            <TextBlock Name="lblDescripcion" FontSize="13" Margin="0,7,0,0" MaxWidth="560"
+                       HorizontalAlignment="Left" TextWrapping="Wrap"
+                       Foreground="{StaticResource Neutral400}"/>
+
+            <!-- Desinstalar va aquí, con la ficha, y en tono menor: es una acción del
+                 complemento que estás mirando, no del panel. Y no compite con lo que
+                 se viene a hacer aquí, que es usarlo. -->
+            <Button Name="btnDesinstalar" Theme="{StaticResource BtnGhostMuted}" FontSize="11.5"
+                    Padding="10,4" Margin="0,12,0,0" HorizontalAlignment="Left"
+                    IsVisible="False" Click="OnDesinstalar"
+                    Content="{i:T ComplementosDesinstalar}"/>
+
+            <!-- El permiso del modelo. Solo sale si el complemento lo declara: ofrecer
+                 un permiso que no hace falta es la forma más rápida de que se conceda
+                 sin leerlo. Empieza apagado, siempre. -->
+            <Border Name="cajaPermisoModelo" Background="{StaticResource Field}" CornerRadius="8"
+                    Padding="12,10" Margin="0,14,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                    IsVisible="False">
+              <StackPanel>
+                <CheckBox Name="chkPermisoModelo" Content="{i:T ComplementoPermisoModelo}" FontSize="12.5"/>
+                <TextBlock Name="lblPermisoModelo" TextWrapping="Wrap" FontSize="11"
+                           Margin="24,5,0,0" Foreground="{StaticResource Neutral600}"
+                           Text="{i:T ComplementoPermisoModeloAyuda}"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- la fuente: solo sale si el complemento la pide -->
+          <Grid Name="zonaFuente" Grid.Row="1" Margin="26,20,26,0" IsVisible="False">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Name="txtFuente" Grid.Column="0" Height="38" FontSize="13"/>
+            <Button Name="btnListar" Grid.Column="1" Theme="{StaticResource BtnSecondary}"
+                    Height="38" MinWidth="104" Margin="10,0,0,0" Content="{i:T ComplementosListar}"/>
+          </Grid>
+
+          <!-- los elementos, o el estado en que esté -->
+          <Grid Grid.Row="2" Margin="26,18,26,0">
+            <StackPanel Name="cajaEstado" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        MaxWidth="380">
+              <TextBlock Name="lblVacioTitulo" FontSize="14.5" TextAlignment="Center"
+                         Foreground="{StaticResource Neutral400}"/>
+              <TextBlock Name="lblVacio" FontSize="12.5" TextAlignment="Center" Margin="0,8,0,0"
+                         TextWrapping="Wrap" Foreground="{StaticResource Neutral600}"/>
+              <Button Name="btnAccionVacio" Theme="{StaticResource BtnSecondary}" Margin="0,16,0,0"
+                      HorizontalAlignment="Center" MinWidth="140" IsVisible="False"/>
+            </StackPanel>
+
+            <ListBox Name="lista" Background="Transparent" BorderThickness="0"
+                       IsVisible="False"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="2,6">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <CheckBox Grid.Column="0" IsChecked="{Binding Marcado, Mode=TwoWay}"
+                              VerticalAlignment="Center" Margin="2,0,12,0"/>
+
+                    <!-- El hueco de la miniatura solo se reserva si ALGUNA la trae.
+                         Un rectángulo gris en todas las filas parece roto, y no
+                         informa de nada. -->
+                    <Border Grid.Column="1" Width="104" Height="58" CornerRadius="5"
+                            Margin="0,0,14,0" Background="#12141A"
+                            IsVisible="{Binding HuecoMiniatura}">
+                      <!-- Imagen y no la cadena: Avalonia no convierte una ruta ni una URL en imagen
+                           sola, al contrario que WPF. Ver Miniaturas. -->
+                      <Image Source="{Binding Imagen}" Stretch="UniformToFill"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                      <!-- Se recorta con puntos suspensivos porque el panel se estrecha, y
+                           entonces el titulo -que es lo unico que identifica el video- deja de
+                           verse entero. El ToolTip lo devuelve al pasar por encima. -->
+                      <TextBlock Text="{Binding Titulo}" FontSize="13.5"
+                                 Foreground="{StaticResource Text}"
+                                 TextTrimming="CharacterEllipsis"
+                                 ToolTip.Tip="{Binding TituloEntero}"/>
+                      <TextBlock Text="{Binding Detalle}" FontFamily="{StaticResource FontMono}"
+                                 FontSize="10.5" Margin="0,4,0,0"
+                                 Foreground="{StaticResource Neutral600}"/>
+                    </StackPanel>
+
+                    <!-- 6 y no 999: la pildora entera desentonaba con el resto del panel, donde
+                             todo va a 5-8. -->
+                    <Border Grid.Column="3" CornerRadius="6" Padding="10,3" VerticalAlignment="Center"
+                            Margin="12,0,2,0" Background="{Binding ColorFondo}">
+                      <TextBlock Text="{Binding Veredicto}" FontSize="10.5" FontWeight="Medium"
+                                 Foreground="{Binding ColorTexto}"/>
+                    </Border>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- los disponibles, en el mismo hueco -->
+            <ListBox Name="listaTienda" Background="Transparent" BorderThickness="0"
+                       IsVisible="False"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="2,9">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Nombre}" FontSize="14" FontWeight="Medium"
+                                   Foreground="{StaticResource Text}"/>
+                        <TextBlock Text="{Binding Version}" FontFamily="{StaticResource FontMono}"
+                                   FontSize="10.5" Margin="9,3,0,0"
+                                   Foreground="{StaticResource Neutral600}"/>
+                      </StackPanel>
+                      <TextBlock Text="{Binding Descripcion}" FontSize="12.5" TextWrapping="Wrap"
+                                 Margin="0,5,16,0" Foreground="{StaticResource Neutral500}"/>
+                      <TextBlock Text="{Binding Donde}" FontFamily="{StaticResource FontMono}"
+                                 FontSize="9.5" Margin="0,5,0,0"
+                                 Foreground="{StaticResource Neutral600}"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Theme="{StaticResource BtnSecondary}" Height="32"
+                            MinWidth="104" VerticalAlignment="Center" Margin="10,0,2,0"
+                            Content="{Binding Accion}" IsEnabled="{Binding SePuede}"
+                            Click="OnInstalar"/>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
+
+          <!-- ══ pie ══ -->
+          <Border Grid.Row="3" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0"
+                  Padding="26,14">
+            <!-- DOS FILAS, no cinco acciones en línea.
+                 Antes iban las cinco en una tira y en un panel de 460 px no caben:
+                 ningún reflujo arregla eso, porque el problema no era colocarlas
+                 mejor sino que no hay cinco cosas igual de importantes. Aquí solo
+                 se viene a hacer una — traer lo marcado.
+
+                 Arriba, lo que habla de la SELECCIÓN: cuántos van y cómo cambiarla.
+                 Son texto, no botones, porque no son el final de nada.
+                 Abajo, las dos únicas acciones que cierran la tarea. -->
+            <StackPanel>
+              <!-- Fila completa y seleccionable: un error con varios IDs no
+                   comparte ancho con acciones y se puede copiar para diagnosticarlo. -->
+              <TextBox Name="lblEstado" IsReadOnly="True" VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                       FontSize="11.5" TextWrapping="Wrap" AcceptsReturn="True"
+                       Background="Transparent" BorderThickness="0" Padding="0"
+                       Foreground="{StaticResource Neutral600}" Margin="0,0,0,10"/>
+
+              <ProgressBar Name="barProgresoComplemento" Minimum="0" Maximum="1"
+                           Value="0" IsVisible="False" Margin="0,0,0,12"/>
+
+              <!-- Seleccionar no compite con el diagnóstico ni con Descargar. -->
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
+                <Button Name="btnSoloFaltan" Theme="{StaticResource BtnGhost}" FontSize="11.5"
+                        Padding="6,2" Content="{i:T ComplementosMarcarLosQueFaltan}"/>
+                <Button Name="btnNinguno" Theme="{StaticResource BtnGhost}" FontSize="11.5"
+                        Padding="6,2" Margin="2,0,0,0" Content="{i:T ComplementosDesmarcar}"/>
+              </StackPanel>
+
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Buscar complementos no es una acción del pie: no termina nada,
+                     lleva a otro sitio. Se queda a la izquierda y en tono menor
+                     para no competir con la que sí cierra la tarea. -->
+                <Button Name="btnDisponibles" Grid.Column="0" Theme="{StaticResource BtnGhost}"
+                        FontSize="12" Padding="6,4" Content="{i:T ComplementosDisponibles}"/>
+
+                <Button Name="btnCerrar" Grid.Column="1" Theme="{StaticResource BtnGhost}"
+                        FontSize="12" HorizontalAlignment="Right" Margin="0,0,8,0"
+                        Content="{i:T Cerrar}"/>
+
+                <!-- La única primaria, y la única con ancho propio. Si el pie se
+                     estrecha, lo que se encoge es todo lo demás. -->
+                <Button Name="btnTraer" Grid.Column="2" Theme="{StaticResource BtnPrimary}"
+                        MinWidth="150" Content="{i:T ComplementosTraer}" IsEnabled="False"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

@@ -34,9 +34,10 @@ public partial class MainWindow : Window
                     await Comprobacion.CorrerPreferencias(this);
                     await Comprobacion.CorrerCatalogo(this);
                     await Comprobacion.CorrerPeliculas(this);
+                    await Comprobacion.CorrerComplementos(this);
                     await Comprobacion.CorrerReproductor(this);
                 }
-                catch (Exception ex) { Comprobacion.Resultados.Add($"REVENTO: {ex.Message}"); }
+                catch (Exception ex) { Comprobacion.Resultados.Add("REVENTO: " + ex); }
                 Close();
             }, Avalonia.Threading.DispatcherPriority.Background);
     }
