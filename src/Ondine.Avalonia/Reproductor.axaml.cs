@@ -154,7 +154,7 @@ public partial class Reproductor : Window
     {
         try
         {
-            Core.Initialize();
+            MotorDeVideo.Arrancar();
             _vlc = new LibVLC();
             _mp = new MediaPlayer(_vlc);
             this.FindControl<LibVLCSharp.Avalonia.VideoView>("video")!.MediaPlayer = _mp;

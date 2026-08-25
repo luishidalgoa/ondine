@@ -29,19 +29,53 @@ public sealed partial class Textos
     /// El nombre del paquete NO se traduce: es un identificador que se teclea tal cual.
     /// </para>
     /// </summary>
-    public string ReproductorFaltaLibVlc => Idioma.Elegir(
-        """
-        The video engine (libVLC) is not installed on this system.
+    public string ReproductorFaltaLibVlc => FaltaLibVlcEn(OperatingSystem.IsMacOS());
 
-        On Linux Mint, Ubuntu or Debian, install it with:
-            sudo apt install vlc
-        """,
-        """
-        El motor de vídeo (libVLC) no está instalado en este sistema.
+    /// <summary>
+    /// El mismo aviso, para el sistema que se le diga.
+    ///
+    /// <para>
+    /// Existe con parámetro por dos razones. Una, que decía «sudo apt install vlc» en todos
+    /// los sistemas, y en un Mac esa orden <b>no existe</b>: quien la leyera se quedaba sin
+    /// saber qué hacer, que es exactamente lo que este mensaje venía a evitar. Y dos, que así
+    /// se pueden comprobar las dos versiones desde cualquier máquina.
+    /// </para>
+    /// </summary>
+    internal string FaltaLibVlcEn(bool mac) => mac
+        ? Idioma.Elegir(
+            """
+            The video engine (libVLC) is not installed on this Mac.
 
-        En Linux Mint, Ubuntu o Debian se instala con:
-            sudo apt install vlc
-        """);
+            Ondine uses the one that comes with VLC, which VideoLAN keeps up to date for
+            both Intel and Apple chips. Install it either way:
+
+                brew install --cask vlc
+
+            or download VLC from videolan.org and drag it to Applications.
+            """,
+            """
+            El motor de vídeo (libVLC) no está instalado en este Mac.
+
+            Ondine usa la que trae VLC, que VideoLAN mantiene al día tanto para Intel como
+            para los chips de Apple. Se instala de cualquiera de las dos formas:
+
+                brew install --cask vlc
+
+            o bajando VLC de videolan.org y arrastrándolo a Aplicaciones.
+            """)
+        : Idioma.Elegir(
+            """
+            The video engine (libVLC) is not installed on this system.
+
+            On Linux Mint, Ubuntu or Debian, install it with:
+                sudo apt install vlc
+            """,
+            """
+            El motor de vídeo (libVLC) no está instalado en este sistema.
+
+            En Linux Mint, Ubuntu o Debian se instala con:
+                sudo apt install vlc
+            """);
 
     // ── Plan B cuando el códec no se puede decodificar ───────────────────────
     public string ReproductorAbrirEnSistema =>

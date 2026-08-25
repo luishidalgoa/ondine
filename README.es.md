@@ -210,18 +210,24 @@ Release. Si el contrato no se cumple, no se publica nada.
 
 | Carpeta | Qué es |
 |---|---|
-| `src/Ondine/` | App C#/WPF. `Engine.cs` es el motor (FFmpeg); el resto es interfaz y auto-update. |
-| `src/Ondine.Cli/` | Herramienta de terminal multiplataforma. Enlaza los fuentes del motor, no los copia. |
+| `src/Ondine.Core/` | El motor, aparte. FFmpeg, catálogos, reglas. Sin interfaz. |
+| `src/Ondine/` | App C#/WPF para Windows, y la auto-actualización. |
+| `src/Ondine.Avalonia/` | La misma app sobre Avalonia, para Linux y macOS. Mismo motor y mismos textos. |
+| `src/Ondine.Cli/` | Herramienta de terminal multiplataforma. Referencia el motor, no lo copia. |
 | `installer/` | Script de Inno Setup. |
+| `empaquetado/` | El `.deb`, el AppImage y el `.dmg`. Ver [docs/empaquetado.md](docs/empaquetado.md). |
 | `web/` | El sitio de [ondine.hdglabs.com](https://ondine.hdglabs.com), sobre Astro. |
 | `spot/` | El spot de cuarenta y cuatro segundos, hecho con composiciones HTML. |
 | `make-icon.ps1` | Genera el icono con GDI+. |
 | `build.ps1` | Compila todo de punta a punta. |
 | `legacy/` | La versión original en PowerShell, con la que nació el proyecto. |
 
-> **La interfaz gráfica es solo para Windows** porque usa **WPF**, que no tiene runtime en Linux ni macOS.
-> El motor (`Engine`, `Estimator`, `RenameRule`) sí es portable, y es justo lo que reutiliza la
-> herramienta de terminal. Llevar la interfaz completa a Linux/macOS exigiría migrarla a **Avalonia**.
+> **Hay dos interfaces gráficas, y es a propósito.** La original usa **WPF**, que no tiene runtime
+> fuera de Windows, así que se portó entera a **Avalonia** pantalla por pantalla — compartiendo con
+> la de WPF el motor, los colores del tema y el catálogo de textos completo. Conviven mientras se
+> rueda la nueva: cambiar las dieciocho pantallas de golpe habría dejado la app sin poder publicarse
+> durante semanas. El estudio completo, lo que costó y lo que no tiene equivalente, está en
+> [docs/avalonia.md](docs/avalonia.md).
 
 ## Cómo funciona
 

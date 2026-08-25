@@ -131,8 +131,12 @@ public static class Program
         Ondine.Reindex.Tests.ColoreadoDeJsonTests.Todas();
         Ondine.Reindex.Tests.PosicionEnLaBarraTests.Todas();
         Ondine.Reindex.Tests.PapeleraDelSistemaTests.Todas();
+        Ondine.Reindex.Tests.PapeleraDeMacTests.Todas();
+        Ondine.Reindex.Tests.RutaDeLibVlcTests.Todas();
+        Ondine.Reindex.Tests.FfmpegEnMacTests.Todas();
         Ondine.Reindex.Tests.RecursosQueNoExistenTests.Todas();
         Ondine.Reindex.Tests.PaqueteDeEscritorioTests.Todas();
+        Ondine.Reindex.Tests.PaquetesPortablesTests.Todas();
         Ondine.Reindex.Tests.BandasDeGrupoTests.Todas();
         Ondine.Reindex.Tests.FiltroDeFilasTests.Todas();
         Ondine.Reindex.Tests.RotuloDeColaTests.Todas();

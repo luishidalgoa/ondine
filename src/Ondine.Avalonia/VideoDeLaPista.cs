@@ -47,7 +47,7 @@ internal sealed class VideoDeLaPista : IDisposable
         if (_mp is not null) return true;
         try
         {
-            Core.Initialize();
+            MotorDeVideo.Arrancar();
             _vlc = new LibVLC();
             _mp = new MediaPlayer(_vlc);
             _vista.MediaPlayer = _mp;

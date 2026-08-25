@@ -206,9 +206,61 @@ primer paquete con binarios nativos del proyecto y entró con permiso explícito
   el desplazamiento y el teclado resueltos, y rehacerla para cambiar cuatro colores es mucho código
   por poco. Los botones sí la necesitaban, porque el haz del foco no existe en ningún tema de serie.
 
-Quedan el resto de pantallas y el empaquetado. Las dos
-interfaces conviven mientras dure: cambiar las dieciocho pantallas de golpe habría dejado la app
-sin poder publicarse durante semanas.
+- **Fase 4** ✅ — **las dieciocho pantallas portadas**, y la última fue la ventana principal, que
+  es la que aloja a las otras tres. Lo que costó más de lo que dice cualquier tabla de
+  equivalencias, por orden:
+
+  **Los modales son asíncronos**, y eso se contagia. `ShowDialog` devuelve una tarea, así que todo
+  método que pregunte algo pasa a `async` — y con él, quien le llama. En `OrganizarView` fueron
+  decenas. Donde se ve mejor es al cerrar la ventana con una compresión en marcha: en WPF se
+  preguntaba dentro del propio aviso de cierre y se respondía a tiempo de cancelarlo; aquí hay que
+  **cancelar el cierre siempre**, preguntar, y cerrar otra vez con la respuesta ya sabida.
+
+  **Un `ControlTheme` sustituye, no hereda.** Sin `BasedOn`, el `DataGrid` se quedó sin plantilla y
+  la tabla salió **completamente vacía, sin un solo error**. Y el remedio tiene su propio filo: un
+  `Border` no tiene tema de serie, así que ponerle `BasedOn` revienta al abrir.
+
+  **`InitializeComponent()` y no `AvaloniaXamlLoader.Load(this)`**: solo el primero rellena los
+  campos de los elementos con nombre. El segundo compila igual y falla en el primer control que se
+  toque.
+
+  **Los disparadores por dato no existen.** Un `DataTrigger` pasa a ser una clase atada a un
+  booleano, y eso obligó a bajar al motor tres propiedades de la fila (`EstadoEsOk`,
+  `EstadoEsError`, `EstadoEsEnMarcha`). El aviso de cambio tiene que nombrarlas a las tres o la
+  fila se queda con la clase anterior puesta.
+
+  **Y lo que no tiene equivalente, dicho y no inventado:** el tope de fotogramas de una animación
+  (`Timeline.DesiredFrameRate`) y el nivel de aceleración gráfica (`RenderCapability.Tier`). Del
+  segundo se quitó la línea del registro en vez de traducirlo a un número: un cero falso manda a
+  buscar un problema de GPU que no existe.
+
+  Sobre todo esto hay una red que no estaba prevista y ha valido más que ninguna otra cosa: el
+  arranque con `--auto`, que abre cada pantalla, mira lo que quedó **pintado** y se cierra. Ciento
+  cincuenta y cuatro comprobaciones. Cazó, entre otras, un `Cursor="SizeWE"` que en Avalonia se
+  llama `SizeWestEast`: compilaba y reventaba al abrir la ventana.
+
+- **Fase 5** ✅ — **empaquetado y piezas de sistema**. El detalle está en
+  [`empaquetado.md`](empaquetado.md); lo que conviene saber desde aquí:
+
+  **La papelera se arregló dos veces**, y las dos por lo mismo. Era un hueco que la ventana de WPF
+  rellenaba al arrancar, y la interfaz nueva no lo rellenaba: sin nadie enchufado el motor borraba
+  sin más. La segunda vez fue un piso más abajo —la llamada de Windows— y la tercera era un
+  comentario que decía «en Linux y macOS» sobre una implementación que solo valía para Linux:
+  `~/.local/share/Trash` en un Mac es una carpeta oculta cualquiera que el Finder no mira. Ahora
+  las tres vienen puestas de fábrica y hay una prueba que se planta si alguna se queda vacía.
+
+  **Dos fallos que solo se dan en la app empaquetada**, los dos de macOS: una app abierta desde el
+  Finder no hereda el PATH del terminal (así que el ffmpeg de Homebrew «no está instalado»), y un
+  binario sin firmar **no se ejecuta** en los Mac con chip de Apple.
+
+  **Y el paquete de libvlc para Mac no sirve**: 2018, solo Intel y sin decodificadores. Se vio
+  mirando dentro, no leyendo la descripción.
+
+Las dos interfaces conviven mientras dure la rodadura: cambiar las dieciocho pantallas de golpe
+habría dejado la app sin poder publicarse durante semanas.
+
+**Lo único que queda no lo puede hacer una máquina:** abrir la app en un Mint de verdad y en un Mac
+de verdad. Ningún runner de CI tiene escritorio.
 
 ## La alternativa que existe, y por qué no la propongo
 
@@ -218,4 +270,5 @@ nada — y la decisión de hornear la clave de TMDb ya está condicionada exacta
 dejo apuntada porque existe, no porque la recomiende.
 
 ---
-*Estudio, 21/08/2026. Nada de esto se ha implementado.*
+*Estudio del 21/08/2026. **Ya no es un estudio:** las seis fases están hechas y lo que se aprendió
+haciéndolas está apuntado arriba, junto a lo que se planeó. Última revisión: 25/08/2026.*

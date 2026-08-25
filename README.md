@@ -221,19 +221,24 @@ the Release. If the contract is not met, nothing gets published.
 
 | Folder | What it is |
 |---|---|
-| `src/Ondine/` | C#/WPF app. `Engine.cs` is the engine (FFmpeg); the rest is interface and auto-update. |
-| `src/Ondine.Cli/` | Cross-platform terminal tool. It links the engine sources, it does not copy them. |
+| `src/Ondine.Core/` | The engine, on its own. FFmpeg, catalogues, rules. No interface. |
+| `src/Ondine/` | C#/WPF app for Windows, plus the auto-update. |
+| `src/Ondine.Avalonia/` | The same app on Avalonia, for Linux and macOS. Same engine, same texts. |
+| `src/Ondine.Cli/` | Cross-platform terminal tool. It references the engine, it does not copy it. |
 | `installer/` | Inno Setup script. |
+| `empaquetado/` | The `.deb`, the AppImage and the `.dmg`. See [docs/empaquetado.md](docs/empaquetado.md). |
 | `web/` | The site at [ondine.hdglabs.com](https://ondine.hdglabs.com), on Astro. |
 | `spot/` | The forty-four second spot, built as HTML compositions. |
 | `make-icon.ps1` | Generates the icon with GDI+. |
 | `build.ps1` | Builds everything end to end. |
 | `legacy/` | The original PowerShell version the project was born as. |
 
-> **The graphical interface is Windows only** because it uses **WPF**, which has no runtime on
-> Linux or macOS. The engine (`Engine`, `Estimator`, `RenameRule`) is portable, and that is exactly
-> what the terminal tool reuses. Bringing the full interface to Linux and macOS would mean porting
-> it to **Avalonia**.
+> **There are two graphical interfaces, and that is on purpose.** The original one uses **WPF**,
+> which has no runtime outside Windows, so the whole thing was ported to **Avalonia** screen by
+> screen — sharing the engine, the theme colours and the entire text catalogue with the WPF one.
+> They live side by side while the new one is being run in: swapping eighteen screens at once would
+> have left the app unpublishable for weeks. The full study, what it cost and what has no
+> equivalent, is in [docs/avalonia.md](docs/avalonia.md).
 
 ## How it works
 
