@@ -2136,7 +2136,7 @@ public partial class MainWindow : Window
             var installer = await Updater.DownloadAsync(_pendingUpdate, progress);
             lblUpdate.Text = Textos.Instancia.MainDescargaLista;
             lblProg.Text = Textos.Instancia.MainAbriendoInstalador;
-            Updater.LaunchInstallerAndExit(installer);
+            Updater.LaunchInstallerAndExit(installer, _pendingUpdate.Paquete);
         }
         catch (Exception ex)
         {

@@ -947,6 +947,37 @@ public sealed partial class Textos
 
     public string MainAbriendoInstalador => Idioma.Elegir("Opening the installer…", "Abriendo el instalador…");
 
+    /// <summary>
+    /// Qué hacer con lo descargado cuando el paquete NO se instala solo.
+    ///
+    /// <para>
+    /// Solo el instalador de Windows se ejecuta y se encarga él. Un <c>.deb</c> pide permisos
+    /// de administrador, un <c>.dmg</c> se monta y se arrastra y un AppImage se marca
+    /// ejecutable: ninguno de los tres es «lanzar y salir». Lanzarlos de todas formas es lo
+    /// que acabó, en Linux, con el gestor de archivadores diciendo que no podía abrir el
+    /// fichero — y con Ondine cerrándose detrás.
+    /// </para>
+    /// <para>
+    /// Así que se descarga, se enseña dónde está y se dice qué hacer. {0} es el fichero.
+    /// </para>
+    /// </summary>
+    public string MainDescargaHechaDeb => Idioma.Elegir(
+        "«{0}» has been downloaded and the folder is now open. Double-click it to install this version; your library and your settings stay as they are.",
+        "«{0}» está descargado y se ha abierto su carpeta. Haz doble clic en él para instalar esta versión: tu biblioteca y tus ajustes se quedan como están.");
+
+    public string MainDescargaHechaAppImage => Idioma.Elegir(
+        "«{0}» has been downloaded and the folder is now open. Mark it executable and open it; you can then delete the old one.",
+        "«{0}» está descargado y se ha abierto su carpeta. Márcalo como ejecutable y ábrelo: después puedes borrar el anterior.");
+
+    public string MainDescargaHechaDmg => Idioma.Elegir(
+        "«{0}» has been downloaded and the folder is now open. Open it and drag Ondine onto Applications, replacing the one that is there.",
+        "«{0}» está descargado y se ha abierto su carpeta. Ábrelo y arrastra Ondine a Aplicaciones, encima de la que ya está.");
+
+    /// <summary>El rótulo de la barra cuando lo descargado se queda esperando al usuario.</summary>
+    public string MainDescargaEsperandoATi => Idioma.Elegir(
+        "Downloaded — it is up to you now",
+        "Descargado · te toca a ti");
+
     public string MainDescargaFallo =>
         Idioma.Elegir("The update could not be downloaded.", "No se pudo descargar la actualización.");
 

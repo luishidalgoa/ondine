@@ -137,6 +137,8 @@ public static class Program
         Ondine.Reindex.Tests.RecursosQueNoExistenTests.Todas();
         Ondine.Reindex.Tests.PaqueteDeEscritorioTests.Todas();
         Ondine.Reindex.Tests.PaquetesPortablesTests.Todas();
+        Ondine.Reindex.Tests.ActualizarEnCadaSistemaTests.Todas();
+        Ondine.Reindex.Tests.NombreValidoEnTodasPartesTests.Todas();
         Ondine.Reindex.Tests.BandasDeGrupoTests.Todas();
         Ondine.Reindex.Tests.FiltroDeFilasTests.Todas();
         Ondine.Reindex.Tests.RotuloDeColaTests.Todas();

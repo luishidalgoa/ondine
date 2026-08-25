@@ -458,7 +458,9 @@ public static class ReindexStore
 
     private static string NombreSeguro(string s)
     {
-        foreach (var ch in Path.GetInvalidFileNameChars()) s = s.Replace(ch, '-');
+        // La lista fija y no la del sistema: en Linux esa solo trae «/», así que un título
+        // con dos puntos acababa en el nombre del fichero. Ver NombreDeFichero.
+        s = NombreDeFichero.Limpiar(s, '-');
         return s.Trim().Length == 0 ? "catalogo" : s.Trim();
     }
 

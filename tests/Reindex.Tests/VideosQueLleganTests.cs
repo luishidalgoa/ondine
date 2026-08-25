@@ -34,6 +34,7 @@ public static class VideosQueLleganTests
             LasCarpetasSeRecorrenSoloSiSePide(raiz);
             NiRepetidosNiDesordenados(raiz);
             LoQueNoExisteNoRompe(raiz);
+            LosArgumentosDeArranque(raiz);
         }
         finally { try { Directory.Delete(raiz, true); } catch { } }
     }
@@ -79,6 +80,39 @@ public static class VideosQueLleganTests
             "soltar una carpeta Y un fichero de dentro no lo mete dos veces");
         Program.Assert(r.SequenceEqual(r.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
             "y lo que sale viene ordenado, no en el orden en que el sistema los fue encontrando");
+    }
+
+    /// <summary>
+    /// Los ficheros con los que se abre la aplicación.
+    ///
+    /// <para>
+    /// El paquete de Linux <b>promete</b> esta vía: su <c>.desktop</c> declara los tipos de
+    /// vídeo que Ondine abre, así que sale en «Abrir con». La interfaz de Avalonia no leía los
+    /// argumentos —la de WPF sí—, y elegir un vídeo desde el gestor de archivos abría una
+    /// ventana vacía.
+    /// </para>
+    /// <para>
+    /// Lo que se prueba aquí es el filtro, y tiene un detalle que se cuela solo: el código de
+    /// WPF descartaba lo que empieza por «/» porque en Windows eso es un modificador. En Linux
+    /// y macOS es el comienzo de <b>toda</b> ruta absoluta, así que copiar esa línea tal cual
+    /// habría dejado fuera todos los ficheros.
+    /// </para>
+    /// </summary>
+    private static void LosArgumentosDeArranque(string raiz)
+    {
+        var video = Path.Combine(raiz, "suelto.mkv");
+
+        var r = VideosQueLlegan.DeLosArgumentos(["--auto", "-v", video]);
+        Program.Assert(r.Count == 1, "de los argumentos entra el vídeo y no los modificadores");
+
+        // La ruta absoluta al estilo de Linux, aunque esto se ejecute en Windows: lo que se
+        // comprueba es que el filtro no la descarte por empezar con barra.
+        var comoEnLinux = VideosQueLlegan
+            .DeLosArgumentos(["/home/luis/peli.mkv"])
+            .Count;
+        bool descartada = !OperatingSystem.IsWindows() && comoEnLinux == 0;
+        Program.Assert(!descartada,
+            "una ruta absoluta de Linux no se descarta por empezar por «/», que allí no es un modificador");
     }
 
     /// <summary>
