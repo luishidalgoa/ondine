@@ -484,9 +484,20 @@ public sealed partial class Textos
 
     public string MainPrevisualizar10s => Idioma.Elegir("Preview 10 s", "Previsualizar 10 s");
 
+    /// <summary>
+    /// El globo del boton de la previa.
+    ///
+    /// <para>
+    /// Decia «con los ajustes actuales», y el Esmero es uno de ellos y NO se aplica: la previa
+    /// codifica siempre lo mas rapido posible, a proposito. Prometer un ajuste que no se aplica
+    /// es la misma familia de fallo que el «Sin tocar» del audio — no da error y solo se
+    /// descubre comparando resultados—, asi que aqui se cambia lo que se promete, no lo que se
+    /// hace.
+    /// </para>
+    /// </summary>
     public string MainPrevisualizarTip => Idioma.Elegir(
-        "Renders 10 s with the current settings so you can see the result. It deletes itself.",
-        "Renderiza 10 s con los ajustes actuales para ver el resultado. Se borra sola.");
+        "Renders 10 s with your codec, quality and resolution so you can see how it will look. It always encodes as fast as possible, so it ignores Effort and tells you nothing about the final time or size — «Measure» is for that. It deletes itself.",
+        "Renderiza 10 s con tu códec, calidad y resolución para ver cómo va a quedar. Codifica siempre lo más rápido posible, así que no respeta el Esmero ni dice nada del tiempo ni del tamaño finales — para eso está «Medir». Se borra sola.");
 
     // ── Estimación ──────────────────────────────────────────────────────────
     public string MainEstTamano => Idioma.Elegir("ESTIMATED SIZE", "TAMAÑO ESTIMADO");

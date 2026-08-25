@@ -36,13 +36,15 @@ public enum Velocidad
 /// </summary>
 public static class VelocidadDelCodificador
 {
-    /// <summary>Con qué bandera se le pide a esta familia.</summary>
-    public static string Bandera(string encoder) => encoder switch
-    {
-        "libaom-av1" or "libvpx-vp9" => "-cpu-used",
-        "hevc_amf" or "h264_amf" or "av1_amf" => "-quality",
-        _ => "-preset",
-    };
+    // Aqui habia un «Bandera(encoder)» que devolvia la bandera de cada familia, y no lo llamaba
+    // nadie en todo src/: la bandera ya sale de «Para(...)[0]», que es la MISMA lista y no puede
+    // desincronizarse de los valores que acompana. Un segundo mapa por familia, sin usar, solo
+    // sirve para que alguien lo actualice creyendo que arregla algo — o para que no lo actualice
+    // y quede mintiendo.
+    //
+    // (El «BanderaDe» de VelocidadDelCodificadorTests es otra cosa y se queda: alli es un oraculo
+    // ESCRITO A MANO desde la documentacion de cada codificador. Sustituirlo por esta funcion
+    // convertiria su comprobacion en «Para[0] == Para[0]», que no comprueba nada.)
 
     public static IReadOnlyList<string> Para(string encoder, Velocidad v)
     {

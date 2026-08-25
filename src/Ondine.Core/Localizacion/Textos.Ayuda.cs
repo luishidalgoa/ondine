@@ -277,6 +277,25 @@ public sealed partial class Textos
         "dice. Nunca se cambia en silencio. El desplegable del caudal, al lado, solo cuenta " +
         "cuando se recodifica: con «Sin tocar» no hay nada que fijar y se apaga.");
 
+    public string AyudaComprimirPreviaTitulo => Idioma.Elegir(
+        "THE 10-SECOND PREVIEW", "LA PREVIA DE 10 SEGUNDOS");
+
+    public string AyudaComprimirPrevia => Idioma.Elegir(
+        "It renders ten seconds with your codec, quality and resolution so you can see how it " +
+        "will look before committing to a whole season. It encodes as fast as it possibly can, " +
+        "on purpose — waiting minutes to see ten seconds would defeat the point — so it ignores " +
+        "the Effort setting and, if anything, looks slightly worse than the real thing rather " +
+        "than better. What it will NOT tell you is how long the job will take or how much it " +
+        "will weigh: for that there is «Measure», which encodes short samples with your actual " +
+        "settings and works out the size from them.",
+        "Renderiza diez segundos con tu códec, tu calidad y tu resolución para que veas cómo va " +
+        "a quedar antes de comprometer una temporada entera. Codifica lo más rápido que puede, y " +
+        "es a propósito —esperar minutos para ver diez segundos sería tirar por tierra la idea—, " +
+        "así que no respeta el Esmero y, como mucho, se ve un pelín peor que el resultado real, " +
+        "nunca mejor. Lo que NO te dice es cuánto va a tardar ni cuánto va a pesar: para eso " +
+        "está «Medir», que codifica muestras cortas con tus ajustes de verdad y saca el tamaño " +
+        "de ahí.");
+
     public string AyudaComprimirIdiomasTitulo => Idioma.Elegir(
         "WHICH AUDIO TRACKS ARE KEPT", "QUÉ PISTAS DE AUDIO SE CONSERVAN");
 

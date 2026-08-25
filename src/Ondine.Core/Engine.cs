@@ -134,7 +134,26 @@ public sealed class Engine
     public static readonly string[] VideoExtensions =
         { ".mkv", ".mp4", ".avi", ".m4v", ".mov", ".wmv", ".webm", ".mpg", ".mpeg", ".flv" };
 
-    private readonly Dictionary<string, string> _cachedEncoder = new();
+    /// <summary>
+    /// El codificador ya elegido para cada códec, para no volver a arrancar ffmpeg por cada
+    /// candidato en cada fichero de la tanda.
+    ///
+    /// <para>
+    /// <b>La clave lleva el interruptor dentro</b>, y esa es la parte que faltaba. Antes se
+    /// indexaba solo por el códec y la caché se consultaba ANTES de mirar
+    /// <see cref="AllowHardware"/>: como el motor vive toda la sesión, bastaba con haber
+    /// comprimido una vez para que desmarcar «usar aceleración por hardware» en Preferencias no
+    /// hiciera nada hasta reiniciar. Un interruptor que parece no hacer nada es peor que no
+    /// tenerlo: el usuario no concluye «no se ha aplicado», concluye «esto no sirve».
+    /// </para>
+    /// <para>
+    /// Y con la clave compuesta se sigue ahorrando el trabajo en los dos estados: apagar y volver
+    /// a encender no vuelve a sondear nada. Vaciar la caché al cambiar la preferencia habría
+    /// arreglado el fallo pagando el sondeo otra vez, y encima habría que acordarse de vaciarla
+    /// desde los dos sitios que escriben esa preferencia.
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<(string Codec, bool ConHardware), string> _cachedEncoder = new();
 
     /// <summary>
     /// Lo que dio la sonda de aceleraciones, para no repetirla. De instancia y no estática: el
@@ -241,24 +260,35 @@ public sealed class Engine
         _ => (new[] { "hevc_qsv", "hevc_nvenc", "hevc_amf" }, new[] { "libx265" }),
     };
 
-    public async Task<string> SelectEncoderAsync(string codec = "hevc")
+    public Task<string> SelectEncoderAsync(string codec = "hevc") => SelectEncoderAsync(codec, null);
+
+    /// <param name="ejecutar">
+    /// Cómo se arranca ffmpeg. Lo inyectan las pruebas con uno de mentira: elegir codificador
+    /// arranca el proceso de verdad una vez por candidato, y el ejecutor de CI no tiene ffmpeg.
+    /// En producción llega null y se usa el de siempre.
+    /// </param>
+    internal async Task<string> SelectEncoderAsync(
+        string codec, Func<string, string[], Task<(int, string, string)>>? ejecutar)
     {
-        if (_cachedEncoder.TryGetValue(codec, out var cached)) return cached;
+        var correr = ejecutar ?? RunAsync;
+
+        var clave = (codec, AllowHardware);
+        if (_cachedEncoder.TryGetValue(clave, out var cached)) return cached;
         var (hw, sw) = Candidates(codec);
-        var (_, encList, _) = await RunAsync(Ffmpeg, new[] { "-hide_banner", "-encoders" });
+        var (_, encList, _) = await correr(Ffmpeg, new[] { "-hide_banner", "-encoders" });
         foreach (var cand in AllowHardware ? hw : Array.Empty<string>())
         {
             if (!encList.Contains(cand)) continue;
-            var (code, _, _) = await RunAsync(Ffmpeg, new[]
+            var (code, _, _) = await correr(Ffmpeg, new[]
             {
                 "-hide_banner", "-loglevel", "error", "-f", "lavfi",
                 "-i", "testsrc=size=640x480:duration=0.1", "-c:v", cand, "-f", "null", "-"
             });
-            if (code == 0) return _cachedEncoder[codec] = cand;
+            if (code == 0) return _cachedEncoder[clave] = cand;
         }
         // primer codificador software que realmente exista en esta build de FFmpeg
-        foreach (var s in sw) if (encList.Contains(s)) return _cachedEncoder[codec] = s;
-        return _cachedEncoder[codec] = sw[0];
+        foreach (var s in sw) if (encList.Contains(s)) return _cachedEncoder[clave] = s;
+        return _cachedEncoder[clave] = sw[0];
     }
 
     public static bool IsHardware(string encoder) => !encoder.StartsWith("lib");
@@ -288,8 +318,30 @@ public sealed class Engine
 
     // ---------- previsualización de 10 s con los ajustes actuales ----------
 
-    /// <summary>Args de codificación para la preview: mismo códec, pero preset lo MÁS rápido posible
-    /// (es solo una vista de la calidad; no vale la pena esperar minutos con un encoder de software).</summary>
+    /// <summary>
+    /// Los argumentos del codificador para la PREVIA: mismo códec y misma calidad, pero
+    /// codificando lo más rápido que se pueda.
+    ///
+    /// <para>
+    /// <b>Sí, es una cuarta tabla por familia, y es a propósito.</b> No es la escala de Esmero
+    /// con otro nombre: va <b>más rápido que la opción más rápida</b> que el usuario puede elegir
+    /// —<c>ultrafast</c> frente a <c>veryfast</c> en x264/x265, <c>preset 12</c> frente a
+    /// <c>10</c> en SVT-AV1— y añade banderas de tiempo real que la escala no tiene.
+    /// </para>
+    /// <para>
+    /// <b>Y por eso la previa NO respeta el Esmero elegido.</b> La previa existe para mirar diez
+    /// segundos y juzgar la imagen; con «Esmero: muy lento» habría que esperar minutos para ver
+    /// esos diez segundos, que es justo lo que viene a evitar. Como contrapartida, la previa se
+    /// ve —si acaso— un pelín peor que el resultado final, nunca mejor: a igual calidad
+    /// constante, los presets rápidos disimulan peor.
+    /// </para>
+    /// <para>
+    /// Esto no se puede adivinar mirando la pantalla, así que <b>se dice</b>: en el globo del
+    /// botón (<c>MainPrevisualizarTip</c>) y en la Ayuda (<c>AyudaComprimirPrevia</c>), y hay una
+    /// prueba que exige que lo sigan diciendo. Antes el globo prometía «con los ajustes
+    /// actuales», y el Esmero era uno de ellos.
+    /// </para>
+    /// </summary>
     private static List<string> PreviewEncoderArgs(string encoder, int quality) => encoder switch
     {
         "libx264" or "libx265" => new() { "-c:v", encoder, "-crf", $"{quality}", "-preset", "ultrafast" },
