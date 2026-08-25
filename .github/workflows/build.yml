@@ -5,8 +5,10 @@ name: Compilar y publicar
 #   adjunta todo al Release de ese tag.
 # - Manualmente (workflow_dispatch): compila y deja todo como artefactos descargables.
 #
-# NOTA sobre la interfaz gráfica: usa WPF, que SOLO existe en Windows. Por eso para Linux
-# y macOS se publica «ondine», la versión de terminal, que comparte el mismo motor.
+# NOTA sobre la interfaz gráfica: hay DOS. La de WPF solo existe en Windows y es la que
+# lleva el instalador. La de Avalonia es multiplataforma y de ella sale el .deb de Linux
+# —Mint, Ubuntu, Debian—. Para macOS y para las arquitecturas sueltas se sigue publicando
+# «ondine», la versión de terminal, que comparte el mismo motor que las dos.
 
 on:
   push:
@@ -246,11 +248,84 @@ jobs:
             ondine-${{ matrix.nombre }}.tar.gz
 
   # ---------------------------------------------------------------------------
+  # Escritorio de Linux: el .deb para Mint, Ubuntu y Debian.
+  #
+  # Se monta EN Linux y no de forma cruzada desde Windows, aunque el script funcione desde
+  # allí: dpkg-deb es de Debian, y montarlo en la misma familia en la que se va a instalar
+  # quita de en medio los permisos y los finales de línea.
+  #
+  # No comprueba que la app ARRANQUE, y es a propósito: es gráfica y el runner no tiene
+  # escritorio. Lo que sí comprueba es que el paquete está bien formado y que dentro está
+  # lo que tiene que estar.
+  # ---------------------------------------------------------------------------
+  linux-escritorio:
+    needs: verificar-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Montar el .deb
+        run: |
+          chmod +x empaquetado/linux/hacer-deb.sh
+          ./empaquetado/linux/hacer-deb.sh
+
+      # lintian es el revisor de paquetes de Debian. Se le pide que avise pero no que
+      # falle: se queja de cosas que no aplican a una app autocontenida —páginas de
+      # manual, changelog en su formato— y convertirlas en error obligaría a apagarlo
+      # entero, que es peor que leer sus avisos.
+      - name: Revisar el paquete
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lintian
+          deb=$(ls empaquetado/salida/*.deb)
+          echo "* $deb - $(du -h "$deb" | cut -f1)"
+          dpkg-deb --info "$deb"
+          lintian --no-tag-display-limit "$deb" || true
+
+      # Que dentro está lo que tiene que estar. Sin esto, un paquete al que se le haya
+      # caído el lanzador instala perfectamente y no sale en el menú.
+      - name: Comprobar el contenido
+        run: |
+          deb=$(ls empaquetado/salida/*.deb)
+          dpkg-deb --contents "$deb" > lista.txt
+          for esperado in \
+              ./opt/ondine/Ondine.Avalonia \
+              ./usr/bin/ondine \
+              ./usr/share/applications/ondine.desktop \
+              ./usr/share/icons/hicolor/256x256/apps/ondine.png; do
+            grep -q "$esperado" lista.txt || { echo "::error::falta $esperado en el paquete"; exit 1; }
+          done
+          # Y que NO se ha colado libVLC de Windows, que ya pasó una vez: 283 MB que se
+          # instalan y no usa nadie.
+          if grep -qi "libvlc/win" lista.txt; then
+            echo "::error::el paquete de Linux lleva binarios de libVLC de Windows dentro"
+            exit 1
+          fi
+          echo "* el paquete lleva lo que tiene que llevar"
+
+      - name: Subir como artefacto
+        uses: actions/upload-artifact@v7
+        with:
+          name: ondine-linux-deb
+          path: empaquetado/salida/*.deb
+          if-no-files-found: error
+
+      - name: Adjuntar al Release (solo en tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: empaquetado/salida/*.deb
+
+  # ---------------------------------------------------------------------------
   # Notas de la Release tomadas del CHANGELOG (el contrato garantiza que existen).
   # ---------------------------------------------------------------------------
   notas:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [windows-instalador, cli]
+    needs: [windows-instalador, cli, linux-escritorio]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8

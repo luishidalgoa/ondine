@@ -16,3 +16,6 @@ src/Ondine/Assets/app-256.png
 
 # Artefacto de las skills instaladas en la maquina, no del proyecto.
 skills-lock.json
+
+# Lo que monta el script del .deb: son cientos de megas de binarios publicados.
+empaquetado/salida/

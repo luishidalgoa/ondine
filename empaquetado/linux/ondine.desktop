@@ -1,0 +1,24 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Ondine
+GenericName=Media library preparer
+GenericName[es]=Preparador de bibliotecas
+Comment=Prepare your series and film library for Plex and Jellyfin
+Comment[es]=Prepara tu biblioteca de series y películas para Plex y Jellyfin
+Exec=/opt/ondine/Ondine.Avalonia %F
+Icon=ondine
+Terminal=false
+StartupNotify=true
+StartupWMClass=Ondine.Avalonia
+Categories=AudioVideo;Video;Utility;FileTools;
+Keywords=video;plex;jellyfin;rename;compress;subtitles;
+Keywords[es]=video;vídeo;plex;jellyfin;renombrar;comprimir;subtitulos;subtítulos;
+
+# Los tipos que la app sabe abrir. Esto es lo que hace que Ondine salga en «Abrir con»
+# al pulsar con el botón derecho sobre un vídeo en Nemo, el gestor de Cinnamon.
+#
+# Es el equivalente en Linux de la casilla «menú del Explorador» de preferencias, que en
+# Windows escribe en el registro. Aquí no hace falta ninguna casilla: va declarado en el
+# paquete, lo aplica el sistema al instalar y se quita al desinstalar.
+MimeType=video/x-matroska;video/mp4;video/x-m4v;video/x-msvideo;video/quicktime;video/webm;video/mpeg;video/x-ms-wmv;video/x-flv;inode/directory;
