@@ -321,11 +321,145 @@ jobs:
           files: empaquetado/salida/*.deb
 
   # ---------------------------------------------------------------------------
+  # El AppImage: un fichero, se marca ejecutable y se abre. Para probar Ondine sin
+  # instalar nada y para las distribuciones que no son Debian.
+  #
+  # No comprueba que la app ARRANQUE -es grafica y el runner no tiene escritorio-, pero si
+  # lo que hace que un AppImage no arranque: que dentro este el binario y que el lanzador
+  # no apunte a /opt, que en un AppImage no existe.
+  # ---------------------------------------------------------------------------
+  linux-appimage:
+    needs: verificar-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Montar el AppImage
+        run: |
+          chmod +x empaquetado/linux/hacer-appimage.sh
+          ./empaquetado/linux/hacer-appimage.sh
+
+      - name: Comprobar el contenido
+        run: |
+          img=$(ls empaquetado/salida/*.AppImage)
+          echo "* $img - $(du -h "$img" | cut -f1)"
+          [ -x "$img" ] || { echo "::error::el AppImage no sale ejecutable"; exit 1; }
+
+          # Se abre por dentro y se mira. --appimage-extract no necesita FUSE, que en el
+          # contenedor del runner no hay.
+          cd empaquetado/salida && "$img" --appimage-extract >/dev/null
+          for esperado in \
+              squashfs-root/AppRun \
+              squashfs-root/ondine.desktop \
+              squashfs-root/ondine.png \
+              squashfs-root/usr/bin/Ondine.Avalonia; do
+            [ -e "$esperado" ] || { echo "::error::falta $esperado dentro del AppImage"; exit 1; }
+          done
+
+          # El fallo que no da error: un Exec absoluto heredado del .deb. El AppImage se
+          # monta igual de bien y al abrirlo no pasa nada.
+          if grep -q "^Exec=/" squashfs-root/ondine.desktop; then
+            echo "::error::el lanzador del AppImage apunta a una ruta absoluta"
+            exit 1
+          fi
+
+          # Y que no se ha colado libVLC de Windows, como ya paso con el .deb.
+          if find squashfs-root -ipath "*libvlc/win*" | grep -q .; then
+            echo "::error::el AppImage lleva binarios de libVLC de Windows dentro"
+            exit 1
+          fi
+          echo "* el AppImage lleva lo que tiene que llevar"
+
+      - name: Subir como artefacto
+        uses: actions/upload-artifact@v7
+        with:
+          name: ondine-linux-appimage
+          path: empaquetado/salida/*.AppImage
+          if-no-files-found: error
+
+      - name: Adjuntar al Release (solo en tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: empaquetado/salida/*.AppImage
+
+  # ---------------------------------------------------------------------------
+  # macOS: el .app dentro de un .dmg, uno por arquitectura.
+  #
+  # ESTE TRABAJO CUESTA DIEZ VECES MAS que los demas: GitHub factura los minutos de macOS
+  # a x10. Por eso publica las dos arquitecturas en UN solo runner en vez de en dos en
+  # paralelo, y por eso -como todo este flujo- solo corre en tag o a mano.
+  #
+  # Tiene que ser un Mac: iconutil, codesign y hdiutil son de macOS. La publicacion de .NET
+  # si se puede hacer desde cualquier sistema; el envoltorio no.
+  # ---------------------------------------------------------------------------
+  macos-dmg:
+    needs: verificar-version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Montar los .dmg
+        run: |
+          chmod +x empaquetado/macos/hacer-dmg.sh
+          ./empaquetado/macos/hacer-dmg.sh
+
+      - name: Comprobar los paquetes
+        run: |
+          cuantos=$(ls empaquetado/salida/*.dmg | wc -l | tr -d ' ')
+          [ "$cuantos" = "2" ] || { echo "::error::salen $cuantos .dmg y tienen que ser 2 (arm64 e Intel)"; exit 1; }
+
+          for dmg in empaquetado/salida/*.dmg; do
+            echo "* $dmg - $(du -h "$dmg" | cut -f1)"
+            punto=$(mktemp -d)
+            hdiutil attach -quiet -nobrowse -mountpoint "$punto" "$dmg"
+
+            app="$punto/Ondine.app"
+            [ -d "$app" ] || { echo "::error::$dmg no lleva Ondine.app dentro"; hdiutil detach -quiet "$punto"; exit 1; }
+            [ -x "$app/Contents/MacOS/Ondine.Avalonia" ] || { echo "::error::el binario no esta o no es ejecutable"; hdiutil detach -quiet "$punto"; exit 1; }
+
+            # La firma ad hoc. Sin ella, en los Mac con chip de Apple la app se cierra al
+            # abrirse y no hay mensaje que lo explique.
+            codesign --verify --deep "$app" || { echo "::error::$dmg va sin firmar"; hdiutil detach -quiet "$punto"; exit 1; }
+
+            # Que el ejecutable declarado es el que esta. Un nombre que no cuadra da un
+            # bundle perfecto que al abrirse no hace nada.
+            declarado=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$app/Contents/Info.plist")
+            [ "$declarado" = "Ondine.Avalonia" ] || { echo "::error::el Info.plist declara $declarado"; hdiutil detach -quiet "$punto"; exit 1; }
+
+            hdiutil detach -quiet "$punto"
+          done
+          echo "* los dos paquetes llevan lo que tienen que llevar"
+
+      - name: Subir como artefacto
+        uses: actions/upload-artifact@v7
+        with:
+          name: ondine-macos-dmg
+          path: empaquetado/salida/*.dmg
+          if-no-files-found: error
+
+      - name: Adjuntar al Release (solo en tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: empaquetado/salida/*.dmg
+
+  # ---------------------------------------------------------------------------
   # Notas de la Release tomadas del CHANGELOG (el contrato garantiza que existen).
   # ---------------------------------------------------------------------------
   notas:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [windows-instalador, cli, linux-escritorio]
+    needs: [windows-instalador, cli, linux-escritorio, linux-appimage, macos-dmg]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8

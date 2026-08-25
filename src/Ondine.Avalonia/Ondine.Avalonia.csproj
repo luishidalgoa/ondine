@@ -89,4 +89,24 @@
     <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
   </ItemGroup>
 
+  <!--
+    Y EN macOS NO VAN DENTRO, aunque el sitio de VideoLAN tenga un paquete para eso.
+
+    Se probo: VideoLAN.LibVLC.Mac 3.1.3.1 trae UN fichero, «osx-x64/libvlc.dylib», de 42 MB
+    y con fecha de julio de 2018. Tres cosas mal a la vez:
+
+      1. Es solo Intel -Mach-O de una arquitectura, no universal-, asi que en un Mac con
+         chip de Apple no carga.
+      2. No trae libvlccore ni la carpeta «plugins», que es donde libvlc tiene los
+         decodificadores. Sin ellos abre y no reproduce nada.
+      3. Lleva siete anos sin tocarse, asi que ni codecs nuevos ni parches de seguridad.
+
+    Se vio mirando el paquete, no leyendo su descripcion: publicar para osx-arm64 desde aqui
+    deja el dylib de Intel en la carpeta sin que nada se queje.
+
+    Asi que macOS va como Linux: se usa la libvlc DEL SISTEMA, la que trae VLC.app -que
+    VideoLAN publica universal y al dia-. Donde buscarla lo sabe RutaDeLibVlc, y si no esta,
+    el reproductor lo dice con la orden de instalarla para ese sistema.
+  -->
+
 </Project>

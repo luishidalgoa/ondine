@@ -13,11 +13,18 @@ namespace Ondine;
 /// Windows, lo que la app dice que va a la papelera <b>se perdía</b>.
 /// </para>
 /// <para>
-/// En Linux y macOS la papelera no es una llamada del sistema: es un <b>acuerdo sobre
-/// carpetas</b>, la especificación de freedesktop.org que siguen Nemo (Cinnamon, el de Linux
-/// Mint), Nautilus, Dolphin y compañía. El fichero se mueve a
-/// <c>~/.local/share/Trash/files</c> y al lado se deja un <c>.trashinfo</c> diciendo de dónde
-/// venía y cuándo.
+/// En Linux la papelera no es una llamada del sistema: es un <b>acuerdo sobre carpetas</b>, la
+/// especificación de freedesktop.org que siguen Nemo (Cinnamon, el de Linux Mint), Nautilus,
+/// Dolphin y compañía. El fichero se mueve a <c>~/.local/share/Trash/files</c> y al lado se
+/// deja un <c>.trashinfo</c> diciendo de dónde venía y cuándo.
+/// </para>
+/// <para>
+/// <b>Y aquí decía «en Linux y macOS», que era mentira a medias.</b> freedesktop es el acuerdo
+/// de los escritorios de Linux; en un Mac, <c>~/.local/share/Trash</c> es una carpeta oculta
+/// cualquiera que el Finder no mira. Lo «enviado a la papelera» se iba a un sitio donde nadie
+/// lo encontraría y del que no se puede recuperar — otra vez un fallo que parece funcionar.
+/// Ahora cada sistema va por su sitio, y quién manda en cada uno lo decide
+/// <see cref="Quien"/>, que es lo único de esto que se puede probar desde cualquier parte.
 /// </para>
 /// <para>
 /// <b>Ese fichero de al lado es lo que importa.</b> Sin él, el gestor de archivos enseña lo
@@ -47,6 +54,48 @@ public static class PapeleraDelSistema
     public static Func<string, bool>? EnWindows { get; set; } = ruta => RecycleBin.Send(ruta);
 
     /// <summary>
+    /// Cómo se manda en macOS: por el Finder, que es el único que deja «Volver a poner».
+    ///
+    /// <para>
+    /// Viene puesta, por lo mismo que la de Windows. Ver <see cref="PapeleraDeMac"/> para lo
+    /// que se gana y lo que cuesta de esa vía.
+    /// </para>
+    /// </summary>
+    public static Func<string, bool>? EnMac { get; set; } = ruta => PapeleraDeMac.Mandar(ruta);
+
+    /// <summary>Quién se lleva lo borrado.</summary>
+    public enum ADonde
+    {
+        /// <summary>La Shell de Windows (shell32).</summary>
+        Shell,
+        /// <summary>El Finder de macOS.</summary>
+        Finder,
+        /// <summary>El acuerdo de carpetas de freedesktop.org.</summary>
+        Freedesktop,
+    }
+
+    /// <summary>
+    /// Quién manda, según el sistema.
+    ///
+    /// <para>
+    /// Está aparte y toma el sistema como argumento por una razón práctica: es <b>la decisión
+    /// que estaba mal</b> —macOS entraba por la puerta de Linux— y así se puede comprobar
+    /// desde cualquier máquina. Que la llamada al Finder haga su trabajo solo se ve en un Mac;
+    /// que no se le mande a la carpeta equivocada, se ve aquí.
+    /// </para>
+    /// <para>
+    /// La casa de pruebas gana a todo lo demás a propósito: es como las pruebas de la papelera
+    /// trabajan con ficheros de verdad sin tocar la de quien las ejecuta, y una papelera de
+    /// carpetas es la única que se puede abrir y mirar después.
+    /// </para>
+    /// </summary>
+    internal static ADonde Quien(bool windows, bool mac, bool casaDePruebas) =>
+        casaDePruebas ? ADonde.Freedesktop
+        : windows ? ADonde.Shell
+        : mac ? ADonde.Finder
+        : ADonde.Freedesktop;
+
+    /// <summary>
     /// Manda una ruta a la papelera. Devuelve si se pudo.
     ///
     /// <param name="casa">
@@ -59,11 +108,13 @@ public static class PapeleraDelSistema
         if (string.IsNullOrWhiteSpace(ruta)) return false;
         if (!File.Exists(ruta) && !Directory.Exists(ruta)) return false;
 
-        // En Windows manda la Shell, que ya sabe hacerlo bien —incluida la cuenta de lo que
-        // ocupa y el «deshacer» del Explorador—. Solo cuando no hay nadie enchufado se cae a
-        // la forma de freedesktop, que en Windows no la lee nadie pero al menos no borra.
-        if (OperatingSystem.IsWindows() && EnWindows is { } shell && casa is null)
-            return shell(ruta);
+        var quien = Quien(OperatingSystem.IsWindows(), OperatingSystem.IsMacOS(), casa is not null);
+
+        // Si el nativo de ese sistema no estuviera enchufado se cae a la de carpetas. En
+        // Windows y en macOS no la lee nadie, pero al menos no borra — y eso es lo único
+        // que hace aceptable el respaldo.
+        if (quien == ADonde.Shell && EnWindows is { } shell) return shell(ruta);
+        if (quien == ADonde.Finder && EnMac is { } finder) return finder(ruta);
 
         return ALaDeFreedesktop(ruta, casa ?? Casa());
     }

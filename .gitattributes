@@ -17,3 +17,7 @@
 
 # Los ficheros de control de un paquete Debian, igual: dpkg los rechaza con CRLF.
 empaquetado/linux/** text eol=lf
+
+# Y los de macOS: un guion con CRLF no lo ejecuta ningun Unix, y hdiutil y
+# codesign se llaman desde ahi.
+empaquetado/macos/** text eol=lf

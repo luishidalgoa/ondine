@@ -133,7 +133,37 @@ public sealed class Engine
             var p = Path.Combine(baseDir, rel);
             if (File.Exists(p)) return p;
         }
+
+        // En un Mac hay que ir a buscarla, y no es por gusto: una aplicación abierta desde el
+        // Finder NO hereda el PATH del terminal -recibe uno mínimo, sin las carpetas de
+        // Homebrew-. Fiarse del PATH ahí significa decir «ffmpeg no está instalado» a quien
+        // acaba de instalarlo y lo ve funcionar en su terminal.
+        if (OperatingSystem.IsMacOS() && HerramientaEnMac(exe, File.Exists) is { } enMac)
+            return enMac;
+
         return exe; // en el PATH
+    }
+
+    /// <summary>
+    /// La herramienta en las carpetas donde los gestores de paquetes de macOS la ponen, o
+    /// <c>null</c> si no está en ninguna.
+    ///
+    /// <para>
+    /// El orden es el de la arquitectura nativa primero. Un Mac con chip de Apple puede tener
+    /// las dos —el Homebrew de Intel bajo Rosetta y el nativo—, y coger el de Intel haría que
+    /// cada compresión pasara por la traducción: más lenta, y sin nada que lo dijera.
+    /// </para>
+    /// <para>
+    /// Toma el «existe» como argumento para poder comprobar el orden y las rutas desde
+    /// cualquier sistema, que es lo único de esto que no depende de tener un Mac delante.
+    /// </para>
+    /// </summary>
+    internal static string? HerramientaEnMac(string exe, Func<string, bool> existe)
+    {
+        // Con barras a mano: son rutas de macOS, y Path.Combine usa el separador del sistema
+        // que ejecuta -armar una ruta de Mac desde Windows saldría con barras invertidas-.
+        string[] carpetas = ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"];
+        return carpetas.Select(c => c + "/" + exe).FirstOrDefault(existe);
     }
     private static string Ffmpeg => ResolveTool("ffmpeg");
     private static string Ffprobe => ResolveTool("ffprobe");

@@ -42,6 +42,20 @@ es un acuerdo de buena voluntad: está verificado.
   su barra de título, su panel lateral, su cola de trabajos y su registro. Fuera de Windows, Ondine
   se abre y se usa entera.
 
+  Y ya se puede **instalar**, que es la otra mitad del asunto. Hay tres paquetes nuevos:
+
+  - un **`.deb`** para Linux Mint, Ubuntu y Debian, que se integra en el menú y en «Abrir con» al
+    pulsar el botón derecho sobre un vídeo;
+  - un **AppImage** para cualquier Linux, que se descarga, se marca ejecutable y se abre sin
+    instalar nada;
+  - dos **`.dmg`** para macOS, uno para los Mac con chip de Apple y otro para los Intel.
+
+  Ninguno necesita instalar .NET. Sí hacen falta **ffmpeg** —obligatorio, `apt install ffmpeg` o
+  `brew install ffmpeg`— y **VLC** si quieres el reproductor de dentro; cuando falta alguno, Ondine
+  lo dice con la orden exacta para **tu** sistema en vez de fallar en seco. En un Mac, la primera
+  vez hay que abrirla con el botón derecho → Abrir: la app no está firmada con un certificado de
+  Apple, que es de pago y anual.
+
   Para quien usa Ondine en Windows **no cambia nada**: la versión de siempre sigue siendo la que se
   instala, y las dos conviven mientras la nueva se rueda en Linux y macOS.
 
