@@ -62,6 +62,24 @@
   -->
   <ItemGroup>
     <PackageReference Include="LibVLCSharp.Avalonia" Version="3.10.1" />
+  </ItemGroup>
+
+  <!--
+    LOS BINARIOS DE LIBVLC SOLO PARA WINDOWS, Y ES A PROPOSITO.
+
+    En Windows no hay VLC instalado de serie, asi que el paquete los trae dentro y el
+    instalador no tiene que pedir nada. Pesan ~40 MB.
+
+    En Linux es al reves: el sistema YA tiene libvlc, o lo instala con su gestor de paquetes
+    en una linea. Meter los binarios propios ahi seria (a) duplicar lo que ya esta, (b)
+    quedarse sin los complementos del sistema —la aceleracion por hardware VAAPI sale de
+    ahi— y (c) envejecer sin que las actualizaciones de seguridad de la distro lleguen. En
+    Mint basta con `sudo apt install vlc`, que es lo que dice el reproductor si falta.
+
+    La condicion mira el RID de publicacion y, si no hay ninguno, el sistema donde se
+    compila. Sin la segunda mitad, compilar en Windows sin -r dejaria la app sin video.
+  -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or $(RuntimeIdentifier.StartsWith('win'))">
     <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
   </ItemGroup>
 

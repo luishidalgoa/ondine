@@ -16,6 +16,33 @@ public sealed partial class Textos
     // barra de tareas y en Alt+Tab, así que se ve igual.
     public string ReproductorTitulo => Idioma.Elegir("Player", "Reproductor");
 
+    /// <summary>
+    /// Cuando falta libvlc, que en Linux es lo normal la primera vez.
+    ///
+    /// <para>
+    /// Se dice el nombre del paquete y el gestor, no «no se pudo inicializar el
+    /// reproductor». En Linux Mint —y en cualquier cosa basada en Debian o Ubuntu— eso se
+    /// arregla con una línea, y el que la sepa la escribe en cinco segundos; el que no,
+    /// se queda mirando un mensaje que no le dice qué hacer.
+    /// </para>
+    /// <para>
+    /// El nombre del paquete NO se traduce: es un identificador que se teclea tal cual.
+    /// </para>
+    /// </summary>
+    public string ReproductorFaltaLibVlc => Idioma.Elegir(
+        """
+        The video engine (libVLC) is not installed on this system.
+
+        On Linux Mint, Ubuntu or Debian, install it with:
+            sudo apt install vlc
+        """,
+        """
+        El motor de vídeo (libVLC) no está instalado en este sistema.
+
+        En Linux Mint, Ubuntu o Debian se instala con:
+            sudo apt install vlc
+        """);
+
     // ── Plan B cuando el códec no se puede decodificar ───────────────────────
     public string ReproductorAbrirEnSistema =>
         Idioma.Elegir("Open in the system player", "Abrir en el reproductor del sistema");
