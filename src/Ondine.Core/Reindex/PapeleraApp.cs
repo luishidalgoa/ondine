@@ -33,11 +33,24 @@ public static class PapeleraApp
     private static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
 
     /// <summary>
-    /// Cómo se mandan los viejos a la papelera del SISTEMA al purgar. La app lo conecta a
-    /// RecycleBin.Send; si nadie lo conecta (p. ej. en tests), se borran sin más — así este
-    /// servicio no depende de la Shell y se puede probar con ficheros de verdad.
+    /// Cómo se mandan los viejos a la papelera del SISTEMA al purgar.
+    ///
+    /// <para>
+    /// <b>Viene puesto de fábrica, y ese es el arreglo.</b> Antes era un hueco que la ventana
+    /// principal de WPF rellenaba al arrancar; si nadie lo rellenaba —y la de Avalonia no lo
+    /// hacía, porque no existía nada que rellenar— este servicio <b>borraba sin más</b>. Lo
+    /// que la app promete que va a la papelera se perdía, en silencio y fuera de Windows.
+    /// </para>
+    /// <para>
+    /// Ahora el valor por defecto es la papelera de verdad, y lo que la app conecta al
+    /// arrancar es la variante de Windows dentro de
+    /// <see cref="PapeleraDelSistema.EnWindows"/>. Olvidarse de conectar algo ya no puede
+    /// costar ficheros: el peor caso es la papelera de freedesktop en un sistema que no la
+    /// mira, que es feo pero no borra nada.
+    /// </para>
     /// </summary>
-    public static Func<string, bool>? EnviarASistema { get; set; }
+    public static Func<string, bool>? EnviarASistema { get; set; } =
+        ruta => PapeleraDelSistema.Mandar(ruta);
 
     private static List<Entrada> LeerIndice()
     {
