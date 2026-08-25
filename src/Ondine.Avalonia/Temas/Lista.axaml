@@ -1,0 +1,146 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    La lista de comprimir, que aqui SI es otro control.
+
+    En WPF era un ListView con GridView, vestido por TableView, RowStyle y ColHeader. En
+    Avalonia no existe ese par: la tabla pasa a DataGrid. Esta es la vez en que aquel motivo
+    -«no se traduce, se hace de nuevo»- era verdad; en Organizar no lo era, porque alli ya
+    habia un DataGrid.
+
+    LO QUE SE GANA AL CAMBIAR. El GridView de WPF no sabia ordenar por columna: habia un
+    HeaderSort propio, veintiseis lineas de propiedad adjunta, para decirle a cada cabecera
+    por que campo ordena. El DataGrid lo trae con SortMemberPath, asi que ese ayudante
+    desaparece entero. Y de paso desaparece su trampa: TAMANO y DURACION ordenaban por su
+    valor numerico y no por el texto formateado, y eso habia que acordarse de declararlo
+    columna por columna.
+
+    LO QUE SE PIERDE, dicho: el comentario de TableView explicaba una peleita fina de WPF
+    -CanContentScroll="False" mataba la virtualizacion, y ScrollUnit="Pixel" daba lo mismo
+    sin matarla-. Aqui no aplica: el DataGrid de Avalonia virtualiza por filas y desplaza por
+    pixel de serie. No es que se arregle, es que ese problema no existe.
+  -->
+
+  <!-- ══ Cabecera ══════════════════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="CabeceraLista" TargetType="DataGridColumnHeader"
+                BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+    <Setter Property="Foreground" Value="#99E9E9ED"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="FontWeight" Value="Normal"/>
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Setter Property="Padding" Value="10,8"/>
+    <Setter Property="Cursor" Value="Hand"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="fondo" Background="Transparent"
+                BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+                Padding="{TemplateBinding Padding}">
+          <Grid ColumnDefinitions="*,Auto">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="Center"/>
+            <Path Name="flecha" Grid.Column="1" Margin="5,0,0,0" Width="8" Height="8"
+                  Stretch="Uniform" IsVisible="False"
+                  Fill="{StaticResource Accent}" Data="M 0,6 L 4,0 L 8,6 Z"/>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#fondo">
+      <Setter Property="Background" Value="{StaticResource RowHover}"/>
+    </Style>
+    <Style Selector="^:sortascending /template/ Path#flecha">
+      <Setter Property="IsVisible" Value="True"/>
+    </Style>
+    <Style Selector="^:sortdescending /template/ Path#flecha">
+      <Setter Property="IsVisible" Value="True"/>
+      <Setter Property="RenderTransform" Value="rotate(180deg)"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Celda ═════════════════════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="CeldaLista" TargetType="DataGridCell"
+                BasedOn="{StaticResource {x:Type DataGridCell}}">
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="FontSize" Value="12.5"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="Transparent" Padding="10,0">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- La seleccion se pinta en la FILA, no en la celda. -->
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Fila ══════════════════════════════════════════════════════════════════
+       Mas simple que la de Organizar: aqui no hay banda de temporada ni detalle desplegable.
+       Se conserva lo que si importa del diseno: el liston de 2 px a la izquierda de la fila
+       elegida, porque el diseno no confia el foco solo al fondo. -->
+  <ControlTheme x:Key="FilaLista" TargetType="DataGridRow"
+                BasedOn="{StaticResource {x:Type DataGridRow}}">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="strip" BorderBrush="Transparent" BorderThickness="2,0,0,0"
+                Background="Transparent">
+          <Border Name="fill" Background="Transparent">
+            <DataGridFrozenGrid Name="PART_Root"
+                                ColumnDefinitions="Auto,*"
+                                RowDefinitions="Auto,Auto,Auto">
+              <DataGridRowHeader Name="PART_RowHeader" Grid.RowSpan="3" IsVisible="False"/>
+              <DataGridCellsPresenter Name="PART_CellsPresenter" Grid.Column="1" Margin="0,7"/>
+              <DataGridDetailsPresenter Name="PART_DetailsPresenter" Grid.Row="1" Grid.Column="1"/>
+              <Rectangle Name="PART_BottomGridLine" Grid.Row="2" Grid.ColumnSpan="2"
+                         Height="1" Fill="Transparent"/>
+            </DataGridFrozenGrid>
+          </Border>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#fill">
+      <Setter Property="Background" Value="{StaticResource RowHover}"/>
+    </Style>
+    <Style Selector="^:selected /template/ Border#fill">
+      <Setter Property="Background" Value="{StaticResource RowSelected}"/>
+    </Style>
+    <Style Selector="^:selected /template/ Border#strip">
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ La tabla ══════════════════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="TablaLista" TargetType="DataGrid"
+                BasedOn="{StaticResource {x:Type DataGrid}}">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="RowBackground" Value="Transparent"/>
+    <Setter Property="GridLinesVisibility" Value="None"/>
+    <Setter Property="HeadersVisibility" Value="Column"/>
+    <Setter Property="AutoGenerateColumns" Value="False"/>
+    <Setter Property="CanUserReorderColumns" Value="False"/>
+    <Setter Property="IsReadOnly" Value="True"/>
+    <!-- Extendida: la lista de comprimir se usa marcando muchas de golpe. -->
+    <Setter Property="SelectionMode" Value="Extended"/>
+    <Setter Property="ColumnHeaderTheme" Value="{StaticResource CabeceraLista}"/>
+    <Setter Property="CellTheme" Value="{StaticResource CeldaLista}"/>
+  </ControlTheme>
+
+</ResourceDictionary>
