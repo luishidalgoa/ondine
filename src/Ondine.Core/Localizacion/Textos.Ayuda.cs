@@ -266,13 +266,16 @@ public sealed partial class Textos
         "to understand it, or Opus if you want about half the weight for the same quality. Not " +
         "everything fits everywhere —WebM only takes Opus, and MP4 will not hold FLAC in a way " +
         "anything plays— so if your choice does not fit the format, it is changed and the log " +
-        "says so. It is never changed silently.",
+        "says so. It is never changed silently. The bitrate dropdown next to it only applies " +
+        "when the audio is being re-encoded: with “Untouched” there is nothing to set, and it " +
+        "is greyed out.",
         "«Sin tocar» copia los bytes del audio tal cual: no se pierde nada ni cuesta tiempo. Es " +
         "lo que viene puesto y casi siempre es la respuesta correcta. Elige AC3 si tiene que " +
         "entenderlo un receptor de salón antiguo, u Opus si quieres la mitad de peso con la misma " +
         "calidad. No todo cabe en todo —WebM solo admite Opus, y MP4 no guarda FLAC de forma que " +
         "lo reproduzca nada— así que si lo tuyo no cabe en el formato, se cambia y el registro lo " +
-        "dice. Nunca se cambia en silencio.");
+        "dice. Nunca se cambia en silencio. El desplegable del caudal, al lado, solo cuenta " +
+        "cuando se recodifica: con «Sin tocar» no hay nada que fijar y se apaga.");
 
     public string AyudaComprimirEsmeroTitulo => Idioma.Elegir(
         "EFFORT: TIME AGAINST SIZE", "ESMERO: TIEMPO CONTRA TAMAÑO");

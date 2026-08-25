@@ -31,6 +31,20 @@ public sealed partial class Textos
         "Audio: {0} channels mixed down to stereo, so the track had to be re-encoded.",
         "Audio: {0} canales bajados a estéreo, así que la pista ha tenido que recodificarse.");
 
+    /// <summary>
+    /// El caudal de audio elegido no se aplica porque se esta copiando la pista.
+    ///
+    /// <para>
+    /// Existe para que no haya ningun ajuste que no haga nada en silencio. Antes el motor
+    /// resolvia esta contradiccion -«Sin tocar» por un lado, «128 kbps» por el otro-
+    /// recodificando sin decirlo, y el usuario perdia calidad sin enterarse. Ahora se copia,
+    /// que es lo pedido, y se dice que el caudal se ha quedado sin usar.
+    /// </para>
+    /// </summary>
+    public string MotorAudioCaudalSinUsar => Idioma.Elegir(
+        "audio copied as-is: the {0} kbps you chose does not apply to a copy",
+        "audio copiado tal cual: los {0} kbps elegidos no se aplican a una copia");
+
     public string MotorAudioCambiado => Idioma.Elegir(
         "Audio: {0} does not fit in {2}, using {1} instead.",
         "Audio: {0} no cabe en {2}, se usa {1} en su lugar.");

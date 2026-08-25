@@ -46,13 +46,34 @@ public static class OpcionesSalida
 
     public static string[] Audios =>
     [
-        Txt.MainAudioCopiar, Txt.MainAudioAac192, Txt.MainAudioAac160, Txt.MainAudioAac128, Txt.MainAudioAac96,
+        Txt.MainAudioCopiar, Txt.MainAudioKbps192, Txt.MainAudioKbps160, Txt.MainAudioKbps128, Txt.MainAudioKbps96,
     ];
 
     public static string CodecDe(int i) => i switch { 1 => "h264", 2 => "av1", _ => "hevc" };
     public static int CalidadDe(int i) => i switch { 1 => 22, 2 => 24, 3 => 27, 4 => 30, _ => 0 };
     public static int AlturaDe(int i) => i switch { 1 => 1080, 2 => 720, 3 => 480, _ => 0 };
     public static int AudioDe(int i) => i switch { 1 => 192, 2 => 160, 3 => 128, 4 => 96, _ => 0 };
+
+    /// <summary>
+    /// Pone el caudal de audio Y lo que ese caudal significa aquí.
+    ///
+    /// <para>
+    /// Esta pantalla no tiene desplegable de códec, así que elegir «128 kbps» solo puede
+    /// querer decir «recodifícalo a AAC a 128». Antes eso lo suponía el motor: con un caudal
+    /// puesto recodificaba aunque le hubieran pedido copiar. Se quitó de allí —pisaba lo que
+    /// el usuario elegía en la pantalla de comprimir, que sí tiene ese desplegable— y por eso
+    /// hay que decirlo aquí, donde es verdad.
+    /// </para>
+    /// <para>
+    /// La comparte la línea de órdenes, que está en el mismo caso: <c>--audio 128</c> no tiene
+    /// forma de decir el códec, y su ayuda promete recodificar.
+    /// </para>
+    /// </summary>
+    public static void PonerCaudalDeAudio(EncodeOptions opt, int kbps)
+    {
+        opt.AudioBitrate = kbps;
+        if (kbps > 0) opt.AudioCodec = Ondine.Audio.AudioElegido.Aac;
+    }
 
     /// <summary>Aplica el formato elegido sobre unas opciones ya empezadas.</summary>
     public static void PonerFormato(EncodeOptions opt, int i)
@@ -77,8 +98,8 @@ public static class OpcionesSalida
             VideoCodec = CodecDe(codec),
             Quality = CalidadDe(calidad),
             MaxHeight = AlturaDe(resolucion),
-            AudioBitrate = AudioDe(audio),
         };
+        PonerCaudalDeAudio(opt, AudioDe(audio));
         PonerFormato(opt, formato);
         return opt;
     }

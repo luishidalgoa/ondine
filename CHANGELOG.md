@@ -47,7 +47,25 @@ es un acuerdo de buena voluntad: está verificado.
   porque allí la app va en un solo fichero y el servidor no puede compartirle el runtime. Cómo
   registrarlo, en [`docs/mcp.md`](docs/mcp.md).
 
+### Corregido
+
+- **«Sin tocar» en el códec de audio ya no recodifica.** Con ese ajuste puesto, un E-AC-3 de
+  224 kbps salía en AAC de 128 —pérdida irreversible del ajuste que existe justamente para
+  impedirla— y sin una línea en el registro que lo dijera. El motor traía un atajo: si había un
+  caudal elegido y el códec de origen no era `aac`, `opus`, `mp3` o `vorbis`, recodificaba a AAC
+  pasando por encima de lo pedido. Ahora manda el códec elegido, y solo dos cosas pueden impedir
+  una copia: que el contenedor no admita ese audio (un DTS en MP4 sigue recodificándose) o que se
+  esté bajando a estéreo. Si eliges un caudal sobre una copia, el registro lo dice en vez de
+  cambiarte el audio por su cuenta.
+
 ### Cambiado
+
+- **El caudal del audio y el códec dejan de contradecirse.** El desplegable del caudal se llamaba
+  «AAC 192 kbps» aunque el códec lo eligiera el de al lado, y **se apaga** cuando el códec está
+  en «Sin tocar»: copiando no hay ningún caudal que aplicar. Los presets guardan ahora también el
+  códec, así que «Ligero para móvil (720p)» pide AAC de verdad en vez de dejar 128 kbps a la vista
+  y «Sin tocar» debajo — que es de donde venía el fallo. Los presets guardados antes se siguen
+  leyendo, con el códec en «Sin tocar».
 
 - **Si no se puede escribir en la carpeta de destino, la compresión se para antes de empezar** y
   lo dice una vez, con la carpeta y el motivo del sistema. Antes lo intentaba fichero a fichero:

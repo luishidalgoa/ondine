@@ -23,6 +23,24 @@ public sealed class Preset
     public int Audio { get; set; }     // índice de cboAud
 
     /// <summary>
+    /// Índice de <c>cboACodec</c>: el códec de audio (0 = «Sin tocar»).
+    ///
+    /// <para>
+    /// Llegó tarde, y se notó. El preset guardaba el CAUDAL pero no el códec, así que aplicar
+    /// «Ligero para móvil (720p)» dejaba 128 kbps a la vista y «Sin tocar» en el desplegable de
+    /// al lado: dos controles diciendo cosas incompatibles. El motor desempataba en silencio
+    /// recodificando, y de ahí salió un E-AC-3 de 224 kbps convertido en AAC de 128 sin que
+    /// nadie lo pidiera.
+    /// </para>
+    /// <para>
+    /// Los presets guardados antes de que este campo existiera se siguen leyendo: el JSON no
+    /// trae la clave y queda en 0, que es «Sin tocar» — exactamente lo que aquellos presets
+    /// tenían a la vista cuando se guardaron.
+    /// </para>
+    /// </summary>
+    public int ACodec { get; set; }
+
+    /// <summary>
     /// Ya no se usa: «analizar subcarpetas» es un ajuste de exploración del usuario
     /// (Preferencias), no parte de la receta de codificación. Se conserva la propiedad
     /// para que los presets guardados con versiones antiguas se sigan leyendo.
@@ -48,11 +66,14 @@ public static class PresetStore
 
     public static List<Preset> Factory() => new()
     {
-        new() { Name = T.PresetEquilibrado,     Factory = true, Fmt = 0, Codec = 0, Quality = 0, Res = 0, Audio = 0 },
-        new() { Name = T.PresetCompatibilidad,  Factory = true, Fmt = 1, Codec = 1, Quality = 2, Res = 0, Audio = 1 },
-        new() { Name = T.PresetArchivar,        Factory = true, Fmt = 0, Codec = 2, Quality = 2, Res = 0, Audio = 0 },
-        new() { Name = T.PresetMovil,           Factory = true, Fmt = 1, Codec = 0, Quality = 0, Res = 2, Audio = 3 },
-        new() { Name = T.PresetSoloAudio,       Factory = true, Fmt = 3, Codec = 0, Quality = 0, Res = 0, Audio = 3 },
+        // ACodec = 1 (AAC) en los que eligen caudal: elegir un caudal ES pedir que se
+        // recodifique, y desde que el motor dejo de suponerlo hay que decirlo. Los que no
+        // tocan el audio se quedan en 0 = «Sin tocar», que ahora copia de verdad.
+        new() { Name = T.PresetEquilibrado,     Factory = true, Fmt = 0, Codec = 0, Quality = 0, Res = 0, Audio = 0, ACodec = 0 },
+        new() { Name = T.PresetCompatibilidad,  Factory = true, Fmt = 1, Codec = 1, Quality = 2, Res = 0, Audio = 1, ACodec = 1 },
+        new() { Name = T.PresetArchivar,        Factory = true, Fmt = 0, Codec = 2, Quality = 2, Res = 0, Audio = 0, ACodec = 0 },
+        new() { Name = T.PresetMovil,           Factory = true, Fmt = 1, Codec = 0, Quality = 0, Res = 2, Audio = 3, ACodec = 1 },
+        new() { Name = T.PresetSoloAudio,       Factory = true, Fmt = 3, Codec = 0, Quality = 0, Res = 0, Audio = 3, ACodec = 1 },
     };
 
     /// <summary>

@@ -121,9 +121,10 @@ public interface IEngineReporter
 /// </summary>
 public sealed class Engine
 {
-    private static readonly string[] LossyAudio = { "aac", "opus", "mp3", "vorbis" };
     private static readonly string[] CoverCodecs = { "png", "mjpeg", "bmp", "gif" };
-    private static readonly string[] Mp4Audio = { "aac", "ac3", "eac3", "mp3", "alac" };  // codecs que MP4 admite por copia
+    // Lo que MP4 admite por copia NO se repite aqui: lo sabe Audio.CodecDeAudio, y era la
+    // tercera copia de la misma lista -esta ya estaba muerta, y otra, la del estimador,
+    // decia algo distinto que el motor-. Tres copias de una lista son tres verdades.
     // Subtítulos "de imagen": mapas de bits, no texto. MP4 no tiene dónde meterlos
     // (mov_text es texto), así que al pasar a MP4 hay que descartarlos a propósito.
     private static readonly string[] ImageSubs =
@@ -727,40 +728,29 @@ public sealed class Engine
                 // esto era una cadena de condiciones aqui dentro que decidia en silencio.
                 for (int i = 0; i < audio.Count; i++)
                 {
-                    var elegido = opt.AudioCodec;
-
-                    // Compatibilidad hacia atras: pedir un bitrate con «copiar» puesto
-                    // siempre habia significado «recodificalo a AAC». Se conserva, porque
-                    // hay presets guardados que cuentan con ello.
-                    if (elegido == Audio.AudioElegido.Copiar && opt.AudioBitrate > 0
-                        && !LossyAudio.Contains(audio[i].CodecName))
-                        elegido = Audio.AudioElegido.Aac;
-
-                    // La mezcla se decide ANTES que el codec: bajar a estereo impide
-                    // copiar, y ffmpeg no avisa de eso — copiaria y se saltaria la mezcla
-                    // en silencio, dejando el 5.1 intacto pese a que la app decia estereo.
-                    var m = Audio.MezclaDeAudio.Decidir(opt.AudioMezcla, audio[i].Channels ?? 2);
-                    if (!Audio.MezclaDeAudio.SePuedeCopiar(m) && elegido == Audio.AudioElegido.Copiar)
-                        elegido = Audio.AudioElegido.Aac;
-
-                    var d = Audio.CodecDeAudio.Decidir(opt.Container, elegido, audio[i].CodecName ?? "");
+                    // TODA la decision vive en el nucleo, en PlanDeAudio: copiar o
+                    // recodificar, con cuantos canales y a que caudal. Antes estaba aqui
+                    // dentro, en una funcion local del bucle de ficheros, y desde ahi no se
+                    // podia probar — la regla mas delicada del motor no tenia ni una prueba,
+                    // y el fallo que la tenia rota (un «Sin tocar» que salia en AAC 128)
+                    // convivio con seis suites de argumentos en verde.
+                    var plan = Audio.PlanDeAudio.Para(
+                        opt.Container, opt.AudioCodec, opt.AudioMezcla, opt.AudioBitrate,
+                        audio[i].CodecName ?? "", audio[i].Channels ?? 2, i);
 
                     // Se avisa UNA vez por fichero, no por pista: con seis idiomas dentro,
                     // seis lineas iguales en el registro tapan todo lo demas.
-                    if (i == 0 && d.Porque != Audio.PorQueSeCambio.SeHizoLoPedido)
-                        rep.Log(string.Format(t.MotorAudioCambiado, d.Pedido, d.Codec, opt.Container));
-                    if (i == 0 && m.HayQueMezclar)
+                    if (i == 0 && plan.Codec.Porque != Audio.PorQueSeCambio.SeHizoLoPedido)
+                        rep.Log(string.Format(t.MotorAudioCambiado, plan.Codec.Pedido, plan.Codec.Codec, opt.Container));
+                    if (i == 0 && plan.Mezcla.HayQueMezclar)
                         rep.Log(string.Format(t.MotorAudioMezclado, audio[i].Channels ?? 2));
+                    // Y se dice tambien cuando el caudal elegido no se usa porque se esta
+                    // copiando. Un ajuste que no hace nada y no avisa es la misma clase de
+                    // silencio que el atajo que esto vino a quitar, en la otra direccion.
+                    if (i == 0 && plan.CaudalIgnorado)
+                        rep.Log(string.Format(t.MotorAudioCaudalSinUsar, opt.AudioBitrate));
 
-                    // El bitrate sigue a los canales de DESPUES de la mezcla: mantener el
-                    // del 5.1 al bajar a estereo desperdicia media pista, y al reves suena
-                    // mal. Un bitrate puesto a mano manda sobre todo esto.
-                    var br = opt.AudioBitrate > 0
-                        ? opt.AudioBitrate
-                        : (webm ? 160 : Audio.MezclaDeAudio.BitratePorDefecto(m.CanalesFinales));
-
-                    a.AddRange(Audio.CodecDeAudio.Argumentos(i, d, br));
-                    a.AddRange(Audio.MezclaDeAudio.Argumentos(i, m));
+                    a.AddRange(plan.Argumentos);
                 }
                 if (withSubs && keptSubs.Count > 0) a.AddRange(new[] { "-c:s", mp4 ? "mov_text" : "copy" });
                 a.AddRange(new[] { "-disposition:a:0", "default" });

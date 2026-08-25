@@ -484,8 +484,8 @@
               <TextBlock Text="{i:T MainAudio}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
               <ComboBox x:Name="cboAud" SelectedIndex="0"
                         ToolTip="{i:T MainAudioTip}">
-                <ComboBoxItem Content="{i:T MainAudioCopiar}"/><ComboBoxItem Content="{i:T MainAudioAac192}"/>
-                <ComboBoxItem Content="{i:T MainAudioAac160}"/><ComboBoxItem Content="{i:T MainAudioAac128}"/><ComboBoxItem Content="{i:T MainAudioAac96}"/>
+                <ComboBoxItem Content="{i:T MainAudioAuto}"/><ComboBoxItem Content="{i:T MainAudioKbps192}"/>
+                <ComboBoxItem Content="{i:T MainAudioKbps160}"/><ComboBoxItem Content="{i:T MainAudioKbps128}"/><ComboBoxItem Content="{i:T MainAudioKbps96}"/>
               </ComboBox>
             </StackPanel>
             <StackPanel Grid.Column="9" Margin="4,0,0,0" Orientation="Vertical">

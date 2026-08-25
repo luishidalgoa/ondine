@@ -1359,6 +1359,27 @@ public static class Comprobacion
         Dice(punto?.Classes.Contains("late") == false,
             "y su punto NO late: escondido y animándose es el 5 % de un núcleo por nada");
 
+        // ══ Los dos desplegables de audio, que no pueden contradecirse ═══════
+        // Se prueba PULSANDO, no leyendo el modelo: el fallo del que sale esto era justo un
+        // ajuste que no hacía nada -«Sin tocar» en un desplegable y «128 kbps» en el de al
+        // lado-, y el motor desempataba en silencio recodificando. Ahora manda el códec y el
+        // caudal se apaga; si el cableado se cae, el caudal se queda encendido y esto lo dice.
+        // Se ponen los dos valores a mano y NO se da por hecho con cuál arranca: la ventana
+        // aplica el preset por defecto del usuario nada más abrirse, así que el estado inicial
+        // depende de la máquina donde corra esto. La primera versión de esta comprobación se
+        // fiaba de él y acusaba al código de un fallo que era suyo.
+        var codecAudio = Cual("cboACodec") as ComboBox;
+        var caudal = Cual("cboAud") as ComboBox;
+        Dice(codecAudio is not null && caudal is not null, "los dos desplegables de audio están montados");
+
+        if (codecAudio is not null) codecAudio.SelectedIndex = 1;   // AAC
+        await Task.Delay(200);
+        Dice(caudal?.IsEnabled == true, "al elegir un códec, el caudal se enciende");
+
+        if (codecAudio is not null) codecAudio.SelectedIndex = 0;   // «Sin tocar»
+        await Task.Delay(200);
+        Dice(caudal?.IsEnabled == false, "y con «Sin tocar» se apaga: copiando no se aplica ningún caudal");
+
         // ══ La cola ══════════════════════════════════════════════════════════
         Dice(Cual("panelCola")?.IsVisible == false, "el panel de la cola arranca oculto");
 

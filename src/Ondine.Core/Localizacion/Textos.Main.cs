@@ -49,10 +49,10 @@ public sealed partial class Textos
     public string MainResolucion720 => Idioma.Elegir("720p", "720p");
     public string MainResolucion480 => Idioma.Elegir("480p", "480p");
 
-    public string MainAudioAac192 => Idioma.Elegir("AAC 192 kbps", "AAC 192 kbps");
-    public string MainAudioAac160 => Idioma.Elegir("AAC 160 kbps", "AAC 160 kbps");
-    public string MainAudioAac128 => Idioma.Elegir("AAC 128 kbps", "AAC 128 kbps");
-    public string MainAudioAac96 => Idioma.Elegir("AAC 96 kbps", "AAC 96 kbps");
+    public string MainAudioKbps192 => Idioma.Elegir("192 kbps", "192 kbps");
+    public string MainAudioKbps160 => Idioma.Elegir("160 kbps", "160 kbps");
+    public string MainAudioKbps128 => Idioma.Elegir("128 kbps", "128 kbps");
+    public string MainAudioKbps96 => Idioma.Elegir("96 kbps", "96 kbps");
 
     // ═══ Aviso de versión nueva ═════════════════════════════════════════════
     // El rótulo del aviso es solo el valor de partida: en cuanto hay una versión
@@ -335,10 +335,24 @@ public sealed partial class Textos
     public string MainAudio => Idioma.Elegir("Audio", "Audio");
 
     public string MainAudioTip => Idioma.Elegir(
-        "Audio quality. “Copy the original” does not re-encode it (quality untouched, but it takes up whatever it took up). Re-encoding to AAC saves a fair bit; mind you, the weight of the audio multiplies by every language you keep.",
-        "Calidad del audio. «Copiar original» no lo recodifica (calidad intacta, pero ocupa lo que ocupara). Recodificar a AAC ahorra bastante: ojo, el peso del audio se multiplica por cada idioma que conserves.");
+        "Bitrate for the audio, and it only applies when it is being re-encoded — which is decided by “Audio codec”, right next to it. With “Untouched” the bytes are copied and this is greyed out. Mind you, the weight of the audio multiplies by every language you keep.",
+        "Caudal del audio, y solo cuenta cuando se está recodificando — eso lo decide «Códec de audio», el de al lado. Con «Sin tocar» se copian los bytes y esto se apaga. Ojo: el peso del audio se multiplica por cada idioma que conserves.");
 
-    // Lo cita el globo de ayuda de arriba: si cambia aquí, cambia allí.
+    /// <summary>
+    /// El índice 0 del caudal en Comprimir: que lo elija la app.
+    ///
+    /// <para>
+    /// Antes decía «Máxima (copiar original)», y eso ya no es lo que hace: copiar o no lo decide
+    /// el desplegable del códec. Cuando se recodifica, esto significa que el caudal lo pone la
+    /// app según los canales que queden (192 kbps, o 448 en un 5.1).
+    /// </para>
+    /// </summary>
+    public string MainAudioAuto => Idioma.Elegir("Automatic", "Automático");
+
+    /// <summary>
+    /// El índice 0 del caudal en RECORTES, donde sí significa copiar: esa pantalla no tiene
+    /// desplegable de códec, así que su único control de audio decide las dos cosas.
+    /// </summary>
     public string MainAudioCopiar => Idioma.Elegir("Maximum (copy the original)", "Máxima (copiar original)");
 
     // Cita la casilla «Analizar subcarpetas» de Preferencias (PreferenciasSubcarpetas).
