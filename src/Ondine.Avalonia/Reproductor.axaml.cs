@@ -183,10 +183,18 @@ public partial class Reproductor : Window
         }
         catch (Exception ex)
         {
-            // Si LibVLC no está —biblioteca nativa ausente en este sistema— no se puede
-            // reproducir nada, pero sí ofrecer el reproductor de fuera. Callar aquí dejaría
-            // una pantalla negra sin explicación, que es justo lo que no se quería.
-            Fallo(ex.Message);
+            // Si LibVLC no esta, se dice CON EL NOMBRE DEL PAQUETE. En Windows viene dentro
+            // de la app, asi que esto es de Linux: la primera vez es normal no tenerlo, y
+            // se arregla con una linea. «No se pudo inicializar el reproductor» seria
+            // verdad y no serviria de nada; «sudo apt install vlc» se teclea y ya esta.
+            //
+            // Se reconoce por el tipo y no por el texto del mensaje, que llega en el idioma
+            // del sistema y cambia entre versiones.
+            bool falta = ex is DllNotFoundException or TypeInitializationException
+                             { InnerException: DllNotFoundException }
+                         || ex is VLCException;
+
+            Fallo(falta ? Textos.Instancia.ReproductorFaltaLibVlc : ex.Message);
         }
     }
 
