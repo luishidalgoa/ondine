@@ -18,7 +18,7 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
 
-    <Version>1.14.3</Version>
+    <Version>1.14.4</Version>
     <Product>Ondine CLI</Product>
     <Company>luishidalgoa</Company>
     <Authors>luishidalgoa</Authors>
