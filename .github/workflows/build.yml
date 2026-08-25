@@ -346,7 +346,12 @@ jobs:
 
       - name: Comprobar el contenido
         run: |
-          img=$(ls empaquetado/salida/*.AppImage)
+          # RUTA ABSOLUTA, y por eso esta escrito asi: mas abajo hay un «cd» -la extraccion
+          # deja su carpeta en el directorio actual- y una ruta relativa deja de resolver en
+          # cuanto se cambia de sitio. Se corto la v1.14.0 con esto mal: el AppImage se monto
+          # perfectamente (46 MB) y fallo la comprobacion, que es el orden bueno para
+          # equivocarse pero dejo la version sin ese paquete.
+          img=$(ls "$PWD"/empaquetado/salida/*.AppImage)
           echo "* $img - $(du -h "$img" | cut -f1)"
           [ -x "$img" ] || { echo "::error::el AppImage no sale ejecutable"; exit 1; }
 
