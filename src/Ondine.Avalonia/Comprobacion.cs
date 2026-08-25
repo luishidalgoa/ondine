@@ -1,3 +1,4 @@
+using Avalonia;
 using Visual = Avalonia.Visual;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -1407,5 +1408,138 @@ public static class Comprobacion
 
         v.Close();
     }
+
+    /// <summary>
+    /// Que TODO control tenga algo dibujado dentro.
+    ///
+    /// <para>
+    /// <b>Esta comprobación existe porque faltaba y se publicó una versión sin ella.</b> El
+    /// desplegable estaba vestido con un <c>ControlTheme</c> de solo colores, sin plantilla y
+    /// sin <c>BasedOn</c>, y un <c>ControlTheme</c> <b>sustituye</b> al del tema base: se
+    /// quedó sin plantilla ninguna. En la ventana principal salieron nueve rótulos —Idioma,
+    /// Formato, Códec, Calidad, Esfuerzo…— con un hueco vacío debajo de cada uno, y en
+    /// Preferencias no había manera de elegir el idioma. La aplicación no servía para nada.
+    /// </para>
+    /// <para>
+    /// Y lo que más duele: <b>había una comprobación de arranque con 154 verificaciones y
+    /// ninguna miraba esto.</b> Todas preguntaban si un tema se había aplicado —si tal parte
+    /// de la plantilla tenía tal color—, y un control sin plantilla no tiene partes que
+    /// preguntar: se cae de la lista en silencio en vez de fallar. Lo encontró una persona
+    /// abriendo la aplicación.
+    /// </para>
+    /// <para>
+    /// Así que esto no pregunta por colores. Pregunta lo anterior a todo eso: <b>¿hay algo
+    /// dibujado?</b> Un control colocado, visible y con tamaño cero o sin un solo hijo visual
+    /// es un control que no está, diga lo que diga el XAML.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerTodoSeDibuja(Window dueno)
+    {
+        // Las dos pantallas con más controles de formulario, que son donde esto se notó.
+        var principal = new VentanaPrincipal { Width = 1180, Height = 780 };
+        principal.Show(dueno);
+        await Task.Delay(600);
+
+        var prefs = new Preferencias(SettingsStore.Load(), []);
+        prefs.Show(dueno);
+        await Task.Delay(500);
+
+        foreach (var (donde, raiz) in new (string, Visual)[] { ("la ventana", principal), ("Preferencias", prefs) })
+        {
+            // Solo lo que está PUESTO y visible: un control oculto a propósito no se dibuja
+            // y eso no es un fallo. Y solo los que salen del tema base -desplegables,
+            // casillas, cajas de texto y botones-, que es donde vive este riesgo.
+            var sospechosos = raiz.GetVisualDescendants()
+                                  .OfType<Control>()
+                                  .Where(c => c is ComboBox or CheckBox or TextBox or Button or Slider)
+                                  .Where(c => c.IsVisible && c.IsEffectivelyVisible)
+                                  .ToList();
+
+            Dice(sospechosos.Count > 5,
+                $"{donde}: hay controles de formulario que mirar ({sospechosos.Count})");
+
+            var vacios = sospechosos
+                // Fuera las piezas de dentro de una plantilla (PART_*). Un boton de
+                // paginar de una barra de desplazamiento mide cero cuando no hay nada que
+                // desplazar, y el de subir de un deslizador mide cero con el tirador al
+                // final: son ceros legitimos. Lo que se busca es un control con el que el
+                // usuario tiene que poder hablar y que no esta dibujado, y esos tienen el
+                // nombre que les pusimos nosotros -cboQ, cboFmt-, no PART_.
+                .Where(c => c.Name is null || !c.Name.StartsWith("PART_"))
+                .Where(c => c.GetVisualChildren().Count() == 0 || c.Bounds.Height <= 0)
+                .Select(c => $"{c.GetType().Name}{(c.Name is null ? "" : "#" + c.Name)}")
+                .Distinct()
+                .ToList();
+
+            Dice(vacios.Count == 0,
+                vacios.Count == 0
+                    ? $"{donde}: todos se dibujan — ninguno se quedó sin plantilla"
+                    : $"{donde}: {vacios.Count} sin dibujar: {string.Join(", ", vacios.Take(6))}");
+        }
+
+        // Y el caso concreto, dicho por su nombre: que los desplegables se vean. Es el que
+        // se rompió, y una cuenta agregada puede volver a pasar con otro control mientras
+        // este sigue mal.
+        var listas = principal.GetVisualDescendants().OfType<ComboBox>()
+                              .Where(c => c.IsEffectivelyVisible).ToList();
+        Dice(listas.Count >= 8, $"los desplegables de la ventana están puestos ({listas.Count})");
+        Dice(listas.All(c => c.Bounds.Height >= 20),
+            $"y todos tienen alto de verdad ({listas.Count(c => c.Bounds.Height >= 20)}/{listas.Count})");
+
+        prefs.Close();
+        principal.Close();
+    }
+
+    /// <summary>
+    /// Que la ventana se pueda mover y estirar.
+    ///
+    /// <para>
+    /// <b>No se podía, y se publicó así.</b> Con <c>SystemDecorations="None"</c> no hay marco
+    /// del sistema, así que arrastrar por el título y estirar por los bordes hay que pedirlos
+    /// —en WPF los daba WindowChrome gratis—. El comentario del XAML decía que se pedían con
+    /// <c>BeginMoveDrag</c>; describía lo que había que hacer y nadie lo hizo. La ventana
+    /// quedaba clavada donde el sistema la abriera. Lo encontró una persona en Linux Mint.
+    /// </para>
+    /// <para>
+    /// <b>Lo que aquí se puede comprobar y lo que no.</b> Arrastrar de verdad necesita un
+    /// ratón de verdad: <c>BeginMoveDrag</c> le pide al gestor de ventanas que tome el
+    /// control, y eso no se simula. Lo que sí: que la franja del título <b>exista y ocupe su
+    /// alto</b> —sin ella no hay por dónde agarrar— y que el cálculo de qué borde hay bajo el
+    /// puntero sea correcto, que es donde está el error posible.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerMoverLaVentana(Window dueno)
+    {
+        var v = new VentanaPrincipal { Width = 1000, Height = 700 };
+        v.Show(dueno);
+        await Task.Delay(500);
+
+        var barra = v.GetVisualDescendants().OfType<Control>()
+                     .FirstOrDefault(c => c.Name == "barraTitulo");
+        Dice(barra is not null, "la franja del título existe: es por donde se agarra la ventana");
+        Dice(barra?.Bounds.Height >= 30,
+            $"y ocupa su alto ({barra?.Bounds.Height:0} px), que es la zona de arrastre");
+
+        // ── Los bordes ────────────────────────────────────────────────────────
+        var tam = new Size(1000, 700);
+
+        Dice(VentanaPrincipal.BordeEn(new Point(500, 350), tam, 6) is null,
+            "en el medio de la ventana no hay borde que estirar");
+        Dice(VentanaPrincipal.BordeEn(new Point(2, 350), tam, 6) == WindowEdge.West,
+            "el borde izquierdo estira a lo ancho");
+        Dice(VentanaPrincipal.BordeEn(new Point(500, 698), tam, 6) == WindowEdge.South,
+            "el de abajo, a lo alto");
+
+        // Las esquinas ganan a los lados. Es lo único que se puede escribir mal aquí sin
+        // que se note: con el orden al revés, una esquina se lee como lado y estirar en
+        // diagonal -que es como se estira de verdad- deja de ser posible.
+        Dice(VentanaPrincipal.BordeEn(new Point(1, 1), tam, 6) == WindowEdge.NorthWest,
+            "y en una esquina gana la esquina, no el lado: si no, no hay diagonal");
+        Dice(VentanaPrincipal.BordeEn(new Point(999, 699), tam, 6) == WindowEdge.SouthEast,
+            "las cuatro");
+
+        v.Close();
+    }
 }
+
 

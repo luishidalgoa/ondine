@@ -26,6 +26,10 @@
     <FluentTheme />
     <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
+    <!-- Despues de Fluent a proposito: lo de aqui se aplica ENCIMA de lo que traiga el
+         tema base, que es justo lo que se quiere de un Style. -->
+    <StyleInclude Source="avares://Ondine.Avalonia/Temas/Estilos.axaml" />
+
     <!--
       LA TIPOGRAFIA, UNA VEZ Y PARA TODO.
 

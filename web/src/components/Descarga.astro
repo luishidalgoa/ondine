@@ -1,7 +1,13 @@
 ---
-// La descarga. Hay seis artefactos publicados y en lista plana serían seis
-// filas sin jerarquía, así que el botón abre un modal y allí se elige. Fuera
-// del modal solo hay una decisión: descargar o no.
+// La descarga. Hay diez artefactos publicados —la aplicación de escritorio para
+// los tres sistemas y la herramienta de terminal para los cinco— y en lista
+// plana serían diez filas sin jerarquía, así que el botón abre un modal y allí
+// se elige. Fuera del modal solo hay una decisión: descargar o no.
+//
+// Dentro, cada sistema separa APLICACIÓN de TERMINAL. Hasta la v1.14.0 solo
+// había ventana en Windows y fuera de ahí lo único que se ofrecía era el
+// binario de terminal; ahora la aplicación va en los tres y es lo que se pone
+// primero, porque es lo que viene buscando quien llega a esta página.
 //
 // El modal es un <dialog> nativo. Trae encierro del foco, cierre con Escape y
 // fondo inerte de serie, sin librería ni JavaScript propio para nada de eso.
@@ -17,11 +23,32 @@ const ULTIMA = `${REPO}/releases/latest/download`;
 // Los destinos son los mismos en los dos idiomas: solo cambian las etiquetas.
 // Van aquí y no en el fichero de textos porque una URL no se traduce, y si
 // estuviera allí habría dos copias que se desincronizarían.
-const ENLACES = [
-  [`${REPO}/releases/latest`, `${ULTIMA}/ondine-windows-x64.exe`],
-  [`${ULTIMA}/ondine-macos-arm64.tar.gz`, `${ULTIMA}/ondine-macos-x64.tar.gz`],
-  [`${ULTIMA}/ondine-linux-x64.tar.gz`, `${ULTIMA}/ondine-linux-arm64.tar.gz`],
-];
+//
+// CADA UNO CON SU CLAVE, y antes era una lista por posición: `ENLACES[i][j]`
+// contra `grupos[i].opciones[j]`. Funcionaba con dos opciones por sistema y se
+// rompía al añadir la tercera, porque nada ataba una lista con la otra —una
+// etiqueta podía acabar apuntando a otro fichero sin que nada fallara—.
+//
+// Los que llevan la VERSIÓN en el nombre no pueden tener enlace fijo a la
+// última: GitHub solo sirve `releases/latest/download/<nombre exacto>`. Esos van
+// a la página de la última versión, donde el nombre de cada fichero dice para
+// qué sistema es. Es lo mismo que ya hacía el instalador de Windows.
+const VERSIONES = `${REPO}/releases/latest`;
+
+const DESCARGAS: Record<string, string> = {
+  "win-app": VERSIONES,
+  "win-cli": `${ULTIMA}/ondine-windows-x64.exe`,
+
+  "mac-app-arm": VERSIONES,
+  "mac-app-x64": VERSIONES,
+  "mac-cli-arm": `${ULTIMA}/ondine-macos-arm64.tar.gz`,
+  "mac-cli-x64": `${ULTIMA}/ondine-macos-x64.tar.gz`,
+
+  "linux-app-deb": VERSIONES,
+  "linux-app-appimage": VERSIONES,
+  "linux-cli-x64": `${ULTIMA}/ondine-linux-x64.tar.gz`,
+  "linux-cli-arm": `${ULTIMA}/ondine-linux-arm64.tar.gz`,
+};
 
 // Simple Icons no trae Windows: Microsoft pidió que retirasen sus marcas del
 // paquete. Así que Apple y Tux salen de la fuente, y para Windows va un glifo
@@ -34,14 +61,30 @@ const VENTANA =
 
 const ICONOS = [VENTANA, siApple.path, siLinux.path];
 
-// El instalador de Windows lleva la versión en el nombre, así que no admite
-// enlace fijo a la última: ese va a la página de versiones y los otros cinco
-// descargan directo.
+// Dos bloques por sistema y en este orden: la APLICACIÓN primero y la
+// herramienta de terminal después. Antes solo había terminal para macOS y Linux
+// —era lo único que existía— y ahora la aplicación va en los tres. Quien llega
+// a esta página quiere una ventana; el terminal es para quien lo busca.
+const ROTULOS = [t.descarga.aplicacion, t.descarga.herramienta];
+
 const GRUPOS = t.descarga.grupos.map((g, i) => ({
   ...g,
   icono: ICONOS[i],
-  opciones: g.opciones.map((o, j) => ({ ...o, href: ENLACES[i][j] })),
+  bloques: g.bloques.map((b, j) => ({
+    rotulo: ROTULOS[j],
+    opciones: b.opciones.map((o) => ({ ...o, href: DESCARGAS[o.id] })),
+  })),
 }));
+
+// Que ninguna opción se quede sin destino. Con las claves esto no puede pasar
+// por descuido de posición, pero sí por una clave mal escrita — y un enlace
+// vacío en un sitio de descargas es lo peor que puede haber aquí.
+const HUERFANAS = GRUPOS.flatMap((g) =>
+  g.bloques.flatMap((b) => b.opciones.filter((o) => !o.href).map((o) => o.id)),
+);
+if (HUERFANAS.length > 0) {
+  throw new Error(`Descargas sin enlace: ${HUERFANAS.join(", ")}`);
+}
 
 const PROMESAS = t.descarga.promesas;
 ---
@@ -84,17 +127,28 @@ const PROMESAS = t.descarga.promesas;
             </svg>
             <h4>{g.sistema}</h4>
           </header>
-          <ul>
-            {g.opciones.map((o) => (
-              <li>
-                <a href={o.href}>
-                  <span class="etiqueta">{o.etiqueta}</span>
-                  <span class="peso">{o.peso}</span>
-                  <span class="detalle">{o.detalle}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          {g.bloques.map((b) => (
+            <>
+              <p class="rotulo">{b.rotulo}</p>
+              <ul>
+                {b.opciones.map((o) => (
+                  <li>
+                    <a href={o.href}>
+                      <span class="etiqueta">{o.etiqueta}</span>
+                      <span class="peso">{o.peso}</span>
+                      {o.detalle && <span class="detalle">{o.detalle}</span>}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ))}
+
+          <!-- Lo que hace falta saber ANTES de descargar, no después: que en un
+               Mac la primera vez hay que abrirla con el botón derecho, y que
+               ffmpeg no va dentro. Descubrir eso al abrirla se lee como que la
+               aplicación está rota. -->
+          <p class="nota">{g.nota}</p>
         </section>
       ))
     }
@@ -361,6 +415,31 @@ const PROMESAS = t.descarga.promesas;
   .tarjeta ul {
     display: grid;
     gap: 0.2rem;
+  }
+
+  /* El rótulo del bloque: en monoespaciada y pequeño, como el del terminal de
+     abajo. Separa «la aplicación» de «la herramienta» sin meter otra caja. */
+  .rotulo {
+    margin: 0.85rem 0 0.35rem;
+    padding: 0 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #6f7488;
+  }
+  .tarjeta ul:first-of-type + .rotulo { margin-top: 0.85rem; }
+  .tarjeta header + .rotulo { margin-top: 0.55rem; }
+
+  /* La nota va al pie de la tarjeta y empujada hacia abajo, así las tres
+     quedan alineadas aunque una tenga más opciones que otra. */
+  .nota {
+    margin-top: auto;
+    padding: 0.85rem 0.6rem 0;
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+    font-size: 12px;
+    line-height: 1.5;
+    color: #7e8396;
   }
 
   .tarjeta a {

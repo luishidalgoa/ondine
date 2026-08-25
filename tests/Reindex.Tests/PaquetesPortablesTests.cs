@@ -39,6 +39,8 @@ public static class PaquetesPortablesTests
         ElAppImage(raiz, binario);
         ElPaqueteDeMac(raiz, binario);
         NingunoSeInventaLaVersion(raiz);
+        ElNombreDiceElSistema(raiz);
+        ElIconoNoDependeDeUnSoloSitio(raiz);
     }
 
     /// <summary>
@@ -129,6 +131,73 @@ public static class PaquetesPortablesTests
             Program.Assert(s.Contains("<Version>"),
                 $"{nombre} saca la versión del csproj, no la lleva escrita");
         }
+    }
+
+    /// <summary>
+    /// El nombre del fichero dice PARA QUÉ SISTEMA es.
+    ///
+    /// <para>
+    /// Esto es un fallo de verdad, no una hipótesis: se publicó la v1.14.0 con los paquetes
+    /// llamados <c>Ondine-1.14.0-x64.dmg</c> y <c>Ondine-1.14.0-x86_64.AppImage</c>, y en la
+    /// página de versiones hay diez ficheros juntos. Alguien con un Linux de 64 bits vio
+    /// «x64», se lo bajó, y su Mint lo detectó como <b>un comprimido cualquiera</b>: un
+    /// <c>.dmg</c> es una imagen de disco de macOS.
+    /// </para>
+    /// <para>
+    /// La extensión ya lo dice, pero solo a quien se sepa las extensiones. La arquitectura
+    /// sola es peor que no poner nada, porque <b>coincide entre sistemas</b> —x64 es x64 en
+    /// los tres— y da una pista falsa que se lee con confianza.
+    /// </para>
+    /// <para>
+    /// El <c>.deb</c> se queda fuera: su nombre lo fija la política de Debian
+    /// (<c>nombre_version_arquitectura.deb</c>) y ahí «amd64» no se puede tocar. A cambio, ese
+    /// es el único de los tres que el escritorio abre e instala él solo.
+    /// </para>
+    /// </summary>
+    private static void ElNombreDiceElSistema(string raiz)
+    {
+        foreach (var (guion, marca) in new[]
+                 {
+                     ("macos/hacer-dmg.sh", "macos"),
+                     ("linux/hacer-appimage.sh", "linux"),
+                 })
+        {
+            var ruta = Path.Combine(raiz, "empaquetado", guion.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(ruta)) { Program.Assert(false, $"no encuentro {guion}"); continue; }
+
+            var s = File.ReadAllText(ruta);
+            Program.Assert(s.Contains($"-{marca}-"),
+                $"el paquete de {guion} lleva «{marca}» en el nombre, no solo la arquitectura");
+        }
+    }
+
+    /// <summary>
+    /// El icono se instala en dos sitios, y hace falta.
+    ///
+    /// <para>
+    /// En Linux Mint el lanzador salió en el menú <b>con un engranaje genérico</b>: el icono
+    /// estaba dentro del paquete y el <c>.desktop</c> lo pedía por su nombre. Lo que falla en
+    /// medio es el tema de iconos, que son varias piezas —el índice del tema, la caché de
+    /// GTK, el cargador de SVG— y basta con que una no esté para que la búsqueda por nombre
+    /// no devuelva nada. Ninguna de ellas avisa.
+    /// </para>
+    /// <para>
+    /// <c>/usr/share/pixmaps</c> es la ruta anterior a los temas: se mira por nombre, sin
+    /// índice y sin caché. Tres kilobytes por no depender de que todo lo demás esté bien.
+    /// </para>
+    /// </summary>
+    private static void ElIconoNoDependeDeUnSoloSitio(string raiz)
+    {
+        var guion = Path.Combine(raiz, "empaquetado", "linux", "hacer-deb.sh");
+        if (!File.Exists(guion)) { Program.Assert(false, "no encuentro hacer-deb.sh"); return; }
+        var s = File.ReadAllText(guion);
+
+        Program.Assert(s.Contains("/usr/share/icons/hicolor/256x256/apps/ondine.png"),
+            "el icono va en el árbol del tema, que es lo primero que mira el escritorio");
+        Program.Assert(s.Contains("/usr/share/pixmaps/ondine.png"),
+            "y también en pixmaps, que es lo que queda cuando el tema de iconos falla");
+        Program.Assert(s.Contains("hicolor-icon-theme"),
+            "y el paquete que crea ese árbol se declara como dependencia");
     }
 
     private static string Entre(string texto, string desde, string hasta)

@@ -109,7 +109,10 @@ if [ ! -x "$herramienta" ]; then
   chmod +x "$herramienta"
 fi
 
-destino="$salida/Ondine-${version}-${arquitectura}.AppImage"
+# Con «linux» en el nombre, por lo mismo que el .dmg lleva «macos»: la arquitectura sola
+# coincide entre sistemas y no distingue nada. (El .deb no puede: su nombre lo fija la
+# politica de Debian, y a cambio es el unico que el escritorio instala el solo.)
+destino="$salida/Ondine-${version}-linux-${arquitectura}.AppImage"
 rm -f "$destino"
 
 # ARCH se le pasa por el entorno: appimagetool no lo deduce del contenido y falla sin ella.
