@@ -45,12 +45,20 @@ public static class RiesgoDelReordenado
     /// <paramref name="esMarcador"/> se inyecta; en la aplicación es
     /// <see cref="Nube.EsMarcador(string)"/>.
     /// </summary>
+    /// <param name="montajes">
+    /// Los puntos de montaje con los que decidir si dos rutas están en el mismo volumen. Se
+    /// inyecta por lo mismo que <paramref name="esMarcador"/>: sin él, esta comprobación
+    /// dependía de los discos que tuviera la máquina que ejecuta las pruebas, y por eso la
+    /// suya se saltaba entera fuera de Windows.
+    /// </param>
     public static List<Aviso> Mirar(
         IEnumerable<PlanDeReordenado.Paso> plan,
         IEnumerable<Nube.Sincronizacion> raices,
-        Func<string, bool>? esMarcador = null)
+        Func<string, bool>? esMarcador = null,
+        IReadOnlyList<string>? montajes = null)
     {
         esMarcador ??= Nube.EsMarcador;
+        montajes ??= PuntoDeMontaje.DeEstaMaquina();
         var nubes = raices as IReadOnlyCollection<Nube.Sincronizacion> ?? raices.ToList();
 
         var cruzan = 0;
@@ -64,7 +72,7 @@ public static class RiesgoDelReordenado
             // deja de leer a la segunda vez.
             if (paso.Motivo != PlanDeReordenado.Porque.Va || paso.Destino is not { } destino) continue;
 
-            if (!MismoVolumen(paso.Origen, destino)) cruzan++;
+            if (!MismoVolumen(paso.Origen, destino, montajes)) cruzan++;
 
             // La nube del DESTINO solo importa si no es ya la del origen: moverse
             // dentro de la misma carpeta sincronizada es mover una referencia, no
@@ -92,12 +100,25 @@ public static class RiesgoDelReordenado
     /// resolver se responde que sí: el aviso existe para avisar de algo cierto, y
     /// uno disparado por una ruta rara es ruido.
     /// </summary>
-    private static bool MismoVolumen(string a, string b)
+    private static bool MismoVolumen(string a, string b, IReadOnlyList<string> montajes)
     {
         try
         {
-            var ra = Path.GetPathRoot(Path.GetFullPath(a));
-            var rb = Path.GetPathRoot(Path.GetFullPath(b));
+            // El punto de montaje y NO Path.GetPathRoot: en Linux y macOS esa función
+            // devuelve «/» para cualquier ruta absoluta, así que la carpeta personal y un NAS
+            // montado en /mnt salían como el mismo volumen y este aviso NO SALTABA NUNCA
+            // fuera de Windows. Justo donde más importa: en un NAS o en un USB, mover no es
+            // renombrar, es copiar el fichero entero. Ver PuntoDeMontaje.
+            // Sin GetFullPath, por lo mismo que PuntoDeMontaje no lo llama: es dependiente
+            // del sistema y convertiría una comparación de rutas en algo que depende de dónde
+            // corra. Las rutas de un plan salen del disco y ya son absolutas; si alguna no lo
+            // fuera, no casaría con ningún montaje y se responde «el mismo volumen», que es
+            // el lado bueno de equivocarse.
+            var ra = PuntoDeMontaje.De(a, montajes);
+            var rb = PuntoDeMontaje.De(b, montajes);
+
+            // Ante la duda, el mismo volumen: un aviso que salta en falso es ruido, y este
+            // existe para avisar de algo cierto.
             if (string.IsNullOrEmpty(ra) || string.IsNullOrEmpty(rb)) return true;
             return string.Equals(ra, rb, StringComparison.OrdinalIgnoreCase);
         }

@@ -31,7 +31,7 @@ public static class SegmentSplitRunner
             "-v", "error", "-show_entries", "format=duration",
             "-of", "default=noprint_wrappers=1:nokey=1", path,
         }, ct);
-        return double.TryParse(salida.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : 0;
+        return double.TryParse(salida.Salida.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : 0;
     }
 
     private static readonly Regex RxNegro = new(
@@ -54,7 +54,7 @@ public static class SegmentSplitRunner
         }, ct);
 
         var lista = new List<SegmentSplitter.Negro>();
-        foreach (Match m in RxNegro.Matches(salida))
+        foreach (Match m in RxNegro.Matches(salida.Salida))
         {
             if (double.TryParse(m.Groups["a"].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var a) &&
                 double.TryParse(m.Groups["b"].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var b))
@@ -88,12 +88,37 @@ public static class SegmentSplitRunner
         // enseñaba el final de la historia anterior en vez de su tarjeta de título.
         args.AddRange(new[] { "-map", "0", "-c", "copy", destino, "-y" });
 
-        await CorrerAsync(Engine.FfmpegPath, args, ct);
-        return File.Exists(destino) && new FileInfo(destino).Length > 0;
+        // SE MIRA EL CODIGO DE SALIDA, y antes no.
+        //
+        // Esto decidia con «existe y pesa mas de cero», tirando lo que devolvia CorrerAsync. Un
+        // ffmpeg que muere a mitad -disco lleno, el origen en una unidad de red que se cae, un
+        // contenedor con el indice roto- deja un fichero de varios megas y sale con codigo
+        // distinto de cero: eso contaba como exito. Y lo que viene despues es que el original
+        // se va a la papelera, asi que quedaban trozos truncados y el episodio entero fuera.
+        //
+        // Un trozo a medias es peor que ninguno: pesa, se reproduce un rato y parece bueno.
+        var (codigo, _) = await CorrerAsync(Engine.FfmpegPath, args, ct);
+
+        if (codigo != 0 || !File.Exists(destino) || new FileInfo(destino).Length == 0)
+        {
+            // El parcial se borra, como ya hace el cortador sin recodificar: dejarlo tirado en
+            // la carpeta de la biblioteca es dejar basura que parece contenido.
+            try { if (File.Exists(destino)) File.Delete(destino); } catch { }
+            return false;
+        }
+        return true;
     }
 
-    /// <summary>Lanza la herramienta y devuelve lo que escriba (ffmpeg informa por stderr).</summary>
-    private static async Task<string> CorrerAsync(string exe, IEnumerable<string> args, CancellationToken ct)
+    /// <summary>
+    /// Lanza la herramienta y devuelve su codigo de salida y lo que escriba (ffmpeg informa
+    /// por stderr).
+    ///
+    /// <para>
+    /// Devolvia solo el texto, y por eso el codigo de salida no se podia mirar aunque se
+    /// quisiera: quien llamaba no lo tenia. Se devuelven los dos.
+    /// </para>
+    /// </summary>
+    private static async Task<(int Codigo, string Salida)> CorrerAsync(string exe, IEnumerable<string> args, CancellationToken ct)
     {
         var psi = new ProcessStartInfo(exe)
         {
@@ -108,6 +133,6 @@ public static class SegmentSplitRunner
         var salida = p.StandardOutput.ReadToEndAsync(ct);
         var error = p.StandardError.ReadToEndAsync(ct);
         await p.WaitForExitAsync(ct);
-        return (await salida) + (await error);
+        return (p.ExitCode, (await salida) + (await error));
     }
 }

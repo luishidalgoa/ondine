@@ -34,6 +34,31 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **«Restaurar» desde la papelera del escritorio devolvía el vídeo a un sitio donde la app lo
+  borraba.** Ondine tiene dos papeleras encadenadas —la suya, para que Ctrl+Z sea instantáneo, y
+  la del sistema— y al pasar de una a otra le entregaba al sistema la ruta *interna*. La papelera
+  apunta la procedencia de lo que le dan, así que «Restaurar» dejaba el fichero en una carpeta de
+  la aplicación que se vacía al cerrar, sin pasar por ninguna papelera: **recuperarlo era la forma
+  de perderlo**. Ahora vuelve a su carpeta de verdad, y si ahí ya hay otro con su nombre no se
+  pisa.
+
+- **Quitar pistas sobrescribía el original aunque no se hubiera podido poner a salvo.** Mover el
+  original a la papelera propia implica copiarlo a la carpeta de datos de la app, que casi nunca
+  está en el mismo disco, así que puede fallar por espacio — y se sobrescribía igual, dejando sin
+  nada al Ctrl+Z que la propia app promete. Ahora, si no se puede asegurar el original, no se
+  toca y se dice por qué.
+
+- **Partir un episodio daba el trozo por bueno sin comprobar que ffmpeg hubiera terminado bien.**
+  Bastaba con que el fichero existiera y pesara algo, así que un ffmpeg muerto a mitad —disco
+  lleno, una unidad de red que se cae— dejaba un trozo truncado que parecía correcto… y el
+  original se iba a la papelera detrás. Ahora se mira el resultado y el trozo a medias se borra.
+
+- **En Linux y macOS, el aviso de «esto mueve ficheros a otro disco» no salía nunca**, y el
+  guardián de disco lleno medía la partición del sistema en vez del disco de destino: con la raíz
+  llena, comprimir se quedaba esperando para siempre a que se liberara un sitio que no
+  necesitaba. Los dos se apoyaban en una función que fuera de Windows devuelve «/» para cualquier
+  ruta.
+
 - **Cambiar de pestaña te llevaba a otra página.** Organizar abría Recortes, Recortes abría
   Comprimir y Comprimir abría Organizar. En Avalonia hay un solo aviso para marcar y desmarcar,
   así que al cambiar de página llegaban dos —el de la pestaña nueva y el de la vieja al apagarse—

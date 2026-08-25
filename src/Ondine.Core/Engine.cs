@@ -446,9 +446,24 @@ public sealed class Engine
             }
 
             long despues = new FileInfo(tmp).Length;
+
             // El original se manda a la papelera propia en vez de borrarlo: si el remux salió
             // mal de una forma que no detectamos, con Ctrl+Z se recupera.
-            Reindex.PapeleraApp.Enviar(path);
+            //
+            // Y SE COMPRUEBA QUE SE HAYA IDO. Esto tiraba el resultado de Enviar y a la línea
+            // siguiente sobrescribía el original. Enviar devuelve null cuando no puede -y puede
+            // no poder a menudo: mueve el fichero a la carpeta de datos de la app, que casi
+            // nunca está en el mismo disco que la biblioteca, así que es una copia entera que
+            // falla si no hay sitio-. En ese caso se sobrescribía el original sin red, y el
+            // Ctrl+Z que la propia línea de arriba promete no tenía nada que deshacer.
+            //
+            // Es el único de los llamantes de Enviar que no miraba la respuesta.
+            if (Reindex.PapeleraApp.Enviar(path) is null)
+            {
+                try { File.Delete(tmp); } catch { }
+                return (false, Textos.Instancia.MotorPistasSinRed, antes, 0);
+            }
+
             File.Move(tmp, path, overwrite: true);
             return (true, "", antes, despues);
         }
@@ -996,9 +1011,30 @@ public sealed class Engine
 
     // Inyectable para pruebas (simular disco lleno). En producción consulta el disco real.
     internal static Func<string, long> FreeSpaceProvider = DefaultFreeSpace;
+    /// <summary>
+    /// El espacio libre del disco DE DESTINO.
+    ///
+    /// <para>
+    /// Esto medía <c>Path.GetPathRoot(dir)</c>, que en Windows da la letra de unidad y acierta,
+    /// pero en Linux y macOS <b>devuelve «/» para cualquier ruta absoluta</b>: se medía siempre
+    /// la partición raíz. Con la raíz llena y el disco de destino vacío, la compresión se
+    /// quedaba esperando para siempre a que se liberara un sitio que no necesitaba; al revés,
+    /// escribía hasta llenar el destino sin avisar. Ver <see cref="PuntoDeMontaje"/>.
+    /// </para>
+    /// <para>
+    /// Y cuando no se puede medir se devuelve <c>long.MaxValue</c>, que es «adelante». Es a
+    /// propósito: una unidad de red que no sabe decir su espacio libre no debe impedir
+    /// comprimir. El que avisa de verdad es ffmpeg, con su ENOSPC.
+    /// </para>
+    /// </summary>
     private static long DefaultFreeSpace(string dir)
     {
-        try { return new DriveInfo(Path.GetPathRoot(Path.GetFullPath(dir))!).AvailableFreeSpace; }
+        try
+        {
+            var completa = Path.GetFullPath(dir);
+            var montaje = PuntoDeMontaje.De(completa, PuntoDeMontaje.DeEstaMaquina());
+            return new DriveInfo(montaje ?? Path.GetPathRoot(completa)!).AvailableFreeSpace;
+        }
         catch { return long.MaxValue; }
     }
     private static long FreeSpace(string dir) => FreeSpaceProvider(dir);

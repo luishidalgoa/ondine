@@ -28,32 +28,31 @@ public static class RiesgoDelReordenadoTests
             "una mudanza dentro del mismo disco y sin nubes no avisa de nada");
 
         // ── Cruzar volumen ────────────────────────────────────────────────────
-        // Solo en Windows: «volumen» aquí es la letra de unidad, y fuera de
-        // Windows «C:lgo» no tiene raíz que comparar —hay una sola, «/»—. Se
-        // salta en voz alta en vez de inventar un caso neutro: un salto
-        // silencioso se lee como cobertura.
-        if (!OperatingSystem.IsWindows())
-        {
-            Console.WriteLine("  · saltado: cruzar volumen son letras de unidad y esto no es Windows");
-        }
-        else
-        {
-        // No es un detalle: dentro del mismo volumen mover es reetiquetar, y entre
-        // volúmenes es copiar entero y borrar. Con 200 capítulos, la diferencia
-        // entre un segundo y media hora.
+        // YA NO SE SALTA FUERA DE WINDOWS, y eso es lo que se ha ganado aquí.
+        //
+        // Antes esta comprobación solo corría en Windows: «volumen» se decidía con
+        // Path.GetPathRoot y fuera de allí eso devuelve «/» para toda ruta absoluta. El salto
+        // estaba escrito en voz alta —bien— pero tapaba algo peor que un hueco de cobertura:
+        // que el aviso NO SALTABA NUNCA en Linux ni en macOS, que es donde una biblioteca vive
+        // en un NAS o en un USB y mover no es renombrar, es copiar el fichero entero.
+        //
+        // Ahora los montajes se inyectan, así que se puede describir un Linux con la carpeta
+        // personal en un disco y un NAS en otro, y comprobarlo desde cualquier sistema.
+        string[] comoUnLinux = ["/", "/home", "/mnt/nas"];
+
         var cruza = RiesgoDelReordenado.Mirar(
             new[]
             {
-                Va(R("C:", "descargas", "a.mkv"), R("E:", "Plex", "Season 03", "a.mkv")),
-                Va(R("C:", "descargas", "b.mkv"), R("E:", "Plex", "Season 03", "b.mkv")),
-                Va(R("C:", "descargas", "c.mkv"), R("C:", "Plex", "Season 03", "c.mkv")),
+                Va("/home/luis/descargas/a.mkv", "/mnt/nas/Plex/Season 03/a.mkv"),
+                Va("/home/luis/descargas/b.mkv", "/mnt/nas/Plex/Season 03/b.mkv"),
+                Va("/home/luis/descargas/c.mkv", "/home/luis/Plex/Season 03/c.mkv"),
             },
-            sinNubes);
+            sinNubes, montajes: comoUnLinux);
+
         Program.Assert(cruza.Count == 1 && cruza[0].Que == RiesgoDelReordenado.Riesgo.CruzaVolumen,
-            "mover a otro volumen se avisa");
-        Program.Assert(cruza[0].Cuantos == 2,
+            "mover de la carpeta personal al NAS se avisa");
+        Program.Assert(cruza.Count == 1 && cruza[0].Cuantos == 2,
             "y se dice cuántos: los dos que cruzan, no el que se queda en su disco");
-        }
 
         // ── Lo que no se mueve, no cuenta ─────────────────────────────────────
         // Un aviso que suma los que se quedan quietos asusta por trabajo que
