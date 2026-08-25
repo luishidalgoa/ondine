@@ -185,6 +185,24 @@ public sealed partial class Textos
         "a file or folder in the way does not exist",
         "algún fichero o carpeta del camino no existe");
 
+    /// <summary>
+    /// No se puede escribir en la carpeta de destino, dicho ANTES de empezar. {0} es la
+    /// carpeta y {1} el motivo del sistema, sin traducir: es lo que se puede buscar.
+    /// </summary>
+    public string MotorNoSePuedeEscribir => Idioma.Elegir(
+        """
+            STOPPED: cannot write to the destination folder, so nothing was attempted.
+            {0}
+            The system says: {1}
+            Check that your user can write there (a read-only mount, or one owned by someone else, looks exactly like this).
+        """,
+        """
+            SE PARA: no se puede escribir en la carpeta de destino, así que no se ha intentado nada.
+            {0}
+            El sistema dice: {1}
+            Comprueba que tu usuario puede escribir ahí (un montaje de solo lectura, o de otro dueño, se ve exactamente así).
+        """);
+
     public string MotorFfmpegSoloElCodigo => Idioma.Elegir(
         "ffmpeg failed with code {0} and did not say why",
         "ffmpeg falló con el código {0} y no dijo por qué");
