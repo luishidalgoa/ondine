@@ -8,6 +8,10 @@ using Avalonia.Media;
 using Ondine.Localizacion;
 using Ondine.Reindex;
 
+// Un pincel del tema, para las clases de apoyo que no son controles y por tanto no tienen
+// el TryFindResource de la vista.
+
+
 
 namespace Ondine.Ava;
 
@@ -377,7 +381,8 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     public IBrush EstadoBorde => Rec($"Org{Tono}Border");
 
     private static IBrush Rec(string clave) =>
-        RecursoDeLaApp(clave) as IBrush ?? Brushes.Transparent;
+        Avalonia.Application.Current is { } app && app.TryFindResource(clave, out var v) && v is IBrush b
+            ? b : Brushes.Transparent;
 
     // ───────────────────── columna FICHERO ORIGINAL ─────────────────────
 

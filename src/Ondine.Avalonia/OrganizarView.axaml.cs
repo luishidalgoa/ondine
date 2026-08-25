@@ -154,10 +154,10 @@ public partial class OrganizarView : UserControl
             if (_catalogoCargado == null || _filas.Count == 0) return;
             await new Faltantes(_catalogoCargado, _filas.Select(f => f.Res).ToList()).ShowDialog(Ventana!);
         };
-        btnReordenar.Click += (_, _) => Reordenar();
+        btnReordenar.Click += async (_, _) => await Reordenar();
         btnDeshacer.Click += (_, _) => DeshacerUltimoLote();
         btnDeshacerBanda.Click += (_, _) => DeshacerUltimoLote();
-        btnMemoria.Click += (_, _) => AbrirMemoria();
+        btnMemoria.Click += async (_, _) => await AbrirMemoria();
         btnAceptarVerdes.Click += (_, _) => AceptarVerdes();
         btnConfirmarEspeciales.Click += (_, _) => FiltrarSolo(ReindexEstado.Especial);
         listaMarcas.ItemsSource = LibraryTemplate.Marcas;
@@ -187,7 +187,7 @@ public partial class OrganizarView : UserControl
             chip.IsCheckedChanged += (_, _) => FiltrarPeliculas();
         }
 
-        cboTipo.SelectionChanged += (_, _) =>
+        cboTipo.SelectionChanged += async (_, _) =>
         {
             // Al cargar la carpeta el desplegable se coloca solo; eso no es una
             // eleccion del usuario y no debe reescribir lo guardado.
@@ -201,7 +201,7 @@ public partial class OrganizarView : UserControl
             MostrarInicio();
         };
         cboSerie.SelectionChanged += (_, _) => ElegirCatalogo(cboSerie.SelectedItem as CatalogoGuardado);
-        cboModo.SelectionChanged += (_, _) =>
+        cboModo.SelectionChanged += async (_, _) =>
         {
             if (_sincronizandoModo || _catalogoElegido == null) return;
             ReindexStore.GuardarModo(_catalogoElegido.Ruta,
@@ -210,7 +210,7 @@ public partial class OrganizarView : UserControl
             if (_catalogoCargado != null && _ficheros.Length > 0) Simular();
         };
         // Ctrl+Z deshace el último envío a la papelera de la app (p. ej. la copia repetida borrada).
-        KeyDown += (_, e) =>
+        KeyDown += async (_, e) =>
         {
             if (e.Key == Key.Z
                 && e.KeyModifiers.HasFlag(KeyModifiers.Control))
@@ -226,12 +226,12 @@ public partial class OrganizarView : UserControl
         }
 
         txtBuscarTabla.TextChanged += (_, _) => AplicarFiltro();
-        txtBuscarTabla.KeyDown += (_, e) =>
+        txtBuscarTabla.KeyDown += async (_, e) =>
         {
             if (e.Key == Key.Escape) { txtBuscarTabla.Text = ""; tabla.Focus(); e.Handled = true; }
         };
         // Ctrl+K desde cualquier punto de la página: el estándar de «buscar aquí dentro»
-        KeyDown += (_, e) =>
+        KeyDown += async (_, e) =>
         {
             if (e.Key == Key.K && e.KeyModifiers == KeyModifiers.Control &&
                 vistaRevision.IsVisible)
@@ -245,7 +245,7 @@ public partial class OrganizarView : UserControl
         // Menú contextual: se resuelve la fila bajo el puntero y se selecciona, para que
         // no quede duda de sobre cuál se va a actuar. Fuera de una fila no se abre: un menú
         // que aparece sobre el vacío y actúa sobre «lo último seleccionado» es una trampa.
-        tabla.ContextRequested += (_, e) =>
+        tabla.ContextRequested += async (_, e) =>
         {
             // Con la tecla Menú no hay puntero al que preguntar: WPF lo indica poniendo la
             // posición en negativo, y entonces manda la fila seleccionada. Sin esto el menú
@@ -284,16 +284,16 @@ public partial class OrganizarView : UserControl
         };
         miElegirEpisodio.Click += (_, _) => OnElegirAMano(tabla, new RoutedEventArgs());
         miDejarComoEsta.Click += (_, _) => OnDejarComoEsta(tabla, new RoutedEventArgs());
-        miAnadirHistoria.Click += (_, _) => AnadirHistoriaDeOtroEpisodio();
-        miQuitarHistorias.Click += (_, _) =>
+        miAnadirHistoria.Click += async (_, _) => await AnadirHistoriaDeOtroEpisodio();
+        miQuitarHistorias.Click += async (_, _) =>
         {
             if (tabla.SelectedItem is not OrganizarRow f) return;
             f.QuitarHistorias();
             ActualizarContadores();
             Escribir(string.Format(Textos.Instancia.OrganizarLogEpisodioNormal, f.Original));
         };
-        miReproducir.Click += (_, _) => ReproducirFila(tabla.SelectedItem as OrganizarRow);
-        miRecortar.Click += (_, _) =>
+        miReproducir.Click += async (_, _) => await ReproducirFila(tabla.SelectedItem as OrganizarRow);
+        miRecortar.Click += async (_, _) =>
         {
             if (tabla.SelectedItem is OrganizarRow f && File.Exists(f.RutaActual))
                 AbrirEnRecortes?.Invoke(f.RutaActual, false);
@@ -301,7 +301,7 @@ public partial class OrganizarView : UserControl
         miUbicacion.Click += (_, _) => AbrirUbicacion(tabla.SelectedItem as OrganizarRow);
         miRevisar.Click += (_, _) => AlternarApartada(tabla.SelectedItem as OrganizarRow);
         btnCola.IsCheckedChanged += (_, _) => PintarCola();
-        btnVaciarCola.Click += (_, _) => VaciarCola();
+        btnVaciarCola.Click += async (_, _) => await VaciarCola();
 
         tabla.KeyDown += OnTablaKeyDown;
         tabla.PointerPressed += OnTablaClic;
@@ -477,11 +477,11 @@ public partial class OrganizarView : UserControl
     /// Menú de las carpetas vinculadas a este catálogo: saltar a una, vincular la actual o
     /// quitarla. El vínculo se guardaba solo al analizar y no se podía ni ver ni tocar.
     /// </summary>
-    private void OnVinculos(object sender, RoutedEventArgs e)
+    private async void OnVinculos(object sender, RoutedEventArgs e)
     {
         if (_catalogoElegido == null)
         {
-            Aviso(Textos.Instancia.OrganizarVinculosSinCatalogo);
+            await Aviso(Textos.Instancia.OrganizarVinculosSinCatalogo);
             return;
         }
         var actual = txtCarpeta.Text?.Trim() ?? "";
@@ -591,7 +591,7 @@ public partial class OrganizarView : UserControl
             if (_catalogoElegido?.Ruta == ruta) _catalogoElegido = null;
             Recargar();
         }
-        else Aviso(Textos.Instancia.OrganizarCatalogoYaNoEstaba);
+        else await Aviso(Textos.Instancia.OrganizarCatalogoYaNoEstaba);
     }
 
     // ─────────────────────────── carpeta ───────────────────────────
@@ -891,11 +891,11 @@ public partial class OrganizarView : UserControl
     // ─────────────────────────── catálogos ───────────────────────────
 
     /// <summary>Abre el explorador del catálogo elegido, para verificar propuestas.</summary>
-    private void AbrirExplorador()
+    private async Task AbrirExplorador()
     {
         if (_catalogoCargado == null)
         {
-            Aviso(Textos.Instancia.OrganizarElegirCatalogoPrimero);
+            await Aviso(Textos.Instancia.OrganizarElegirCatalogoPrimero);
             return;
         }
         // Se le pasa lo analizado para que cada episodio pueda decir si lo tienes y
@@ -934,7 +934,7 @@ public partial class OrganizarView : UserControl
     private const string UrlEspecificacion =
         "https://github.com/luishidalgoa/ondine/blob/main/docs/catalogo-reindex.md";
 
-    private void AbrirEspecificacion()
+    private async Task AbrirEspecificacion()
     {
         try
         {
@@ -943,7 +943,7 @@ public partial class OrganizarView : UserControl
         }
         catch (Exception ex)
         {
-            Aviso(string.Format(Textos.Instancia.OrganizarNoSeAbrioDoc, ex.Message, UrlEspecificacion));
+            await Aviso(string.Format(Textos.Instancia.OrganizarNoSeAbrioDoc, ex.Message, UrlEspecificacion));
         }
     }
 
@@ -1388,7 +1388,7 @@ public partial class OrganizarView : UserControl
     /// Solo cuenta el clic sobre una CELDA: dentro del desplegable hay botones («Cambiar a
     /// E318»), y si el clic ahí también cerrara la fila, elegir un candidato sería imposible.
     /// </summary>
-    private void OnTablaClic(object sender, PointerPressedEventArgs e)
+    private async void OnTablaClic(object sender, PointerPressedEventArgs e)
     {
         // Doble clic = ver el video en el reproductor del sistema: ante la duda de que
         // capitulo es, mirarlo gana a cualquier metadato. Va antes que el cierre de fila
@@ -1400,7 +1400,7 @@ public partial class OrganizarView : UserControl
             // Reproductor INTEGRADO en modo focus, no una ventana del sistema: la pregunta
             // es «¿qué capítulo es?» y la respuesta debe estar a un Esc de distancia. Si el
             // códec no está soportado, la propia ventana ofrece el reproductor del sistema.
-            ReproducirFila(filaVideo);
+            await ReproducirFila(filaVideo);
             e.Handled = true;
             return;
         }
@@ -1667,7 +1667,7 @@ public partial class OrganizarView : UserControl
     /// Saltar al fichero: se selecciona y se trae a la vista. Si no está en esta simulación
     /// —otra carpeta, otra serie— se abre su carpeta, que es lo único útil que queda.
     /// </summary>
-    private void OnIrAFicheroDeLaCola(object sender, RoutedEventArgs e)
+    private async void OnIrAFicheroDeLaCola(object sender, RoutedEventArgs e)
     {
         if ((sender as Control)?.Tag is not string ruta) return;
 
@@ -1678,7 +1678,7 @@ public partial class OrganizarView : UserControl
         {
             btnCola.IsChecked = false;
             if (File.Exists(ruta)) AbrirCarpetaDe(ruta);
-            else Aviso(string.Format(Textos.Instancia.OrganizarColaYaNoEsta, Path.GetFileName(ruta)));
+            else await Aviso(string.Format(Textos.Instancia.OrganizarColaYaNoEsta, Path.GetFileName(ruta)));
             return;
         }
 
@@ -1902,18 +1902,18 @@ public partial class OrganizarView : UserControl
         (sender as Control)?.DataContext as OrganizarRow;
 
     /// <summary>«Enviar este a la Papelera»: manda a la Papelera ESTE fichero (la copia repetida).</summary>
-    private void OnBorrarEste(object sender, RoutedEventArgs e)
+    private async void OnBorrarEste(object sender, RoutedEventArgs e)
     {
         if (FilaDe(sender) is not { } fila) return;
-        EnviarRepetidoAPapelera(fila, fila.RutaActual, esOtro: false);
+        await EnviarRepetidoAPapelera(fila, fila.RutaActual, esOtro: false);
     }
 
     /// <summary>«Enviar el otro a la Papelera»: manda el fichero rival y deja esta fila como la copia buena.</summary>
-    private void OnBorrarOtro(object sender, RoutedEventArgs e)
+    private async void OnBorrarOtro(object sender, RoutedEventArgs e)
     {
         if (FilaDe(sender) is not { } fila) return;
         if (string.IsNullOrEmpty(fila.Res.RutaPareja)) return;
-        EnviarRepetidoAPapelera(fila, fila.Res.RutaPareja!, esOtro: true);
+        await EnviarRepetidoAPapelera(fila, fila.Res.RutaPareja!, esOtro: true);
     }
 
     private void OnAbrirCarpetaEste(object sender, RoutedEventArgs e)
@@ -1997,7 +1997,7 @@ public partial class OrganizarView : UserControl
         if (tabla.SelectedItem is not OrganizarRow fila || _catalogoCargado == null) return;
         if (fila.Res.Episodio == null)
         {
-            Aviso(Textos.Instancia.OrganizarElegirEpisodioPrincipal);
+            await Aviso(Textos.Instancia.OrganizarElegirEpisodioPrincipal);
             return;
         }
 
@@ -2342,7 +2342,7 @@ public partial class OrganizarView : UserControl
         try { ReindexStore.EscribirJournal(lote); }
         catch (Exception ex)
         {
-            Aviso(string.Format(Textos.Instancia.OrganizarNoSeGuardoRegistro, ex.Message));
+            await Aviso(string.Format(Textos.Instancia.OrganizarNoSeGuardoRegistro, ex.Message));
             return;
         }
 
@@ -2536,7 +2536,7 @@ public partial class OrganizarView : UserControl
             }
         }
 
-        new Reproductor(fila.RutaActual).ShowDialog(Ventana!);
+        await new Reproductor(fila.RutaActual).ShowDialog(Ventana!);
     }
 
     /// <summary>
