@@ -76,10 +76,16 @@
     ahi— y (c) envejecer sin que las actualizaciones de seguridad de la distro lleguen. En
     Mint basta con `sudo apt install vlc`, que es lo que dice el reproductor si falta.
 
-    La condicion mira el RID de publicacion y, si no hay ninguno, el sistema donde se
-    compila. Sin la segunda mitad, compilar en Windows sin -r dejaria la app sin video.
+    LA CONDICION MIRA EL DESTINO, NO DONDE SE COMPILA, y el orden importa. El primer
+    intento fue «si compilo en Windows O el RID es de Windows», y compilar el paquete de
+    Linux DESDE Windows -que es lo normal aqui- cumplia la primera mitad: la publicacion
+    para linux-x64 se llevaba 283 MB de libvlc de Windows dentro, arm64 incluido. Se vio
+    publicando y midiendo la carpeta, no leyendo.
+
+    Asi que: el RID manda. Solo cuando no hay ninguno -compilar y ejecutar aqui sin -r- se
+    cae a mirar el sistema, o la app se quedaria sin video al depurar.
   -->
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or $(RuntimeIdentifier.StartsWith('win'))">
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('win')) Or ('$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('Windows')))">
     <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
   </ItemGroup>
 
