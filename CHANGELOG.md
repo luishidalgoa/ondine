@@ -32,6 +32,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Cambiado
+
+- **Si no se puede escribir en la carpeta de destino, la compresión se para antes de empezar** y
+  lo dice una vez, con la carpeta y el motivo del sistema. Antes lo intentaba fichero a fichero:
+  doce capítulos daban doce veces el mismo error, cada uno después de su espera. Se comprueba
+  escribiendo de verdad, porque en un montaje de red o de solo lectura los permisos dicen una
+  cosa y el sistema hace otra.
+
 ## [1.14.4] - 2026-08-25
 
 ### Corregido

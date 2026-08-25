@@ -140,6 +140,7 @@ public static class Program
         Ondine.Reindex.Tests.ActualizarEnCadaSistemaTests.Todas();
         Ondine.Reindex.Tests.ComoSeInstalaTests.Todas();
         Ondine.Reindex.Tests.MotivoDeFfmpegTests.Todas();
+        Ondine.Reindex.Tests.SePuedeEscribirTests.Todas();
         Ondine.Reindex.Tests.AjustesQueSobrevivenTests.Todas();
         Ondine.Reindex.Tests.NombreValidoEnTodasPartesTests.Todas();
         Ondine.Reindex.Tests.CerrarModalesTests.Todas();

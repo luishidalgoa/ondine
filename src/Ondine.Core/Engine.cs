@@ -790,6 +790,17 @@ public sealed class Engine
             rep.FileStart(n, total, name, durSec);
 
             Directory.CreateDirectory(outDir);
+
+            // ANTES DE TOCAR NADA: ¿se puede escribir ahí? Si no, no tiene sentido analizar
+            // pistas, decidir codificador y lanzar ffmpeg para que falle — y menos hacerlo una
+            // vez por fichero. Doce capítulos dieron doce veces el mismo «Permission denied»,
+            // cada uno después de su espera.
+            if (SePuedeEscribirEn(outDir) is { } porQueNo)
+            {
+                rep.Log(string.Format(Textos.Instancia.MotorNoSePuedeEscribir, outDir, porQueNo));
+                break;
+            }
+
             await WaitForSpaceAsync(outDir, MinFreeBytes, rep, ct);   // no empezar si el disco ya está lleno
             // El temporal DEBE llevar la extensión del contenedor elegido: ffmpeg escoge
             // el muxer por la extensión, así que un ".tmp.mkv" producía un Matroska aunque
@@ -1024,6 +1035,45 @@ public sealed class Engine
     internal static bool IsDiskFull(string err) =>
         err.Contains("No space left", StringComparison.OrdinalIgnoreCase) ||
         err.Contains("ENOSPC", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// ¿Se puede escribir en esa carpeta? Devuelve <c>null</c> si sí, y el motivo si no.
+    ///
+    /// <para>
+    /// <b>Escribiendo, no mirando los permisos.</b> En un montaje de red, en un disco montado
+    /// de solo lectura o con otro dueño, los bits dicen una cosa y el sistema hace otra. La
+    /// única forma honesta de saber si se puede escribir es escribir.
+    /// </para>
+    /// <para>
+    /// Existe por un caso real: doce capítulos, cada uno con su análisis de pistas y su
+    /// reintento sin subtítulos, y los doce fallando con el mismo «Permission denied» en la
+    /// carpeta de destino. El fallo era del sistema del usuario, pero <b>la forma de contarlo
+    /// era nuestra</b>: nada impedía saberlo antes de tocar el primero. Esto cuesta
+    /// milisegundos y responde la pregunta entera.
+    /// </para>
+    /// <para>
+    /// La carpeta se crea si no está, porque es lo que la compresión iba a hacer de todas
+    /// formas: comprobar sobre una carpeta que aún no existe y responder «no se puede» sería
+    /// un falso negativo en el caso más normal, la primera vez.
+    /// </para>
+    /// </summary>
+    public static string? SePuedeEscribirEn(string carpeta)
+    {
+        var prueba = Path.Combine(carpeta, $".ondine-prueba-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(carpeta);
+            using (File.Create(prueba)) { }
+            return null;
+        }
+        catch (Exception ex) { return ex.Message; }
+        finally
+        {
+            // Recoger siempre: un fichero de prueba olvidado en la carpeta de la biblioteca es
+            // basura que parece contenido.
+            try { if (File.Exists(prueba)) File.Delete(prueba); } catch { }
+        }
+    }
 
     // Inyectable para pruebas (simular disco lleno). En producción consulta el disco real.
     internal static Func<string, long> FreeSpaceProvider = DefaultFreeSpace;
