@@ -28,6 +28,7 @@ public partial class MainWindow : Window
                     await Comprobacion.CorrerTipografia(this);
                     await Comprobacion.CorrerTablaDeOrganizar(this);
                     await Comprobacion.CorrerOrganizar(this);
+                    await Comprobacion.CorrerRecortes(this);
                     await Comprobacion.CorrerFaltantes(this);
                     await Comprobacion.CorrerPistas(this);
                     await Comprobacion.CorrerReordenar(this);
