@@ -107,6 +107,33 @@ bautiza solo.
   capítulos pegados o cortar intros— con previsualización de la línea de tiempo.
 - **Presets y preferencias** por pestañas, y actualizaciones automáticas desde GitHub.
 
+## Tu agente sabe usarlo
+
+<p align="center">
+  <img src="web/public/img/agente-mcp.svg" width="480"
+       alt="Un robot teclea de perfil en un portátil mientras Ondine ordena tres ficheros">
+</p>
+
+Ondine trae dentro un servidor MCP. Conectas Claude, Cursor o el agente que uses, le señalas una
+carpeta, y él lista los vídeos, los coteja con el catálogo, aplica los renombrados seguros y manda
+ficheros a la papelera. Llama al mismo `Ondine.Core` que llama la ventana, con las mismas tres
+reglas:
+
+1. **Analizar propone y no escribe nada.**
+2. **Lo que escribe pide permiso.** Sin `"confirmar": true` te contesta lo que haría, fichero a
+   fichero.
+3. **Lo borrado va a la papelera del sistema.**
+
+Las dudas se quedan fuera del renombrado en bloque, igual que en la app.
+
+```bash
+claude mcp add ondine -- /usr/bin/ondine-mcp
+```
+
+Viaja dentro del `.deb`, del AppImage, del `.dmg` y del instalador de Windows, y cada versión trae
+además un binario suelto por plataforma. En [docs/mcp.md](docs/mcp.md) están la ruta de cada
+paquete, la configuración de Claude Desktop y lo que pide cada herramienta.
+
 ## Instalación
 
 ### Windows — app de escritorio

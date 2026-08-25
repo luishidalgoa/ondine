@@ -112,6 +112,32 @@ second segment names itself.
   episodes stuck together or remove intros, with a timeline preview.
 - **Presets and preferences** per tab, and automatic updates from GitHub.
 
+## Your agent can drive it
+
+<p align="center">
+  <img src="web/public/img/agente-mcp.svg" width="480"
+       alt="A robot types on a laptop while Ondine sorts three files">
+</p>
+
+Ondine ships an MCP server. Point Claude, Cursor or whichever agent you use at it, and it lists
+your videos, matches them against the catalogue, applies the safe renames and sends files to the
+bin. It calls the same `Ondine.Core` the window calls, under the same three rules:
+
+1. **Analysing proposes and writes nothing.**
+2. **Anything that writes asks first.** Without `"confirmar": true` you get the list of what it
+   would do, file by file.
+3. **Deleted files go to the system bin.**
+
+Doubtful rows stay out of bulk renames, the way they do in the app.
+
+```bash
+claude mcp add ondine -- /usr/bin/ondine-mcp
+```
+
+It travels inside the `.deb`, the AppImage, the `.dmg` and the Windows installer, and every
+release also carries a standalone binary per platform. [docs/mcp.md](docs/mcp.md) has the path for
+each package, the Claude Desktop config and what every tool takes.
+
 ## Installing
 
 ### Windows, desktop app

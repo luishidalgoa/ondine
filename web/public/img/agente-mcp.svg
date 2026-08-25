@@ -1,0 +1,228 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="42 18 400 226" width="400" height="226"
+     role="img" aria-labelledby="titulo-agente">
+  <title id="titulo-agente">Un robot teclea de perfil en un portátil mientras Ondine ordena tres ficheros</title>
+
+  <!--
+    La ilustración del servidor MCP: un robot trabajando con Ondine.
+
+    DE PERFIL, Y ESA ES LA PARTE QUE COSTÓ. La primera versión ponía al robot de frente y el
+    portátil delante, con la pantalla mirando al lector: si el robot nos mira, esa pantalla la
+    está viendo por detrás. Y los brazos le cruzaban por encima para llegar al teclado, que
+    remataba el disparate. De perfil no hay nada que disimular: el robot mira su pantalla, la
+    pantalla mira al robot, y de ella vemos la tapa por fuera.
+
+    Lo que hace la app se enseña en un panel aparte, encima. Es la convención de siempre para
+    «lo que está pasando ahí dentro», y no obliga a mentir con la perspectiva.
+
+    UN SOLO FICHERO PARA LOS TRES SITIOS. Lo sirve la web en /img/agente-mcp.svg y lo enseñan
+    los dos README por su ruta del repositorio. Una copia en `docs/` habría acabado a medio
+    camino de esta, que es lo que ya pasa con `antes-despues.gif`.
+
+    ANIMADO CON CSS Y SIN NADA MÁS. Nada de Lottie ni de JavaScript: dentro de un <img>, GitHub
+    y cualquier navegador ejecutan estas animaciones y bloquean los scripts, así que un Lottie
+    se quedaría quieto justo donde más se mira. Y esto pesa 9 kB en vez de 300.
+
+    Quien lo edite: los colores son los de la web (el acento #968ae0, la tinta #8a8fa3) y están
+    escritos a mano porque un SVG dentro de un <img> no ve las variables CSS de la página. Ojo
+    con los guiones dobles dentro de estos comentarios: en XML no son legales y el fichero deja
+    de abrir. Ese ya costó una vez.
+  -->
+
+  <style>
+    .cara        { fill: #2c3142; }
+    .fondo       { fill: #232735; }
+    .brillo      { fill: #3a4055; }
+    .acento      { fill: #968ae0; }
+    .ojo         { fill: #b5abfc; }
+    .visor       { fill: #101119; }
+    .panel       { fill: #101119; stroke: rgba(150, 138, 224, 0.32); stroke-width: 1.5; }
+    .cromo       { fill: #2a2d3a; }
+    .barra-vieja { fill: #363a4a; }
+    .barra-nueva { fill: #968ae0; }
+    .visto       { stroke: #5db872; stroke-width: 2.4; fill: none;
+                   stroke-linecap: round; stroke-linejoin: round; }
+    .brazo       { fill: none; stroke-linecap: round; }
+    .brazo-lejos { stroke: #1e2230; stroke-width: 9; }
+    .brazo-cerca { stroke: #2c3142; stroke-width: 12; }
+    .brazo-mano-lejos { fill: #262b3a; }
+    .mesa        { stroke: #2a2d3a; stroke-width: 3; stroke-linecap: round; }
+    .haz         { stroke: #968ae0; stroke-width: 1.5; stroke-dasharray: 3 5; opacity: 0.22; }
+
+    /* Todo lo que se mueve arranca desde su propia caja: sin esto, el origen de la
+       transformación es el del lienzo entero y el ojo parpadea desde una esquina. */
+    .parpadeo, .lampara, .halo, .barra-nueva, .visto, .caret { transform-box: fill-box; }
+
+    /* ── Teclear ────────────────────────────────────────────────────────────────
+       Las dos manos van a contratiempo, que es lo que hace que parezca escribir y
+       no aplaudir. El desfase es medio ciclo exacto. */
+    .mano-lejos { animation: teclea 0.44s ease-in-out infinite; }
+    .mano-cerca { animation: teclea 0.44s ease-in-out infinite 0.22s; }
+    @keyframes teclea {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-5px); }
+    }
+
+    /* El cuerpo acompaña, con un recorrido diez veces menor. Si se mueve lo mismo que
+       las manos, el robot bota. */
+    .cuerpo { animation: respira 3.2s ease-in-out infinite; }
+    @keyframes respira {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-1.5px); }
+    }
+
+    /* ── Parpadeo ───────────────────────────────────────────────────────────────
+       Casi todo el ciclo con el ojo abierto: parpadear cada dos segundos se lee como
+       un tic. */
+    .parpadeo { transform-origin: center; animation: parpadea 5.5s infinite; }
+    @keyframes parpadea {
+      0%, 92%, 100% { transform: scaleY(1); }
+      95%           { transform: scaleY(0.08); }
+    }
+
+    /* ── La luz del pecho y la antena ───────────────────────────────────────────
+       Marcan el compás del trabajo: laten al ritmo de las filas que se resuelven. */
+    .lampara { transform-origin: center; animation: late 2s ease-in-out infinite; }
+    @keyframes late {
+      0%, 100% { opacity: 0.55; transform: scale(0.9); }
+      50%      { opacity: 1;    transform: scale(1.08); }
+    }
+    .halo { transform-origin: center; animation: halo 2s ease-out infinite; }
+    @keyframes halo {
+      0%   { opacity: 0.45; transform: scale(0.6); }
+      70%  { opacity: 0;    transform: scale(2.2); }
+      100% { opacity: 0;    transform: scale(2.2); }
+    }
+
+    /* ── El panel: tres ficheros que se resuelven ───────────────────────────────
+       Cada fila tarda lo mismo y entra con ochocientas milésimas de diferencia, así
+       que se lee de arriba abajo. Al final del ciclo se vacían de golpe para volver a
+       empezar: encadenar tres desapariciones distraería de lo único que importa aquí,
+       que es que el trabajo avanza solo. */
+    .barra-nueva { transform-origin: left center; transform: scaleX(0);
+                   animation: resuelve 6s ease-in-out infinite; }
+    .fila-2 .barra-nueva { animation-delay: 0.8s; }
+    .fila-3 .barra-nueva { animation-delay: 1.6s; }
+    @keyframes resuelve {
+      0%, 6%   { transform: scaleX(0); }
+      22%, 88% { transform: scaleX(1); }
+      94%,100% { transform: scaleX(0); }
+    }
+
+    .visto { opacity: 0; stroke-dasharray: 14; stroke-dashoffset: 14;
+             animation: marca 6s ease-in-out infinite; }
+    .fila-2 .visto { animation-delay: 0.8s; }
+    .fila-3 .visto { animation-delay: 1.6s; }
+    @keyframes marca {
+      0%, 14%  { opacity: 0; stroke-dashoffset: 14; }
+      26%, 88% { opacity: 1; stroke-dashoffset: 0; }
+      94%,100% { opacity: 0; stroke-dashoffset: 14; }
+    }
+
+    .caret { animation: cursor 1.06s steps(1) infinite; }
+    @keyframes cursor {
+      0%, 50%   { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* El haz que une la tapa con el panel: se arrastra hacia arriba, como quien va
+       mandando lo que ocurre. */
+    .haz { animation: sube 1.8s linear infinite; }
+    @keyframes sube {
+      to { stroke-dashoffset: -16; }
+    }
+
+    /* ── Quieto ─────────────────────────────────────────────────────────────────
+       Con el movimiento desactivado no se congela a mitad de faena: se enseña el
+       trabajo TERMINADO. Una ilustración parada con las barras a cero contaría lo
+       contrario de lo que dice la sección. */
+    @media (prefers-reduced-motion: reduce) {
+      .mano-lejos, .mano-cerca, .cuerpo, .parpadeo, .lampara, .halo, .caret, .haz
+        { animation: none; }
+      .barra-nueva { animation: none; transform: scaleX(1); }
+      .visto { animation: none; opacity: 1; stroke-dashoffset: 0; }
+      .caret { opacity: 0; }
+    }
+  </style>
+
+  <!-- ── El panel de lo que está haciendo, encima del portátil ─────────────────
+       De la pantalla de perfil no se puede leer nada, así que lo que hace la app se
+       enseña aquí, con el haz saliendo de la tapa. Es la convención de siempre para
+       «lo que está pasando ahí dentro», y no obliga a mentir con la perspectiva. -->
+  <g class="tablero">
+    <rect class="panel" x="230" y="26" width="204" height="92" rx="10"/>
+
+    <circle class="cromo" cx="246" cy="40" r="2.6"/>
+    <circle class="cromo" cx="256" cy="40" r="2.6"/>
+    <circle class="cromo" cx="266" cy="40" r="2.6"/>
+    <rect class="cromo" x="280" y="37" width="46" height="5" rx="2.5"/>
+
+    <g class="fila-1">
+      <rect class="cromo" x="244" y="58" width="9" height="9" rx="2"/>
+      <rect class="barra-vieja" x="260" y="60" width="120" height="6" rx="3"/>
+      <rect class="barra-nueva" x="260" y="60" width="120" height="6" rx="3"/>
+      <path class="visto" d="M400 63 l4 4 l7 -8"/>
+    </g>
+    <g class="fila-2">
+      <rect class="cromo" x="244" y="78" width="9" height="9" rx="2"/>
+      <rect class="barra-vieja" x="260" y="80" width="96" height="6" rx="3"/>
+      <rect class="barra-nueva" x="260" y="80" width="96" height="6" rx="3"/>
+      <path class="visto" d="M400 83 l4 4 l7 -8"/>
+    </g>
+    <g class="fila-3">
+      <rect class="cromo" x="244" y="98" width="9" height="9" rx="2"/>
+      <rect class="barra-vieja" x="260" y="100" width="108" height="6" rx="3"/>
+      <rect class="barra-nueva" x="260" y="100" width="108" height="6" rx="3"/>
+      <path class="visto" d="M400 103 l4 4 l7 -8"/>
+    </g>
+    <rect class="acento caret" x="376" y="98" width="5" height="9" rx="1.5"/>
+  </g>
+
+  <!-- El haz que sale de la tapa y sostiene el panel -->
+  <path class="haz" d="M410 128 L 402 120"/>
+  <path class="haz" d="M410 128 L 320 120"/>
+
+  <!-- ── El robot, de perfil y mirando a su pantalla ─────────────────────────────
+       Sin oreja redonda con luz dentro: en la primera versión parecía un segundo ojo
+       y deshacía el perfil entero. Lo que se ve de este lado es la nuca. -->
+  <g class="cuerpo">
+    <!-- Antena -->
+    <circle class="acento halo" cx="126" cy="74" r="4.5"/>
+    <rect class="cara" x="124" y="74" width="4" height="24" rx="2"/>
+    <circle class="acento lampara" cx="126" cy="74" r="4.5"/>
+
+    <!-- Cabeza. El visor asoma por el lado derecho: hacia ahí mira -->
+    <rect class="fondo" x="90" y="112" width="8" height="20" rx="4"/>
+    <rect class="cara" x="94" y="96" width="66" height="56" rx="19"/>
+    <rect class="visor" x="130" y="107" width="36" height="34" rx="13"/>
+    <circle class="ojo parpadeo" cx="150" cy="124" r="6.5"/>
+
+    <!-- Cuello, joroba y tronco -->
+    <rect class="cara" x="112" y="148" width="20" height="14" rx="6"/>
+    <rect class="fondo" x="74" y="172" width="18" height="46" rx="9"/>
+    <rect class="cara" x="86" y="158" width="74" height="70" rx="24"/>
+    <circle class="acento lampara" cx="138" cy="184" r="5"/>
+  </g>
+
+  <!-- ── La mesa ───────────────────────────────────────────────────────────────── -->
+  <path class="mesa" d="M46 232 H 428"/>
+
+  <!-- ── El portátil, de perfil: la tapa mira al robot y de ella vemos el dorso ── -->
+  <path class="fondo" d="M228 228 L 398 228 L 386 210 L 240 210 Z"/>
+  <path class="mesa" d="M252 220 H 372" stroke-width="2" opacity="0.5"/>
+
+  <path class="cara" d="M384 212 L 396 212 L 422 132 L 408 130 Z"/>
+  <path class="fondo" d="M408 130 L 422 132 L 398 210 L 388 209 Z" opacity="0.45"/>
+  <circle class="acento" cx="403" cy="172" r="5.5" opacity="0.5"/>
+
+  <!-- ── Los brazos: hombro, codo y antebrazo ───────────────────────────────────
+       Con curva y sin codo salía un tentáculo, y los dos juntos se fundían en uno. Con
+       vértice, y el de detrás más corto, más fino y más apagado, se leen dos. -->
+  <g class="mano-lejos">
+    <path class="brazo brazo-lejos" d="M148 172 L 196 196 L 242 202"/>
+    <rect class="brazo-mano-lejos" x="234" y="195" width="26" height="12" rx="6"/>
+  </g>
+  <g class="mano-cerca">
+    <path class="brazo brazo-cerca" d="M152 182 L 206 210 L 258 208"/>
+    <rect class="brillo" x="250" y="201" width="32" height="13" rx="6.5"/>
+  </g>
+</svg>
