@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.14.4] - 2026-08-25
+
 ### Corregido
 
 - **La configuración no sobrevivía a reiniciar en Linux y macOS.** Cambiabas el idioma, se
