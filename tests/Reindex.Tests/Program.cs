@@ -153,6 +153,8 @@ public static class Program
         Ondine.Reindex.Tests.EstadoDeLaFilaTests.Todas();
         Ondine.Reindex.Tests.PlanDeAudioTests.Todas();
         Ondine.Reindex.Tests.PistasQueSeQuedanTests.Todas();
+        Ondine.Reindex.Tests.ElInterruptorDeHardwareTests.Todas();
+        Ondine.Reindex.Tests.LaPreviaDiceLaVerdadTests.Todas();
         Ondine.Reindex.Tests.AceleracionDeVideoTests.Todas();
         Ondine.Reindex.Tests.LoQueDiceElAudioTests.Todas();
         Ondine.Reindex.Tests.HerramientasMcpTests.Todas();

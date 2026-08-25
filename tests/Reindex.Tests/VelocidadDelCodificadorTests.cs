@@ -137,6 +137,17 @@ public static class VelocidadDelCodificadorTests
               "medium", "slow", "slower", "veryslow", "placebo"],
     };
 
+    /// <summary>
+    /// Con que bandera se le pide la velocidad a cada familia. Escrita a mano, igual que
+    /// <see cref="EscalaDe"/> y por lo mismo: es un oraculo INDEPENDIENTE del codigo.
+    ///
+    /// <para>
+    /// Parece un duplicado de lo que hace el motor, y no lo es. El motor saca la bandera de
+    /// <c>Para(...)[0]</c>; si esta prueba hiciera lo mismo, la comprobacion seria
+    /// «Para[0] == Para[0]» y pasaria con cualquier bandera equivocada. Que las dos listas se
+    /// escriban por separado es lo unico que hace que comparar signifique algo.
+    /// </para>
+    /// </summary>
     private static string BanderaDe(string enc) => enc switch
     {
         "libaom-av1" or "libvpx-vp9" => "-cpu-used",

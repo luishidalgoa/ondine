@@ -68,6 +68,20 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Apagar la aceleración por hardware ya surte efecto al momento.** Si habías comprimido o
+  previsualizado algo, desmarcar «usar aceleración por hardware» en Preferencias **no hacía nada**
+  hasta reiniciar Ondine: el codificador elegido se guardaba en una caché que se consultaba antes
+  de mirar el interruptor. Quien lo apagaba porque su GPU le sacaba artefactos seguía viéndolos, y
+  no tenía forma de saber por qué. Ahora la caché distingue los dos estados, así que apagar y
+  volver a encender siguen sin costar un solo sondeo de más.
+
+- **La vista previa ya no promete un ajuste que no aplica.** Su globo decía «renderiza 10 s con
+  los ajustes actuales», y el **Esmero** es uno de ellos: la previa codifica siempre lo más rápido
+  posible, a propósito, porque esperar minutos para ver diez segundos sería tirar por tierra la
+  idea. El comportamiento no cambia —está bien así— cambia lo que se cuenta: el globo y la Ayuda
+  dicen ahora que la previa enseña **cómo va a quedar la imagen**, nunca mejor que el resultado
+  real, y que el tiempo y el tamaño se miden con «Medir».
+
 - **El registro dice qué pista de audio se descarta y por qué.** Antes decía «pistas de audio:
   spa+eng (descarto 1)»: ni cuál era la descartada, ni por qué. Ahora dice
   «(descarto por: no está entre los idiomas que se conservan, spa+eng)», con la lista contra la
