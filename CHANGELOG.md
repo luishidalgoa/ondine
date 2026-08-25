@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.14.2] - 2026-08-25
+
 ### Corregido
 
 - **Buscar actualizaciones se bajaba el instalador de Windows en Linux y en macOS**, y lo
