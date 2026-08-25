@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-08-25
+
 ### Añadido
 
 - **Empieza la interfaz para Linux y macOS.** Ondine solo corría en Windows porque su interfaz usa

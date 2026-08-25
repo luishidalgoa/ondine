@@ -85,7 +85,6 @@ public partial class VentanaPrincipal : Window
         relojPapelera.Tick += (_, _) => Reindex.PapeleraApp.FinalizarViejos();
         relojPapelera.Start();
         lst.ItemsSource = _rows;
-        // Clic en una cabecera de la tabla = ordenar por esa columna (asc/desc alterno).
 #if DEV_BUILD
         // Compilación local/dev: se marca «dev» + hora del build para no confundirla con la
         // release de GitHub (misma versión) y saber si es la última que se acaba de compilar.
@@ -93,7 +92,7 @@ public partial class VentanaPrincipal : Window
         try { marcaDev += " " + System.IO.File.GetLastWriteTime(Environment.ProcessPath!).ToString("dd/MM HH:mm"); }
         catch { /* sin ruta de proceso: basta con «dev» */ }
         lblVersion.Text = "v" + Updater.Current + marcaDev;
-        lblVersion.ToolTip = Textos.Instancia.MainVersionDevTip;
+        ToolTip.SetTip(lblVersion, Textos.Instancia.MainVersionDevTip);
 #else
         lblVersion.Text = "v" + Updater.Current;
 #endif
