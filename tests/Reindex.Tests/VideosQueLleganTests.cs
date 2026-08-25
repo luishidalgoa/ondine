@@ -105,14 +105,17 @@ public static class VideosQueLleganTests
         var r = VideosQueLlegan.DeLosArgumentos(["--auto", "-v", video]);
         Program.Assert(r.Count == 1, "de los argumentos entra el vídeo y no los modificadores");
 
-        // La ruta absoluta al estilo de Linux, aunque esto se ejecute en Windows: lo que se
-        // comprueba es que el filtro no la descarte por empezar con barra.
-        var comoEnLinux = VideosQueLlegan
-            .DeLosArgumentos(["/home/luis/peli.mkv"])
-            .Count;
-        bool descartada = !OperatingSystem.IsWindows() && comoEnLinux == 0;
-        Program.Assert(!descartada,
-            "una ruta absoluta de Linux no se descarta por empezar por «/», que allí no es un modificador");
+        // LA RUTA ABSOLUTA YA ESTÁ COMPROBADA ARRIBA, y merece explicarse porque el intento
+        // anterior estaba mal y lo cazó el CI.
+        //
+        // Ese intento pasaba «/home/luis/peli.mkv» —una ruta de Linux escrita a mano— y
+        // esperaba que no se descartase. Falla en Linux, y con razón: ese fichero no existe en
+        // el runner, así que se descarta por no estar, no por empezar con barra. La prueba
+        // acusaba al filtro de algo que hacía el disco.
+        //
+        // No hace falta otra: la ruta de arriba es absoluta, y EN LINUX toda ruta absoluta
+        // empieza por «/». Si el filtro descartara la barra, esa primera comprobación fallaría
+        // allí — que es exactamente donde tiene que fallar.
     }
 
     /// <summary>
