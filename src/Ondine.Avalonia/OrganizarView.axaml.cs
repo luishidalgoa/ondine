@@ -130,7 +130,16 @@ public partial class OrganizarView : UserControl
 
     public OrganizarView()
     {
-        AvaloniaXamlLoader.Load(this);
+        // InitializeComponent y NO AvaloniaXamlLoader.Load, que es lo que usan las demas
+        // pantallas de este puerto. La diferencia importa y cuesta verla: Load monta el arbol
+        // pero NO rellena los campos de los elementos con nombre; el InitializeComponent que
+        // genera Avalonia hace las dos cosas. Con Load, esta pantalla revienta en la primera
+        // linea que toca un control —y el error es un NullReference sin mas, que no dice que
+        // el problema sea el arranque—.
+        //
+        // Aqui hace falta porque son mas de cien referencias por nombre; las pantallas
+        // pequenas van con FindControl y les da igual.
+        InitializeComponent();
 
         tabla.ItemsSource = _filas;
         listaCatalogos.ItemsSource = new ObservableCollection<CatalogoCard>();
@@ -329,6 +338,7 @@ public partial class OrganizarView : UserControl
             Textos.Instancia.OrganizarPaso2,
             Textos.Instancia.OrganizarPaso3);
         panelEtapas.Children.Add(_pasos.Raiz);
+        zonaEspera.Children.Add(_espera);
 
         Loaded += (_, _) =>
         {

@@ -422,8 +422,9 @@
                        StrokeDashArray="4,3"/>
             <!-- El haz giratorio del borde NO se porta, igual que el del campo de texto: era
                  un degradado girando por el marco, y aqui seria una animacion escrita a mano
-                 para un adorno. Lo que hacia falta —decir que esta identificando— lo dicen
-                 los circulos de espera y el rotulo, que si estan. -->
+                 para un adorno. Lo que hacia falta —decir que esta identificando— lo dice la
+                 espera, que si esta. -->
+            <Panel Name="zonaEspera"/>
 
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="340" Margin="18,0">
 

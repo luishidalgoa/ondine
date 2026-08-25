@@ -63,4 +63,25 @@
     <Setter Property="Margin" Value="0,0,0,4"/>
   </ControlTheme>
 
+  <!-- ══ Tarjeta de la pagina ══════════════════════════════════════════════════
+       La caja que agrupa un bloque de la pantalla de inicio. Es solo geometria y color, asi
+       que se traduce tal cual. -->
+  <ControlTheme x:Key="OrgCard" TargetType="Border" BasedOn="{StaticResource {x:Type Border}}">
+    <Setter Property="Background" Value="{StaticResource Surface}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="14,12"/>
+    <Setter Property="Margin" Value="0,0,0,10"/>
+  </ControlTheme>
+
+  <!-- ══ Texto atenuado ════════════════════════════════════════════════════════
+       Como OrgLabel: en WPF heredaba de TextoRecortable, que le ponia un tooltip con su
+       propio texto para cuando se recorta. Aqui no se hereda, por lo mismo — Avalonia si
+       distingue si un texto se ha recortado de verdad. -->
+  <ControlTheme x:Key="OrgMuted" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource Neutral500}"/>
+    <Setter Property="FontSize" Value="12"/>
+  </ControlTheme>
+
 </ResourceDictionary>
