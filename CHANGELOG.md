@@ -32,6 +32,41 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Actualizar en Linux y macOS se quedaba a medias:** descargaba el paquete y te abría la
+  carpeta. Ahora **abre el paquete**, que es lo mismo que hacerle doble clic: en Linux sale su
+  instalador con el botón «Instalar», y en un Mac se monta el `.dmg` con la ventana para
+  arrastrar Ondine a Aplicaciones. El AppImage además se descarga ya con permiso de ejecución,
+  que sin él no se puede abrir.
+
+- **El reproductor entero estaba detrás del vídeo.** El título, los controles, la barra de
+  posición y el aviso de fallo quedaban tapados y sin ratón, porque el vídeo se dibuja en una
+  ventana del sistema que se pinta encima de todo. En Recortes tapaba también los fotogramas,
+  que son justo el plan B cuando el vídeo no se puede reproducir.
+
+- **Ocho ventanas más no se podían mover ni estirar** —Ayuda, Catálogo, el encargo para la IA,
+  «qué falta», «quitar pistas», «ordenar por temporadas», el reproductor y los avisos—. Se
+  quedaban clavadas donde el sistema las abriera.
+
+- **Marcar varias filas arrastrando no funcionaba** en Organizar, que es la única forma de
+  seleccionar más de una. Y en la lista de comprimir, la banda de selección solo iba hacia
+  abajo y a la derecha: arrastrando hacia arriba no seleccionaba nada.
+
+- **El espacio no pausaba el vídeo** y las flechas no saltaban 10 segundos: se los quedaba el
+  botón que tuviera el foco. Y en Recortes, **Ctrl+Z nunca deshacía un corte** — se lo comía el
+  Ctrl+Z que recupera el original. Ahora Ctrl+Z deshace lo último que hiciste, y solo cuando no
+  queda nada que deshacer recupera el original.
+
+- **El texto largo de una caja no se podía desplazar**, ni con la rueda ni con las flechas. En
+  la del encargo para la IA —que es un texto largo por definición— dejaba fuera casi todo.
+
+- **Con el escritorio en tema claro salían piezas blancas** dentro de la app oscura: los
+  desplegables, los menús contextuales y las barras de desplazamiento seguían al sistema.
+
+- **En Linux y macOS sin VLC, Recortes culpaba al códec del vídeo** en vez de decir que falta el
+  reproductor y cómo instalarlo. El mensaje bueno llegaba y se tiraba.
+
 ## [1.14.3] - 2026-08-25
 
 ### Corregido

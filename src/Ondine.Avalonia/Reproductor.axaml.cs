@@ -5,6 +5,7 @@ using Avalonia.Controls.Shapes;
 using Path = System.IO.Path;
 using Forma = Avalonia.Controls.Shapes.Path;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -76,7 +77,16 @@ public partial class Reproductor : Window
     private const string GlifoContraer =
         "M7.5,3 L7.5,7.5 L3,7.5 M17,7.5 L12.5,7.5 L12.5,3 M12.5,17 L12.5,12.5 L17,12.5 M3,12.5 L7.5,12.5 L7.5,17";
 
-    public Reproductor() => AvaloniaXamlLoader.Load(this);
+        /// <summary>
+    /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
+    /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
+    /// abriera.
+    /// </summary>
+    public Reproductor()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ArrastrarLaVentana.Enganchar(this);
+    }
 
     public Reproductor(string ruta) : this()
     {
@@ -124,7 +134,11 @@ public partial class Reproductor : Window
         lienzo.DoubleTapped += (_, _) => AlternarPantalla();
 
         this.FindControl<Grid>("raiz")!.PointerMoved += AlMoverRaton;
-        KeyDown += AlPulsarTecla;
+        // EN TUNEL, no en burbuja. Con el evento normal, el control que tenga el foco se
+        // queda las teclas antes que la ventana: el espacio -que aqui es pausa- lo entiende
+        // como «pulsa el boton que tengo enfocado», asi que repetia la ultima accion en vez de
+        // pausar. Y las flechas movian el foco en vez de saltar 10 segundos.
+        AddHandler(KeyDownEvent, AlPulsarTecla, RoutingStrategies.Tunnel);
 
         _apagon.Tick += (_, _) => { _apagon.Stop(); if (!RatonEnControles()) Ocultar(); };
         _esperaPrevia.Tick += async (_, _) => { _esperaPrevia.Stop(); await SacarPreviaAsync(); };

@@ -27,6 +27,9 @@ public partial class Ayuda : Window
     {
         AvaloniaXamlLoader.Load(this);
 
+        // Sin marco del sistema hay que pedir el arrastre y los bordes. Ver ArrastrarLaVentana.
+        ArrastrarLaVentana.Enganchar(this);
+
         this.FindControl<Button>("btnCerrar")!.Click += (_, _) => Close();
 
         Atar("navOrgComo", "pagOrgComo");

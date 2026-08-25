@@ -151,15 +151,6 @@ public partial class RecortesView : UserControl
         _video = new VideoDeLaPista(this.FindControl<LibVLCSharp.Avalonia.VideoView>("video")!);
         listaTramos.ItemsSource = _tramos;
 
-        // Ctrl+Z: recuperar el original que se mandó a la Papelera propia tras exportar los tramos.
-        KeyDown += async (_, e) =>
-        {
-            if (e.Key == Key.Z && (e.KeyModifiers & KeyModifiers.Control) == KeyModifiers.Control)
-            {
-                await DeshacerPapelera();
-                e.Handled = true;
-            }
-        };
 
         LlenarDesplegables();
         chkSinRecodificar.IsCheckedChanged += (_, _) => AlCambiarSinRecodificar();
@@ -238,7 +229,7 @@ public partial class RecortesView : UserControl
             if (_video.Duracion <= TimeSpan.Zero) return;
             Duracion(_video.Duracion.TotalSeconds);
         };
-        _video.Fallo += _ =>
+        _video.Fallo += detalle =>
         {
             // Windows no sabe decodificar esto, pero ffmpeg sí: en vez de un fondo vacío
             // se enseñan fotogramas. Cortar nunca dependió de la previsualización -eso lo
@@ -246,10 +237,15 @@ public partial class RecortesView : UserControl
             _modoFotogramas = true;
             imgFotograma.IsVisible = true;
 
+            // EL MOTIVO QUE LLEGA, y antes se tiraba. Esto decía siempre «este vídeo usa el
+            // códec X y el reproductor de dentro no sabe decodificarlo», que en Linux o macOS
+            // sin VLC es culpar al fichero de lo que le pasa al sistema. El mensaje bueno
+            // -con la orden para instalar VLC- venía en el evento y no se leía.
             var codec = _fuente?.Codec ?? "";
-            lblSinVideo.Text = codec.Length > 0
-                ? string.Format(Textos.Instancia.RecortesModoFotogramas, codec)
-                : Textos.Instancia.RecortesSinPrevisualizacion;
+            lblSinVideo.Text = _video.MotorAusente ? detalle
+                : codec.Length > 0
+                    ? string.Format(Textos.Instancia.RecortesModoFotogramas, codec)
+                    : Textos.Instancia.RecortesSinPrevisualizacion;
 
             // La pastilla baja: ahora hay imagen detrás y taparla sería absurdo.
             chipSinVideo.VerticalAlignment = VerticalAlignment.Bottom;
@@ -319,7 +315,17 @@ public partial class RecortesView : UserControl
             e.Handled = true;
         };
         // Ctrl+Z / Ctrl+Y para el historial; Ctrl + y Ctrl − para el aumento (Ctrl+0, entero).
-        KeyDown += (_, e) =>
+        //
+        // UN SOLO MANEJADOR PARA LOS DOS «DESHACER», y antes eran dos peleándose. Había otro
+        // registrado ANTES que se quedaba el Ctrl+Z para recuperar el original de la papelera
+        // y lo marcaba atendido, así que deshacer un corte no funcionaba nunca — y Ctrl+Mayús+Z
+        // tampoco, porque ese manejador tampoco miraba el Mayús. Ahora el orden es el que
+        // espera cualquiera: Ctrl+Z deshace lo último que hiciste, y solo cuando no queda nada
+        // que deshacer se entiende como «recupera el original».
+        //
+        // Y EN TÚNEL: en burbuja, el control con el foco se los queda. Con el cursor en una
+        // caja de texto -el nombre de un tramo- Ctrl+Z deshacía el texto y no el corte.
+        AddHandler(KeyDownEvent, (object? _, KeyEventArgs e) =>
         {
             // HasFlag y no «==»: con «==» exacto, Ctrl+Mayús+Z (el rehacer de toda la vida)
             // no entraba nunca aquí.
@@ -327,13 +333,16 @@ public partial class RecortesView : UserControl
             switch (e.Key)
             {
                 case Key.Z when e.KeyModifiers.HasFlag(KeyModifiers.Shift): RehacerAccion(); e.Handled = true; break;
-                case Key.Z: Deshacer(); e.Handled = true; break;
+                // El historial primero; si está vacío, lo que se quiere deshacer es la
+                // exportación, o sea recuperar el original de la papelera propia.
+                case Key.Z when _atras.Count > 0: Deshacer(); e.Handled = true; break;
+                case Key.Z: _ = DeshacerPapelera(); e.Handled = true; break;
                 case Key.Y: RehacerAccion(); e.Handled = true; break;
                 case Key.OemPlus or Key.Add: Ampliar(1.25); e.Handled = true; break;
                 case Key.OemMinus or Key.Subtract: Ampliar(1 / 1.25); e.Handled = true; break;
                 case Key.D0 or Key.NumPad0: Ampliar(ZoomMin / Math.Max(_zoom, 0.0001)); e.Handled = true; break;
             }
-        };
+        }, RoutingStrategies.Tunnel);
         // Al salir de la página no se deja nada en memoria ni en disco temporal.
         Unloaded += (_, _) => LiberarMiniaturas();
     }

@@ -109,7 +109,16 @@ public partial class Reordenar : Window
     // Los tres valores del desplegable, en el mismo orden en que se añaden.
     private static readonly string?[] Idiomas = [null, "en", "es"];
 
-    public Reordenar() => AvaloniaXamlLoader.Load(this);
+        /// <summary>
+    /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
+    /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
+    /// abriera.
+    /// </summary>
+    public Reordenar()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ArrastrarLaVentana.Enganchar(this);
+    }
 
     public Reordenar(IReadOnlyList<ReindexResolution> resoluciones, string raiz, Settings ajustes) : this()
     {

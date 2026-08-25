@@ -43,7 +43,16 @@ public partial class Encargo : Window
     /// <summary>Códigos elegidos, en el orden en que se fueron marcando.</summary>
     private readonly List<string> _elegidos = ["es", "en"];
 
-    public Encargo() => AvaloniaXamlLoader.Load(this);
+        /// <summary>
+    /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
+    /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
+    /// abriera.
+    /// </summary>
+    public Encargo()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ArrastrarLaVentana.Enganchar(this);
+    }
 
     public Encargo(string serieSugerida) : this()
     {

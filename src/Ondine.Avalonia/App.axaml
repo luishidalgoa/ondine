@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Ondine.Ava.App">
+             x:Class="Ondine.Ava.App"
+             RequestedThemeVariant="Dark">
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
@@ -23,6 +24,12 @@
   </Application.Resources>
 
   <Application.Styles>
+    <!-- OSCURO SIEMPRE, Y HAY QUE DECIRLO.
+         Ondine tiene un tema propio y oscuro, pero lo que NO se viste a mano -el popup de un
+         desplegable, una barra de desplazamiento, un menu contextual- lo sigue pintando
+         Fluent. Y Fluent elige claro u oscuro segun lo que diga el SISTEMA, asi que en un
+         escritorio en tema claro salian piezas blancas sueltas dentro de una app oscura.
+         No da error: sale mal y ya. -->
     <FluentTheme />
     <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 

@@ -28,7 +28,16 @@ namespace Ondine.Ava;
 /// </summary>
 public partial class Dialogo : Window
 {
-    public Dialogo() => AvaloniaXamlLoader.Load(this);
+    /// <summary>
+    /// Sin marco del sistema hay que pedir el arrastre. Aparecio en la lista por un guardian y
+    /// no por la auditoria: un diálogo pequeño clavado en el centro molesta menos que una
+    /// ventana grande, pero tapa lo que estas leyendo detras y no hay forma de apartarlo.
+    /// </summary>
+    public Dialogo()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ArrastrarLaVentana.Enganchar(this);
+    }
 
     private Dialogo(string titulo, string mensaje, string aceptar, string? cancelar) : this()
     {

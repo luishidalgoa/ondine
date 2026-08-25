@@ -962,16 +962,16 @@ public sealed partial class Textos
     /// </para>
     /// </summary>
     public string MainDescargaHechaDeb => Idioma.Elegir(
-        "«{0}» has been downloaded and the folder is now open. Double-click it to install this version; your library and your settings stay as they are.",
-        "«{0}» está descargado y se ha abierto su carpeta. Haz doble clic en él para instalar esta versión: tu biblioteca y tus ajustes se quedan como están.");
+        "«{0}» has been downloaded and its installer is now open. Press Install; your library and your settings stay as they are.",
+        "«{0}» está descargado y se ha abierto su instalador. Pulsa «Instalar»: tu biblioteca y tus ajustes se quedan como están.");
 
     public string MainDescargaHechaAppImage => Idioma.Elegir(
-        "«{0}» has been downloaded and the folder is now open. Mark it executable and open it; you can then delete the old one.",
-        "«{0}» está descargado y se ha abierto su carpeta. Márcalo como ejecutable y ábrelo: después puedes borrar el anterior.");
+        "«{0}» has been downloaded, it is already executable and its folder is open. Open it; you can then delete the old one.",
+        "«{0}» está descargado, ya tiene permiso de ejecución y se ha abierto su carpeta. Ábrelo: después puedes borrar el anterior.");
 
     public string MainDescargaHechaDmg => Idioma.Elegir(
-        "«{0}» has been downloaded and the folder is now open. Open it and drag Ondine onto Applications, replacing the one that is there.",
-        "«{0}» está descargado y se ha abierto su carpeta. Ábrelo y arrastra Ondine a Aplicaciones, encima de la que ya está.");
+        "«{0}» has been downloaded and mounted. Drag Ondine onto Applications, replacing the one that is there.",
+        "«{0}» está descargado y montado. Arrastra Ondine a Aplicaciones, encima de la que ya está.");
 
     /// <summary>El rótulo de la barra cuando lo descargado se queda esperando al usuario.</summary>
     public string MainDescargaEsperandoATi => Idioma.Elegir(
