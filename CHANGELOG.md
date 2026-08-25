@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.14.3] - 2026-08-25
+
 ### Corregido
 
 - **«Restaurar» desde la papelera del escritorio devolvía el vídeo a un sitio donde la app lo
