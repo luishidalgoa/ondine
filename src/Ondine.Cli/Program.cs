@@ -22,6 +22,7 @@ try
         "comprimir" or "compress" => await CompressAsync(rest),
         "analizar" or "probe" => await ProbeAsync(rest),
         "medir" or "measure" => await MeasureAsync(rest),
+        "hardware" => await HardwareAsync(),
         "version" or "--version" => Version(),
         _ => Unknown(cmd),
     };
@@ -38,6 +39,50 @@ catch (Exception ex)
 }
 
 // ---------------------------------------------------------------------------
+
+/// <summary>
+/// Qué hay en esta máquina: qué codificador se usaría y qué aceleraciones de decodificación
+/// arrancan de verdad.
+///
+/// <para>
+/// Existe porque no había forma de saberlo sin comprimir algo y leer el registro, y porque la
+/// lista de <c>ffmpeg -hwaccels</c> engaña: ofrece las que están compiladas, no las que
+/// funcionan. Aquí se prueban una a una —arrancando ffmpeg contra un ficherito— y se enseña lo
+/// que sobrevive, que es lo mismo que ofrece Preferencias.
+/// </para>
+/// </summary>
+static async Task<int> HardwareAsync()
+{
+    var engine = new Engine();
+
+    Console.WriteLine("Herramientas");
+    Console.WriteLine($"  ffmpeg : {Engine.FfmpegPath}");
+    Console.WriteLine($"  ffprobe: {Engine.FfprobePath}");
+
+    Console.WriteLine();
+    Console.WriteLine("Codificador que se usaría");
+    foreach (var codec in new[] { "hevc", "h264", "av1" })
+    {
+        var enc = await engine.SelectEncoderAsync(codec);
+        Console.WriteLine($"  {codec,-5}: {enc}{(Engine.IsHardware(enc) ? "  (por hardware)" : "  (por software)")}");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Decodificación por hardware");
+    var hay = await engine.AceleracionesDisponiblesAsync();
+    if (hay.Count == 0)
+        Console.WriteLine("  ninguna: el original se descomprime en la CPU");
+    else
+    {
+        foreach (var a in hay) Console.WriteLine($"  {a}");
+        var auto = Ondine.Objetivo.AceleracionDeVideo.Automatica(hay, await engine.SelectEncoderAsync("hevc"));
+        Console.WriteLine($"  → «automática» elegiría: {auto}");
+    }
+    Console.WriteLine();
+    Console.WriteLine("Se prueban de verdad, una a una: la lista de «ffmpeg -hwaccels» dice qué está");
+    Console.WriteLine("compilado, no qué funciona. Se elige con «--aceleracion» o en Preferencias.");
+    return 0;
+}
 
 static int Version()
 {
@@ -61,6 +106,7 @@ USO
   comprimir <archivos|carpetas>   Comprime los vídeos indicados
   analizar  <archivos|carpetas>   Muestra pistas, duración y tamaño
   medir     <archivo>             Mide el tamaño real codificando muestras cortas
+  hardware                        Qué codificador y qué aceleración usaría en esta máquina
   version                         Muestra la versión
 
 OPCIONES DE SALIDA
@@ -79,6 +125,9 @@ OPCIONES GENERALES
   -f, --forzar               Reprocesar aunque ya exista la salida
   -n, --simular              Solo mostrar lo que haría, sin escribir nada
       --sin-hardware         No usar la GPU (codificar por CPU)
+      --aceleracion <cual>   Decodificar por hardware: auto (por defecto), ninguna, o el
+                             nombre de una (cuda, qsv, vaapi, d3d11va, videotoolbox).
+                             «ondine hardware» dice las que funcionan en esta maquina
       --margen-disco <MB>    Margen mínimo de disco antes de pausar (por defecto 200)
 
 RENOMBRADO DE LA SALIDA (estilo PowerRename)
@@ -109,6 +158,7 @@ static async Task<int> CompressAsync(string[] args)
     }
 
     Engine.AllowHardware = o.hardware;
+    Engine.AceleracionPedida = o.aceleracion;
     Engine.MinFreeBytes = o.minFreeMb * 1024L * 1024;
 
     Console.WriteLine($"{files.Count} vídeo(s) a procesar.");
@@ -157,6 +207,7 @@ static async Task<int> MeasureAsync(string[] args)
     if (file == null) { Console.Error.WriteLine("No se ha encontrado el vídeo."); return 1; }
 
     Engine.AllowHardware = o.hardware;
+    Engine.AceleracionPedida = o.aceleracion;
     var engine = new Engine();
     Console.WriteLine($"Midiendo «{Path.GetFileName(file)}» con muestras reales…");
     int kbps = await engine.MeasureVideoBitrateAsync(file, o.opt, new ConsoleReporter(quiet: true), CancellationToken.None);
@@ -194,6 +245,7 @@ static (List<string> paths, Opts o) Parse(string[] args)
     var opt = new EncodeOptions();
     var rule = new RenameRule();
     bool recursive = false, hardware = true;
+    string aceleracion = Ondine.Objetivo.AceleracionDeVideo.Auto;
     int minFreeMb = 200;
 
     string Next(ref int i) => i + 1 < args.Length ? args[++i] : throw new ArgumentException($"Falta el valor de «{args[i]}»");
@@ -223,6 +275,10 @@ static (List<string> paths, Opts o) Parse(string[] args)
             case "-f" or "--forzar": opt.Force = true; break;
             case "-n" or "--simular": opt.DryRun = true; break;
             case "--sin-hardware": hardware = false; break;
+            // La de DECODIFICAR, que es otra cosa que «--sin-hardware» (esa es la de codificar).
+            // Se admite cualquier nombre: lo que en esta máquina no arranque se resuelve como
+            // «auto» al usarlo, en vez de fallar en cada fichero de la tanda.
+            case "--aceleracion": aceleracion = Next(ref i).Trim().ToLowerInvariant(); break;
             case "--margen-disco": minFreeMb = NextInt(ref i); break;
             case "--buscar": rule.Search = Next(ref i); rule.Enabled = true; break;
             case "--reemplazar": rule.Replace = Next(ref i); rule.Enabled = true; break;
@@ -235,7 +291,7 @@ static (List<string> paths, Opts o) Parse(string[] args)
         }
     }
     if (rule.HasEffect) opt.NameRule = rule;
-    return (paths, new Opts(opt, recursive, hardware, minFreeMb));
+    return (paths, new Opts(opt, recursive, hardware, minFreeMb, aceleracion));
 }
 
 static string Human(long b) => b switch
@@ -245,7 +301,8 @@ static string Human(long b) => b switch
     _ => $"{b / 1024.0:n0} KB",
 };
 
-readonly record struct Opts(EncodeOptions opt, bool recursive, bool hardware, int minFreeMb);
+readonly record struct Opts(EncodeOptions opt, bool recursive, bool hardware, int minFreeMb,
+                            string aceleracion);
 
 /// <summary>Vuelca el progreso del motor por consola, con una barra en la misma línea.</summary>
 sealed class ConsoleReporter(bool quiet = false) : IEngineReporter

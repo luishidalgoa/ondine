@@ -213,7 +213,7 @@ public partial class VentanaPrincipal : Window
         // solo recibe dos datos, y se puede abrir desde otro sitio mañana.
         miComplementos.Click += (_, _) => AbrirComplementos(null);
 
-        miPrefs.Click += (_, _) => OpenPreferences();
+        miPrefs.Click += async (_, _) => await OpenPreferences();
         miCheckUpd.Click += async (_, _) => await CheckUpdateAsync(manual: true);
         miAbout.Click += async (_, _) => await ShowAbout();
         miTutoriales.Click += (_, _) => new Ayuda().Show(this);
@@ -328,6 +328,7 @@ public partial class VentanaPrincipal : Window
     {
         Engine.MinFreeBytes = _settings.MinFreeMb * 1024L * 1024;
         Engine.AllowHardware = _settings.UseHardware;
+        Engine.AceleracionPedida = _settings.AceleracionVideo;
         Estimator.ComplexityFactor = Math.Clamp(_settings.ComplexityFactor, 0.15, 4.0);
         chkRec.IsChecked = _settings.Recurse;
         UpdateRenameStatus();
@@ -345,7 +346,12 @@ public partial class VentanaPrincipal : Window
     private async Task OpenPreferences()
     {
         var names = (cboPreset.ItemsSource as IEnumerable<Preset>)?.Select(p => p.Name) ?? Enumerable.Empty<string>();
-        var dlg = new Preferencias(_settings, names) ;
+        // La sonda de aceleraciones, antes de abrir: arranca ffmpeg una vez por candidata y
+        // tarda un par de segundos la PRIMERA vez -luego el motor la recuerda-. Se paga aqui,
+        // al abrir Preferencias, y no dentro de la ventana: asi la ventana no depende del disco
+        // ni de ffmpeg, que es lo que la deja probarse en el autochequeo.
+        var aceleraciones = await _engine.AceleracionesDisponiblesAsync();
+        var dlg = new Preferencias(_settings, names, aceleraciones);
         if (await dlg.ShowDialog<bool>(this) && dlg.Result != null)
         {
             _settings = dlg.Result;

@@ -126,6 +126,33 @@ public sealed partial class Textos
         "Turn it off only if your GPU produces artefacts. On CPU, compression is quite a bit slower.",
         "Desactívalo solo si tu GPU produce artefactos. Por CPU la compresión es bastante más lenta.");
 
+    /// <summary>El rotulo del desplegable de la aceleracion de DECODIFICACION.</summary>
+    public string PreferenciasAceleracionVideo =>
+        Idioma.Elegir("Hardware decoding", "Decodificacion por hardware");
+
+    /// <summary>
+    /// La ayuda de debajo. Dice para que sirve y por que la lista es corta: solo salen las que
+    /// de verdad arrancan en esta maquina, porque ffmpeg ofrece varias que no funcionan.
+    /// </summary>
+    public string PreferenciasAceleracionVideoAyuda => Idioma.Elegir(
+        "Who decompresses the original: the graphics card or the processor. Only the ones that actually work on this machine are listed. It saves a good chunk of CPU; encoding is a separate setting.",
+        "Quien descomprime el original: la tarjeta grafica o el procesador. Solo salen las que de verdad funcionan en esta maquina. Ahorra buena parte de la CPU; codificar es el ajuste de arriba.");
+
+    /// <summary>La opcion «que lo decida la app», que es la de fabrica.</summary>
+    public string PreferenciasAceleracionAuto => Idioma.Elegir("Automatic", "Automatica");
+
+    /// <summary>Y la de apagarla a proposito.</summary>
+    public string PreferenciasAceleracionNinguna => Idioma.Elegir("None (use the CPU)", "Ninguna (usar la CPU)");
+
+    /// <summary>
+    /// Cuando la sonda no encuentra ninguna. Se dice, en vez de dejar un desplegable con una
+    /// sola opcion sin explicacion: puede ser que la maquina no tenga, o que este ffmpeg venga
+    /// sin ellas compiladas, y las dos cosas se arreglan de forma distinta.
+    /// </summary>
+    public string PreferenciasAceleracionNoHay => Idioma.Elegir(
+        "No hardware decoding available on this machine",
+        "Sin decodificacion por hardware en esta maquina");
+
     // ── Avisos de la ventana ────────────────────────────────────────────────
     public string PreferenciasMenuAvisoTitulo =>
         Idioma.Elegir("File Explorer menu", "Menú del Explorador");

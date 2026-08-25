@@ -756,6 +756,12 @@ public static class Comprobacion
             AfterCompress = encendido ? Ondine.AfterCompress.Keep : Ondine.AfterCompress.RecycleOriginal,
             MinFreeMb = encendido ? 4321 : 1234,
             UseHardware = encendido,
+            // Los DESPLEGABLES, que hasta ahora no los miraba nadie. Un desplegable sin cablear
+            // devuelve lo de fabrica y el viaje de ida y vuelta pasa igual: por eso cada pasada
+            // elige un valor distinto, y ninguno es el de fabrica.
+            Idioma = encendido ? "en" : "es",
+            AceleracionVideo = encendido ? "qsv" : Ondine.Objetivo.AceleracionDeVideo.Ninguna,
+            DefaultPreset = encendido ? "Archivar" : "Movil",
         };
         entra.Ia.Activo = encendido;
         entra.Ia.BaseUrl = "http://ejemplo.invalido/v1";
@@ -767,7 +773,7 @@ public static class Comprobacion
         // una vez el historial de renombrado entero.
         entra.RenameSearchHistory = ["1080p", "BluRay"];
 
-        var v = new Preferencias(entra, ["Archivar", "Movil"]);
+        var v = new Preferencias(entra, ["Archivar", "Movil"], ["cuda", "qsv"]);
         v.Show(dueno);
         await Task.Delay(400);
 
@@ -788,6 +794,15 @@ public static class Comprobacion
             $"y el que de los tres redondos estaba elegido ({sale.AfterCompress})");
         Dice(sale.MinFreeMb == entra.MinFreeMb, $"y el margen de disco ({sale.MinFreeMb})");
         Dice(sale.UseHardware == encendido, $"y la aceleracion, {como}");
+
+        // Los tres desplegables. El de la aceleracion se ofrece con las que FUNCIONAN en esta
+        // maquina, asi que aqui se le pasan a mano: la comprobacion no puede depender de que
+        // haya una tarjeta delante.
+        Dice(sale.Idioma == entra.Idioma, $"y el idioma de la app, que no lo miraba nadie ({sale.Idioma})");
+        Dice(sale.DefaultPreset == entra.DefaultPreset,
+            $"y el preset por defecto, que tampoco ({sale.DefaultPreset})");
+        Dice(sale.AceleracionVideo == entra.AceleracionVideo,
+            $"y la aceleracion de decodificacion elegida ({sale.AceleracionVideo})");
         Dice(sale.Ia.Activo == encendido && sale.Ia.BaseUrl == entra.Ia.BaseUrl
              && sale.Ia.Modelo == entra.Ia.Modelo, $"y los tres del modelo, {como}");
         Dice(sale.Tmdb.Activo == encendido, $"y el de peliculas, {como}");

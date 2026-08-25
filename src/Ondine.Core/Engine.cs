@@ -136,6 +136,13 @@ public sealed class Engine
 
     private readonly Dictionary<string, string> _cachedEncoder = new();
 
+    /// <summary>
+    /// Lo que dio la sonda de aceleraciones, para no repetirla. De instancia y no estática: el
+    /// hardware no cambia a mitad de sesión, pero un proceso distinto (la CLI, el servidor MCP)
+    /// tiene que poder preguntarlo por su cuenta.
+    /// </summary>
+    private IReadOnlyList<string>? _aceleracionesProbadas;
+
     // ---------- localización de ffmpeg/ffprobe ----------
     private static string ResolveTool(string exe)
     {
@@ -573,6 +580,58 @@ public sealed class Engine
         return false;
     }
 
+    /// <summary>
+    /// Las aceleraciones de DECODIFICACIÓN que arrancan de verdad en esta máquina.
+    ///
+    /// <para>
+    /// Se prueban una a una porque la lista de <c>ffmpeg -hwaccels</c> no sirve de respuesta: en
+    /// la máquina donde se escribió esto ofrecía siete y solo tres funcionaban. Pedir «cuda» sin
+    /// NVIDIA no cae a software, se muere con código 127 («Cannot load nvcuda.dll»), y lo mismo
+    /// «vaapi» sin libva. Es el mismo motivo por el que <see cref="SelectEncoderAsync"/> prueba
+    /// los codificadores en vivo en vez de creerse la lista.
+    /// </para>
+    /// <para>
+    /// La sonda necesita un fichero COMPRIMIDO —lo que se prueba es un decodificador—, así que se
+    /// fabrica uno de diez kilobytes con <c>mpeg4</c>, que va dentro de ffmpeg y no depende de
+    /// ninguna biblioteca externa. La pasada entera cuesta menos de dos segundos y se recuerda
+    /// para toda la sesión.
+    /// </para>
+    /// </summary>
+    public async Task<IReadOnlyList<string>> AceleracionesDisponiblesAsync()
+    {
+        if (_aceleracionesProbadas is not null) return _aceleracionesProbadas;
+
+        var (_, salida, err) = await RunAsync(Ffmpeg, new[] { "-hide_banner", "-hwaccels" });
+        var candidatas = Objetivo.AceleracionDeVideo.Candidatas(
+            salida + "\n" + err,                      // según la build, la lista sale por una o por otra
+            OperatingSystem.IsWindows(), OperatingSystem.IsMacOS());
+
+        if (candidatas.Count == 0) return _aceleracionesProbadas = Array.Empty<string>();
+
+        var sonda = Path.Combine(Path.GetTempPath(), $"ondine-sonda-{Guid.NewGuid():N}.avi");
+        try
+        {
+            var (codigoSonda, _, _) = await RunAsync(Ffmpeg, new[]
+            {
+                "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                "-i", "testsrc=size=128x128:duration=0.2:rate=10", "-c:v", "mpeg4", sonda,
+            });
+            // Sin ficherito no hay sonda, y sin sonda no se arriesga: decodificar en la CPU
+            // funciona siempre, y un 127 por cada fichero de la tanda no.
+            if (codigoSonda != 0 || !File.Exists(sonda)) return _aceleracionesProbadas = Array.Empty<string>();
+
+            var funcionan = new List<string>();
+            foreach (var a in candidatas)
+            {
+                var (codigo, _, _) = await RunAsync(Ffmpeg,
+                    Objetivo.AceleracionDeVideo.ArgumentosDeSonda(a, sonda).ToArray());
+                if (codigo == 0) funcionan.Add(a);
+            }
+            return _aceleracionesProbadas = funcionan;
+        }
+        finally { try { if (File.Exists(sonda)) File.Delete(sonda); } catch { } }
+    }
+
     // ---------- compresión ----------
     public async Task<List<FileResult>> CompressAsync(
         IReadOnlyList<string> files, EncodeOptions opt, IEngineReporter rep, CancellationToken ct)
@@ -591,6 +650,16 @@ public sealed class Engine
             if (encoder is "libaom-av1")
                 rep.Log(t.MotorAvisoAv1Lento);
         }
+
+        // La aceleración de la DECODIFICACIÓN, una vez por tanda. Y se dice, porque hasta ahora
+        // el registro contaba el codificador y callaba que el original lo descomprimía la CPU:
+        // desde fuera parecía que todo iba por la tarjeta.
+        var aceleracion = opt.AudioOnly ? null : Objetivo.AceleracionDeVideo.Elegida(
+            AceleracionPedida, await AceleracionesDisponiblesAsync(), encoder);
+        bool aceleracionCaida = false;   // si falla una vez, no se reintenta con el resto de la tanda
+        if (!opt.AudioOnly)
+            rep.Log(aceleracion is null ? t.MotorDecodificaCpu
+                                        : string.Format(t.MotorDecodificaGpu, aceleracion));
 
         var keepLangs = opt.KeepLangs.Count > 0 ? opt.KeepLangs : new List<string> { opt.Lang, "eng" };
         bool keepAll = keepLangs.Contains("all");
@@ -704,6 +773,13 @@ public sealed class Engine
             {
                 var (ssAntes, tDespues) = Reindex.Tramos.ArgsFfmpeg(opt.Desde, opt.Duracion);
                 var a = new List<string> { "-hide_banner", "-loglevel", "warning", "-stats", "-y" };
+
+                // Aceleración de la decodificación: es una opción de ENTRADA, así que va antes
+                // del -ss y del -i. Sin -hwaccel_output_format a propósito: los fotogramas bajan
+                // a memoria de sistema para que el «scale» de CPU de más abajo pueda con ellos.
+                // Con él, la orden moriría al montar el grafo de filtros.
+                if (!aceleracionCaida)
+                    a.AddRange(Objetivo.AceleracionDeVideo.Argumentos(aceleracion));
                 a.AddRange(ssAntes);        // el salto, ANTES de la entrada: busca por índice
                 a.AddRange(new[] { "-i", f });
                 a.AddRange(tDespues);
@@ -804,6 +880,22 @@ public sealed class Engine
                 while (true)
                 {
                     (code, err) = await RunFfmpegAsync(BuildArgs(true).Append(tmp).ToList(), durSec, rep, ct);
+
+                    // PRIMERO la aceleración, y el orden importa. Si este brazo fuera después
+                    // del de los subtítulos, un fallo de la GPU se reintentaría sin subtítulos y,
+                    // al salir bien, se apuntarían como perdidos unos subtítulos que sí están
+                    // dentro: el aviso acabaría mintiendo.
+                    if (code != 0 && aceleracion is not null && !aceleracionCaida
+                        && Objetivo.AceleracionDeVideo.EsFalloDeAceleracion(err)
+                        && !ct.IsCancellationRequested)
+                    {
+                        // Y no se reintenta con el resto de la tanda: si la tarjeta no está,
+                        // no va a estar en el fichero siguiente, y son doce capítulos.
+                        aceleracionCaida = true;
+                        rep.Log(string.Format(t.MotorAceleracionCaida, aceleracion));
+                        try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+                        (code, err) = await RunFfmpegAsync(BuildArgs(true).Append(tmp).ToList(), durSec, rep, ct);
+                    }
 
                     // red de seguridad: si aun así el subtítulo no entra (formato raro que
                     // no supimos clasificar), sacar el vídeo sin subtítulos antes que nada.
@@ -1007,6 +1099,19 @@ public sealed class Engine
     internal static long MinFreeBytes = 200L * 1024 * 1024;
 
     // ¿Se permite usar codificadores por hardware? (configurable desde Preferencias)
+    /// <summary>
+    /// Que aceleracion de DECODIFICACION pidio el usuario en Preferencias: «auto», «ninguna» o
+    /// el nombre de una (cuda, qsv, vaapi, d3d11va, videotoolbox).
+    ///
+    /// <para>
+    /// Separada de <see cref="AllowHardware"/> a proposito: decodificar y codificar por hardware
+    /// no fallan por lo mismo -uno depende del decodificador de la tarjeta y el otro de las
+    /// sesiones de codificacion-, y quien apague una por un problema concreto no tiene por que
+    /// perder la otra.
+    /// </para>
+    /// </summary>
+    public static string AceleracionPedida { get; set; } = Objetivo.AceleracionDeVideo.Auto;
+
     public static bool AllowHardware = true;
 
     /// <summary>

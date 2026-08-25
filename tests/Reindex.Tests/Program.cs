@@ -152,6 +152,7 @@ public static class Program
         Ondine.Reindex.Tests.VideosQueLleganTests.Todas();
         Ondine.Reindex.Tests.EstadoDeLaFilaTests.Todas();
         Ondine.Reindex.Tests.PlanDeAudioTests.Todas();
+        Ondine.Reindex.Tests.AceleracionDeVideoTests.Todas();
         Ondine.Reindex.Tests.LoQueDiceElAudioTests.Todas();
         Ondine.Reindex.Tests.HerramientasMcpTests.Todas();
         Ondine.Reindex.Tests.ElMcpNoSeQuedaAtrasTests.Todas();
