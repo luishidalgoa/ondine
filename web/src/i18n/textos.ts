@@ -52,7 +52,7 @@ const es = {
     titular: "Ordena bibliotecas de series y películas",
     bajada:
       "Cada capítulo con su título, su número y su temporada. Escrito como los metadatos esperan encontrarlo.",
-    descargar: "Descargar para Windows",
+    descargar: "Descargar",
     terminal: "Instalar por terminal",
   },
 
@@ -172,7 +172,7 @@ const es = {
 
   descarga: {
     titulo: "Ordena tu biblioteca.",
-    apoyo: "Escritorio para Windows, y binarios para macOS y Linux.",
+    apoyo: "Aplicación de escritorio para Windows, macOS y Linux. Y la misma en terminal, para los tres.",
     boton: "Descargar",
     modalTitulo: "Elige tu sistema",
     cerrar: "Cerrar",
@@ -185,27 +185,60 @@ const es = {
     pieA: "Todas las versiones y sus notas están en ",
     pieEnlace: "la página de versiones",
     pieB: ".",
+    aplicacion: "Aplicación",
+    herramienta: "Terminal",
     grupos: [
       {
         sistema: "Windows",
-        opciones: [
-          { etiqueta: "Instalador", detalle: "Lo habitual. Crea accesos y se actualiza solo.", peso: "55 MB" },
-          { etiqueta: "Portable", detalle: "Un ejecutable suelto. No instala nada.", peso: "13 MB" },
+        bloques: [
+          {
+            opciones: [
+              { id: "win-app", etiqueta: "Instalador", detalle: "Lo habitual. Crea accesos y se actualiza solo.", peso: "56 MB" },
+            ],
+          },
+          {
+            opciones: [
+              { id: "win-cli", etiqueta: "Ejecutable suelto", detalle: "Para automatizar. No instala nada.", peso: "13 MB" },
+            ],
+          },
         ],
+        nota: "El instalador se baja ffmpeg solo si no lo tienes.",
       },
       {
         sistema: "macOS",
-        opciones: [
-          { etiqueta: "Apple Silicon", detalle: "M1 en adelante.", peso: "5 MB" },
-          { etiqueta: "Intel", detalle: "Mac anteriores a 2020.", peso: "6 MB" },
+        bloques: [
+          {
+            opciones: [
+              { id: "mac-app-arm", etiqueta: "Apple Silicon · .dmg", detalle: "M1 en adelante.", peso: "55 MB" },
+              { id: "mac-app-x64", etiqueta: "Intel · .dmg", detalle: "Mac anteriores a 2020.", peso: "57 MB" },
+            ],
+          },
+          {
+            opciones: [
+              { id: "mac-cli-arm", etiqueta: "Apple Silicon", detalle: "", peso: "6 MB" },
+              { id: "mac-cli-x64", etiqueta: "Intel", detalle: "", peso: "6 MB" },
+            ],
+          },
         ],
+        nota: "La primera vez ábrela con el botón derecho → Abrir: no está firmada con un certificado de Apple y el doble clic no basta. Necesita ffmpeg (brew install ffmpeg).",
       },
       {
         sistema: "Linux",
-        opciones: [
-          { etiqueta: "x64", detalle: "La mayoría de equipos y servidores.", peso: "6 MB" },
-          { etiqueta: "ARM64", detalle: "Raspberry Pi y equipos ARM.", peso: "5 MB" },
+        bloques: [
+          {
+            opciones: [
+              { id: "linux-app-deb", etiqueta: "Mint, Ubuntu y Debian · .deb", detalle: "Doble clic y se instala. Sale en el menú y en «Abrir con».", peso: "39 MB" },
+              { id: "linux-app-appimage", etiqueta: "Cualquier distribución · AppImage", detalle: "Un solo fichero. Se marca ejecutable y se abre.", peso: "45 MB" },
+            ],
+          },
+          {
+            opciones: [
+              { id: "linux-cli-x64", etiqueta: "x64", detalle: "La mayoría de equipos y servidores.", peso: "6 MB" },
+              { id: "linux-cli-arm", etiqueta: "ARM64", detalle: "Raspberry Pi y equipos ARM.", peso: "6 MB" },
+            ],
+          },
         ],
+        nota: "Necesita ffmpeg (sudo apt install ffmpeg). VLC solo hace falta para el reproductor de dentro.",
       },
     ],
     promesas: [
@@ -224,7 +257,7 @@ const es = {
     codigoDeOndine: "Código de Ondine",
     queEsTitulo: "Qué es Ondine",
     queEsCuerpo:
-      "Una aplicación de escritorio para Windows, y una herramienta de terminal para Linux, macOS y Windows, que prepara una biblioteca de series y películas antes de que Plex, Jellyfin o Kodi la escaneen. Esos servidores enseñan una biblioteca preciosa, pero solo si los ficheros ya vienen bien nombrados. Ondine es el paso intermedio.",
+      "Una aplicación de escritorio para Windows, macOS y Linux, y una herramienta de terminal para los tres, que prepara una biblioteca de series y películas antes de que Plex, Jellyfin o Kodi la escaneen. Esos servidores enseñan una biblioteca preciosa, pero solo si los ficheros ya vienen bien nombrados. Ondine es el paso intermedio.",
     queHace: [
       "Identifica cada episodio contra un catálogo y propone su nombre",
       "Parte los ficheros que traen dos capítulos pegados",
@@ -238,12 +271,12 @@ const es = {
     abrirPortfolio: "Abrir portfolio.hdglabs.com",
     pilaTitulo: "Con qué está construido",
     pila: [
-      { area: "Escritorio", cosas: ["C# 13 sobre .NET 9", "WPF, con tema propio", "Cero dependencias de NuGet"] },
+      { area: "Escritorio", cosas: ["C# 13 sobre .NET 9", "WPF en Windows, Avalonia en macOS y Linux", "El mismo motor y los mismos textos en las dos"] },
       { area: "Terminal", cosas: [".NET 9 multiplataforma", "Fichero único y autocontenido", "Recortado: de 68 MB a 13"] },
       { area: "Motor de vídeo", cosas: ["ffmpeg y ffprobe", "HEVC, H.264 y AV1", "MKV, MP4 y WebM"] },
       { area: "Aceleración", cosas: ["Intel Quick Sync", "NVIDIA NVENC", "AMD AMF", "Respaldo por software si no hay"] },
       { area: "Catálogo", cosas: ["Encargo escrito para la IA que tú uses", "Sin clave ni servicio propio", "Esquema reindex/1.0"] },
-      { area: "Distribución", cosas: ["GitHub Actions", "Inno Setup para el instalador", "Autoactualización desde Releases", "96 pruebas en cada cambio"] },
+      { area: "Distribución", cosas: ["GitHub Actions", "Inno Setup para el instalador", "Autoactualización desde Releases", "Casi 1.900 pruebas en cada cambio"] },
     ],
   },
 };
@@ -280,7 +313,7 @@ const en: typeof es = {
     titular: "Get your TV and film library in order",
     bajada:
       "Every episode with its title, its number and its season. Written the way metadata expects to find it.",
-    descargar: "Download for Windows",
+    descargar: "Download",
     terminal: "Install from the terminal",
   },
 
@@ -397,7 +430,7 @@ const en: typeof es = {
 
   descarga: {
     titulo: "Get your library in order.",
-    apoyo: "Desktop app for Windows, and binaries for macOS and Linux.",
+    apoyo: "Desktop app for Windows, macOS and Linux. And the same thing in a terminal, for all three.",
     boton: "Download",
     modalTitulo: "Choose your system",
     cerrar: "Close",
@@ -410,27 +443,60 @@ const en: typeof es = {
     pieA: "Every release and its notes are on ",
     pieEnlace: "the releases page",
     pieB: ".",
+    aplicacion: "App",
+    herramienta: "Terminal",
     grupos: [
       {
         sistema: "Windows",
-        opciones: [
-          { etiqueta: "Installer", detalle: "The usual one. Adds shortcuts and updates itself.", peso: "55 MB" },
-          { etiqueta: "Portable", detalle: "A single executable. Installs nothing.", peso: "13 MB" },
+        bloques: [
+          {
+            opciones: [
+              { id: "win-app", etiqueta: "Installer", detalle: "The usual one. Adds shortcuts and updates itself.", peso: "56 MB" },
+            ],
+          },
+          {
+            opciones: [
+              { id: "win-cli", etiqueta: "Standalone executable", detalle: "For scripting. Installs nothing.", peso: "13 MB" },
+            ],
+          },
         ],
+        nota: "The installer fetches ffmpeg for you if you do not have it.",
       },
       {
         sistema: "macOS",
-        opciones: [
-          { etiqueta: "Apple Silicon", detalle: "M1 and later.", peso: "5 MB" },
-          { etiqueta: "Intel", detalle: "Macs from before 2020.", peso: "6 MB" },
+        bloques: [
+          {
+            opciones: [
+              { id: "mac-app-arm", etiqueta: "Apple Silicon · .dmg", detalle: "M1 and later.", peso: "55 MB" },
+              { id: "mac-app-x64", etiqueta: "Intel · .dmg", detalle: "Macs before 2020.", peso: "57 MB" },
+            ],
+          },
+          {
+            opciones: [
+              { id: "mac-cli-arm", etiqueta: "Apple Silicon", detalle: "", peso: "6 MB" },
+              { id: "mac-cli-x64", etiqueta: "Intel", detalle: "", peso: "6 MB" },
+            ],
+          },
         ],
+        nota: "The first time, right-click → Open: it is not signed with an Apple certificate, so a double click will not do. Needs ffmpeg (brew install ffmpeg).",
       },
       {
         sistema: "Linux",
-        opciones: [
-          { etiqueta: "x64", detalle: "Most desktops and servers.", peso: "6 MB" },
-          { etiqueta: "ARM64", detalle: "Raspberry Pi and ARM machines.", peso: "5 MB" },
+        bloques: [
+          {
+            opciones: [
+              { id: "linux-app-deb", etiqueta: "Mint, Ubuntu and Debian · .deb", detalle: "Double-click to install. Shows up in the menu and in «Open with».", peso: "39 MB" },
+              { id: "linux-app-appimage", etiqueta: "Any distribution · AppImage", detalle: "A single file. Mark it executable and open it.", peso: "45 MB" },
+            ],
+          },
+          {
+            opciones: [
+              { id: "linux-cli-x64", etiqueta: "x64", detalle: "Most machines and servers.", peso: "6 MB" },
+              { id: "linux-cli-arm", etiqueta: "ARM64", detalle: "Raspberry Pi and ARM machines.", peso: "6 MB" },
+            ],
+          },
         ],
+        nota: "Needs ffmpeg (sudo apt install ffmpeg). VLC is only needed for the built-in player.",
       },
     ],
     promesas: [
@@ -449,7 +515,7 @@ const en: typeof es = {
     codigoDeOndine: "Ondine source",
     queEsTitulo: "What Ondine is",
     queEsCuerpo:
-      "A desktop app for Windows, and a terminal tool for Linux, macOS and Windows, that gets a TV and film library ready before Plex, Jellyfin or Kodi scan it. Those servers show you a beautiful library, but only when the files are already named properly. Ondine is the step in between.",
+      "A desktop app for Windows, macOS and Linux, and a terminal tool for all three, that gets a TV and film library ready before Plex, Jellyfin or Kodi scan it. Those servers show you a beautiful library, but only when the files are already named properly. Ondine is the step in between.",
     queHace: [
       "Matches every episode against a catalogue and proposes its name",
       "Splits the files that carry two episodes stuck together",
@@ -463,12 +529,12 @@ const en: typeof es = {
     abrirPortfolio: "Open portfolio.hdglabs.com",
     pilaTitulo: "What it is built with",
     pila: [
-      { area: "Desktop", cosas: ["C# 13 on .NET 9", "WPF, with its own theme", "Zero NuGet dependencies"] },
+      { area: "Desktop", cosas: ["C# 13 on .NET 9", "WPF on Windows, Avalonia on macOS and Linux", "Same engine and same texts in both"] },
       { area: "Terminal", cosas: [".NET 9, cross-platform", "Single self-contained file", "Trimmed: from 68 MB to 13"] },
       { area: "Video engine", cosas: ["ffmpeg and ffprobe", "HEVC, H.264 and AV1", "MKV, MP4 and WebM"] },
       { area: "Acceleration", cosas: ["Intel Quick Sync", "NVIDIA NVENC", "AMD AMF", "Software fallback when there is none"] },
       { area: "Catalogue", cosas: ["A brief written for whichever AI you use", "No key, no service of its own", "reindex/1.0 schema"] },
-      { area: "Distribution", cosas: ["GitHub Actions", "Inno Setup for the installer", "Self-updating from Releases", "96 tests on every change"] },
+      { area: "Distribution", cosas: ["GitHub Actions", "Inno Setup for the installer", "Self-updating from Releases", "Almost 1,900 tests on every change"] },
     ],
   },
 };
