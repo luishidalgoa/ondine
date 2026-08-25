@@ -22,6 +22,11 @@
   -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Ondine.Core\Ondine.Core.csproj" />
+    <!--
+      Y el servidor MCP, para poder EJECUTAR sus herramientas en vez de leer su codigo. Es un
+      Exe, y referenciarlo vale: cada proyecto conserva su propio punto de entrada.
+    -->
+    <ProjectReference Include="..\..\src\Ondine.Mcp\Ondine.Mcp.csproj" />
   </ItemGroup>
 
 </Project>

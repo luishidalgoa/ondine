@@ -60,7 +60,7 @@ jobs:
             || { echo "::error::Falta en CHANGELOG.md la sección «## [$VER] - AAAA-MM-DD»"; exit 1; }
 
           # 3) todos los .csproj declaran esa misma versión
-          for p in src/Ondine/Ondine.csproj src/Ondine.Core/Ondine.Core.csproj src/Ondine.Cli/Ondine.Cli.csproj src/Ondine.Avalonia/Ondine.Avalonia.csproj; do
+          for p in src/Ondine/Ondine.csproj src/Ondine.Core/Ondine.Core.csproj src/Ondine.Cli/Ondine.Cli.csproj src/Ondine.Avalonia/Ondine.Avalonia.csproj src/Ondine.Mcp/Ondine.Mcp.csproj; do
             PV=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$p" | head -1)
             [[ "$PV" == "$VER" ]] \
               || { echo "::error::$p declara <Version>$PV</Version> pero se publica $VER"; exit 1; }
@@ -230,6 +230,45 @@ jobs:
             tar czf "../ondine-${{ matrix.nombre }}.tar.gz" ondine
           fi
 
+      # Y el servidor MCP, suelto. Dentro de los paquetes de escritorio ya viaja gratis
+      # -comparte el runtime con la interfaz-, pero quien instale por el .exe de Windows o
+      # quiera solo el servidor necesita poder bajarlo aparte.
+      #
+      # SIN RECORTAR, y eso cuesta unos 35 MB en vez de 14. El recortador se lleva los
+      # metadatos que System.Text.Json necesita por reflexion y el servidor revienta al
+      # arrancar («JsonTypeInfo metadata for type System.String was not provided»). Se probo.
+      - name: Publicar el servidor MCP
+        run: >
+          dotnet publish src/Ondine.Mcp/Ondine.Mcp.csproj
+          -c Release -r ${{ matrix.rid }} --self-contained true
+          -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:DebugType=none
+          -o publicado-mcp
+
+      - name: Comprobar que el servidor MCP contesta
+        if: ${{ !matrix.cruzado }}
+        shell: bash
+        run: |
+          BIN=publicado-mcp/ondine-mcp
+          [[ -f "$BIN.exe" ]] && BIN="$BIN.exe"
+          chmod +x "$BIN" || true
+          # Una conversacion minima DE VERDAD: se le pide la lista de herramientas y se mira
+          # que conteste con alguna dentro. Arrancar sin mas no probaria nada -el fallo del
+          # recortado ocurria justo al construir esa lista, antes de leer una sola peticion-.
+          echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | "$BIN" > respuesta.json
+          grep -q '"ondine_analizar"' respuesta.json || {
+            echo "::error::el servidor MCP no lista sus herramientas"; cat respuesta.json; exit 1; }
+
+      - name: Empaquetar el servidor MCP
+        shell: bash
+        run: |
+          cd publicado-mcp
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
+            mv ondine-mcp.exe "../ondine-mcp-${{ matrix.nombre }}.exe"
+          else
+            chmod +x ondine-mcp
+            tar czf "../ondine-mcp-${{ matrix.nombre }}.tar.gz" ondine-mcp
+          fi
+
       - name: Subir como artefacto
         uses: actions/upload-artifact@v7
         with:
@@ -237,6 +276,8 @@ jobs:
           path: |
             ondine-${{ matrix.nombre }}.exe
             ondine-${{ matrix.nombre }}.tar.gz
+            ondine-mcp-${{ matrix.nombre }}.exe
+            ondine-mcp-${{ matrix.nombre }}.tar.gz
           if-no-files-found: error
 
       - name: Adjuntar al Release (solo en tags)
@@ -246,6 +287,8 @@ jobs:
           files: |
             ondine-${{ matrix.nombre }}.exe
             ondine-${{ matrix.nombre }}.tar.gz
+            ondine-mcp-${{ matrix.nombre }}.exe
+            ondine-mcp-${{ matrix.nombre }}.tar.gz
 
   # ---------------------------------------------------------------------------
   # Escritorio de Linux: el .deb para Mint, Ubuntu y Debian.
@@ -294,6 +337,7 @@ jobs:
           dpkg-deb --contents "$deb" > lista.txt
           for esperado in \
               ./opt/ondine/Ondine.Avalonia \
+              ./opt/ondine/ondine-mcp \
               ./usr/bin/ondine \
               ./usr/share/applications/ondine.desktop \
               ./usr/share/icons/hicolor/256x256/apps/ondine.png               ./usr/share/pixmaps/ondine.png; do

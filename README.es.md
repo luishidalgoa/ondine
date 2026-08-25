@@ -198,10 +198,10 @@ pwsh -File build.ps1
 Todo se compila en la nube, sin dependencias locales:
 
 1. Añade la sección de la versión en [`CHANGELOG.md`](CHANGELOG.md) (`## [X.Y.Z] - AAAA-MM-DD`).
-2. Sube `<Version>` **en los cuatro** `.csproj` (`Ondine`, `Ondine.Core`, `Ondine.Cli`,
-   `Ondine.Avalonia`). Eran dos antes de separar el motor y de que llegara la segunda
-   interfaz; el trabajo `verificar-version` comprueba los cuatro y no publica si alguno no
-   cuadra.
+2. Sube `<Version>` **en los cinco** `.csproj` (`Ondine`, `Ondine.Core`, `Ondine.Cli`,
+   `Ondine.Avalonia`, `Ondine.Mcp`). Eran dos antes de separar el motor, de que llegara la
+   segunda interfaz y del servidor MCP; el trabajo `verificar-version` comprueba los cinco y no
+   publica si alguno no cuadra. Las pruebas también lo miran, para enterarse antes del tag.
 3. `git tag vX.Y.Z && git push --follow-tags`.
 
 [GitHub Actions](.github/workflows/build.yml) **verifica primero el contrato del CHANGELOG** —que la
@@ -217,6 +217,7 @@ Release. Si el contrato no se cumple, no se publica nada.
 | `src/Ondine/` | App C#/WPF para Windows, y la auto-actualización. |
 | `src/Ondine.Avalonia/` | La misma app sobre Avalonia, para Linux y macOS. Mismo motor y mismos textos. |
 | `src/Ondine.Cli/` | Herramienta de terminal multiplataforma. Referencia el motor, no lo copia. |
+| `src/Ondine.Mcp/` | Servidor MCP: deja usar Ondine desde un agente. Sobre el motor, no sobre la interfaz. Ver [docs/mcp.md](docs/mcp.md). |
 | `installer/` | Script de Inno Setup. |
 | `empaquetado/` | El `.deb`, el AppImage y el `.dmg`. Ver [docs/empaquetado.md](docs/empaquetado.md). |
 | `web/` | El sitio de [ondine.hdglabs.com](https://ondine.hdglabs.com), sobre Astro. |

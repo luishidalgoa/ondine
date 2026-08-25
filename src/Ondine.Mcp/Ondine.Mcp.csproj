@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    El servidor MCP de Ondine: deja que un agente use la aplicación.
+
+    SOBRE EL MOTOR Y NO SOBRE LA INTERFAZ, y esa es la decisión que lo define. La alternativa
+    era conducir la ventana a golpe de clic simulado, y eso es frágil (cualquier cambio de
+    diseño lo rompe), lento (cada paso espera a que se pinte algo) y ciego (no puede leer más
+    que lo que hay en pantalla). Aquí se llama al mismo `Ondine.Core` que usan las dos
+    interfaces, así que el agente hace lo mismo que un humano por el mismo camino.
+
+    LAS REGLAS DE LA APP SE MANTIENEN, que es lo que hace que esto no sea peligroso:
+
+      · Analizar PROPONE y no toca nada. Es la regla que sostiene la aplicación entera.
+      · Lo que escribe pide `confirmar: true`. Sin él contesta lo que HARÍA, con la lista
+        entera, para que se pueda leer antes de dar permiso.
+      · Lo borrado va a la papelera del sistema. No hay borrado de verdad, ni con confirmar.
+
+    Va como proyecto aparte y no dentro de la CLI porque son dos cosas distintas: la CLI la
+    escribe una persona y contesta en texto; esto habla JSON-RPC por la entrada estándar y lo
+    lee una máquina.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ondine-mcp</AssemblyName>
+    <RootNamespace>Ondine.Mcp</RootNamespace>
+    <!--
+      GLOBALIZACION SI, y esto se midio. Nacio en «true» -parecia inofensivo en un servidor sin
+      interfaz, y ahorra unos megas- y el mismo fichero contra el mismo catalogo bajo de 100 % a
+      81 % de parecido: la comparacion de titulos descompone en Unicode para que «nino» case con
+      «nino» con enie, y en modo invariante ese plegado de acentos deja de funcionar. No da
+      ningun error; solo identifica peor, en silencio. Lo vigila «ElMotorNecesitaGlobalizacion».
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- La misma versión que el resto. El flujo `verificar-version` la comprueba en cada tag. -->
+    <Version>1.14.4</Version>
+    <Product>Ondine</Product>
+    <Company>luishidalgoa</Company>
+    <Authors>luishidalgoa</Authors>
+    <Description>Ondine por MCP: analizar, renombrar, comprimir y partir desde un agente.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ondine.Core\Ondine.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Las pruebas ejecutan las herramientas de verdad, y las herramientas son internas: este
+      servidor no es una libreria y no tiene por que ofrecer superficie publica a nadie mas.
+    -->
+    <InternalsVisibleTo Include="reindex-tests" />
+  </ItemGroup>
+
+</Project>

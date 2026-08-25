@@ -57,9 +57,18 @@ cp "$salida/cli-tmp/ondine" "$arbol/opt/ondine/ondine-cli"
 chmod +x "$arbol/opt/ondine/ondine-cli"
 rm -rf "$salida/cli-tmp"
 
+# Y EL SERVIDOR MCP, que es lo que deja usar Ondine desde un agente.
+#
+# Va publicado en la MISMA carpeta que la interfaz a proposito: ahi ya esta el runtime
+# entero, asi que lo unico que se anade son sus dos ficheros -unos 200 kB-. Publicarlo
+# aparte y autocontenido costaria 76 MB de runtime duplicado para lo mismo.
+dotnet publish "$raiz/src/Ondine.Mcp/Ondine.Mcp.csproj"   -c Release -r "$rid" --self-contained true   -p:PublishSingleFile=false   -o "$arbol/opt/ondine" --nologo -v quiet
+chmod +x "$arbol/opt/ondine/ondine-mcp"
+
 # ── Lo que ve el escritorio ──────────────────────────────────────────────────
 ln -sf /opt/ondine/Ondine.Avalonia "$arbol/usr/bin/ondine"
 ln -sf /opt/ondine/ondine-cli      "$arbol/usr/bin/ondine-cli"
+ln -sf /opt/ondine/ondine-mcp      "$arbol/usr/bin/ondine-mcp"
 
 cp "$raiz/empaquetado/linux/ondine.desktop" "$arbol/usr/share/applications/ondine.desktop"
 cp "$raiz/docs/marca/ondine-marca-oscuro.svg" \

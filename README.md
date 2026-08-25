@@ -209,10 +209,10 @@ pwsh -File build.ps1
 Everything builds in the cloud, with no local dependencies:
 
 1. Add the version section to [`CHANGELOG.md`](CHANGELOG.md) (`## [X.Y.Z] - YYYY-MM-DD`).
-2. Bump `<Version>` in **all four** `.csproj` files (`Ondine`, `Ondine.Core`, `Ondine.Cli`,
-   `Ondine.Avalonia`). They were two before the engine was split out and the second interface
-   arrived; the `verificar-version` job checks the four of them and fails the release if any
-   disagrees.
+2. Bump `<Version>` in **all five** `.csproj` files (`Ondine`, `Ondine.Core`, `Ondine.Cli`,
+   `Ondine.Avalonia`, `Ondine.Mcp`). They were two before the engine was split out, the second
+   interface arrived and the MCP server was added; the `verificar-version` job checks all five and
+   fails the release if any disagrees. The test suite checks it too, so it shows up before the tag.
 3. `git tag vX.Y.Z && git push --follow-tags`.
 
 [GitHub Actions](.github/workflows/build.yml) **checks the CHANGELOG contract first**, that the
@@ -228,6 +228,7 @@ the Release. If the contract is not met, nothing gets published.
 | `src/Ondine/` | C#/WPF app for Windows, plus the auto-update. |
 | `src/Ondine.Avalonia/` | The same app on Avalonia, for Linux and macOS. Same engine, same texts. |
 | `src/Ondine.Cli/` | Cross-platform terminal tool. It references the engine, it does not copy it. |
+| `src/Ondine.Mcp/` | MCP server: lets an agent use Ondine. Over the engine, not the UI. See [docs/mcp.md](docs/mcp.md). |
 | `installer/` | Inno Setup script. |
 | `empaquetado/` | The `.deb`, the AppImage and the `.dmg`. See [docs/empaquetado.md](docs/empaquetado.md). |
 | `web/` | The site at [ondine.hdglabs.com](https://ondine.hdglabs.com), on Astro. |

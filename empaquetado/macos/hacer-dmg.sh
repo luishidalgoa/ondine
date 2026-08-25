@@ -72,6 +72,14 @@ for par in "arm64:osx-arm64" "x64:osx-x64"; do
   chmod +x "$app/Contents/MacOS/ondine-cli"
   rm -rf "$salida/cli-tmp"
 
+  # Y EL SERVIDOR MCP, que es lo que deja usar Ondine desde un agente.
+  #
+  # Va publicado en la MISMA carpeta que la interfaz a proposito: ahi ya esta el runtime
+  # entero, asi que lo unico que se anade son sus dos ficheros -unos 200 kB-. Publicarlo
+  # aparte y autocontenido costaria 76 MB de runtime duplicado para lo mismo.
+  dotnet publish "$raiz/src/Ondine.Mcp/Ondine.Mcp.csproj"     -c Release -r "$rid" --self-contained true     -p:PublishSingleFile=false     -o "$app/Contents/MacOS" --nologo -v quiet
+  chmod +x "$app/Contents/MacOS/ondine-mcp"
+
   cp "$icns" "$app/Contents/Resources/ondine.icns"
 
   # ── Info.plist ─────────────────────────────────────────────────────────────

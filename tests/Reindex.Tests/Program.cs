@@ -151,6 +151,8 @@ public static class Program
         Ondine.Reindex.Tests.RotuloDeColaTests.Todas();
         Ondine.Reindex.Tests.VideosQueLleganTests.Todas();
         Ondine.Reindex.Tests.EstadoDeLaFilaTests.Todas();
+        Ondine.Reindex.Tests.HerramientasMcpTests.Todas();
+        Ondine.Reindex.Tests.ElMcpNoSeQuedaAtrasTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;
