@@ -149,7 +149,17 @@ internal static class EnElGestorDeArchivos
     {
         try
         {
-            var p = Process.Start(new ProcessStartInfo("/usr/bin/which", programa)
+            // «which» y no «/usr/bin/which»: es la única ruta absoluta que había en este
+            // fichero, y no está garantizada. En Fedora 41 y siguientes «which» ya no se
+            // instala de serie; en NixOS nada vive en /usr/bin; y dentro de un AppImage el
+            // entorno tampoco es el del sistema. Cuando falla, esta función devuelve «no está
+            // instalado» para los seis gestores, así que se cae al respaldo de abrir la
+            // carpeta: la app funciona, pero deja de SEÑALAR el fichero — y eso es justo lo
+            // que este fichero entero viene a hacer.
+            //
+            // Dejando que .NET lo resuelva por el PATH se comporta como el resto de llamadas
+            // de aquí, que ya lanzan «nemo» o «xdg-open» por su nombre.
+            var p = Process.Start(new ProcessStartInfo("which", programa)
             {
                 UseShellExecute = false,
                 RedirectStandardOutput = true,

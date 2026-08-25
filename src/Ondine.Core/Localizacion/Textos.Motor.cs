@@ -161,9 +161,33 @@ public sealed partial class Textos
         "    Done  {0} MB → {1} MB  (-{2}%)",
         "    Listo  {0} MB → {1} MB  (-{2}%)");
 
+    /// <summary>
+    /// El fallo al codificar. {0} es el MOTIVO, no el código a secas.
+    ///
+    /// <para>
+    /// Decía «ERROR al codificar (código 243)» y nada más: un número sin causa, con la salida
+    /// de error de ffmpeg capturada dos líneas más arriba y tirada. Ahora se dice qué pasó.
+    /// </para>
+    /// </summary>
     public string MotorErrorCodificar => Idioma.Elegir(
-        "    ERROR while encoding (code {0})",
-        "    ERROR al codificar (código {0})");
+        "    ERROR while encoding: {0}",
+        "    ERROR al codificar: {0}");
+
+    public string MotorFfmpegSinPermiso => Idioma.Elegir(
+        "permission denied writing the result (check that you can write to the destination folder)",
+        "sin permiso para escribir el resultado (comprueba que puedes escribir en la carpeta de destino)");
+
+    public string MotorFfmpegSinEspacio => Idioma.Elegir(
+        "no space left on the destination disk",
+        "no queda espacio en el disco de destino");
+
+    public string MotorFfmpegNoEncontrado => Idioma.Elegir(
+        "a file or folder in the way does not exist",
+        "algún fichero o carpeta del camino no existe");
+
+    public string MotorFfmpegSoloElCodigo => Idioma.Elegir(
+        "ffmpeg failed with code {0} and did not say why",
+        "ffmpeg falló con el código {0} y no dijo por qué");
 
     public string MotorDetenidoConTemporal => Idioma.Elegir(
         "    stopped; temporary file deleted.",

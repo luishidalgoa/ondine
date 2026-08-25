@@ -592,8 +592,13 @@
                                         SortMemberPath="Estado">
                   <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
+                      <!-- El motivo al pasar el raton. La columna dice «Error» y nada mas, y
+                           el porque -que ffmpeg si da- no llegaba a ninguna parte: doce
+                           ficheros fallando, doce «Error» y ninguna pista. El globo solo sale
+                           cuando hay algo que contar; con Detalle en nulo, ToolTip no aparece. -->
                       <TextBlock Text="{Binding Estado}" TextTrimming="CharacterEllipsis"
                                  Foreground="{StaticResource Neutral500}"
+                                 ToolTip.Tip="{Binding Detalle}"
                                  Classes.estadoOk="{Binding EstadoEsOk}"
                                  Classes.estadoErr="{Binding EstadoEsError}"
                                  Classes.estadoVivo="{Binding EstadoEsEnMarcha}"/>

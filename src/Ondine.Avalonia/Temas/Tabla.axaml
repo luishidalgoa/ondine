@@ -175,9 +175,12 @@
     <Setter Property="ColumnHeaderTheme" Value="{StaticResource OrgColHeader}"/>
     <Setter Property="CellTheme" Value="{StaticResource OrgCell}"/>
 
-    <!-- El tema de la fila NO se pone aqui: en WPF habia RowStyle y en Avalonia el DataGrid
-         no expone nada equivalente. Va como estilo suelto sobre DataGridRow dentro de la
-         pantalla que usa esta tabla, que es lo que alcanza a las filas que crea. -->
+    <!-- El tema de la fila NO se pone aqui, pero SI se le pone a cada tabla: RowTheme.
+         Este comentario decia que Avalonia «no expone nada equivalente» al RowStyle de WPF, y
+         es falso: DataGrid.RowTheme existe. Por creerselo se puso como estilo suelto sobre
+         DataGridRow en la pantalla, y un estilo suelto alcanza a las filas de LAS DOS tablas
+         de Organizar: la de peliculas salio con la banda de temporada -vacia- en cada fila.
+         Un comentario equivocado hace mas dano que ninguno, porque se cita. -->
   </ControlTheme>
 
 </ResourceDictionary>

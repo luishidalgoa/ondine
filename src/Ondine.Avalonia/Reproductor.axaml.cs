@@ -107,7 +107,11 @@ public partial class Reproductor : Window
         Btn("btnAdelante").Click += (_, _) => Saltar(10);
         Btn("btnPantalla").Click += (_, _) => AlternarPantalla();
         Btn("btnMudo").Click += (_, _) => AlternarMudo();
-        Btn("btnSistema").Click += (_, _) => AbrirEnSistema();
+        // Y SE CIERRA, que es lo que hacía la versión de WPF y aquí se perdió. Este botón
+        // sale cuando el vídeo no se puede reproducir aquí: lanzarlo fuera y dejar el modal
+        // delante bloquea la ventana principal, así que hay que cerrarlo a mano para volver a
+        // usar la aplicación mientras se ve el vídeo en otro programa.
+        Btn("btnSistema").Click += (_, _) => { AbrirEnSistema(); Close(); };
 
         Sld("volumen").PropertyChanged += (_, e) =>
         {

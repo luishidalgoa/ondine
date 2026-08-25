@@ -2289,7 +2289,12 @@ public partial class VentanaPrincipal : Window
             Dispatcher.UIThread.Post(() =>
             {
                 if (RowOf(r.SourcePath) is { } row)
+                {
                     row.Estado = r.Ok ? $"{r.Status} · {Human(r.OutBytes!.Value)}" : Textos.Instancia.Error;
+                    // El motivo del fallo viaja a la fila para que la celda lo cuente al pasar
+                    // el ratón: «Error» a secas no deja arreglar nada.
+                    row.Detalle = r.Detalle;
+                }
                 if (_current != null && string.Equals(_current.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase))
                     _current = null;
             });

@@ -212,13 +212,27 @@
                   StrokeJoin="Round"
                   IsVisible="{Binding Icono, RelativeSource={RelativeSource TemplatedParent},
                                       Converter={x:Static ObjectConverters.IsNotNull}}"/>
-            <TextPresenter Name="PART_TextPresenter" Grid.Column="1"
-                           Text="{TemplateBinding Text, Mode=TwoWay}"
-                           CaretBrush="{TemplateBinding CaretBrush}"
-                           SelectionBrush="{StaticResource Accent800}"
-                           SelectionStart="{TemplateBinding SelectionStart}"
-                           SelectionEnd="{TemplateBinding SelectionEnd}"
-                           VerticalAlignment="Center"/>
+            <!-- EL VISOR, la segunda instancia del mismo fallo.
+                 Se arregló el del TextBox normal y este se quedó fuera, y es justo el que más
+                 se nota: aquí van las RUTAS. Sin ScrollViewer, una ruta que no cabe se puede
+                 escribir pero no leer -mover el cursor con las flechas no arrastra el texto-,
+                 así que no hay manera de comprobar que está bien metida.
+
+                 Sin barra visible y a lo ancho: es una sola línea, y una barra de
+                 desplazamiento dentro de un campo de 30 px de alto se come el campo. Lo que
+                 hace falta es que el cursor arrastre el texto, y de eso se encarga
+                 PART_ScrollViewer por su nombre. -->
+            <ScrollViewer Name="PART_ScrollViewer" Grid.Column="1"
+                          HorizontalScrollBarVisibility="Hidden"
+                          VerticalScrollBarVisibility="Disabled">
+              <TextPresenter Name="PART_TextPresenter"
+                             Text="{TemplateBinding Text, Mode=TwoWay}"
+                             CaretBrush="{TemplateBinding CaretBrush}"
+                             SelectionBrush="{StaticResource Accent800}"
+                             SelectionStart="{TemplateBinding SelectionStart}"
+                             SelectionEnd="{TemplateBinding SelectionEnd}"
+                             VerticalAlignment="Center"/>
+            </ScrollViewer>
           </Grid>
         </Border>
       </ControlTemplate>
