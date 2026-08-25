@@ -64,13 +64,6 @@ public static class TemaPortadoTests
         ["EvidenciaMas"] = "va con el detalle de fila de Organizar",
         ["EvidenciaMenos"] = "idem",
 
-        // Estos cuatro visten el ListView + GridView de Organizar. Misma historia que
-        // TableView y compañía: en Avalonia esa tabla es un DataGrid, otro control con
-        // otras partes, así que su tema no se traduce — se hace de nuevo.
-        ["OrgColHeader"] = "el ListView+GridView de Organizar pasa a DataGrid: otro control",
-        ["OrgCell"] = "idem, va con el DataGrid",
-        ["OrgRow"] = "idem, va con el DataGrid",
-        ["OrgGrid"] = "idem, va con el DataGrid",
 
     };
 
