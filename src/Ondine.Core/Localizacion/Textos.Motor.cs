@@ -25,11 +25,9 @@ public sealed partial class Textos
     // {0} = lo que se pidio · {1} = lo que se va a hacer · {2} = el contenedor
     // Se dice porque cambiarlo en silencio deja al usuario creyendo que tiene AC3
     // cuando tiene AAC, y eso solo se descubre al reproducirlo en el sitio equivocado.
-    // {0} = los canales que traia. Se dice porque mezclar obliga a recodificar, y
-    // quien pidio «sin tocar» el codec merece saber por que se le ha tocado.
-    public string MotorAudioMezclado => Idioma.Elegir(
-        "Audio: {0} channels mixed down to stereo, so the track had to be re-encoded.",
-        "Audio: {0} canales bajados a estéreo, así que la pista ha tenido que recodificarse.");
+    public string MotorAudioCambiado => Idioma.Elegir(
+        "Audio: {0} does not fit in {2}, using {1} instead.",
+        "Audio: {0} no cabe en {2}, se usa {1} en su lugar.");
 
     /// <summary>
     /// El caudal de audio elegido no se aplica porque se esta copiando la pista.
@@ -45,9 +43,35 @@ public sealed partial class Textos
         "audio copied as-is: the {0} kbps you chose does not apply to a copy",
         "audio copiado tal cual: los {0} kbps elegidos no se aplican a una copia");
 
-    public string MotorAudioCambiado => Idioma.Elegir(
-        "Audio: {0} does not fit in {2}, using {1} instead.",
-        "Audio: {0} no cabe en {2}, se usa {1} en su lugar.");
+    // {0} = los canales que traia. Se dice porque mezclar obliga a recodificar, y
+    // quien pidio «sin tocar» el codec merece saber por que se le ha tocado.
+    public string MotorAudioMezclado => Idioma.Elegir(
+        "Audio: {0} channels mixed down to stereo, so the track had to be re-encoded.",
+        "Audio: {0} canales bajados a estéreo, así que la pista ha tenido que recodificarse.");
+
+    /// <summary>El original se descomprime en la tarjeta. Dice cual, porque no siempre es la misma.</summary>
+    public string MotorDecodificaGpu => Idioma.Elegir(
+        "Decoding on the GPU ({0})",
+        "Decodificando en la GPU ({0})");
+
+    /// <summary>
+    /// Y cuando no. Se dice igual: antes el registro contaba el codificador y callaba esto, asi
+    /// que desde fuera parecia que todo el trabajo iba por la tarjeta cuando la mitad no.
+    /// </summary>
+    public string MotorDecodificaCpu => Idioma.Elegir(
+        "Decoding on the CPU (no hardware acceleration)",
+        "Decodificando en la CPU (sin aceleracion por hardware)");
+
+    /// <summary>
+    /// La aceleracion fallo y se sigue sin ella. Se avisa una vez y no se vuelve a intentar en
+    /// esa tanda: si la tarjeta no esta, no va a estar en el fichero siguiente, y son doce
+    /// capitulos.
+    /// </summary>
+    public string MotorAceleracionCaida => Idioma.Elegir(
+        "hardware decoding ({0}) failed: carrying on with the CPU for the rest of the batch",
+        "la decodificacion por hardware ({0}) fallo: se sigue con la CPU el resto de la tanda");
+
+
 
     public string MotorPistasRemuxFallido =>
         Idioma.Elegir("ffmpeg could not repackage it.", "ffmpeg no pudo reempaquetarlo.");

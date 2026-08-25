@@ -41,10 +41,26 @@ public partial class PreferencesWindow : Window
     /// <summary>Los ajustes con los que se abrió, para no perder lo que aquí no se edita.</summary>
     private readonly Settings _previos;
 
+    /// <summary>
+    /// Los codigos de la aceleracion, en el MISMO orden que los textos del desplegable: el
+    /// guardado indexa esta lista con el SelectedIndex. Es el patron que ya usa el desplegable
+    /// de idioma, y el orden es la unica cosa que los ata.
+    /// </summary>
+    private readonly List<string> _codigosAcel = new();
+
+    private static Textos T => Textos.Instancia;
+
     /// <summary>Ajustes resultantes tras pulsar Guardar (null si se cancela).</summary>
     public Settings? Result { get; private set; }
 
-    public PreferencesWindow(Settings current, IEnumerable<string> presetNames)
+    /// <param name="aceleraciones">
+    /// Las aceleraciones de decodificacion que FUNCIONAN en esta maquina, sondeadas por el
+    /// motor. Se pasan de fuera y no se sondean aqui por dos razones: la sonda arranca ffmpeg
+    /// una vez por candidata -casi dos segundos- y una ventana no debe hacer eso mientras se
+    /// abre; y asi esta ventana sigue siendo pura, que es lo que la deja probarse.
+    /// </param>
+    public PreferencesWindow(Settings current, IEnumerable<string> presetNames,
+                             IEnumerable<string>? aceleraciones = null)
     {
         InitializeComponent();
         _previos = current;
@@ -90,6 +106,27 @@ public partial class PreferencesWindow : Window
         // Rendimiento y disco
         txtMinFree.Text = current.MinFreeMb.ToString();
         chkHw.IsChecked = current.UseHardware;
+
+        // El desplegable de la aceleracion: «Automatica», las que funcionan, y «Ninguna».
+        //
+        // Solo las que FUNCIONAN. La lista de ffmpeg -hwaccels no vale: en la maquina donde se
+        // escribio esto ofrecia siete y arrancaban tres -pedir «cuda» sin NVIDIA no cae a
+        // software, se muere-. Ofrecer las que no van seria invitar a elegir un fallo.
+        _codigosAcel.Add(Ondine.Objetivo.AceleracionDeVideo.Auto);
+        var textosAcel = new List<string> { T.PreferenciasAceleracionAuto };
+        foreach (var a in aceleraciones ?? [])
+        {
+            _codigosAcel.Add(a);
+            textosAcel.Add(a);      // «cuda», «qsv»… son nombres de ffmpeg: no se traducen
+        }
+        _codigosAcel.Add(Ondine.Objetivo.AceleracionDeVideo.Ninguna);
+        textosAcel.Add(_codigosAcel.Count == 2 ? T.PreferenciasAceleracionNoHay      // solo auto y ninguna
+                                               : T.PreferenciasAceleracionNinguna);
+
+        foreach (var t in textosAcel) cboAcelVideo.Items.Add(t);
+        var posAcel = _codigosAcel.FindIndex(c => string.Equals(c, current.AceleracionVideo,
+                                                               StringComparison.OrdinalIgnoreCase));
+        cboAcelVideo.SelectedIndex = posAcel >= 0 ? posAcel : 0;   // lo que aqui no valga, «Automatica»
 
         // Modelo. Se trabaja sobre una COPIA: probar la conexión necesita la
         // clave ya guardada, y si se cancela la ventana nada de esto se aplica.
@@ -245,6 +282,9 @@ public partial class PreferencesWindow : Window
                         : AfterCompress.Ask;
         s.MinFreeMb = int.TryParse(txtMinFree.Text.Trim(), out var mb) ? Math.Clamp(mb, 50, 100_000) : 200;
         s.UseHardware = chkHw.IsChecked == true;
+        s.AceleracionVideo = cboAcelVideo.SelectedIndex >= 0
+            ? _codigosAcel[cboAcelVideo.SelectedIndex]
+            : Ondine.Objetivo.AceleracionDeVideo.Auto;
 
         _ia.Activo = chkIa.IsChecked == true;
         _ia.BaseUrl = txtIaUrl.Text.Trim();

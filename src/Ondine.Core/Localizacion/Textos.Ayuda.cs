@@ -277,6 +277,25 @@ public sealed partial class Textos
         "dice. Nunca se cambia en silencio. El desplegable del caudal, al lado, solo cuenta " +
         "cuando se recodifica: con «Sin tocar» no hay nada que fijar y se apaga.");
 
+    public string AyudaComprimirHardwareTitulo => Idioma.Elegir(
+        "WHO DOES THE WORK: CARD OR PROCESSOR", "QUIÉN HACE EL TRABAJO: TARJETA O PROCESADOR");
+
+    public string AyudaComprimirHardware => Idioma.Elegir(
+        "Two separate things, and both are in Preferences. ENCODING on the card is what makes " +
+        "compression fast, and it is on by default. DECODING on the card is what stops the " +
+        "processor from having to unpack the original first — a good chunk of the work — and you " +
+        "pick it from a list of the ones that actually run on your machine: what ffmpeg offers is " +
+        "what was compiled in, not what works, so each one is tried before being offered. If it " +
+        "fails halfway through a batch, Ondine carries on with the processor and says so in the " +
+        "log; nothing is lost.",
+        "Son dos cosas distintas y las dos están en Preferencias. CODIFICAR en la tarjeta es lo " +
+        "que hace rápida la compresión, y viene puesto. DECODIFICAR en la tarjeta es lo que " +
+        "evita que el procesador tenga que descomprimir el original primero —buena parte del " +
+        "trabajo—, y se elige de una lista con las que de verdad arrancan en tu máquina: lo que " +
+        "ofrece ffmpeg es lo que trae compilado, no lo que funciona, así que se prueba cada una " +
+        "antes de ofrecerla. Si falla a mitad de una tanda, Ondine sigue con el procesador y lo " +
+        "dice en el registro; no se pierde nada.");
+
     public string AyudaComprimirEsmeroTitulo => Idioma.Elegir(
         "EFFORT: TIME AGAINST SIZE", "ESMERO: TIEMPO CONTRA TAMAÑO");
 

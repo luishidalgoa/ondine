@@ -40,6 +40,7 @@ public static class AjustesQueSobrevivenTests
             ElIdiomaVuelveAlArrancar();
             LoDemasTambien();
             LasTresLoAplicanAlArrancar();
+            LasDosPreferenciasEditanLaAceleracion();
         }
         finally
         {
@@ -122,6 +123,48 @@ public static class AjustesQueSobrevivenTests
         }
     }
 
+    /// <summary>
+    /// Y las DOS pantallas de Preferencias editan el ajuste de la aceleracion de decodificacion.
+    ///
+    /// <para>
+    /// Es la misma trampa de siempre en este proyecto: hay dos interfaces, un ajuste nuevo se
+    /// cablea en una y se olvida en la otra, y nadie se entera hasta que alguien lo usa en el
+    /// sistema equivocado. El viaje de ida y vuelta del autochequeo cubre la de Avalonia; esta
+    /// mira las dos, que es lo que faltaba.
+    /// </para>
+    /// </summary>
+    private static void LasDosPreferenciasEditanLaAceleracion()
+    {
+        var raiz = LocalizarRaiz();
+        var caras = new[]
+        {
+            Path.Combine(raiz, "src", "Ondine", "PreferencesWindow.xaml.cs"),
+            Path.Combine(raiz, "src", "Ondine.Avalonia", "Preferencias.axaml.cs"),
+        };
+
+        foreach (var f in caras)
+        {
+            var nombre = Path.GetFileName(Path.GetDirectoryName(f)!);
+            var texto = File.Exists(f) ? File.ReadAllText(f) : "";
+            var sinComentarios = string.Join(" ", texto.Split('\n').Where(l => !l.TrimStart().StartsWith("//")));
+
+            Program.Assert(sinComentarios.Contains("current.AceleracionVideo"),
+                $"{nombre} lee la aceleracion guardada al abrir");
+            Program.Assert(sinComentarios.Contains("s.AceleracionVideo ="),
+                $"{nombre} la guarda al pulsar Guardar");
+        }
+
+        // Y que llegue al motor: guardarla sin aplicarla es un ajuste que no hace nada.
+        foreach (var f in new[] { Path.Combine(raiz, "src", "Ondine", "MainWindow.xaml.cs"),
+                                  Path.Combine(raiz, "src", "Ondine.Avalonia", "VentanaPrincipal.axaml.cs") })
+        {
+            var nombre = Path.GetFileName(Path.GetDirectoryName(f)!);
+            var texto = File.Exists(f) ? File.ReadAllText(f) : "";
+            Program.Assert(texto.Contains("Engine.AceleracionPedida = _settings.AceleracionVideo"),
+                $"{nombre} se la pasa al motor al aplicar los ajustes");
+        }
+    }
+
     private static string LocalizarRaiz()
     {
         var d = new DirectoryInfo(AppContext.BaseDirectory);
@@ -139,6 +182,7 @@ public static class AjustesQueSobrevivenTests
         s.DefaultLang = "jpn";
         s.MinFreeMb = 4321;
         s.UseHardware = false;
+        s.AceleracionVideo = "qsv";
         s.Recurse = false;
         SettingsStore.Save(s);
 
@@ -146,6 +190,8 @@ public static class AjustesQueSobrevivenTests
         Program.Assert(vuelto.DefaultLang == "jpn", $"el idioma de audio vuelve ({vuelto.DefaultLang})");
         Program.Assert(vuelto.MinFreeMb == 4321, $"y el margen de disco ({vuelto.MinFreeMb})");
         Program.Assert(!vuelto.UseHardware, "y la aceleración apagada sigue apagada");
+        Program.Assert(vuelto.AceleracionVideo == "qsv",
+            $"y la aceleración de decodificación elegida ({vuelto.AceleracionVideo})");
         Program.Assert(!vuelto.Recurse, "y las subcarpetas");
     }
 }

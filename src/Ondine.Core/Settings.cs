@@ -106,6 +106,24 @@ public sealed class Settings
     public int MinFreeMb { get; set; } = 200;            // margen mínimo de disco antes de pausar
     public bool UseHardware { get; set; } = true;        // usar aceleración por hardware si existe
 
+    /// <summary>
+    /// Qué aceleración usar para DECODIFICAR el original: «auto», «ninguna», o el nombre de una
+    /// (cuda, qsv, vaapi, d3d11va, videotoolbox).
+    ///
+    /// <para>
+    /// Aparte de <see cref="UseHardware"/>, que es la de codificar, porque no fallan por lo
+    /// mismo: una depende del decodificador de la tarjeta y la otra de sus sesiones de
+    /// codificación. Quien apague una por un problema concreto no tiene por qué perder la otra.
+    /// </para>
+    /// <para>
+    /// Es una CADENA y no un enum a propósito: los nombres los pone ffmpeg, cambian entre builds
+    /// y entre sistemas, y lo que aquí no se reconozca se resuelve como «auto» al usarlo
+    /// (<c>AceleracionDeVideo.Elegida</c>). Un enum obligaría a tocar código para admitir una
+    /// aceleración nueva.
+    /// </para>
+    /// </summary>
+    public string AceleracionVideo { get; set; } = Ondine.Objetivo.AceleracionDeVideo.Auto;
+
     public Settings Clone()
     {
         var c = (Settings)MemberwiseClone();

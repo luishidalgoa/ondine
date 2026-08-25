@@ -47,6 +47,19 @@ es un acuerdo de buena voluntad: está verificado.
   porque allí la app va en un solo fichero y el servidor no puede compartirle el runtime. Cómo
   registrarlo, en [`docs/mcp.md`](docs/mcp.md).
 
+### Añadido
+
+- **Decodificación por hardware: la GPU también descomprime el original.** Ondine codificaba en
+  la tarjeta y descomprimía siempre en el procesador. Un usuario lo midió sobre media hora de
+  compresión: **NVDEC al 0,0 % incluso de máximo** —en treinta minutos no se usó ni una vez— con
+  la CPU al 88,6 %. Ahora se pasa la aceleración a ffmpeg y **se elige en Preferencias**, en la
+  pestaña «Rendimiento y disco», con las que de verdad funcionan en tu máquina: la lista de
+  ffmpeg dice qué está compilado, no qué arranca —en la máquina donde se hizo esto ofrecía siete
+  y funcionaban tres—, así que se prueban una a una y solo se ofrecen las que pasan. Si falla a
+  mitad de una tanda, se sigue por CPU y **se dice**, en vez de dar el fichero por perdido. Y el
+  registro ya cuenta quién decodifica, que antes lo callaba. En terminal: `ondine hardware` dice
+  lo que hay, y `--aceleracion <cual>` la fija.
+
 ### Corregido
 
 - **«Sin tocar» en el códec de audio ya no recodifica.** Con ese ajuste puesto, un E-AC-3 de
