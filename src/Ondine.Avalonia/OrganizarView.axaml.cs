@@ -28,12 +28,16 @@ public sealed class CatalogoCard
     public required CatalogoGuardado Cat { get; init; }
     public bool Seleccionado { get; init; }
     public bool NoSeleccionado => !Seleccionado;
-    public IBrush Fondo => Seleccionado
-        ? Pincel("Accent900")
-        : Pincel("Surface");
-    public IBrush Borde => Seleccionado
-        ? Pincel("Accent700")
-        : Pincel("Divider");
+
+    /// <summary>
+    /// Un pincel del tema. Esta clase no es un control, asi que no tiene el TryFindResource
+    /// de la vista: se pregunta a la aplicacion.
+    /// </summary>
+    private static IBrush DelTema(string clave) =>
+        Avalonia.Application.Current is { } app && app.TryFindResource(clave, out var v) && v is IBrush b
+            ? b : Brushes.Gray;
+    public IBrush Fondo => DelTema(Seleccionado ? "Accent900" : "Surface");
+    public IBrush Borde => DelTema(Seleccionado ? "Accent700" : "Divider");
 }
 
 /// <summary>
@@ -133,23 +137,22 @@ public partial class OrganizarView : UserControl
 
         txtPlantilla.Text = LibraryTemplate.PatronPorDefecto;
 
-        btnCarpeta.Click += (_, _) => ElegirCarpeta();
-        btnImportar.Click += (_, _) => ImportarCatalogo();
-        btnCatalogos.Click += (_, _) => ImportarCatalogo();
+        btnCarpeta.Click += async (_, _) => await ElegirCarpeta();
+        btnImportar.Click += async (_, _) => await ImportarCatalogo();
+        btnCatalogos.Click += async (_, _) => await ImportarCatalogo();
         btnExplorar.Click += (_, _) => AbrirExplorador();
         btnFormato.Click += (_, _) => AbrirEspecificacion();
-        btnEjemplo.Click += (_, _) => GuardarEjemplo();
-        btnPrompt.Click += (_, _) => AbrirGeneradorDePrompt();
+        btnEjemplo.Click += async (_, _) => await GuardarEjemplo();
+        btnPrompt.Click += async (_, _) => await AbrirGeneradorDePrompt();
         btnVolver.Click += (_, _) => VolverAlInicio();
         btnSimular.Click += (_, _) => Simular();
         btnSimularGrande.Click += (_, _) => Simular();
         btnAplicar.Click += (_, _) => PedirConfirmacion();
         btnPartirSegmentos.Click += OnPartirSegmentos;
-        btnQueFalta.Click += (_, _) =>
+        btnQueFalta.Click += async (_, _) =>
         {
             if (_catalogoCargado == null || _filas.Count == 0) return;
-            new Faltantes(_catalogoCargado, _filas.Select(f => f.Res).ToList())
-            { Owner = Ventana }.ShowDialog();
+            await new Faltantes(_catalogoCargado, _filas.Select(f => f.Res).ToList()).ShowDialog(Ventana!);
         };
         btnReordenar.Click += (_, _) => Reordenar();
         btnDeshacer.Click += (_, _) => DeshacerUltimoLote();
@@ -181,8 +184,7 @@ public partial class OrganizarView : UserControl
 
         foreach (var chip in new[] { chipColocan, chipRenombran, chipMirar, chipQuietas })
         {
-            chip.Checked += (_, _) => FiltrarPeliculas();
-            chip.Unchecked += (_, _) => FiltrarPeliculas();
+            chip.IsCheckedChanged += (_, _) => FiltrarPeliculas();
         }
 
         cboTipo.SelectionChanged += (_, _) =>
@@ -208,7 +210,7 @@ public partial class OrganizarView : UserControl
             if (_catalogoCargado != null && _ficheros.Length > 0) Simular();
         };
         // Ctrl+Z deshace el último envío a la papelera de la app (p. ej. la copia repetida borrada).
-        PreviewKeyDown += (_, e) =>
+        KeyDown += (_, e) =>
         {
             if (e.Key == Key.Z
                 && e.KeyModifiers.HasFlag(KeyModifiers.Control))
@@ -220,8 +222,7 @@ public partial class OrganizarView : UserControl
 
         foreach (var chip in new[] { chipLimpios, chipCorregidos, chipEspeciales, chipConflictos, chipErrores, chipDudas })
         {
-            chip.Checked += (_, _) => AplicarFiltro();
-            chip.Unchecked += (_, _) => AplicarFiltro();
+            chip.IsCheckedChanged += (_, _) => AplicarFiltro();
         }
 
         txtBuscarTabla.TextChanged += (_, _) => AplicarFiltro();
@@ -230,9 +231,9 @@ public partial class OrganizarView : UserControl
             if (e.Key == Key.Escape) { txtBuscarTabla.Text = ""; tabla.Focus(); e.Handled = true; }
         };
         // Ctrl+K desde cualquier punto de la página: el estándar de «buscar aquí dentro»
-        PreviewKeyDown += (_, e) =>
+        KeyDown += (_, e) =>
         {
-            if (e.Key == Key.K && Keyboard.Modifiers == ModifierKeys.Control &&
+            if (e.Key == Key.K && e.KeyModifiers == KeyModifiers.Control &&
                 vistaRevision.IsVisible)
             {
                 txtBuscarTabla.Focus();
@@ -244,15 +245,17 @@ public partial class OrganizarView : UserControl
         // Menú contextual: se resuelve la fila bajo el puntero y se selecciona, para que
         // no quede duda de sobre cuál se va a actuar. Fuera de una fila no se abre: un menú
         // que aparece sobre el vacío y actúa sobre «lo último seleccionado» es una trampa.
-        tabla.ContextMenuOpening += (_, e) =>
+        tabla.ContextRequested += (_, e) =>
         {
             // Con la tecla Menú no hay puntero al que preguntar: WPF lo indica poniendo la
             // posición en negativo, y entonces manda la fila seleccionada. Sin esto el menú
             // quedaría muerto para quien no use el ratón.
-            bool conTeclado = e.CursorLeft < 0 && e.CursorTop < 0;
-            var r = conTeclado
-                ? tabla.SelectedItem as OrganizarRow
-                : Ascender<DataGridRow>(Mouse.DirectlyOver as Visual)?.Item as OrganizarRow;
+            // De donde sale la fila: en Avalonia el evento dice QUIEN lo pidio —el propio
+            // control si fue con el teclado, o lo que hubiera bajo el raton— asi que no hace
+            // falta preguntarle al raton por su cuenta como en WPF. Sobre la fila, la fila;
+            // sobre cualquier otro sitio de la tabla, la que estuviera elegida.
+            var r = Ascender<DataGridRow>(e.Source as Visual)?.DataContext as OrganizarRow
+                    ?? tabla.SelectedItem as OrganizarRow;
             if (r == null) { e.Handled = true; return; }
             tabla.SelectedItem = r;
             miReproducir.IsEnabled = File.Exists(r.RutaActual);
@@ -297,14 +300,17 @@ public partial class OrganizarView : UserControl
         };
         miUbicacion.Click += (_, _) => AbrirUbicacion(tabla.SelectedItem as OrganizarRow);
         miRevisar.Click += (_, _) => AlternarApartada(tabla.SelectedItem as OrganizarRow);
-        btnCola.Checked += (_, _) => PintarCola();
+        btnCola.IsCheckedChanged += (_, _) => PintarCola();
         btnVaciarCola.Click += (_, _) => VaciarCola();
 
-        tabla.PreviewKeyDown += OnTablaKeyDown;
-        tabla.PreviewMouseLeftButtonDown += OnTablaClic;
-        tabla.PreviewMouseMove += OnTablaArrastre;
-        tabla.PreviewMouseLeftButtonUp += (_, _) => _pintando = null;
-        tabla.MouseLeave += (_, _) => _pintando = null;
+        tabla.KeyDown += OnTablaKeyDown;
+        tabla.PointerPressed += OnTablaClic;
+        // Arrastrar para marcar varias filas de una pasada. En WPF eran los eventos
+        // «Preview», que aqui no existen: se pide la fase de tunel con AddHandler.
+        tabla.PointerMoved += OnTablaArrastre;
+        tabla.AddHandler(InputElement.PointerReleasedEvent, (_, _) => _pintando = null,
+                         RoutingStrategies.Tunnel);
+        tabla.PointerExited += (_, _) => _pintando = null;
 
         // Con la ventana estrecha, el rótulo de la sección se recortaba a un par de puntos
         // suspensivos, que queda peor que no estar: los botones de al lado ya dicen de qué
@@ -314,7 +320,7 @@ public partial class OrganizarView : UserControl
         // de la página, los tres botones piden unos 330 px y el rótulo necesita ~140 para
         // leerse entero. Media página ≥ 470 ⇒ página ≥ 990.
         SizeChanged += (_, _) =>
-            lblTituloCatalogos.IsVisible = ActualWidth >= 990;
+            lblTituloCatalogos.IsVisible = Bounds.Width >= 990;
 
         // Las tres etapas de la identificación, en el panel de ficheros. Son las fases
         // REALES del trabajo, no decorado: cada una se enciende cuando su fase corre.
@@ -497,7 +503,9 @@ public partial class OrganizarView : UserControl
             {
                 Header = destino,
                 IsChecked = string.Equals(destino, actual, StringComparison.OrdinalIgnoreCase),
-                IsCheckable = true,
+                // En WPF la entrada de menu se marcaba sola con IsCheckable; aqui se le
+                // pone el icono del visto a mano cuando toca.
+                Icon = null,
             };
             it.Click += (_, _) => PonerCarpeta(destino);
             menu.Items.Add(it);
@@ -533,8 +541,7 @@ public partial class OrganizarView : UserControl
             { Header = Textos.Instancia.OrganizarVincularSinCarpeta, IsEnabled = false });
 
         menu.PlacementTarget = btnVinculos;
-        menu.Placement = PlacementMode.Bottom;
-        menu.IsOpen = true;
+        menu.Open(this);
     }
 
     private void OnUsarCatalogo(object sender, RoutedEventArgs e)
@@ -549,10 +556,10 @@ public partial class OrganizarView : UserControl
         if ((sender as Control)?.Tag is string ruta) AbrirCarpetaDe(ruta);
     }
 
-    private void OnCopiarRutaCatalogo(object sender, RoutedEventArgs e)
+    private async void OnCopiarRutaCatalogo(object sender, RoutedEventArgs e)
     {
         if ((sender as Control)?.Tag is not string ruta) return;
-        try { Clipboard.SetText(ruta); Escribir(Textos.Instancia.MainRutaCopiada); }
+        try { await CopiarAlPortapapeles(ruta); Escribir(Textos.Instancia.MainRutaCopiada); }
         catch { /* el portapapeles puede estar cogido por otra app; no es grave */ }
     }
 
@@ -589,16 +596,14 @@ public partial class OrganizarView : UserControl
 
     // ─────────────────────────── carpeta ───────────────────────────
 
-    private void ElegirCarpeta()
+    private async Task ElegirCarpeta()
     {
-        var dlg = new OpenFolderDialog { Title = Textos.Instancia.OrganizarCarpeta };
-        if (!string.IsNullOrWhiteSpace(txtCarpeta.Text) && Directory.Exists(txtCarpeta.Text))
-            dlg.InitialDirectory = txtCarpeta.Text;
-        if (dlg.ShowDialog() == true)
-        {
-            txtCarpeta.Text = dlg.FolderName;
-            RevisarCarpeta();
-        }
+        var elegida = await Selector.CarpetaAsync(Ventana, Textos.Instancia.OrganizarCarpeta,
+                                                  txtCarpeta.Text);
+        if (elegida is null) return;
+
+        txtCarpeta.Text = elegida;
+        RevisarCarpeta();
     }
 
     /// <summary>
@@ -828,7 +833,8 @@ public partial class OrganizarView : UserControl
         if (sender is not Control fe || fe.Tag is not string marca) return;
 
         int pos = txtPlantilla.SelectionStart;
-        txtPlantilla.Text = txtPlantilla.Text.Remove(pos, txtPlantilla.SelectionLength).Insert(pos, marca);
+        var largo = Math.Abs(txtPlantilla.SelectionEnd - txtPlantilla.SelectionStart);
+        txtPlantilla.Text = (txtPlantilla.Text ?? "").Remove(pos, largo).Insert(pos, marca);
         txtPlantilla.SelectionStart = pos + marca.Length;
 
         btnMarcas.IsChecked = false;
@@ -867,8 +873,8 @@ public partial class OrganizarView : UserControl
             : Textos.Instancia.OrganizarPlantillaAyuda + "\n\n" +
               string.Format(Textos.Instancia.OrganizarPlantillaGlobo, _catalogoCargado.Serie, nombre);
 
-        txtPlantilla.ToolTip = Globo(globo);
-        lblVistaPrevia.ToolTip = Globo(globo);
+        ToolTip.SetTip(txtPlantilla, Globo(globo));
+        ToolTip.SetTip(lblVistaPrevia, Globo(globo));
     }
 
     /// <summary>
@@ -896,21 +902,18 @@ public partial class OrganizarView : UserControl
         // en qué fichero. Si no hay nada analizado va vacío y el explorador calla:
         // decir «te falta» sin haber mirado ningún disco sería inventárselo.
         new Catalogo(_catalogoCargado, loQueHay: _filas.Select(f => f.Res).ToList())
-        { Owner = Ventana }.Show();
+        { }.Show();
     }
 
-    private void ImportarCatalogo()
+    private async Task ImportarCatalogo()
     {
-        var dlg = new OpenFileDialog
-        {
-            Title = Textos.Instancia.OrganizarImportarTitulo,
-            Filter = Textos.Instancia.OrganizarFiltroAbrir,
-        };
-        if (dlg.ShowDialog() != true) return;
+        var elegido = await Selector.FicheroAsync(Ventana, Textos.Instancia.OrganizarImportarTitulo,
+                                                  "reindex/1.0", "*.json");
+        if (elegido is null) return;
 
         try
         {
-            var guardado = ReindexStore.ImportarCatalogo(dlg.FileName);
+            var guardado = ReindexStore.ImportarCatalogo(elegido);
             _catalogoElegido = guardado;
             // Importar TAMBIÉN es elegir: sin esto, quitar un catálogo y reimportarlo dejaba
             // la preferencia vacía y el siguiente arranque caía al primero por alfabeto.
@@ -948,11 +951,11 @@ public partial class OrganizarView : UserControl
     /// Abre el generador del encargo para la IA. Se le sugiere el nombre de la serie que
     /// tengas elegida, que es el caso más común: ampliar un catálogo que ya usas.
     /// </summary>
-    private void AbrirGeneradorDePrompt()
+    private async Task AbrirGeneradorDePrompt()
     {
         var ventana = new Encargo(_catalogoElegido?.Serie ?? "")
-        { Owner = Ventana };
-        ventana.ShowDialog();
+        { };
+        await ventana.ShowDialog(Ventana!);
     }
 
     /// <summary>
@@ -962,18 +965,15 @@ public partial class OrganizarView : UserControl
     /// </summary>
     private async Task GuardarEjemplo()
     {
-        var dlg = new SaveFileDialog
-        {
-            Title = Textos.Instancia.OrganizarGuardarEjemploTitulo,
-            Filter = Textos.Instancia.OrganizarFiltroGuardar,
-            FileName = "mi-serie.reindex.json",
-        };
-        if (dlg.ShowDialog() != true) return;
+        var destino = await Selector.GuardarComoAsync(
+            Ventana, Textos.Instancia.OrganizarGuardarEjemploTitulo,
+            "mi-serie.reindex.json", "reindex/1.0", "*.json");
+        if (destino is null) return;
 
         try
         {
-            File.WriteAllText(dlg.FileName, ReindexCatalog.Ejemplo, new System.Text.UTF8Encoding(false));
-            Escribir(string.Format(Textos.Instancia.OrganizarLogEjemploGuardado, dlg.FileName));
+            File.WriteAllText(destino, ReindexCatalog.Ejemplo, new System.Text.UTF8Encoding(false));
+            Escribir(string.Format(Textos.Instancia.OrganizarLogEjemploGuardado, destino));
 
             var r = await Dialogo.Confirmar(Ventana, Textos.Instancia.OrganizarTitulo,
                 Textos.Instancia.OrganizarEjemploGuardado);
@@ -1254,9 +1254,11 @@ public partial class OrganizarView : UserControl
     /// rótulo, que sí están.
     /// </para>
     /// </summary>
-    private void EncenderHaz() => cargandoFicheros.IsVisible = true;
+    private readonly CirculosCargando _espera = new() { IsVisible = false };
 
-    private void ApagarHaz() => cargandoFicheros.IsVisible = false;
+    private void EncenderHaz() => _espera.IsVisible = true;
+
+    private void ApagarHaz() => _espera.IsVisible = false;
 
     private void VolverAlInicio()
     {
@@ -1324,7 +1326,7 @@ public partial class OrganizarView : UserControl
             _ => string.Format(Textos.Instancia.OrganizarAplicarDe, r.Marcados, r.Listos),
         };
         btnAplicar.IsEnabled = r.PuedeAplicar;
-        btnAplicar.ToolTip = Textos.Instancia.OrganizarAplicarAyudaDetalle;
+        ToolTip.SetTip(btnAplicar, Textos.Instancia.OrganizarAplicarAyudaDetalle);
         btnAceptarVerdes.IsEnabled = r.PuedeAceptarVerdes;
 
         btnQueFalta.IsEnabled = r.PuedeCompararCatalogo;
@@ -1393,7 +1395,7 @@ public partial class OrganizarView : UserControl
         // para que el segundo clic no la recoja.
         if (e.ClickCount == 2 &&
             Ascender<CheckBox>(e.Source as Visual) == null &&
-            Ascender<DataGridRow>(e.Source as Visual)?.Item is OrganizarRow filaVideo)
+            Ascender<DataGridRow>(e.Source as Visual)?.DataContext is OrganizarRow filaVideo)
         {
             // Reproductor INTEGRADO en modo focus, no una ventana del sistema: la pregunta
             // es «¿qué capítulo es?» y la respuesta debe estar a un Esc de distancia. Si el
@@ -1439,10 +1441,10 @@ public partial class OrganizarView : UserControl
     private void OnTablaArrastre(object sender, PointerEventArgs e)
     {
         if (_pintando is not bool valor) return;
-        if (e.LeftButton != MouseButtonState.Pressed) { _pintando = null; return; }
+        if (!e.GetCurrentPoint(tabla).Properties.IsLeftButtonPressed) { _pintando = null; return; }
 
         var fila = Ascender<DataGridRow>(e.Source as Visual);
-        if (fila?.Item is OrganizarRow f && f.ListoParaAplicar && f.Marcado != valor)
+        if (fila?.DataContext is OrganizarRow f && f.ListoParaAplicar && f.Marcado != valor)
         {
             f.Marcado = valor;
             ActualizarContadores();
@@ -1477,19 +1479,22 @@ public partial class OrganizarView : UserControl
         var vista = _vista;
         if (vista == null) return;
 
-        ListSortDirection? siguiente = col.SortDirection switch
-        {
-            null => ListSortDirection.Ascending,
-            ListSortDirection.Ascending => ListSortDirection.Descending,
-            _ => null,   // descendente → se quita el orden
-        };
+        // El estado actual sale de LA VISTA y no de la columna: en WPF cada columna llevaba
+        // su SortDirection y se apagaban a mano las demas; aqui esa propiedad es de solo
+        // lectura y quien sabe como esta ordenado es la vista. Sale mejor: no hay forma de
+        // dejar dos columnas diciendo que ordenan a la vez.
+        var actual = vista.SortDescriptions
+            .FirstOrDefault(d => d.PropertyPath == col.SortMemberPath);
 
-        foreach (var c in tabla.Columns) if (c != col) c.SortDirection = null;
-        col.SortDirection = siguiente;
+        ListSortDirection? siguiente =
+            actual is null ? ListSortDirection.Ascending
+            : actual.Direction == ListSortDirection.Ascending ? ListSortDirection.Descending
+            : null;   // descendente → se quita el orden
+
         vista.SortDescriptions.Clear();
 
         if (siguiente is { } dir)
-            vista.SortDescriptions.Add(new SortDescription(col.SortMemberPath, dir));
+            vista.SortDescriptions.Add(DataGridSortDescription.FromPath(col.SortMemberPath, dir));
 
         _ordenManual = siguiente != null;
         RecalcularSeparadores();   // reordena las bandas (o las oculta si hay orden manual)
@@ -1499,7 +1504,10 @@ public partial class OrganizarView : UserControl
     private void QuitarOrdenManual()
     {
         _ordenManual = false;
-        foreach (var c in tabla.Columns) c.SortDirection = null;
+        // En WPF se apagaba la flecha columna a columna; aquí SortDirection es de
+        // solo lectura y el orden vive en la vista, así que se quita de ahí y las
+        // cabeceras se enteran solas.
+        _vista.SortDescriptions.Clear();
         var vista = _vista;
         vista?.SortDescriptions.Clear();
     }
@@ -1682,7 +1690,7 @@ public partial class OrganizarView : UserControl
             LimpiarFiltros();
 
         tabla.SelectedItem = fila;
-        tabla.ScrollIntoView(fila);
+        tabla.ScrollIntoView(fila, null);
         tabla.Focus();
     }
 
@@ -1763,14 +1771,14 @@ public partial class OrganizarView : UserControl
     /// Abre el explorador en modo elegir, arrancando con el título del fichero ya buscado:
     /// lo normal es que el episodio correcto esté a un golpe de vista.
     /// </summary>
-    private void OnElegirAMano(object sender, RoutedEventArgs e)
+    private async void OnElegirAMano(object sender, RoutedEventArgs e)
     {
         if (tabla.SelectedItem is not OrganizarRow fila || _catalogoCargado == null) return;
 
         var win = new Catalogo(_catalogoCargado, fila.Res.Archivo.TituloNombre, modoElegir: true)
-        { Owner = Ventana };
+        { };
 
-        if (win.ShowDialog() != true || win.Elegido is not { } ep) return;
+        if (!await win.ShowDialog<bool>(Ventana!) || win.Elegido is not { } ep) return;
 
         fila.ElegirEpisodio(ep, win.SegElegido);
         RecordarDecision(fila, ep, win.SegElegido);
@@ -1984,7 +1992,7 @@ public partial class OrganizarView : UserControl
     /// fichero que no encaja en ningún episodio—, así que el nombre lo dice con el código
     /// compuesto («E1b+2b») en vez de disimularlo detrás de uno de los dos.
     /// </summary>
-    private void AnadirHistoriaDeOtroEpisodio()
+    private async Task AnadirHistoriaDeOtroEpisodio()
     {
         if (tabla.SelectedItem is not OrganizarRow fila || _catalogoCargado == null) return;
         if (fila.Res.Episodio == null)
@@ -1994,8 +2002,8 @@ public partial class OrganizarView : UserControl
         }
 
         var win = new Catalogo(_catalogoCargado, fila.Res.Archivo.TituloNombre, modoElegir: true)
-        { Owner = Ventana };
-        if (win.ShowDialog() != true || win.Elegido is not { } ep) return;
+        { };
+        if (!await win.ShowDialog<bool>(Ventana!) || win.Elegido is not { } ep) return;
 
         fila.AnadirHistoria(ep, win.SegElegido);
         ActualizarContadores();
@@ -2404,7 +2412,7 @@ public partial class OrganizarView : UserControl
     /// abrir carpeta, aplicar— en un error a la espera.
     /// </para>
     /// </summary>
-    private void Reordenar()
+    private async Task Reordenar()
     {
         var carpeta = txtCarpeta.Text?.Trim() ?? "";
         if (_catalogoCargado == null || _filas.Count == 0 || !Directory.Exists(carpeta))
@@ -2414,8 +2422,8 @@ public partial class OrganizarView : UserControl
         }
 
         var v = new Reordenar(_filas.Select(f => f.Res).ToList(), carpeta, SettingsStore.Load())
-        { Owner = Ventana };
-        v.ShowDialog();
+        { };
+        await v.ShowDialog(Ventana!);
 
         if (v.MovioAlgo) Simular();
     }
@@ -2528,7 +2536,7 @@ public partial class OrganizarView : UserControl
             }
         }
 
-        new Reproductor(fila.RutaActual) { Owner = Ventana }.ShowDialog();
+        new Reproductor(fila.RutaActual).ShowDialog(Ventana!);
     }
 
     /// <summary>
@@ -2602,6 +2610,18 @@ public partial class OrganizarView : UserControl
     }
 
     private void Escribir(string linea) => Log?.Invoke(linea);
+
+    /// <summary>
+    /// Al portapapeles. En WPF era <c>Clipboard.SetText</c>, estático y síncrono; aquí
+    /// cuelga de la ventana y devuelve una tarea.
+    /// </summary>
+    private async Task CopiarAlPortapapeles(string texto)
+    {
+        if (Ventana?.Clipboard is not { } portapapeles) return;
+        var datos = new DataTransfer();
+        datos.Add(DataTransferItem.CreateText(texto));
+        await portapapeles.SetDataAsync(datos);
+    }
 
     /// <summary>
     /// Dudosos que no se llegaron a sondear porque el vídeo está solo en la nube. Sale en
