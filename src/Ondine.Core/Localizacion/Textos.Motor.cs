@@ -38,6 +38,18 @@ public sealed partial class Textos
     public string MotorPistasRemuxFallido =>
         Idioma.Elegir("ffmpeg could not repackage it.", "ffmpeg no pudo reempaquetarlo.");
 
+    /// <summary>
+    /// Cuando quitar pistas no puede asegurar el original antes de sobrescribirlo.
+    ///
+    /// <para>
+    /// Se prefiere no hacer nada a hacerlo sin red: quitar un doblaje es rápido y se puede
+    /// repetir, pero el original sobrescrito sin copia no vuelve.
+    /// </para>
+    /// </summary>
+    public string MotorPistasSinRed => Idioma.Elegir(
+        "The tracks were not removed: the original could not be moved to the recycle bin first, and it will not be overwritten without a way back. Free some space and try again.",
+        "No se han quitado las pistas: no se ha podido poner a salvo el original antes de sobrescribirlo, y no se sobrescribe sin vuelta atrás. Libera espacio y vuelve a intentarlo.");
+
     // Cuando ni siquiera se pudo LANZAR la herramienta: no esta instalada, no esta en el
     // PATH, o el instalador no llego a bajarla. Es distinto de que fallara al procesar, y
     // se dice distinto: aqui lo que hay que hacer es reinstalar, no cambiar de fichero.

@@ -170,12 +170,74 @@ public static class PapeleraApp
         }
     }
 
-    // Manda una entrada a la Papelera del sistema (si está conectada) o la borra, y limpia su
-    // carpeta. Es lo que hacen los tres triggers (cantidad, antigüedad y cierre).
+    /// <summary>
+    /// Manda una entrada a la papelera del sistema, o la borra si no se puede. Es lo que hacen
+    /// los tres disparadores: cantidad, antigüedad y cierre.
+    ///
+    /// <para>
+    /// <b>EL FICHERO VUELVE A SU SITIO ANTES DE IRSE.</b> Esto mandaba a la papelera del
+    /// sistema <c>e.Guardado</c>, que es la ruta DENTRO del almacén de la app
+    /// —<c>…/Ondine/papelera/&lt;guid&gt;/x.mkv</c>—, teniendo al lado <c>e.Origen</c>, que es
+    /// de donde salió el fichero de verdad.
+    /// </para>
+    /// <para>
+    /// Y la papelera del sistema apunta la procedencia de lo que le dan: en Linux la escribe
+    /// en el <c>.trashinfo</c> y en Windows y macOS la guardan la Shell y el Finder. Así que
+    /// «Restaurar» devolvía el vídeo <b>a la carpeta interna de la aplicación</b>, que es la
+    /// que se vacía al cerrar — recursivamente y sin pasar por ninguna papelera. Recuperar el
+    /// fichero era la forma de perderlo.
+    /// </para>
+    /// <para>
+    /// Si el fichero no se puede devolver a su sitio —la carpeta ya no existe, no hay
+    /// permiso—, se manda desde donde está: peor procedencia, pero recuperable. Lo que no se
+    /// hace nunca es borrar sin haber pasado por la papelera.
+    /// </para>
+    /// </summary>
     private static void Finalizar(Entrada e)
     {
-        if (EnviarASistema?.Invoke(e.Guardado) != true)
-            try { File.Delete(e.Guardado); } catch { }
+        var aMandar = DevolverASuSitio(e) ?? e.Guardado;
+
+        if (EnviarASistema?.Invoke(aMandar) != true)
+            try { File.Delete(aMandar); } catch { }
+
         try { Directory.Delete(Path.GetDirectoryName(e.Guardado)!, false); } catch { }
+    }
+
+    /// <summary>
+    /// Devuelve el fichero a donde estaba, para que la papelera del sistema apunte la
+    /// procedencia buena. Devuelve la ruta nueva, o <c>null</c> si no se pudo.
+    ///
+    /// <para>
+    /// Con nombre libre si el sitio está ocupado: entre que el fichero entró en la papelera y
+    /// ahora, puede haber otro con su nombre — y pisarlo sería perder uno de verdad, no
+    /// mandarlo a la papelera.
+    /// </para>
+    /// </summary>
+    private static string? DevolverASuSitio(Entrada e)
+    {
+        try
+        {
+            if (!File.Exists(e.Guardado) || string.IsNullOrWhiteSpace(e.Origen)) return null;
+
+            var carpeta = Path.GetDirectoryName(e.Origen);
+            if (string.IsNullOrEmpty(carpeta) || !Directory.Exists(carpeta)) return null;
+
+            var destino = e.Origen;
+            if (File.Exists(destino) || Directory.Exists(destino))
+            {
+                var sinExt = Path.GetFileNameWithoutExtension(e.Origen);
+                var ext = Path.GetExtension(e.Origen);
+                for (int i = 2; i < 1000; i++)
+                {
+                    var probar = Path.Combine(carpeta, $"{sinExt} ({i}){ext}");
+                    if (!File.Exists(probar) && !Directory.Exists(probar)) { destino = probar; break; }
+                }
+                if (destino == e.Origen) return null;   // mil con el mismo nombre: no se toca
+            }
+
+            File.Move(e.Guardado, destino);
+            return destino;
+        }
+        catch { return null; }
     }
 }
