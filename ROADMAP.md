@@ -111,43 +111,59 @@ Leyenda: ✅ hecho · 🔜 siguiente · ⬜ pendiente
 - ✅ **FFmpeg**: el instalador lo detecta y, si falta, lo descarga e instala junto a la app (el usuario no configura nada).
 - ✅ **Compilación en la nube** (GitHub Actions): al empujar un tag `vX.Y.Z`, el instalador se compila y se adjunta al Release automáticamente.
 - ✅ **CLI** (`Ondine.Cli`) para comprimir, analizar y medir sin abrir la interfaz.
-- ✅ **Motor con tests** (640+) que corren en CI sin restaurar paquetes.
+- ✅ **Motor con tests** (1.870+) que corren en CI sin restaurar paquetes.
 - ✅ **Capturas en el README** de las tres herramientas, con datos reales dentro.
 - ⬜ Firmar el instalador (evitar el aviso de SmartScreen).
 - ⬜ Rediseño visual (brief en [`docs/design-brief.md`](docs/design-brief.md)).
-- 🔜 **Linux / macOS con interfaz** — EN MARCHA. El motor ya era portable; ahora existe
-  `src/Ondine.Avalonia` y **publica para Linux y macOS**. Va por fases y las dos interfaces
-  conviven mientras dure: el estudio medido está en [`docs/avalonia.md`](docs/avalonia.md) y las
-  dos incógnitas que podían cancelarlo se despejaron con código en `spike/avalonia`.
+- ✅ **Linux / macOS con interfaz** — HECHO, desde la v1.14.0. El motor ya era portable; ahora
+  `src/Ondine.Avalonia` es la misma aplicación sobre Avalonia y **se publica en `.deb`,
+  AppImage y dos `.dmg`**. Las dos interfaces conviven mientras se rueda la nueva. El estudio
+  completo, con lo que costó y lo que no tiene equivalente, está en
+  [`docs/avalonia.md`](docs/avalonia.md); los paquetes, en
+  [`docs/empaquetado.md`](docs/empaquetado.md).
   - ✅ Fase 0: el motor separado en `Ondine.Core`.
   - ✅ Fase 1: reglas de Organizar bajadas al motor, con pruebas.
   - ✅ Fase 2: la prueba de fuego —DataGrid con RowDetails y vídeo con LibVLC—, las dos salen.
   - ✅ Fase 3a: el esqueleto, los 30 colores del tema y los textos del catálogo compartido.
-  - ✅ Fase 3b: los estilos a selectores. Hecha la familia de **botones**, la fila del
-    desplegable de sugerencias y las dos piezas compartidas con Organizar. Los demás están
-    apuntados con su motivo, y la mayoría no se portan: visten controles de WPF que en
-    Avalonia son otros —la tabla pasa a DataGrid— o van con su pantalla en la Fase 4.
+  - ✅ Fase 3b: los estilos a selectores.
     **Aquí salió que el termómetro medía media habitación**: contaba solo `Theme.xaml` y hay
     un segundo diccionario con doce estilos más. El de colores tenía el mismo agujero, y por
     él once colores de estado no estaban portados — con las insignias de «ordenar por
     temporadas» saliendo grises sin que nada avisara.
-  - 🔜 Fase 4: las pantallas, de menos a más. Hechas **ocho**: el diálogo compartido, «qué
-    falta», «quitar pistas», «ordenar por temporadas», «renombrar», el encargo para la IA,
-    la Ayuda, preferencias y el explorador de catálogos. Cada una con su comprobación de
-    arranque (`--auto`, 87 hoy), y cada comprobación confirmada en rojo rompiendo a propósito
-    lo que vigila.
+  - ✅ Fase 4: **las dieciocho pantallas**, de menos a más, y la última la ventana principal,
+    que es la que aloja a las otras tres. Cada una con su comprobación de arranque (`--auto`,
+    167 hoy), y cada comprobación confirmada en rojo rompiendo a propósito lo que vigila.
     - **Lo que más cuesta y menos se ve venir:** mostrar un modal es asíncrono, así que todo
       método que pregunte algo pasa a ser `async` — y hay que apagar el botón *antes* de
-      preguntar, porque la ventana sigue viva mientras se decide.
-    - **Dos veces ha aparecido lógica pura viviendo dentro de una ventana de WPF** (el
-      autocompletado de renombrar y el coloreado del JSON). Las dos han bajado al motor con
-      pruebas antes de portar la pantalla: reescribir a ojo un cálculo de índices o un
-      autómata es reescribirlo con otro fallo.
+      preguntar, porque la ventana sigue viva mientras se decide. Al cerrar la ventana con una
+      compresión en marcha eso obliga a darlo la vuelta: se cancela el cierre, se pregunta, y
+      se cierra otra vez con la respuesta ya sabida.
+    - **Un `ControlTheme` sustituye, no hereda**, y esa frase costó dos fallos. Sin `BasedOn`
+      el `DataGrid` se quedó sin plantilla y la tabla salió vacía sin un solo error; y el
+      desplegable, que solo quería cuatro colores, se quedó igual — nueve huecos en la ventana
+      principal y Preferencias sin poder elegir idioma. **Se publicó así.** Lo que solo cambia
+      valores va como `Style`, que se aplica encima en vez de sustituir.
+    - **Cinco veces ha aparecido lógica pura viviendo dentro de una ventana de WPF** (el
+      autocompletado de renombrar, el coloreado del JSON, el rótulo de la cola, lo que se
+      suelta con el ratón y el estado de una fila). Las cinco han bajado al motor con pruebas
+      antes de portar la pantalla: reescribir a ojo un cálculo de índices o un autómata es
+      reescribirlo con otro fallo.
     - **Diferencias reales que quedan escritas, no arregladas:** el aviso de «esto está en
       una nube» no salta fuera de Windows (lee el registro); las claves ya no van en un
       `PasswordBox` porque no existe; en Linux el gestor de archivos abre la carpeta pero no
-      señala el fichero; y la casilla del menú del Explorador no se enseña en vez de
-      enseñarse sin hacer nada.
-    - Faltan: el reproductor, los complementos, el panel de películas, la ventana principal
-      y las dos grandes —Organizar y Recortes—.
-  - ⬜ Fase 5: empaquetado, papelera y `.desktop`.
+      señala el fichero; la casilla del menú del Explorador no se enseña en vez de enseñarse
+      sin hacer nada; y no hay equivalente ni del tope de fotogramas de una animación ni del
+      nivel de aceleración gráfica — del segundo se quitó la línea del registro en vez de
+      inventarse un número.
+  - ✅ Fase 5: empaquetado y piezas de sistema. `.deb` para Mint, Ubuntu y Debian; AppImage
+    para cualquier Linux; `.dmg` para los dos tipos de Mac.
+    - **La papelera se arregló tres veces por el mismo motivo:** era un hueco que la interfaz
+      rellenaba al arrancar, y quien no lo rellenara borraba. Ahora las tres vías —Shell de
+      Windows, Finder de macOS, freedesktop en Linux— vienen puestas de fábrica.
+    - **Dos fallos que solo se dan en la app empaquetada**, los dos de macOS: una app abierta
+      desde el Finder no hereda el PATH del terminal (así que el ffmpeg de Homebrew «no está
+      instalado»), y un binario sin firmar **no se ejecuta** en los Mac con chip de Apple.
+    - **Lo que ninguna máquina puede comprobar:** que la aplicación arranque en un escritorio
+      de verdad. Ningún runner de CI tiene uno, y ahí se colaron los desplegables vacíos, la
+      ventana que no se movía y el icono que no salía en el menú de Mint. Los tres los
+      encontró una persona abriéndola, y de los tres salió un guardián nuevo.

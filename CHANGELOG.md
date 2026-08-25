@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.14.1] - 2026-08-25
+
 ### Corregido
 
 - **Los desplegables no se veían en Linux ni en macOS.** En la ventana principal salían nueve
