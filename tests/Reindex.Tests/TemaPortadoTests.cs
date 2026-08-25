@@ -59,8 +59,6 @@ public static class TemaPortadoTests
         // puerto; los dos que hacen falta antes están dichos.
         ["PageSelector"] = "el conmutador de páginas va con la tabla de Organizar",
         ["PageTab"] = "idem, es una pestaña de ese conmutador",
-        ["OrgCard"] = "va con la pantalla de Organizar",
-        ["OrgMuted"] = "idem",
         ["EvidenciaMas"] = "va con el detalle de fila de Organizar",
         ["EvidenciaMenos"] = "idem",
 

@@ -7,6 +7,10 @@ using Ondine.Reindex;
 namespace Ondine;
 
 /// <summary>
+/// (Vivía en el proyecto de WPF y no tocaba la interfaz por ningún sitio: son ciento nueve
+/// líneas de proceso y expresiones regulares. Se mueve al motor al portar Organizar, que es
+/// quien lo llama, para que las dos interfaces usen el mismo.)
+///
 /// Parte un episodio en sus mini-historias («segmentos») SIN recodificar.
 ///
 /// El reparto lo decide <see cref="SegmentSplitter"/> a partir de dos datos: cuántas historias

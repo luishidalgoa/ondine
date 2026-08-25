@@ -139,6 +139,59 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// Organizar: que la pantalla abra y pinte su estado de partida.
+    ///
+    /// <para>
+    /// Es la mas grande de la app y la unica que se monta sola —lee los catalogos del disco y
+    /// se pinta—, asi que lo primero que hay que saber es si <b>abre sin reventar</b>. Con
+    /// mil doscientas lineas de XAML, un recurso que falte o una plantilla mal cerrada
+    /// aparecen aqui y en ningun otro sitio.
+    /// </para>
+    /// <para>
+    /// Y que arranque EN INICIO: la pantalla tiene dos caras —elegir carpeta y catalogo, o la
+    /// tabla de repaso— y si arrancara en la de repaso saldria una tabla vacia sin explicar
+    /// por que. Eso no da error, solo desconcierta.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerOrganizar(Window dueno)
+    {
+        var vista = new OrganizarView();
+        var v = new Window { Width = 1200, Height = 780, Content = vista };
+        v.Show(dueno);
+        await Task.Delay(700);
+
+        Control? Cual(string n) => vista.GetVisualDescendants().OfType<Control>()
+                                       .FirstOrDefault(c => c.Name == n);
+
+        Dice(true, "la pantalla de Organizar abre sin reventar");
+
+        // Arranca en inicio, no en la tabla. Los dos se llaman vistaInicio y vistaRevision;
+        // el primer intento buscaba «pagInicio», que no existe — y buscar algo que no esta
+        // devuelve null, que se lee igual que «esta oculto». Otra vez lo mismo: una
+        // comprobacion que no encuentra su objetivo acusa al codigo de lo que hace ella.
+        var inicio = Cual("vistaInicio");
+        var repaso = Cual("vistaRevision");
+        Dice(inicio is not null, "la vista de inicio existe con ese nombre");
+        Dice(inicio?.IsVisible == true, "y arranca en ella");
+        Dice(repaso is not null && repaso.IsVisible == false,
+            "no en la tabla de repaso, que sin analizar estaria vacia");
+
+        // Las dos tablas existen con sus columnas: es lo que sostiene el repaso.
+        var tablas = vista.GetVisualDescendants().OfType<DataGrid>().ToList();
+        Dice(tablas.Count >= 1, $"la tabla del repaso esta montada ({tablas.Count})");
+        var conColumnas = tablas.FirstOrDefault(t => t.Columns.Count > 3);
+        Dice(conColumnas is not null,
+            $"con sus columnas ({conColumnas?.Columns.Count})");
+
+        // El recorrido de pasos: tres etapas, montadas en codigo.
+        var etapas = Cual("panelEtapas");
+        Dice(etapas is not null && etapas.GetVisualDescendants().OfType<TextBlock>().Count() >= 3,
+            "el recorrido de etapas esta puesto, con sus tres pasos");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// El tema de la tabla de Organizar, antes de que haya ninguna pantalla que lo use.
     ///
     /// <para>

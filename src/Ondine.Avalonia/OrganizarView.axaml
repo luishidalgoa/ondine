@@ -1,0 +1,1212 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+             xmlns:o="clr-namespace:Ondine.Ava"
+             x:Class="Ondine.Ava.OrganizarView"
+             Foreground="{StaticResource Text}">
+
+  <!--
+    Organizar, portado de OrganizarView.xaml. Es la pantalla mas grande de la app.
+
+    TRES COSAS DESAPARECEN AL PORTAR, y las tres porque Avalonia no las necesita:
+
+    - El convertidor de booleano a visibilidad. IsVisible YA es booleano, asi que los siete
+      usos de B2V se atan directos. En WPF hacia falta un convertidor por el tipo Visibility.
+    - Los DataTrigger de las plantillas. Aqui se ata una CLASE a un booleano
+      -Classes.destacada="{Binding ...}"- y un selector la usa. Es la misma idea con menos
+      piezas, y no hay TargetName que se pueda quedar apuntando a nada.
+    - Las sombras y el cacheado de mapa de bits. DropShadowEffect no existe; lo que aportaba
+      era profundidad en las tarjetas, y aqui se consigue con el borde y el fondo que ya
+      llevan.
+
+    Lo que se conserva y conviene no tocar: el enlace de la fila al DataContext y no por
+    disparador, porque el DataGrid recicla contenedores; y la banda de temporada dentro de
+    la fila, no como grupo del DataGrid.
+  -->
+
+  <UserControl.Styles>
+    <!-- Las dos clases que sustituyen a los DataTrigger de WPF. -->
+    <Style Selector="TextBlock.destacada">
+      <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+    <Style Selector="Border.elegida">
+      <Setter Property="BorderBrush" Value="{StaticResource Accent700}"/>
+      <Setter Property="Background" Value="{StaticResource Accent900}"/>
+    </Style>
+    <Style Selector="Border.insigniaElegida">
+      <Setter Property="Background" Value="{StaticResource Accent800}"/>
+    </Style>
+
+    <!-- El tema de la fila. El DataGrid de Avalonia no tiene nada como el RowStyle de WPF,
+         asi que se pone con un estilo suelto que alcanza a las filas que crea. -->
+    <Style Selector="DataGridRow">
+      <Setter Property="Theme" Value="{StaticResource OrgRow}"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/><!-- barra de contexto -->
+      <RowDefinition Height="Auto"/><!-- resumen-filtro -->
+      <RowDefinition Height="*"/>   <!-- inicio / revisión -->
+      <RowDefinition Height="Auto"/><!-- acciones -->
+    </Grid.RowDefinitions>
+
+    <!-- ══════════════ Barra de contexto ══════════════ -->
+    <!-- La carpeta ya no vive aquí: se eligió centralizarla en el panel de ficheros,
+         que es donde se ve el recuento y donde está «Simular» — tres piezas de la misma
+         acción repartidas por la pantalla eran información redundante. -->
+    <Grid Grid.Row="0" Margin="16,4,16,10">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="14"/>
+        <ColumnDefinition Width="*" MinWidth="120"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- De qué es esta carpeta. Va lo PRIMERO y no como una casilla más porque
+           condiciona todo lo que hay a su derecha: una película no tiene catálogo,
+           ni temporada, ni número, así que el resto de la fila sobra cuando se
+           elige «Películas». Se recuerda por carpeta. -->
+      <StackPanel Grid.Column="0" Margin="0,0,14,0">
+        <TextBlock Text="{i:T OrganizarTipoBiblioteca}" Theme="{StaticResource OrgLabel}"/>
+        <ComboBox Name="cboTipo" Height="34" MinWidth="128" VerticalContentAlignment="Center"
+                  ToolTip.Tip="{i:T OrganizarTipoBibliotecaAyuda}">
+          <ComboBoxItem Content="{i:T OrganizarTipoSerie}" IsSelected="True"/>
+          <ComboBoxItem Content="{i:T OrganizarTipoPelicula}"/>
+        </ComboBox>
+      </StackPanel>
+
+      <!-- Serie (catálogo de referencia) -->
+      <StackPanel Name="panelSerie" Grid.Column="1">
+        <TextBlock Text="{i:T OrganizarSerie}" Theme="{StaticResource OrgLabel}"/>
+        <StackPanel Orientation="Horizontal">
+          <!-- ItemTemplate explícito y no DisplayMemberPath: la plantilla propia del tema
+               pinta la selección con SelectionBoxItemTemplate, y con DisplayMemberPath se
+               quedaba sin plantilla y enseñaba el nombre del tipo. -->
+          <ComboBox Name="cboSerie" MinWidth="110" MaxWidth="215" Height="34" VerticalContentAlignment="Center"
+                    ToolTip.Tip="{i:T OrganizarSerieAyuda}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Serie}" TextTrimming="CharacterEllipsis"/>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <Button Name="btnCatalogos" Theme="{StaticResource BtnSecondary}" Height="34" Margin="6,0,0,0"
+                  Content="{i:T OrganizarCatalogos}"
+                  ToolTip.Tip="{i:T OrganizarCatalogosAyuda}"/>
+          <!-- Verificar una propuesta sin abrir el JSON a mano: busca por número o título -->
+          <Button Name="btnExplorar" Theme="{StaticResource BtnSecondary}" Width="34" Height="34" Padding="0"
+                  Margin="6,0,0,0" ToolTip.Tip="{i:T OrganizarExplorarAyuda}">
+            <Viewbox Width="14" Height="14">
+              <Path Data="M6.5 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z M9.8 9.8 L13.5 13.5"
+                    Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeLineCap="Round"/>
+            </Viewbox>
+          </Button>
+          <!-- En qué confía ESTE catálogo al identificar (se guarda por catálogo). -->
+          <ComboBox Name="cboModo" Height="34" MinWidth="168" Margin="10,0,0,0" VerticalContentAlignment="Center"
+                    ToolTip.Tip="{i:T OrganizarModoAyuda}">
+            <ComboBoxItem Content="{i:T OrganizarModoAuto}" IsSelected="True"/>
+            <ComboBoxItem Content="{i:T OrganizarModoNumero}"/>
+          </ComboBox>
+        </StackPanel>
+      </StackPanel>
+
+      <!-- Plantilla de biblioteca -->
+      <StackPanel Name="panelPlantilla" Grid.Column="3">
+        <TextBlock Text="{i:T OrganizarPlantilla}" Theme="{StaticResource OrgLabel}"/>
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <o:CampoTexto Name="txtPlantilla" HorizontalAlignment="Stretch" MinWidth="90"
+                            FontFamily="{StaticResource FontMono}" FontSize="11.5"
+                            Foreground="{StaticResource Neutral400}"
+                            ToolTip.Tip="{i:T OrganizarPlantillaAyuda}"/>
+          <!-- «Editar» no hacía nada que no hiciera pinchar en el propio campo. En su sitio,
+               un desplegable que inserta las marcas y explica qué es cada una. -->
+          <ToggleButton Name="btnMarcas" Grid.Column="1" Theme="{StaticResource FiltroChip}"
+                        Margin="6,0,0,0" Padding="10,7" VerticalAlignment="Center"
+                        ToolTip.Tip="{i:T OrganizarMarcasAyuda}">
+            <TextBlock><Run Text="{i:T OrganizarMarcas}"/><Run Text=" ▾" Foreground="{StaticResource Neutral500}"/></TextBlock>
+          </ToggleButton>
+
+          <Popup Name="popMarcas" PlacementTarget="{Binding #btnMarcas}" Placement="Bottom"
+                 IsOpen="{Binding IsChecked, ElementName=btnMarcas, Mode=TwoWay}" IsLightDismissEnabled="True" HorizontalOffset="-260">
+            <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Neutral800}"
+                    BorderThickness="1" CornerRadius="8" Padding="6" Margin="0,4,12,12" MaxWidth="420">
+              <StackPanel>
+                <TextBlock Text="{i:T OrganizarMarcasCursor}" Theme="{StaticResource OrgMuted}"
+                           FontSize="11" Margin="8,4,8,6"/>
+                <ItemsControl Name="listaMarcas">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Theme="{StaticResource BtnGhostMuted}" HorizontalContentAlignment="Stretch"
+                              Padding="8,6" Click="OnInsertarMarca" Tag="{Binding Marca}">
+                        <StackPanel>
+                          <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Marca}" FontFamily="{StaticResource FontMono}"
+                                       FontSize="12" Foreground="{StaticResource Accent}"/>
+                            <TextBlock Text="{Binding Nombre}" Margin="10,0,0,0" FontSize="12"
+                                       Foreground="{StaticResource Text}"/>
+                          </StackPanel>
+                          <TextBlock Text="{Binding Descripcion}" FontSize="11.5" TextWrapping="Wrap"
+                                     Foreground="{StaticResource Neutral500}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </Popup>
+        </Grid>
+
+        <!-- Cómo queda de verdad, con un episodio real del catálogo elegido: sin esto hay
+             que aplicar para descubrir qué produce la plantilla. -->
+        <TextBlock Name="lblVistaPrevia" Margin="0,5,0,0" FontSize="11" TextTrimming="CharacterEllipsis"
+                   Foreground="{StaticResource Neutral500}" ToolTip.Tip="{i:T OrganizarVistaPreviaAyuda}"/>
+      </StackPanel>
+    </Grid>
+
+    <!-- ══════════════ Resumen-filtro (solo en revisión) ══════════════ -->
+    <Grid Name="filaChips" Grid.Row="1" Margin="16,0,16,10" IsVisible="False">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <!-- WrapPanel: los chips bajan de linea en vez de meterse debajo de los botones. -->
+      <WrapPanel Orientation="Horizontal" Name="panelChips">
+        <!-- Sin esto, una vez simulas te quedas en la tabla para siempre: no había forma de
+             volver a la pantalla limpia salvo cambiar de página y regresar. -->
+        <Button Name="btnVolver" Theme="{StaticResource BtnSecondary}" FontSize="11.5"
+                Padding="9,4" Margin="0,0,10,0" Content="{i:T OrganizarVolver}"
+                ToolTip.Tip="{i:T OrganizarVolverAyuda}"/>
+        <!-- Los cinco Runs nacen vacíos: el texto lleva el recuento dentro, así que lo
+             escribe ActualizarContadores, y siempre antes de que esta fila se enseñe. -->
+        <ToggleButton Name="chipLimpios" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="●" Foreground="#86D8A6"/><Run Name="runLimpios"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipCorregidos" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="↻" Foreground="#86D8A6"/><Run Name="runCorregidos"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipEspeciales" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="▲" Foreground="#E3C36B"/><Run Name="runEspeciales"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipConflictos" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="◆" Foreground="#EC9AA0"/><Run Name="runConflictos"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipErrores" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="✕" Foreground="#EC9AA0"/><Run Name="runErrores"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipDudas" Theme="{StaticResource FiltroChip}" Content="{i:T OrganizarSoloDudas}" Margin="6,0,0,0"
+                      ToolTip.Tip="{i:T OrganizarSoloDudasAyuda}"/>
+      </WrapPanel>
+
+      <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+        <!-- Buscar dentro de la tabla (Ctrl+K). Filtra por el nombre original Y por la
+             propuesta, con la misma normalización del identificador: sin tildes y a medias. -->
+        <o:CampoTexto Name="txtBuscarTabla" Width="200" Margin="0,0,8,0"
+                          Icono="M6.5 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z M9.8 9.8 L13.5 13.5"
+                          ToolTip.Tip="{i:T OrganizarBuscarAyuda}"/>
+        <Button Name="btnAceptarVerdes" Theme="{StaticResource BtnSecondary}" Content="{i:T OrganizarAceptarVerdes}"
+                Padding="10,5" FontSize="12"
+                ToolTip.Tip="{i:T OrganizarAceptarVerdesAyuda}"/>
+        <Button Name="btnConfirmarEspeciales" Theme="{StaticResource BtnSecondary}" Content="{i:T OrganizarConfirmarEspeciales}"
+                Padding="10,5" FontSize="12" Margin="8,0,0,0"
+                ToolTip.Tip="{i:T OrganizarConfirmarEspecialesAyuda}"/>
+      </StackPanel>
+    </Grid>
+
+    <!-- ══════════════ INICIO: catálogos + ficheros ══════════════ -->
+    <!-- La biblioteca de películas tiene su propio flujo y su propio componente:
+         ni catálogo, ni plantilla, ni temporadas, ni segmentos. Ocupa las filas
+         de contenido y acciones enteras, en vez de esconder media pantalla. -->
+    <!-- La fila 2 es «inicio / revisión», y el panel de películas es el inicio DEL
+         flujo de películas: ocupa la misma fila que vistaInicio y no tres, para que
+         los chips (fila 1) y las acciones (fila 3) sean suyas también. -->
+    <o:PeliculasPanel Name="vistaPeliculas" Grid.Row="2"
+                          IsVisible="False"/>
+
+    <!-- ══ Chips de películas: mismo sitio y misma forma que los de series ══
+         Llevan el recuento dentro y filtran la tabla. Con glifo además de color:
+         un chip que solo se distingue por el color no se distingue para quien no
+         distingue esos dos colores. -->
+    <Grid Name="filaChipsPelis" Grid.Row="1" Margin="16,0,16,10" IsVisible="False">
+      <WrapPanel Orientation="Horizontal">
+        <Button Name="btnVolverPelis" Theme="{StaticResource BtnSecondary}" FontSize="11.5"
+                Padding="9,4" Margin="0,0,10,0" Content="{i:T OrganizarVolver}"
+                ToolTip.Tip="{i:T OrganizarVolverAyuda}"/>
+        <ToggleButton Name="chipColocan" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="●" Foreground="#86D8A6"/><Run Name="runColocan"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipRenombran" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="↻" Foreground="#86D8A6"/><Run Name="runRenombran"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipMirar" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="◆" Foreground="#EC9AA0"/><Run Name="runMirar"/></TextBlock>
+        </ToggleButton>
+        <ToggleButton Name="chipQuietas" Theme="{StaticResource FiltroChip}">
+          <TextBlock><Run Text="✓" Foreground="#8A8F98"/><Run Name="runQuietas"/></TextBlock>
+        </ToggleButton>
+      </WrapPanel>
+    </Grid>
+
+    <Grid Name="vistaInicio" Grid.Row="2" Margin="16,0,16,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Catálogos importados -->
+      <Border Grid.Column="0" Background="{StaticResource SurfaceGlass}" CornerRadius="8" Padding="14,12">
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+          <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <TextBlock Name="lblTituloCatalogos" Text="{i:T OrganizarCatalogosImportados}" FontSize="11" FontWeight="Medium"
+                       Margin="0,0,8,0" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
+            <!-- La ayuda del formato va SIEMPRE visible, no solo cuando no hay catálogos:
+                 la duda «¿y esto cómo se escribe?» aparece justo al ir a importar. -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Name="btnFormato" Theme="{StaticResource BtnGhost}" Padding="8,5" FontSize="12"
+                      Content="{i:T OrganizarQueFormato}" Margin="0,0,8,0"
+                      ToolTip.Tip="{i:T OrganizarQueFormatoAyuda}"/>
+              <Button Name="btnEjemplo" Theme="{StaticResource BtnSecondary}" Padding="10,5" FontSize="12"
+                      Content="{i:T OrganizarCrearEjemplo}" Margin="0,0,8,0"
+                      ToolTip.Tip="{i:T OrganizarCrearEjemploAyuda}"/>
+              <Button Name="btnPrompt" Theme="{StaticResource BtnSecondary}" Padding="10,5" FontSize="12"
+                      Content="{i:T OrganizarGenerarIA}" Margin="0,0,8,0"
+                      ToolTip.Tip="{i:T OrganizarGenerarIAAyuda}"/>
+              <Button Name="btnImportar" Theme="{StaticResource BtnSecondary}"
+                      Padding="10,5" FontSize="12"
+                      ToolTip.Tip="{i:T OrganizarImportarAyuda}">
+                <StackPanel Orientation="Horizontal">
+                  <Viewbox Width="13" Height="13" Margin="0,0,6,0">
+                    <Path Data="M8 2v8M5 7l3 3 3-3M2.5 13h11" Stroke="{StaticResource Text}" StrokeThickness="1.4"
+                          StrokeLineCap="Round" StrokeJoin="Round"/>
+                  </Viewbox>
+                  <TextBlock Text="{i:T OrganizarImportarJson}" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </Grid>
+
+          <!-- Horizontal en «Disabled», no en «Hidden»: con Hidden el contenido se mide con
+               ancho infinito y las advertencias nunca llegan a ajustarse — se cortaban. -->
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+              <ItemsControl Name="listaCatalogos">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <!-- Tarjeta de catálogo. Las ADVERTENCIAS van dentro y siempre visibles:
+                         son lo que evita que el usuario confíe de más en el resultado. -->
+                    <Border Theme="{StaticResource OrgCard}" Background="{Binding Fondo}"
+                            BorderBrush="{Binding Borde}">
+                      <!-- El clic derecho lleva AL FICHERO: la app ya no guarda copia, así
+                           que ver dónde vive y poder saltar ahí es parte del trato. -->
+                      <Border.ContextMenu>
+                        <ContextMenu>
+                          <MenuItem Header="{i:T OrganizarAbrirUbicacion}"
+                                    Click="OnUbicacionCatalogo" Tag="{Binding Cat.Ruta}"/>
+                          <MenuItem Header="{i:T OrganizarCopiarRuta}"
+                                    Click="OnCopiarRutaCatalogo" Tag="{Binding Cat.Ruta}"/>
+                        </ContextMenu>
+                      </Border.ContextMenu>
+                      <StackPanel>
+                        <Grid Margin="0,0,0,6">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                          </Grid.ColumnDefinitions>
+                          <!-- El texto tiene SU columna y se recorta. Grid y NO StackPanel
+                               horizontal: el StackPanel mide con ancho infinito, el recorte
+                               nunca actúa y el texto seguía corriendo bajo los botones —
+                               la misma trampa que ya mordió tres veces en este fichero. -->
+                          <Grid Grid.Column="0">
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Cat.Serie}" FontSize="13.5" FontWeight="Medium"
+                                       Foreground="{StaticResource Text}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Cat.Resumen}" Theme="{StaticResource OrgMuted}"
+                                       FontSize="11.5" Margin="10,1,8,0" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"/>
+                          </Grid>
+                          <!-- Los tres en UNA fila. Antes iban alineados a la derecha en la
+                               misma celda: «seleccionado» y «Usar» son excluyentes y no
+                               chocaban, pero «Quitar» sale siempre y quedaba encima de ambos.
+                               Con fondo sólido, además: transparentes sobre el título de al
+                               lado no había quien los leyera. -->
+                          <StackPanel Orientation="Horizontal" Grid.Column="1"
+                                      VerticalAlignment="Center">
+                            <Border Background="{StaticResource Accent800}" CornerRadius="6" Padding="8,2"
+                                    Margin="0,0,6,0" VerticalAlignment="Center"
+                                    IsVisible="{Binding Seleccionado}">
+                              <TextBlock Text="{i:T OrganizarSeleccionado}" FontSize="10.5"
+                                         Foreground="{StaticResource Accent200}"/>
+                            </Border>
+                            <Button Content="{i:T OrganizarUsar}" Theme="{StaticResource BtnCristal}" FontSize="11.5"
+                                    Padding="10,3" Margin="0,0,6,0" Tag="{Binding Cat.Ruta}"
+                                    Click="OnUsarCatalogo"
+                                    IsVisible="{Binding NoSeleccionado}"/>
+                            <Button Theme="{StaticResource BtnCristal}" FontSize="11.5" Padding="10,3"
+                                    Content="{i:T Quitar}" Tag="{Binding Cat.Ruta}"
+                                    Click="OnQuitarCatalogo"
+                                    ToolTip.Tip="{i:T OrganizarQuitarCatalogoAyuda}"/>
+                          </StackPanel>
+                        </Grid>
+
+                        <!-- Dónde vive el JSON que la app lee (ya no hay copia). Es un botón:
+                             pulsar abre la carpeta con el fichero seleccionado. -->
+                        <Button Theme="{StaticResource BtnGhostMuted}" Padding="0" Margin="0,0,0,6"
+                                HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+                                Click="OnUbicacionCatalogo" Tag="{Binding Cat.Ruta}"
+                                ToolTip.Tip="{Binding Cat.ProcedenciaDetalle}">
+                          <TextBlock Text="{Binding Cat.Procedencia}" Theme="{StaticResource OrgMuted}"
+                                     FontSize="11" TextTrimming="CharacterEllipsis"/>
+                        </Button>
+                        <ItemsControl ItemsSource="{Binding Cat.Advertencias}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <!-- Grid y no StackPanel horizontal: un StackPanel horizontal mide a
+                                   sus hijos con ancho infinito, así que TextWrapping no llega a
+                                   actuar nunca y la advertencia salía cortada. -->
+                              <Grid Margin="0,2,0,0">
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="▲" Foreground="{StaticResource OrgWarn}" FontSize="10.5"
+                                           Margin="0,1,6,0" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding}" Foreground="{StaticResource OrgWarn}"
+                                           FontSize="11.5" TextWrapping="Wrap"/>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <!-- Sin catálogos: se explica qué es antes de pedir nada -->
+              <StackPanel Name="panelSinCatalogos" Margin="0,10,0,0" IsVisible="False">
+                <!-- Los párrafos van partidos en Runs porque llevan una palabra destacada
+                     dentro. Los dos últimos citan el rótulo de un botón: van con la MISMA
+                     clave que el botón, así que no pueden descuadrarse al traducirse. -->
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Neutral400}" FontSize="12.5" LineHeight="19">
+                  <Run Text="{i:T OrganizarSinCatalogos1a}"/><Run FontWeight="Medium" Foreground="{StaticResource Text}" Text="{i:T OrganizarSinCatalogosPalabra}"/><Run Text="{i:T OrganizarSinCatalogos1b}"/>
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Neutral500}" FontSize="12"
+                           Margin="0,10,0,0" LineHeight="18">
+                  <!-- «reindex/1.0» es el identificador del esquema: va tal cual en los dos
+                       idiomas, y por eso es lo único que sigue escrito aquí dentro. -->
+                  <Run Text="{i:T OrganizarSinCatalogos2a}"/><Run FontFamily="{StaticResource FontMono}">reindex/1.0</Run><Run Text="{i:T OrganizarSinCatalogos2b}"/>
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Neutral500}" FontSize="12"
+                           Margin="0,10,0,0" LineHeight="18">
+                  <Run Text="{i:T OrganizarSinCatalogos3a}"/><Run FontWeight="Medium" Foreground="{StaticResource Accent}" Text="{i:T OrganizarCrearEjemplo}"/><Run Text="{i:T OrganizarSinCatalogos3b}"/><Run FontWeight="Medium" Foreground="{StaticResource Accent}" Text="{i:T OrganizarQueFormato}"/><Run Text="{i:T OrganizarSinCatalogos3c}"/>
+                </TextBlock>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+
+      <!-- Ficheros -->
+      <Border Grid.Column="2" Background="{StaticResource SurfaceGlass}" CornerRadius="8" Padding="14,12">
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+          <TextBlock Grid.Row="0" Text="{i:T OrganizarFicheros}" FontSize="11" FontWeight="Medium"
+                     Foreground="{StaticResource Neutral500}" Margin="0,0,0,12"/>
+
+          <Grid Grid.Row="1">
+            <!-- Trazo discontinuo del diseño: marca «aquí falta algo» sin pesar como un marco
+                 sólido. Border no sabe hacer guiones, así que va un Rectangle detrás. -->
+            <Rectangle Stroke="{StaticResource Neutral800}" StrokeThickness="1" RadiusX="8" RadiusY="8"
+                       StrokeDashArray="4,3"/>
+            <!-- El haz giratorio del borde NO se porta, igual que el del campo de texto: era
+                 un degradado girando por el marco, y aqui seria una animacion escrita a mano
+                 para un adorno. Lo que hacia falta —decir que esta identificando— lo dice la
+                 espera, que si esta. -->
+            <Panel Name="zonaEspera"/>
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="340" Margin="18,0">
+
+              <!-- La carpeta vive AQUÍ: elegirla, ver cuántos ficheros trae y simular son la
+                   misma acción, y estaban repartidas por tres sitios de la pantalla. -->
+              <TextBlock Text="{i:T OrganizarCarpeta}" Theme="{StaticResource OrgLabel}"/>
+              <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <o:CampoTexto Name="txtCarpeta" Icono="M1.5 3.5h4l1.5 2h7.5v7h-13z" HorizontalAlignment="Stretch"/>
+                <Button Name="btnCarpeta" Grid.Column="1" Theme="{StaticResource BtnSecondary}" Width="34" Height="34" Padding="0"
+                        Margin="6,0,0,0" ToolTip.Tip="{i:T OrganizarCarpetaAyuda}">
+                  <Viewbox Width="15" Height="15">
+                    <Path Data="M1.5 3.5h4l1.5 2h7.5l-2 7h-11z M1.5 3.5v9h11" Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeJoin="Round"/>
+                  </Viewbox>
+                </Button>
+                <!-- Carpetas vinculadas a ESTE catálogo: verlas, saltar a una, vincular la
+                     actual o quitarla. Antes el vínculo se guardaba solo al analizar y no había
+                     manera de verlo ni de hacerlo a mano — era una función invisible. -->
+                <Button Name="btnVinculos" Grid.Column="2" Theme="{StaticResource BtnSecondary}" Width="34" Height="34" Padding="0"
+                        Margin="6,0,0,0" Click="OnVinculos"
+                        ToolTip.Tip="{i:T OrganizarVinculosAyuda}">
+                  <Viewbox Width="15" Height="15">
+                    <Path Data="M6.2 9.8 9.8 6.2 M6.6 4.4 8.1 2.9a2.6 2.6 0 0 1 3.7 3.7l-1.5 1.5 M9.4 11.6 7.9 13.1a2.6 2.6 0 0 1-3.7-3.7l1.5-1.5"
+                          Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeLineCap="Round"/>
+                  </Viewbox>
+                </Button>
+              </Grid>
+              <!-- Estado del vínculo, a la vista: sin esto no hay forma de saber si la carpeta
+                   quedará asociada al catálogo para la próxima vez. -->
+              <TextBlock Name="lblVinculo" FontSize="11.5" Margin="0,0,0,12"
+                         Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>
+
+              <TextBlock Name="lblFicheros" Text="{i:T OrganizarElegirCarpeta}" FontSize="13.5"
+                         Foreground="{StaticResource Text}" HorizontalAlignment="Center" TextAlignment="Center"
+                         TextWrapping="Wrap"/>
+
+              <!-- Reposo: promesa + botón. Se retiran mientras corren las etapas. -->
+              <StackPanel Name="panelReposo">
+                <!-- La promesa explícita: nada se toca sin aprobación. Es lo que permite
+                     pulsar «Simular» sin miedo. -->
+                <TextBlock Margin="0,10,0,0" FontSize="12" Foreground="{StaticResource Neutral500}"
+                           TextAlignment="Center" TextWrapping="Wrap" LineHeight="18">
+                  <!-- El destacado va con la clave del propio botón: la promesa nombra
+                       «Analizar» y tiene que decir exactamente lo que pone el botón. -->
+                  <Run Text="{i:T OrganizarPromesa1}"/><Run FontWeight="Medium" Foreground="{StaticResource Neutral400}" Text="{i:T OrganizarAnalizar}"/><Run Text="{i:T OrganizarPromesa2}"/>
+                </TextBlock>
+                <Button Name="btnSimularGrande" Theme="{StaticResource BtnPrimary}" Margin="0,18,0,0"
+                        HorizontalAlignment="Center" IsEnabled="False">
+                  <StackPanel Orientation="Horizontal">
+                    <Viewbox Width="14" Height="14" Margin="0,0,6,0">
+                      <Canvas Width="16" Height="16">
+                        <Ellipse Width="9" Height="9" Canvas.Left="2.5" Canvas.Top="2.5" Stroke="#968AE0" StrokeThickness="1.5"/>
+                        <Path Data="M10.5 10.5L14 14" Stroke="#968AE0" StrokeThickness="1.5" StrokeLineCap="Round"/>
+                      </Canvas>
+                    </Viewbox>
+                    <TextBlock Text="{i:T OrganizarAnalizarCarpeta}" VerticalAlignment="Center"/>
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+
+              <!-- Etapas de la identificación. Los iconos los conmuta el código:
+                   círculo discontinuo (pendiente) → arco girando (en curso) → check que se
+                   dibuja y da un pequeño salto (hecha). -->
+              <StackPanel Name="panelEtapas" Margin="0,16,0,0" IsVisible="False"/>
+            </StackPanel>
+          </Grid>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- ══════════════ REVISIÓN: la tabla de triaje ══════════════ -->
+    <Grid Name="vistaRevision" Grid.Row="2" Margin="16,0,16,0" IsVisible="False">
+      <!-- Tres filas y no dos: los DOS avisos pueden estar puestos a la vez -uno dice
+           cuántas filas piden decisión y el otro cuántas se acaban de renombrar- y
+           compartiendo fila se pintaban uno encima del otro, ilegibles los dos. -->
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- Banner de aviso cuando el lote viene mayoritariamente dudoso -->
+      <Border Name="bannerAviso" Grid.Row="0" Background="{StaticResource OrgWarnBg}"
+              BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,9" Margin="0,0,0,10" IsVisible="False">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="▲" Foreground="{StaticResource OrgWarn}" VerticalAlignment="Top" Margin="0,1,9,0"/>
+          <TextBlock Name="lblBannerAviso" Foreground="{StaticResource OrgWarn}" FontSize="12.5"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Banda de resultado tras aplicar -->
+      <Border Name="bannerAplicado" Grid.Row="1" Background="{StaticResource OrgOkBg}"
+              BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,9" Margin="0,0,0,10" IsVisible="False">
+        <Grid>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="✓" Foreground="{StaticResource OrgOk}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+            <TextBlock Name="lblBannerAplicado" Foreground="{StaticResource OrgOk}" FontSize="12.5"
+                       VerticalAlignment="Center"/>
+          </StackPanel>
+          <Button Name="btnDeshacerBanda" Theme="{StaticResource BtnGhost}" HorizontalAlignment="Right"
+                  Content="{i:T OrganizarDeshacerEsteLote}" FontSize="12"/>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="2" Background="{StaticResource SurfaceGlass}" CornerRadius="8" ClipToBounds="True">
+        <!-- El resolutor se despliega al seleccionar la fila; el propio detalle se oculta
+             para las filas que no tienen nada que resolver. -->
+        <!-- La separación por temporada la pinta cada fila (ver «banda» en OrgRow), no
+             DataGrid.GroupStyle: agrupar rompe el reparto de las columnas en «*». -->
+        <DataGrid Name="tabla" Theme="{StaticResource OrgGrid}"
+                  RowDetailsVisibilityMode="VisibleWhenSelected"
+                  Sorting="OnTablaSorting">
+          <!-- Va en la tabla y no en el estilo de fila: el estilo vive en un diccionario
+               de recursos, que no tiene código detrás donde colgar los manejadores. La
+               fila sobre la que se pulsó se resuelve al abrirlo. -->
+          <DataGrid.ContextMenu>
+            <ContextMenu Name="menuFila">
+              <MenuItem Name="miReproducir" Header="{i:T OrganizarReproducir}"/>
+              <MenuItem Name="miRecortar" Header="{i:T OrganizarEnviarRecortes}"/>
+              <MenuItem Name="miUbicacion" Header="{i:T OrganizarAbrirUbicacion}"/>
+              <Separator/>
+              <!-- Cambiar la propuesta desde CUALQUIER fila, no solo desde las que tienen
+                   conflicto: una fila en verde también puede estar mal, y hasta ahora el
+                   resolutor solo se abría cuando la app dudaba. Aquí se elige el episodio y,
+                   si trae varias historias, cuáles de ellas (E1b, E1bc…). -->
+              <MenuItem Name="miElegirEpisodio" Header="{i:T OrganizarElegirEpisodioHistorias}"/>
+              <!-- Para el fichero raro que mezcla historias de episodios DISTINTOS. El nombre
+                   sale con el código compuesto («E1b+2b») a propósito: así se ve lo que hay. -->
+              <MenuItem Name="miAnadirHistoria" Header="{i:T OrganizarAnadirHistoria}"/>
+              <MenuItem Name="miQuitarHistorias" Header="{i:T OrganizarQuitarHistorias}"/>
+              <!-- Se apunta EN EL CATÁLOGO, así la decisión viaja con él y no vuelve a
+                   preguntarse en cada análisis. -->
+              <MenuItem Name="miDejarComoEsta" Header="{i:T OrganizarDejarComoEstaMenu}"/>
+              <Separator/>
+              <!-- Encontrar un fichero problemático cuesta más que arreglarlo: esto lo
+                   aparta para mañana sin tener que volver a buscarlo. -->
+              <MenuItem Name="miRevisar" Header="{i:T OrganizarApartarRevisar}"/>
+            </ContextMenu>
+          </DataGrid.ContextMenu>
+          <DataGrid.Columns>
+
+            <!-- Marcar qué se aplica. Solo tiene casilla lo que ESTÁ listo: poner una en
+                 los conflictos insinuaría que marcándolos se aplican, y es al revés. -->
+            <DataGridTemplateColumn Width="44" CanUserSort="False">
+              <DataGridTemplateColumn.Header>
+                <CheckBox Name="chkTodos" IsChecked="True" IsCheckedChanged="OnMarcarTodos"
+                          ToolTip.Tip="{i:T OrganizarMarcarTodosAyuda}"/>
+              </DataGridTemplateColumn.Header>
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <CheckBox IsChecked="{Binding Marcado}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            IsCheckedChanged="OnMarcarFila"
+                            IsVisible="{Binding ListoParaAplicar}"
+                            ToolTip.Tip="{i:T OrganizarMarcarFilaAyuda}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- ESTADO — chip: glifo + palabra + color, nunca solo color -->
+            <DataGridTemplateColumn Header="{i:T OrganizarColEstado}" Width="112" SortMemberPath="EstadoVisible">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{Binding EstadoBg}" BorderBrush="{Binding EstadoBorde}" BorderThickness="1"
+                          CornerRadius="6" Padding="8,3" HorizontalAlignment="Left">
+                    <ToolTip.Tip>
+                      <TextBlock Text="{Binding EstadoTooltip}" MaxWidth="360" TextWrapping="Wrap"/>
+                    </ToolTip.Tip>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding EstadoGlifo}" Foreground="{Binding EstadoFg}" FontSize="10.5"
+                                 VerticalAlignment="Center" Margin="0,0,5,0"/>
+                      <TextBlock Text="{Binding EstadoTexto}" Foreground="{Binding EstadoFg}" FontSize="11.5"
+                                 VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- APARTADO — sin encabezado ni anchura fija: es un margen de libreta, no una
+                 columna de datos. Solo aparece si hay algo apartado. -->
+            <DataGridTemplateColumn Width="Auto" CanUserSort="False">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="🔖" FontSize="12" Margin="0,0,2,0" VerticalAlignment="Center"
+                             IsVisible="{Binding VerApartada}" ToolTip.Tip="{i:T OrganizarEnLaCola}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- SEGMENTO — «E1bc» cuando el fichero es solo algunas historias del episodio.
+                 Sin esto, una fila que es medio episodio se leía igual que las demás. -->
+            <DataGridTemplateColumn Width="Auto" CanUserSort="False">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{StaticResource Accent900}" BorderBrush="{StaticResource Accent700}"
+                          BorderThickness="1" CornerRadius="7" Padding="7,1" Margin="0,0,4,0"
+                          VerticalAlignment="Center" IsVisible="{Binding VerSegmento}"
+                          ToolTip.Tip="{Binding SegmentoTooltip}">
+                    <TextBlock Text="{Binding SegmentoPildora}" FontSize="10.5"
+                               FontFamily="{StaticResource FontMono}"
+                               Foreground="{StaticResource Accent200}"/>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- FICHERO ORIGINAL -->
+            <DataGridTemplateColumn Header="{i:T OrganizarColOriginal}" Width="1.1*" SortMemberPath="Original">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Original}" Foreground="{StaticResource Neutral300}"
+                             TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Res.Archivo.Path}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- PROPUESTA -->
+            <DataGridTemplateColumn Header="{i:T OrganizarColPropuesta}" Width="1.6*" SortMemberPath="Propuesta">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <!-- Solo se destaca lo que de verdad va a cambiar. En WPF era un
+                       DataTrigger dentro de un Style local del TextBlock; aqui es una clase
+                       atada al booleano. -->
+                  <TextBlock Text="{Binding Propuesta}" Foreground="{Binding PropuestaFg}"
+                             Classes.destacada="{Binding PropuestaDestacada}"
+                             TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Propuesta}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- POR QUÉ — evidencia corta; la prosa completa, en el tooltip -->
+            <!-- La duración. Se lee de la ficha de Windows, no del contenido, así que
+                 los ficheros que están en la nube también la traen sin descargarse.
+                 Va ANTES del «por qué» porque es un dato, y el «por qué» es la
+                 conclusión que a veces se saca de él. -->
+            <DataGridTemplateColumn Header="{i:T OrganizarColDuracion}" Width="74"
+                                    SortMemberPath="DuracionOrden">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding DuracionVisible}" FontFamily="{StaticResource FontMono}"
+                             FontSize="11.5" Foreground="{StaticResource Neutral500}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center"
+                             ToolTip.Tip="{Binding DuracionTooltip}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="{i:T OrganizarColPorQue}" Width="0.7*" MinWidth="90" SortMemberPath="PorQue">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding PorQue}" Foreground="{StaticResource Neutral500}" FontSize="12"
+                             TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Explicacion}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+
+          <!-- ══ Resolutor de conflictos, desplegado BAJO la fila ══ -->
+          <DataGrid.RowDetailsTemplate>
+            <DataTemplate>
+              <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,1"
+                      Padding="16,14"
+                      IsVisible="{Binding TieneDetalle}">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <TextBlock Text="{Binding TituloDetalle}" FontSize="11" FontWeight="Medium"
+                               Foreground="{StaticResource Accent400}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Original}" FontSize="12.5" Foreground="{StaticResource Text}"
+                               Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Explicacion}" Theme="{StaticResource OrgMuted}"
+                               Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
+
+                  <!-- Tarjetas de candidato, con la evidencia a favor y en contra -->
+                  <!-- Se listan los Candidatos de la fila, no las alternativas del motor: esa
+                       lista incluye al elegido, que antes no se enseñaba y hacía que las dos
+                       opciones ofrecidas parecieran las dos equivocadas. -->
+                  <!-- El selector de candidatos se esconde cuando el fichero trae dos
+                       episodios: elegir uno es precisamente el error. En su lugar manda el
+                       botón «Partirlo en dos…» de abajo. -->
+                  <ItemsControl ItemsSource="{Binding Candidatos}" IsVisible="{Binding VerSelector}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <!-- La propuesta actual se distingue de un vistazo. En WPF eran dos
+                             DataTrigger con TargetName; aqui la clase se ata al booleano y el
+                             selector la usa — sin TargetName que se pueda quedar apuntando a
+                             un elemento que ya no existe. -->
+                        <Border Name="tarjeta" Classes.elegida="{Binding EsElegido}"
+                                Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                                BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,10,0">
+                          <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                              <TextBlock Text="{Binding Cabecera}" VerticalAlignment="Center" FontSize="13"
+                                         FontWeight="Medium" Foreground="{StaticResource Text}"/>
+                              <Border Name="insignia" Classes.insigniaElegida="{Binding EsElegido}"
+                                      HorizontalAlignment="Right" VerticalAlignment="Center"
+                                      Background="{StaticResource Field}" CornerRadius="6" Padding="8,2">
+                                <TextBlock Text="{Binding Etiqueta}" FontSize="10.5"
+                                           Foreground="{StaticResource Neutral400}"/>
+                              </Border>
+                            </Grid>
+                            <TextBlock Text="{Binding Titulo}" Theme="{StaticResource OrgMuted}"
+                                       TextWrapping="Wrap" Margin="0,0,0,8"/>
+                            <ItemsControl ItemsSource="{Binding Evidencia}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                  <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,4"
+                                             Foreground="{StaticResource Neutral400}"/>
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- La consecuencia, a la vista: qué nombre quedaría si eliges esta.
+                                 Sin esto hay que decidir a ciegas. -->
+                            <TextBlock Text="{i:T OrganizarQuedariaComo}" FontSize="10.5" Margin="0,8,0,3"
+                                       Foreground="{StaticResource Neutral500}"/>
+                            <Border Background="{StaticResource Field}" CornerRadius="6" Padding="8,6">
+                              <TextBlock Text="{Binding NombreResultante}" FontSize="11.5" TextWrapping="Wrap"
+                                         Foreground="{StaticResource Neutral300}"
+                                         FontFamily="{StaticResource FontMono}"/>
+                            </Border>
+
+                            <Button Theme="{StaticResource BtnSecondary}" HorizontalAlignment="Left" Margin="0,10,0,0"
+                                    FontSize="12" Padding="10,5" Click="OnElegirCandidato" Tag="{Binding Episodio}"
+                                    Content="{Binding TextoBoton}"/>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                  <!-- FICHERO REPETIDO (#128): las DOS rutas implicadas, para elegir cuál va a la
+                       Papelera. Nada se borra por su cuenta; ambos ficheros se pueden abrir antes. -->
+                  <Grid IsVisible="{Binding VerBorrarCopia}" Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                            BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,6,0">
+                      <StackPanel>
+                        <TextBlock Text="{i:T OrganizarEsteFichero}" FontSize="10.5" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding NombrePropio}" FontSize="12.5" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding CarpetaPropia}" FontSize="11" Foreground="{StaticResource Neutral400}"
+                                   TextWrapping="Wrap" Margin="0,2,0,10" FontFamily="{StaticResource FontMono}"/>
+                        <StackPanel Orientation="Horizontal">
+                          <Button Content="{i:T OrganizarEnviarEsteAPapelera}" Theme="{StaticResource BtnSecondary}" FontSize="12"
+                                  Padding="12,4" Click="OnBorrarEste"
+                                  ToolTip.Tip="{i:T OrganizarEnviarEsteAyuda}"/>
+                          <Button Content="{i:T OrganizarAbrirCarpeta}" Theme="{StaticResource BtnGhost}" FontSize="12"
+                                  Margin="8,0,0,0" Click="OnAbrirCarpetaEste"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                            BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="6,0,0,0">
+                      <StackPanel>
+                        <TextBlock Text="{i:T OrganizarElOtroFichero}" FontSize="10.5" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding NombrePareja}" FontSize="12.5" Foreground="{StaticResource Text}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding CarpetaPareja}" FontSize="11" Foreground="{StaticResource Neutral400}"
+                                   TextWrapping="Wrap" Margin="0,2,0,10" FontFamily="{StaticResource FontMono}"/>
+                        <StackPanel Orientation="Horizontal">
+                          <Button Content="{i:T OrganizarEnviarOtroAPapelera}" Theme="{StaticResource BtnSecondary}" FontSize="12"
+                                  Padding="12,4" Click="OnBorrarOtro"
+                                  ToolTip.Tip="{i:T OrganizarEnviarOtroAyuda}"/>
+                          <Button Content="{i:T OrganizarAbrirCarpeta}" Theme="{StaticResource BtnGhost}" FontSize="12"
+                                  Margin="8,0,0,0" Click="OnAbrirCarpetaOtro"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+
+                  <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <CheckBox Name="chkRecordar" Content="{i:T OrganizarRecordarDecision}"
+                              Foreground="{StaticResource Neutral400}" FontSize="12" VerticalAlignment="Center"
+                              IsVisible="{Binding VerSelector}"/>
+                    <!-- Un fichero con dos episodios dentro no se arregla eligiendo número:
+                         hay que partirlo. Por eso este botón va el PRIMERO y destacado
+                         cuando toca — es la única salida real, no una alternativa más. -->
+                    <Button Content="{i:T OrganizarPartirEnDos}" Theme="{StaticResource BtnPrimary}" FontSize="12"
+                            Padding="12,4" Margin="16,0,0,0" Click="OnPartirEnDos"
+                            IsVisible="{Binding VerRecortar}"
+                            ToolTip.Tip="{i:T OrganizarPartirEnDosAyuda}"/>
+                    <!-- Visible SIEMPRE, también cuando la app recomienda partir: aunque
+                         detecte «dos episodios», el usuario puede querer asignar uno a mano
+                         (p. ej. si la detección fue un falso positivo). Es la vía de escape.
+                         Va en estilo discreto para no competir con «Partirlo en dos…». -->
+                    <Button Content="{i:T OrganizarElegirOtroEpisodio}" Theme="{StaticResource BtnGhost}" FontSize="12"
+                            Margin="16,0,0,0" Click="OnElegirAMano"/>
+                    <Button Content="{i:T OrganizarDejarComoEsta}" Theme="{StaticResource BtnGhost}" FontSize="12"
+                            Margin="8,0,0,0" Click="OnDejarComoEsta"/>
+                    <!-- Solo aparece cuando hay OTRAS filas con la misma causa Y esa causa
+                         tiene una única respuesta buena para todas. Contestar dieciséis
+                         veces «esto no está en este catálogo» no es revisar, es teclear. -->
+                    <!-- La acción CONTRARIA a la de al lado: aquella dice «no toques», esta
+                         «acepta lo que propones». Por eso son dos botones y no uno. -->
+                    <Button Name="btnConfirmarTodosIguales" Theme="{StaticResource BtnPrimary}" FontSize="12"
+                            Padding="12,4" Margin="8,0,0,0" Click="OnConfirmarTodosLosIguales"
+                            Content="{Binding ConfirmarIgualesTexto}"
+                            ToolTip.Tip="{i:T OrganizarConfirmarIgualesAyuda}"
+                            IsVisible="{Binding VerConfirmarIguales}"/>
+                    <Button Name="btnDejarTodasIguales" Theme="{StaticResource BtnGhost}" FontSize="12"
+                            Margin="8,0,0,0" Click="OnDejarTodasLasIguales"
+                            Content="{Binding DejarIgualesTexto}"
+                            ToolTip.Tip="{i:T OrganizarDejarIgualesAyuda}"
+                            IsVisible="{Binding VerDejarIguales}"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </DataGrid.RowDetailsTemplate>
+        </DataGrid>
+      </Border>
+    </Grid>
+
+    <!-- ══════════════ Barra de acciones ══════════════ -->
+    <!-- ══ Repaso de películas ══
+         La forma es la del repaso de series a propósito: mismos chips arriba, misma
+         rejilla, misma barra de aplicar abajo. Lo que da confianza es reconocer la
+         pantalla y poder decidir fila a fila; para eso no hace falta compartir la
+         clase de la fila, que en series arrastra catálogo, plantilla y temporada
+         —tres cosas que una película no tiene—. -->
+    <Grid Name="vistaRevisionPelis" Grid.Row="2" Margin="16,0,16,0" IsVisible="False">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- Lo que va a costar el movimiento: cruzar de disco, entrar en una nube, o
+           ficheros que solo están en la nube. Arriba y no abajo, porque es lo que
+           puede hacerte no aplicar nada: un aviso que se lee después de pulsar no
+           es un aviso. -->
+      <Border Name="cajaRiesgoPelis" Grid.Row="0" Background="{StaticResource OrgWarnBg}"
+              BorderBrush="{StaticResource OrgWarnBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,9" Margin="0,0,0,10" IsVisible="False">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="▲" Foreground="{StaticResource OrgWarn}" VerticalAlignment="Top" Margin="0,1,9,0"/>
+          <TextBlock Name="lblRiesgoPelis" Foreground="{StaticResource OrgWarn}" FontSize="12.5"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <Border Name="bandaPelis" Grid.Row="1" Background="{StaticResource OrgOkBg}"
+              BorderBrush="{StaticResource OrgOkBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,9" Margin="0,0,0,10" IsVisible="False">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="✓" Foreground="{StaticResource OrgOk}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+          <TextBlock Name="lblBandaPelis" Foreground="{StaticResource OrgOk}" FontSize="12.5"
+                     VerticalAlignment="Center" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="2" Background="{StaticResource SurfaceGlass}" CornerRadius="8" ClipToBounds="True">
+        <DataGrid Name="tablaPelis" Theme="{StaticResource OrgGrid}"
+                  RowDetailsVisibilityMode="VisibleWhenSelected">
+          <!-- ══ Elegir a mano, desplegado BAJO la fila ══
+               La cascada se planta cuando dos encajan igual de bien, y hace bien. Pero
+               si no puedes resolverlo tú, se planta para siempre. Aquí se elige, y la
+               elección se recuerda: no hay que volver a tomarla en cada análisis. -->
+          <DataGrid.RowDetailsTemplate>
+            <DataTemplate>
+              <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Divider}"
+                      BorderThickness="0,1,0,1" Padding="16,12"
+                      IsVisible="{Binding TieneDetalle}">
+                <StackPanel>
+                  <Grid Margin="0,0,0,10">
+                    <TextBlock Text="{i:T PeliculasCual}" FontSize="11" FontWeight="Medium"
+                               Foreground="{StaticResource Accent400}" VerticalAlignment="Center"/>
+                    <Button Name="btnOlvidarPeli" HorizontalAlignment="Right"
+                            Theme="{StaticResource BtnGhostMuted}" FontSize="11" Padding="10,3"
+                            Content="{i:T PeliculasOlvidarEleccion}"
+                            IsVisible="{Binding VerOlvidar}"
+                            Tag="{Binding}" Click="OnOlvidarPelicula"/>
+                  </Grid>
+
+                  <ItemsControl ItemsSource="{Binding Candidatos}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,6">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                          </Grid.ColumnDefinitions>
+                          <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Titulo}" FontSize="12.5"
+                                       Foreground="{StaticResource Text}"/>
+                            <TextBlock FontSize="11" Foreground="{StaticResource Neutral500}">
+                              <Run Text="{Binding Anio, Mode=OneWay}"/><Run Text="  ·  "/><Run Text="{Binding Original, Mode=OneWay}"/>
+                            </TextBlock>
+                          </StackPanel>
+                          <Button Grid.Column="1" Theme="{StaticResource BtnSecondary}" FontSize="11"
+                                  Padding="12,4" Content="{i:T PeliculasEsEsta}"
+                                  Tag="{Binding $parent[DataGridRow].DataContext.DataContext}"
+                                  Click="OnElegirPelicula"/>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </DataGrid.RowDetailsTemplate>
+
+          <DataGrid.Columns>
+
+            <!-- Marcar qué se aplica. Solo lleva casilla lo que tiene trabajo: ponerla
+                 en un nombre ocupado insinuaría que marcándolo se aplica, y es al
+                 revés. Es la pieza que faltaba, y la que hacía desconfiar de la
+                 pantalla: era aplicar las once o ninguna. -->
+            <DataGridTemplateColumn Width="44" CanUserSort="False">
+              <DataGridTemplateColumn.Header>
+                <CheckBox Name="chkTodasPelis" IsChecked="True"
+                          IsCheckedChanged="OnMarcarTodasPelis"
+                          ToolTip.Tip="{i:T OrganizarMarcarTodosAyuda}"/>
+              </DataGridTemplateColumn.Header>
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <CheckBox IsChecked="{Binding Marcado}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            IsCheckedChanged="OnMarcarPelicula"
+                            IsVisible="{Binding ListoParaAplicar}"
+                            ToolTip.Tip="{i:T OrganizarMarcarFilaAyuda}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="{i:T OrganizarColEstado}" Width="120" SortMemberPath="EstadoVisible">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{Binding EstadoBg}" BorderBrush="{Binding EstadoBorde}" BorderThickness="1"
+                          CornerRadius="6" Padding="8,3" HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding EstadoGlifo}" Foreground="{Binding EstadoFg}" FontSize="10.5"
+                                 VerticalAlignment="Center" Margin="0,0,5,0"/>
+                      <TextBlock Text="{Binding EstadoTexto}" Foreground="{Binding EstadoFg}" FontSize="11.5"
+                                 VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="{i:T OrganizarColOriginal}" Width="1.1*" SortMemberPath="Original">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Original}" FontFamily="{StaticResource FontMono}" FontSize="11.5"
+                             Foreground="{StaticResource Neutral400}"
+                             TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Original}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="{i:T OrganizarColPropuesta}" Width="1.6*" SortMemberPath="Propuesta">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Propuesta}" FontFamily="{StaticResource FontMono}" FontSize="11.5"
+                             Foreground="{StaticResource Text}"
+                             TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Propuesta}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- POR QUÉ — la columna que convierte un color en una razón. En verde
+                 cuando lo dijo TMDb y entró; en ámbar cuando lo dijo y NO entró. -->
+            <DataGridTemplateColumn Header="{i:T OrganizarColPorQue}" Width="0.9*" MinWidth="110"
+                                    SortMemberPath="PorQue">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding PorQue}" Foreground="{Binding PorQueColor}" FontSize="12"
+                             TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Explicacion}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+    </Grid>
+
+    <!-- ══ Acciones de películas ══ -->
+    <Grid Name="filaAccionesPelis" Grid.Row="3" Margin="16,10,16,8" IsVisible="False">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <Button Name="btnIdentificar" Theme="{StaticResource BtnSecondary}" FontSize="12" Padding="12,5"
+                Content="{i:T PeliculasIdentificar}" ToolTip.Tip="{i:T PeliculasIdentificarAyuda}"/>
+        <TextBlock Name="lblTmdbApagado" Text="{i:T PeliculasIdentificarApagado}" FontSize="10.5"
+                   MaxWidth="300" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0"
+                   Foreground="{StaticResource Neutral600}" IsVisible="False"/>
+      </StackPanel>
+
+      <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <TextBlock Name="lblPiePelis" FontSize="11" Foreground="{StaticResource Neutral500}"
+                   VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="320" Margin="0,0,10,0"/>
+        <Button Name="btnDeshacerPelis" Theme="{StaticResource BtnGhostMuted}" FontSize="12" Padding="12,5"
+                Margin="0,0,8,0" IsVisible="False" Content="{i:T PeliculasDeshacer}"/>
+        <Button Name="btnAplicarPelis" Theme="{StaticResource BtnPrimary}" FontSize="12" Padding="14,5"
+                Content="{i:T PeliculasBotonNada}" IsEnabled="False"/>
+      </StackPanel>
+    </Grid>
+
+    <Grid Name="filaAcciones" Grid.Row="3" Margin="16,10,16,8">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <WrapPanel Orientation="Horizontal">
+        <Button Name="btnSimular" Theme="{StaticResource BtnPrimary}" Margin="0,0,8,0" IsEnabled="False"
+                ToolTip.Tip="{i:T OrganizarAnalizarAyuda}">
+          <StackPanel Orientation="Horizontal">
+            <Viewbox Width="14" Height="14" Margin="0,0,6,0">
+              <Canvas Width="16" Height="16">
+                <Ellipse Width="9" Height="9" Canvas.Left="2.5" Canvas.Top="2.5" Stroke="#968AE0" StrokeThickness="1.5"/>
+                <Path Data="M10.5 10.5L14 14" Stroke="#968AE0" StrokeThickness="1.5" StrokeLineCap="Round"/>
+              </Canvas>
+            </Viewbox>
+            <TextBlock Text="{i:T OrganizarAnalizar}" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Button>
+
+        <Button Name="btnAplicar" Theme="{StaticResource BtnPrimary}" Margin="0,0,8,0" IsEnabled="False"
+                ToolTip.Tip="{i:T OrganizarAplicarAyuda}">
+          <StackPanel Orientation="Horizontal">
+            <Viewbox Width="14" Height="14" Margin="0,0,6,0">
+              <Path Data="M2.5 8.5l4 4 7-9" Stroke="#968AE0" StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"/>
+            </Viewbox>
+            <TextBlock Name="lblAplicar" Text="{i:T Aplicar}" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Button>
+
+        <!-- El catálogo sabe qué episodios existen y la app cuáles tienes: la resta es «qué me
+             falta», y estaba ahí sin aprovechar. -->
+        <Button Name="btnQueFalta" Theme="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"
+                Content="{i:T OrganizarQueFalta}"
+                ToolTip.Tip="{i:T OrganizarQueFaltaAyuda}"/>
+
+        <!-- Un capítulo descargado cae donde cae. Esto lo lleva a la carpeta de su temporada,
+             creándola si hace falta, y SOLO si ya está curado: un conflicto no se mueve. -->
+        <Button Name="btnReordenar" Theme="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"
+                Content="{i:T OrganizarReordenar}"
+                ToolTip.Tip="{i:T OrganizarReordenarAyuda}"/>
+
+        <!-- Un fichero con 2-3 mini-historias se puede dejar en un fichero por historia, con la
+             numeración por segmento («1a», «1b», «1c»). El corte va sin recodificar. -->
+        <Button Name="btnPartirSegmentos" Theme="{StaticResource BtnSecondary}" Margin="0,0,8,0" IsEnabled="False"
+                Content="{i:T OrganizarPartirSegmentos}"
+                ToolTip.Tip="{i:T OrganizarPartirSegmentosAyuda}"/>
+
+        <Button Name="btnDeshacer" Theme="{StaticResource BtnGhostMuted}" IsEnabled="False"
+                ToolTip.Tip="{i:T OrganizarDeshacerAyuda}">
+          <StackPanel Orientation="Horizontal">
+            <Viewbox Width="14" Height="14" Margin="0,0,6,0">
+              <Path Data="M3 8a5 5 0 1 1 1.6 3.7M3 4.5V8h3.5" Stroke="{StaticResource Neutral500}" StrokeThickness="1.4"
+                    StrokeLineCap="Round" StrokeJoin="Round"/>
+            </Viewbox>
+            <TextBlock Name="lblDeshacer" Text="{i:T OrganizarDeshacerLote}" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Button>
+      </WrapPanel>
+
+      <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <TextBlock Name="lblEstadoOrg" Text="{i:T OrganizarEstadoInicial}" VerticalAlignment="Center"
+                   FontSize="12" Foreground="{StaticResource Neutral500}" Margin="0,0,12,0"
+                   MaxWidth="360" TextTrimming="CharacterEllipsis"/>
+        <!-- La cola no es un filtro de la tabla: es una LISTA APARTE que se abre y se
+             mira, como la cola de reproducción de un reproductor de música. Por eso es un
+             botón con su desplegable y no un chip que esconde filas. -->
+        <!-- FiltroChip y no BtnGhostMuted: aquel apunta a ToggleButton y este a Button, y
+             la cola necesita quedarse pulsada mientras su lista está abierta. -->
+        <ToggleButton Name="btnCola" Theme="{StaticResource FiltroChip}" Padding="10,5" Margin="8,0,0,0"
+                      ToolTip.Tip="{i:T OrganizarColaAyuda}">
+          <TextBlock><Run Text="☰" Foreground="#C9A0FF"/><Run Name="runCola" Text="{i:T OrganizarCola}"/></TextBlock>
+        </ToggleButton>
+
+        <Popup Name="popCola" PlacementTarget="{Binding #btnCola}" Placement="Top"
+               IsOpen="{Binding IsChecked, ElementName=btnCola, Mode=TwoWay}" IsLightDismissEnabled="True">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Neutral800}"
+                  BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,12,12,4"
+                  Width="440" MaxHeight="420">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+
+              <TextBlock Grid.Row="0" Margin="14,12,14,8" FontSize="11" FontWeight="Medium"
+                         Foreground="{StaticResource Neutral500}" Text="{i:T OrganizarColaTitulo}"/>
+
+              <TextBlock Name="lblColaVacia" Grid.Row="1" Margin="14,4,14,14" FontSize="12"
+                         TextWrapping="Wrap" Foreground="{StaticResource Neutral500}"
+                         Text="{i:T OrganizarColaVacia}"/>
+
+              <ScrollViewer Name="visorCola" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                            IsVisible="False">
+                <ItemsControl Name="listaCola">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid Margin="6,1,6,1">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- La fila entera lleva a ese fichero: es lo que se quiere hacer
+                             el 99 % de las veces al abrir la cola. -->
+                        <Button Grid.Column="0" Theme="{StaticResource BtnGhostMuted}" Padding="8,6"
+                                HorizontalContentAlignment="Stretch" Click="OnIrAFicheroDeLaCola"
+                                Tag="{Binding Ruta}" ToolTip.Tip="{Binding Ruta}">
+                          <StackPanel>
+                            <TextBlock Text="{Binding Nombre}" FontSize="12.5" TextTrimming="CharacterEllipsis"
+                                       Foreground="{StaticResource Text}"/>
+                            <TextBlock Text="{Binding Detalle}" FontSize="11" Margin="0,1,0,0"
+                                       Foreground="{StaticResource Neutral500}" TextTrimming="CharacterEllipsis"/>
+                          </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Theme="{StaticResource BtnGhostMuted}" Padding="8,6"
+                                Content="✕" FontSize="11" Click="OnQuitarDeLaCola"
+                                Tag="{Binding Ruta}" ToolTip.Tip="{i:T OrganizarSacarDeLaCola}"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+
+              <Border Grid.Row="2" BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0"
+                      Padding="10,7">
+                <Button Name="btnVaciarCola" Theme="{StaticResource BtnGhostMuted}" Padding="8,4"
+                        FontSize="11.5" HorizontalAlignment="Right" Content="{i:T OrganizarVaciarCola}"/>
+              </Border>
+            </Grid>
+          </Border>
+        </Popup>
+
+        <Button Name="btnMemoria" Theme="{StaticResource BtnGhostMuted}" Content="{i:T OrganizarMemoria}"
+                ToolTip.Tip="{i:T OrganizarMemoriaAyuda}"/>
+      </StackPanel>
+    </Grid>
+
+    <!-- ══════════════ Confirmación (superpuesta, no MessageBox) ══════════════ -->
+    <!-- Va dentro de la ventana a propósito: un MessageBox del sistema rompería el tema
+         y sacaría al usuario del contexto justo en la decisión más delicada. -->
+    <Grid Name="overlayConfirmar" Grid.RowSpan="4" Background="#B0000000" IsVisible="False"
+          Panel.ZIndex="10">
+      <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}" BorderThickness="1"
+              CornerRadius="12" MaxWidth="560" VerticalAlignment="Center" HorizontalAlignment="Center"
+              Padding="24,20">
+        <StackPanel>
+          <TextBlock Text="{i:T OrganizarConfirmarTitulo}" FontSize="16" FontWeight="Medium"
+                     Foreground="{StaticResource Text}" Margin="0,0,0,14"/>
+
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="✓" Foreground="{StaticResource OrgOk}" Margin="0,0,9,0" VerticalAlignment="Top"/>
+            <TextBlock Name="lblConfSeRenombra" Foreground="{StaticResource Text}" FontSize="13"
+                       TextWrapping="Wrap"/>
+          </StackPanel>
+
+          <StackPanel Name="filaNoSeToca" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="—" Foreground="{StaticResource Neutral500}" Margin="0,0,9,0" VerticalAlignment="Top"/>
+            <TextBlock Name="lblConfNoSeToca" Foreground="{StaticResource Neutral400}" FontSize="13"
+                       TextWrapping="Wrap"/>
+          </StackPanel>
+
+          <Border Background="{StaticResource Accent900}" BorderBrush="{StaticResource Accent800}" BorderThickness="1"
+                  CornerRadius="8" Padding="12,9" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="↺" Foreground="{StaticResource Accent300}" Margin="0,0,9,0" VerticalAlignment="Top"/>
+              <TextBlock Foreground="{StaticResource Accent200}" FontSize="12.5" TextWrapping="Wrap"
+                         Text="{i:T OrganizarConfirmarRegistro}"/>
+            </StackPanel>
+          </Border>
+
+          <CheckBox Name="chkRecordarDecisiones" Margin="0,14,0,0" Foreground="{StaticResource Neutral400}"
+                    FontSize="12.5" IsVisible="False"/>
+
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Name="btnConfCancelar" Theme="{StaticResource BtnSecondary}" Content="{i:T Cancelar}"/>
+            <Button Name="btnConfAceptar" Theme="{StaticResource BtnPrimary}" Content="{i:T Aplicar}" Margin="8,0,0,0"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>
