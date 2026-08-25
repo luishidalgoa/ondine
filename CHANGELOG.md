@@ -32,6 +32,30 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Buscar actualizaciones se bajaba el instalador de Windows en Linux y en macOS**, y lo
+  intentaba abrir: el escritorio no tiene con qué abrir un `.exe`, así que se lo pasaba al gestor
+  de archivadores —«se produjo un error cargando el archivador»— y Ondine se cerraba detrás,
+  porque lanzar el instalador implica salir. Ahora se baja **el paquete de tu sistema** —el `.deb`,
+  el AppImage o el `.dmg` de tu arquitectura—, se abre su carpeta y se dice qué hacer con él.
+  Solo el instalador de Windows se ejecuta solo; los otros tres no se instalan sin ti.
+
+- **Cuatro botones no hacían nada fuera de Windows**: «Abrir» la carpeta de salida, «Abrir la
+  carpeta que lo contiene» de la lista, y los dos equivalentes de Organizar. Llamaban a
+  `explorer.exe`, que en Linux y macOS no existe. Ahora abren el gestor de archivos de tu
+  escritorio, y en Linux además **señalan el fichero** en Nemo, Nautilus, Dolphin, Caja o Thunar.
+
+- **En Linux y macOS los nombres podían llevar caracteres que rompen el fichero en Windows.**
+  «Alien: Covenant» salía con los dos puntos dentro del nombre. No falla al crearlo —allí es
+  legal— pero sí en cuanto la biblioteca se sirve desde un NAS o se copia a un disco de Windows,
+  que es donde se va a ver. Ahora el nombre vale en los tres sistemas se cree donde se cree.
+
+- **«Abrir con → Ondine» desde el gestor de archivos abría una ventana vacía.** El paquete de
+  Linux declara los tipos de vídeo que Ondine abre, así que sale en el menú del botón derecho;
+  lo que faltaba era leer el fichero con el que se abre. (En un Mac esto sigue sin traer el
+  vídeo: macOS no lo pasa por la línea de órdenes, lo manda como un evento aparte.)
+
 ## [1.14.1] - 2026-08-25
 
 ### Corregido

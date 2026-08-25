@@ -1941,8 +1941,9 @@ public partial class OrganizarView : UserControl
     {
         try
         {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
-                "explorer.exe", $"/select,\"{ruta}\"") { UseShellExecute = true });
+            // Por el ayudante: explorer.exe no existe fuera de Windows y esto no hacía nada
+            // ni en Linux ni en macOS.
+            EnElGestorDeArchivos.Ensenar(ruta);
         }
         catch { /* si el fichero ya no está, no pasa nada: el usuario ve la carpeta o un aviso del SO */ }
     }
@@ -2563,15 +2564,13 @@ public partial class OrganizarView : UserControl
         try
         {
             if (File.Exists(ruta))
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
-                    "explorer.exe", $"/select,\"{ruta}\"") { UseShellExecute = true });
+                EnElGestorDeArchivos.Ensenar(ruta);
             else
             {
                 // Si el fichero ya no está (renombrado fuera, movido), al menos la carpeta
                 var carpeta = Path.GetDirectoryName(ruta);
                 if (Directory.Exists(carpeta))
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(carpeta)
-                        { UseShellExecute = true });
+                    EnElGestorDeArchivos.Abrir(carpeta);
             }
         }
         catch (Exception ex)

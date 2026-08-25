@@ -260,12 +260,15 @@ public sealed class RenameRule
         return new string(a);
     }
 
-    /// <summary>Deja un nombre de archivo válido en Windows (sin caracteres prohibidos ni puntos/espacios finales).</summary>
-    public static string Sanitize(string name)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        var sb = new StringBuilder(name.Length);
-        foreach (var c in name) sb.Append(Array.IndexOf(invalid, c) >= 0 ? '_' : c);
-        return sb.ToString().TrimEnd(' ', '.');
-    }
+    /// <summary>
+    /// Deja un nombre de archivo válido en los tres sistemas: sin caracteres prohibidos ni
+    /// puntos o espacios al final.
+    ///
+    /// <para>
+    /// Esto llamaba a <c>Path.GetInvalidFileNameChars()</c>, que en Linux devuelve solo la
+    /// barra y el nulo: allí no quitaba nada de lo que decía quitar. Ver
+    /// <see cref="NombreDeFichero"/>.
+    /// </para>
+    /// </summary>
+    public static string Sanitize(string name) => NombreDeFichero.Limpiar(name);
 }

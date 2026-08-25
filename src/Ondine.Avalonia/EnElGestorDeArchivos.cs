@@ -49,6 +49,32 @@ internal static class EnElGestorDeArchivos
     ];
 
     /// <summary>
+    /// Abre una carpeta en el gestor de archivos. Devuelve si se pudo lanzar algo.
+    ///
+    /// <para>
+    /// No es lo mismo que <see cref="Ensenar"/>: esa <b>señala un fichero dentro</b> de su
+    /// carpeta, y para eso cada gestor tiene su propia forma de pedírselo. Abrir una carpeta
+    /// sí es igual en los tres sistemas, y <c>xdg-open</c> lo hace sin más.
+    /// </para>
+    /// </summary>
+    public static bool Abrir(string carpeta)
+    {
+        if (string.IsNullOrWhiteSpace(carpeta)) return false;
+
+        try
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return Lanzar("explorer.exe", $"\"{carpeta}\"");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                return Lanzar("open", $"\"{carpeta}\"");
+
+            return Lanzar("xdg-open", $"\"{carpeta}\"");
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
     /// Abre el gestor de archivos en ese fichero. Devuelve si se pudo lanzar algo — si no,
     /// quien llama decide qué decir: un botón que no hace nada visible convierte «no tengo
     /// gestor de archivos» en «esto está roto».

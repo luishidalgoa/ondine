@@ -41,6 +41,7 @@ public static class PaquetesPortablesTests
         NingunoSeInventaLaVersion(raiz);
         ElNombreDiceElSistema(raiz);
         ElIconoNoDependeDeUnSoloSitio(raiz);
+        UnaSolaPuertaAlGestorDeArchivos(raiz);
     }
 
     /// <summary>
@@ -198,6 +199,42 @@ public static class PaquetesPortablesTests
             "y también en pixmaps, que es lo que queda cuando el tema de iconos falla");
         Program.Assert(s.Contains("hicolor-icon-theme"),
             "y el paquete que crea ese árbol se declara como dependencia");
+    }
+
+    /// <summary>
+    /// Nadie llama a <c>explorer.exe</c> por su cuenta.
+    ///
+    /// <para>
+    /// Había cuatro sitios en la interfaz de Avalonia que lo hacían —abrir la carpeta de
+    /// salida, enseñar el fichero de una fila, y dos en Organizar—. Fuera de Windows ese
+    /// programa <b>no existe</b>: esos cuatro botones no hacían absolutamente nada en Linux ni
+    /// en macOS. Se quedaron del puerto, la línea compilaba igual, y ninguna comprobación los
+    /// vio porque «no pasa nada» no es un error.
+    /// </para>
+    /// <para>
+    /// El ayudante que sabe hacerlo en los tres sistemas —y que conoce los seis gestores de
+    /// Linux— estaba ahí al lado, en el mismo proyecto. Así que la regla es una puerta y solo
+    /// una: quien quiera enseñar un fichero, que pase por ella.
+    /// </para>
+    /// </summary>
+    private static void UnaSolaPuertaAlGestorDeArchivos(string raiz)
+    {
+        var carpeta = Path.Combine(raiz, "src", "Ondine.Avalonia");
+        if (!Directory.Exists(carpeta)) { Program.Assert(false, "no encuentro Ondine.Avalonia"); return; }
+
+        var culpables = Directory.GetFiles(carpeta, "*.cs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .Where(f => Path.GetFileName(f) != "EnElGestorDeArchivos.cs")
+            .Where(f => File.ReadAllLines(f)
+                            .Where(l => !l.TrimStart().StartsWith("//"))
+                            .Any(l => l.Contains("explorer.exe")))
+            .Select(Path.GetFileName)
+            .ToList();
+
+        Program.Assert(culpables.Count == 0,
+            culpables.Count == 0
+                ? "solo EnElGestorDeArchivos sabe de explorer.exe: los demás pasan por él"
+                : $"{culpables.Count} llaman a explorer.exe a pelo, y fuera de Windows eso no hace nada: {string.Join(", ", culpables)}");
     }
 
     private static string Entre(string texto, string desde, string hasta)

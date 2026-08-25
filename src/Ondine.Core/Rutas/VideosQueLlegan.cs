@@ -40,6 +40,28 @@ public static class VideosQueLlegan
                   .OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    /// <summary>
+    /// Los vídeos que vienen en la línea de órdenes al abrir la aplicación.
+    ///
+    /// <para>
+    /// Es la tercera vía por la que entran ficheros —las otras dos son el selector y soltar
+    /// con el ratón— y la que enseña el escritorio: el <c>.desktop</c> de Linux declara los
+    /// tipos que Ondine abre, así que «Abrir con → Ondine» sobre un vídeo en Nemo lo pasa
+    /// <b>por aquí</b>. Se recorre siempre en profundidad, como al soltar una carpeta.
+    /// </para>
+    /// <para>
+    /// Se descartan los modificadores. Un guion es un modificador en los tres sistemas; una
+    /// barra al principio, en cambio, <b>solo lo es en Windows</b> —<c>/select</c>— y en Linux
+    /// y macOS es el comienzo de cualquier ruta absoluta. Descartarla en todas partes, que es
+    /// lo que hacía el código de WPF, dejaría fuera <b>todos</b> los ficheros de Linux.
+    /// </para>
+    /// </summary>
+    public static List<string> DeLosArgumentos(IEnumerable<string> argumentos) =>
+        Expandir(
+            argumentos.Where(a => !a.StartsWith('-'))
+                      .Where(a => !(OperatingSystem.IsWindows() && a.StartsWith('/'))),
+            recursivo: true);
+
     private static bool EsVideo(string ruta) =>
         Engine.VideoExtensions.Contains(Path.GetExtension(ruta).ToLowerInvariant());
 }

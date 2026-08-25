@@ -548,7 +548,12 @@ public partial class VentanaPrincipal : Window
         var o = EffectiveOutput();
         if (string.IsNullOrEmpty(o)) return;
         Directory.CreateDirectory(o);
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{o}\"") { UseShellExecute = true });
+
+        // Por el ayudante y no con explorer.exe a pelo: fuera de Windows ese programa no
+        // existe, así que este botón NO HACÍA NADA en Linux ni en macOS. Se quedó del
+        // puerto —la línea compilaba igual— y no lo vio ninguna comprobación.
+        if (!EnElGestorDeArchivos.Abrir(o))
+            lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoAbrirCarpeta, o);
     }
 
     // ---------- analizar ----------
@@ -988,7 +993,11 @@ public partial class VentanaPrincipal : Window
         if (SelectedRows().FirstOrDefault() is not { } r) return;
         try
         {
-            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{r.Path}\"") { UseShellExecute = true });
+            // Señalar el fichero, no solo abrir su carpeta: eso lo sabe hacer cada gestor
+            // a su manera y el ayudante conoce las seis de Linux. Aquí había un
+            // explorer.exe que fuera de Windows no hacía nada.
+            if (!EnElGestorDeArchivos.Ensenar(r.Path))
+                lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoAbrirCarpeta, r.Path);
         }
         catch (Exception ex) { lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoAbrirCarpeta, ex.Message); }
     }
@@ -2322,6 +2331,18 @@ public partial class VentanaPrincipal : Window
     }
 
     private UpdateInfo? _pendingUpdate;
+
+    /// <summary>
+    /// Qué se le dice al usuario según lo que se haya bajado. Cada paquete se instala de una
+    /// forma y decir «ya está descargado» a secas deja a medias justo al final.
+    /// </summary>
+    private static string QueHacerCon(Updater.Paquete paquete) => paquete switch
+    {
+        Updater.Paquete.DebDeLinux => Textos.Instancia.MainDescargaHechaDeb,
+        Updater.Paquete.AppImageDeLinux => Textos.Instancia.MainDescargaHechaAppImage,
+        _ => Textos.Instancia.MainDescargaHechaDmg,
+    };
+
     private async void OnUpdateNow(object sender, RoutedEventArgs e)
     {
         if (_pendingUpdate == null) return;
@@ -2336,10 +2357,32 @@ public partial class VentanaPrincipal : Window
                 lblUpdate.Text = string.Format(Textos.Instancia.MainDescargandoPct, _pendingUpdate.AssetName, p * 100);
                 bar.Value = p;
             });
-            var installer = await Updater.DownloadAsync(_pendingUpdate, progress);
+            var paquete = await Updater.DownloadAsync(_pendingUpdate, progress);
             lblUpdate.Text = Textos.Instancia.MainDescargaLista;
-            lblProg.Text = Textos.Instancia.MainAbriendoInstalador;
-            Updater.LaunchInstallerAndExit(installer);
+
+            // SOLO EL DE WINDOWS SE LANZA. Los otros tres se dejan descargados, se abre su
+            // carpeta y se dice qué hacer con ellos.
+            //
+            // Antes esto lanzaba lo que hubiera bajado, y lo que bajaba era siempre el
+            // instalador de Windows. En Linux, el escritorio no tiene con qué abrir un .exe,
+            // así que se lo pasó al gestor de archivadores —«se produjo un error cargando el
+            // archivador»— y Ondine se cerró detrás, porque lanzar el instalador implica
+            // salir. Fallo doble: no actualiza y encima te echa.
+            if (Updater.SeInstalaSolo(_pendingUpdate.Paquete))
+            {
+                lblProg.Text = Textos.Instancia.MainAbriendoInstalador;
+                Updater.LaunchInstallerAndExit(paquete, _pendingUpdate.Paquete);
+                return;
+            }
+
+            progRow.IsVisible = false;
+            lblProg.Text = Textos.Instancia.MainDescargaEsperandoATi;
+            updateBar.IsVisible = false;
+
+            EnElGestorDeArchivos.Ensenar(paquete);
+            await Dialogo.Aviso(this, Textos.Instancia.MainActualizarTitulo,
+                string.Format(QueHacerCon(_pendingUpdate.Paquete),
+                              System.IO.Path.GetFileName(paquete)));
         }
         catch (Exception ex)
         {

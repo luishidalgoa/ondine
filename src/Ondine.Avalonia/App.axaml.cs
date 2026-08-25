@@ -26,9 +26,33 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime escritorio)
-            escritorio.MainWindow = Environment.GetCommandLineArgs().Contains("--auto")
-                ? new MainWindow()
-                : new VentanaPrincipal();
+        {
+            if (escritorio.Args?.Contains("--auto") == true)
+            {
+                escritorio.MainWindow = new MainWindow();
+            }
+            else
+            {
+                var ventana = new VentanaPrincipal();
+                escritorio.MainWindow = ventana;
+
+                // LOS FICHEROS CON LOS QUE SE ABRE LA APLICACIÓN, que esto no leía.
+                //
+                // Y el paquete de Linux los PROMETE: su .desktop declara los tipos de vídeo
+                // que Ondine abre, así que Ondine sale en «Abrir con» al pulsar el botón
+                // derecho en Nemo. Se abría… y no pasaba nada: la ventana salía vacía y el
+                // vídeo que habías elegido no estaba en ninguna parte. La versión de WPF sí
+                // los leía; al portar se quedó fuera.
+                //
+                // En un Mac esto NO basta y conviene saberlo: macOS no pasa los ficheros por
+                // la línea de órdenes, los manda como un evento del sistema una vez abierta
+                // la aplicación. Así que ahí «Abrir con» seguirá sin traer el vídeo hasta que
+                // se atienda ese evento. Queda dicho en vez de dado por hecho.
+                var vienen = Ondine.Rutas.VideosQueLlegan.DeLosArgumentos(escritorio.Args ?? []);
+                if (vienen.Count > 0)
+                    ventana.Opened += (_, _) => ventana.AddFilesFromShell(vienen);
+            }
+        }
 
         base.OnFrameworkInitializationCompleted();
     }
