@@ -139,6 +139,63 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// Que la tipografia LLEGUE a la pantalla, no solo que este definida.
+    ///
+    /// <para>
+    /// Que las dos fuentes existan ya lo vigila RecursosQueNoExistenTests leyendo ficheros.
+    /// Lo que eso no puede ver es si alguien las APLICA: en WPF cada ventana pedia la suya en
+    /// su cabecera y al portar se cayo en todas, asi que las pantallas heredaban la de serie
+    /// de Fluent. Una fuente que no se pone no da error, sale otra y ya.
+    /// </para>
+    /// <para>
+    /// Aqui se abre una ventana de verdad y se mira con que fuente ha quedado.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerTipografia(Window dueno)
+    {
+        var v = new Faltantes();
+        v.Show(dueno);
+        await Task.Delay(250);
+
+        // Se compara contra el RECURSO, no contra una ventana recien creada. El primer
+        // intento hacia lo segundo y no valia: una ventana sin mostrar todavia no tiene los
+        // estilos aplicados, asi que su fuente era otra tercera cosa y la comparacion salia
+        // bien tanto con el estilo puesto como sin el. Se vio quitando el estilo a proposito.
+        var pedida = Avalonia.Application.Current!.TryFindResource("FontUI", out var r)
+            ? (r as FontFamily)?.Name : null;
+
+        Dice(pedida is not null, "la fuente de la interfaz esta en el tema");
+        Dice(v.FontFamily.Name == pedida,
+            $"y es la que lleva puesta la ventana ({v.FontFamily.Name}, se pedia {pedida})");
+
+        v.Close();
+
+        // Y la monoespaciada, que es la que de verdad se nota: las columnas de rutas y
+        // codigos van alineadas por ancho de caracter, y con una proporcional se tuercen.
+        //
+        // Se mira en una pantalla que la USE. El primer intento la buscaba en «que falta»,
+        // que no lleva ni un texto monoespaciado, asi que fallaba sobre codigo correcto:
+        // buscar algo donde no lo hay no es comprobar, es tener suerte.
+        var catalogo = Ondine.Reindex.ReindexCatalog.Parse("""
+        {
+          "esquema": "reindex/1.0",
+          "serie": "Serie de prueba",
+          "episodios": [ { "num": 1, "temporada": 1, "titulos": { "es": ["Uno"] } } ]
+        }
+        """);
+        var conMono = new Catalogo(catalogo);
+        conMono.Show(dueno);
+        await Task.Delay(300);
+
+        var familias = conMono.GetVisualDescendants().OfType<TextBlock>()
+                              .Select(t => t.FontFamily.Name).Distinct().ToList();
+        Dice(familias.Count > 1,
+            $"y hay texto en dos fuentes distintas, no todo en la misma ({string.Join(", ", familias)})");
+
+        conMono.Close();
+    }
+
+    /// <summary>
     /// El panel de complementos: el indice que se retira y los tres estados de la derecha.
     ///
     /// <para>

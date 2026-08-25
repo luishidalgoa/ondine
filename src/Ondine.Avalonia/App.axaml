@@ -22,5 +22,25 @@
   <Application.Styles>
     <FluentTheme />
     <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+
+    <!--
+      LA TIPOGRAFIA, UNA VEZ Y PARA TODO.
+
+      En WPF cada ventana llevaba su FontFamily="{StaticResource FontUI}" en la cabecera, y
+      al portar se cayo en todas: las pantallas heredaban la de serie de Fluent sin que nada
+      lo dijera. Una fuente que no se pone no da error, simplemente sale otra.
+
+      Aqui va en un solo sitio. Ademas del tamano base, que en WPF venia de Windows y aqui
+      hay que decirlo o cada sistema pone el suyo — y una interfaz con textos de 10,5 y 13,5
+      medidos a mano se descoloca entera si el numero de partida cambia.
+    -->
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="{StaticResource FontUI}"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="UserControl">
+      <Setter Property="FontFamily" Value="{StaticResource FontUI}"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
   </Application.Styles>
 </Application>
