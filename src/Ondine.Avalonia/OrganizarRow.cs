@@ -654,6 +654,21 @@ public sealed class OrganizarRow : INotifyPropertyChanged
     /// </summary>
     public bool VerSelector => RecomiendaRecortar || EsRepetido ? false : true;
 
+    /// <summary>
+    /// Si la decisión que se tome sobre esta fila se guarda para la próxima vez.
+    ///
+    /// <para>
+    /// Es la casilla «Recordar esta decisión» del detalle de la fila, que <b>no la leía
+    /// nadie</b>: se pintaba, se podía marcar y desmarcar, y la decisión se guardaba siempre.
+    /// Está dentro de un DataTemplate, así que cada fila tiene su propia casilla y el único
+    /// sitio donde puede vivir su estado es la fila.
+    /// </para>
+    /// <para>
+    /// Por defecto sí: es lo que hacía antes, y es lo que se quiere casi siempre.
+    /// </para>
+    /// </summary>
+    public bool RecordarDecisionActiva { get; set; } = true;
+
     // Ni pendiente ni por despachar: no hay nada que hacerle.
     public bool EsDuda => !Aplicado && !SinCambios && Res.EsDuda;
     public bool ListoParaAplicar =>

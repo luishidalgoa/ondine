@@ -68,7 +68,15 @@ internal static class Selector
         {
             Title = titulo,
             AllowMultiple = true,
-            FileTypeFilter = [new FilePickerFileType(nombreDelTipo) { Patterns = extensiones }],
+            // Y «todos los archivos» de segundo. La cadena de WPF traía las dos opciones y al
+            // portar se quedó solo la primera: sin ella no hay manera de abrir un vídeo con una
+            // extensión que no esté en la lista, y esas existen.
+            FileTypeFilter =
+            [
+                new FilePickerFileType(nombreDelTipo) { Patterns = extensiones },
+                new FilePickerFileType(Ondine.Localizacion.Textos.Instancia.MainTipoTodos)
+                    { Patterns = ["*"] },
+            ],
         });
 
         return elegidos.Select(Ruta).Where(r => r is not null).Select(r => r!).ToList();

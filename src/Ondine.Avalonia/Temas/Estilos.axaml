@@ -40,4 +40,30 @@
     <Setter Property="BorderBrush" Value="{StaticResource Neutral600}"/>
   </Style>
 
+  <!-- ══ Y LA LISTA QUE SE ABRE ════════════════════════════════════════════════
+       Vestir el desplegable por fuera y dejar el popup de serie es la mitad del trabajo: al
+       abrirlo salta una caja con los colores de Fluent -otro gris, otro borde, otro resaltado-
+       dentro de una aplicacion oscura. Se nota justo al usarlo, que es cuando importa. -->
+  <Style Selector="ComboBox /template/ Border#PopupBorder">
+    <Setter Property="Background" Value="{StaticResource Surface}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Neutral800}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="6"/>
+  </Style>
+
+  <Style Selector="ComboBoxItem">
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Padding" Value="8,5"/>
+    <Setter Property="Cursor" Value="Hand"/>
+  </Style>
+
+  <!-- El resaltado de la fila: el de Fluent es azul, y aqui no hay nada azul. -->
+  <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource RowHover}"/>
+  </Style>
+  <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource RowSelected}"/>
+  </Style>
+
 </Styles>

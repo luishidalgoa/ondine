@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 using Path = Avalonia.Controls.Shapes.Path;
 
@@ -101,7 +102,7 @@ public sealed class PasosVisual
             Width = 44,
             Height = 44,
             HorizontalAlignment = HorizontalAlignment.Center,
-            RenderTransform = new ScaleTransform(0.6, 0.6),
+            RenderTransform = TransformOperations.Parse($"scale(0.6)"),
             RenderTransformOrigin = RelativePoint.Center,
             Transitions = [Transicion(Visual.RenderTransformProperty, 420, new ElasticEaseOut())],
         };
@@ -153,6 +154,14 @@ public sealed class PasosVisual
     /// Una transición: se declara una vez y el control interpola cada cambio de esa
     /// propiedad. Es lo que sustituye a los <c>BeginAnimation</c> de WPF, y la razón por la
     /// que aquí no hay nada que parar.
+    ///
+    /// <para>
+    /// <b>Y hay que darle lo que sabe interpolar.</b> <c>TransformOperationsTransition</c> solo
+    /// entiende <c>TransformOperations</c>; si se le pone un <c>ScaleTransform</c> —que es lo
+    /// que había— no interpola nada: el tamaño <b>salta</b> de un valor a otro. No da error,
+    /// simplemente no hay animación, y como el salto es de 0,6 a 1 en un icono pequeño se lee
+    /// como un parpadeo y no como algo roto.
+    /// </para>
     /// </summary>
     private static ITransition Transicion(AvaloniaProperty prop, double ms, Easing? suavizado = null)
         => prop == Visual.RenderTransformProperty
@@ -175,7 +184,7 @@ public sealed class PasosVisual
         _lista.IsHitTestVisible = true;
         _final.Opacity = 0;
         _resplandor.Opacity = 0;
-        _icono.RenderTransform = new ScaleTransform(0.6, 0.6);
+        _icono.RenderTransform = TransformOperations.Parse($"scale(0.6)");
 
         foreach (var p in _pasos) p.Pendiente();
         foreach (var c in _conectores) c.Apagar();
@@ -215,7 +224,7 @@ public sealed class PasosVisual
         Retrasar(180, () =>
         {
             _final.Opacity = 1;
-            _icono.RenderTransform = new ScaleTransform(1, 1);
+            _icono.RenderTransform = TransformOperations.Parse($"scale(1)");
 
             // El destello: sube y se va. Con transiciones se pide el valor alto y, cuando
             // llega, el bajo — no hay que declarar ningún ciclo.
@@ -249,7 +258,7 @@ public sealed class PasosVisual
             {
                 Width = Diametro, Height = Diametro,
                 VerticalAlignment = VerticalAlignment.Top,
-                RenderTransform = new ScaleTransform(1, 1),
+                RenderTransform = TransformOperations.Parse($"scale(1)"),
                 RenderTransformOrigin = RelativePoint.Center,
                 Transitions = [Transicion(Visual.RenderTransformProperty, 260, new ElasticEaseOut())],
             };
@@ -329,7 +338,7 @@ public sealed class PasosVisual
             _num.Opacity = 1;
             _detalle.IsVisible = false;
             _detalle.Text = "";
-            Raiz.RenderTransform = new ScaleTransform(1, 1);
+            Raiz.RenderTransform = TransformOperations.Parse($"scale(1)");
         }
 
         public void Marcha(string texto)
@@ -368,15 +377,15 @@ public sealed class PasosVisual
 
             // El abultamiento del testigo: sube y vuelve. Dos cambios de valor sobre una
             // transición; en WPF eran tres fotogramas clave y un reloj.
-            Raiz.RenderTransform = new ScaleTransform(1.22, 1.22);
-            Retrasar(200, () => Raiz.RenderTransform = new ScaleTransform(1, 1));
+            Raiz.RenderTransform = TransformOperations.Parse($"scale(1.22)");
+            Retrasar(200, () => Raiz.RenderTransform = TransformOperations.Parse($"scale(1)"));
         }
 
         /// <summary>Al recibir el testigo de la etapa anterior.</summary>
         public void Recibe()
         {
-            Raiz.RenderTransform = new ScaleTransform(1.16, 1.16);
-            Retrasar(190, () => Raiz.RenderTransform = new ScaleTransform(1, 1));
+            Raiz.RenderTransform = TransformOperations.Parse($"scale(1.16)");
+            Retrasar(190, () => Raiz.RenderTransform = TransformOperations.Parse($"scale(1)"));
         }
 
         private void Pararlo()
@@ -418,7 +427,7 @@ public sealed class PasosVisual
                 Fill = Rec("Accent"),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Top,
-                RenderTransform = new ScaleTransform(1, 0),
+                RenderTransform = TransformOperations.Parse($"scale(1)"),
                 RenderTransformOrigin = RelativePoint.TopLeft,
                 Transitions = [Transicion(Visual.RenderTransformProperty, ViajeMs)],
             };
@@ -430,8 +439,8 @@ public sealed class PasosVisual
             };
         }
 
-        public void Encender() => _tenido.RenderTransform = new ScaleTransform(1, 1);
+        public void Encender() => _tenido.RenderTransform = TransformOperations.Parse($"scale(1)");
 
-        public void Apagar() => _tenido.RenderTransform = new ScaleTransform(1, 0);
+        public void Apagar() => _tenido.RenderTransform = TransformOperations.Parse($"scale(1)");
     }
 }

@@ -182,7 +182,25 @@ public partial class Reproductor : Window
             // ventana ya se cerró simplemente no se ejecuta nada.
             _mp.LengthChanged += (_, e) => EnLaInterfaz(() => PonerDuracion(e.Length));
             _mp.TimeChanged += (_, e) => EnLaInterfaz(() => PonerPosicion(e.Time));
-            _mp.EncounteredError += (_, _) => EnLaInterfaz(() => Fallo());
+            // EL CASO DE LA NUBE, que se perdió al portar.
+            //
+            // Un fichero a medio bajar de OneDrive falla EXACTAMENTE igual que uno con un
+            // códec que no se sabe decodificar: LibVLC dice «error» y no más. Contarlo como
+            // códec manda a buscar un problema que no existe — y encima el aviso de arriba
+            // está diciendo «descargando de la nube», así que la pantalla se contradice.
+            //
+            // Con el texto correcto y volviendo a intentarlo: el fichero acaba de bajar solo,
+            // y entonces sí se abre. La versión de WPF hacía las dos cosas.
+            _mp.EncounteredError += (_, _) => EnLaInterfaz(() =>
+            {
+                if (_eraMarcador && Ondine.Reindex.Nube.EsMarcador(_ruta))
+                {
+                    Fallo(Textos.Instancia.ReproductorEsperandoLaNube);
+                    ReintentarCuandoBaje();
+                    return;
+                }
+                Fallo();
+            });
             _mp.Playing += (_, _) => EnLaInterfaz(() =>
             {
                 Cargando().IsVisible = false;
@@ -279,6 +297,37 @@ public partial class Reproductor : Window
         _desdeReloj = false;
         Lbl("lblPos").Text = Fmt(TimeSpan.FromSeconds(seg));
     }
+
+    /// <summary>
+    /// Vuelve a intentarlo cuando el fichero deje de ser un marcador de la nube.
+    ///
+    /// <para>
+    /// Se sondea en vez de esperar un aviso porque no hay ninguno: que un fichero acabe de
+    /// bajarse no lo notifica nadie. Cada dos segundos y sin límite de vueltas — el reloj se
+    /// para al cerrar la ventana, que es cuando deja de importar.
+    /// </para>
+    /// </summary>
+    private void ReintentarCuandoBaje()
+    {
+        if (_esperandoLaNube) return;
+        _esperandoLaNube = true;
+
+        var reloj = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        reloj.Tick += (_, _) =>
+        {
+            if (Ondine.Reindex.Nube.EsMarcador(_ruta)) return;
+
+            reloj.Stop();
+            _esperandoLaNube = false;
+            this.FindControl<StackPanel>("panelFallo")!.IsVisible = false;
+            Cargando().IsVisible = true;
+            try { _mp?.Play(new Media(_vlc!, new Uri(_ruta))); } catch { }
+        };
+        Closed += (_, _) => reloj.Stop();
+        reloj.Start();
+    }
+
+    private bool _esperandoLaNube;
 
     private void Fallo(string? detalle = null)
     {

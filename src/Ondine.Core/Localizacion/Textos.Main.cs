@@ -901,7 +901,22 @@ public sealed partial class Textos
     // orden importa. Se traducen los rótulos, jamás las extensiones.
     public string MainFiltroVideos => Idioma.Elegir(
         "Videos|*.mkv;*.mp4;*.avi;*.m4v;*.mov;*.wmv;*.webm;*.mpg;*.mpeg;*.flv|All files|*.*",
+
         "Vídeos|*.mkv;*.mp4;*.avi;*.m4v;*.mov;*.wmv;*.webm;*.mpg;*.mpeg;*.flv|Todos|*.*");
+
+    /// <summary>
+    /// El nombre del tipo en el selector de ficheros, a secas.
+    ///
+    /// <para>
+    /// Distinto de <c>MainFiltroVideos</c>, que es la cadena con tuberías y comodines que pide
+    /// WPF. Al portar se le pasó esa al selector de Avalonia, que espera una etiqueta: en el
+    /// desplegable salía la frase entera con sus asteriscos.
+    /// </para>
+    /// </summary>
+    public string MainTipoVideos => Idioma.Elegir("Video files", "Vídeos");
+
+    /// <summary>Para abrir algo con una extensión que no está en la lista.</summary>
+    public string MainTipoTodos => Idioma.Elegir("All files", "Todos los archivos");
 
     // ═══ Actualizaciones ════════════════════════════════════════════════════
     // Rótulo del menú y del botón del pie: el mismo texto en los dos sitios.

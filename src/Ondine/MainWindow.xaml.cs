@@ -1670,7 +1670,9 @@ public partial class MainWindow : Window
     private void RefrescarComplementos()
     {
         var modo = ModoDe(_paginaActual);
-        var suyos = Complementos.Descubridor.Buscar().Bueno.Where(c => c.SaleEn(modo)).ToList();
+        // Encendidos() y no Buscar().Bueno: respeta el interruptor de apagar del panel, que
+        // antes se movía y no apagaba nada aquí.
+        var suyos = Complementos.Descubridor.Encendidos().Where(c => c.SaleEn(modo)).ToList();
 
         btnComplementos.Visibility = suyos.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         lblCuantosComplementos.Text = suyos.Count.ToString();

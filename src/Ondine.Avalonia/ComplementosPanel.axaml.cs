@@ -393,10 +393,42 @@ public partial class ComplementosPanel : UserControl
     {
         _puestos.Clear();
         var h = Descubridor.Buscar();
-        foreach (var c in h.Bueno) _puestos.Add(new Puesto { Cual = c });
+
+        // LO APAGADO SE RECUERDA. El interruptor de cada complemento no se leía en ningún
+        // sitio: se movía, se veía moverse, y al recargar la lista volvía a encendido. Se
+        // guarda lo apagado y no lo encendido, así uno recién instalado nace encendido sin
+        // que nadie tenga que apuntarlo.
+        var apagados = new HashSet<string>(SettingsStore.Load().ComplementosApagados,
+                                           StringComparer.OrdinalIgnoreCase);
+
+        foreach (var c in h.Bueno)
+        {
+            var puesto = new Puesto { Cual = c, Activo = !apagados.Contains(c.Id) };
+            puesto.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName != nameof(Puesto.Activo)) return;
+                GuardarApagados();
+            };
+            _puestos.Add(puesto);
+        }
 
         Zona("cajaDescartados").IsVisible = h.Descartado.Count > 0;
         this.FindControl<ItemsControl>("listaDescartados")!.ItemsSource = h.Descartado.Select(d => $"{d.Cual.Id} · {d.Motivo}").ToList();
+    }
+
+    /// <summary>
+    /// Escribe en los ajustes qué complementos están apagados.
+    ///
+    /// <para>
+    /// Se guarda la lista entera cada vez en vez de ir añadiendo y quitando: son cuatro
+    /// cadenas y así no hay forma de que se desincronice con lo que se ve en pantalla.
+    /// </para>
+    /// </summary>
+    private void GuardarApagados()
+    {
+        var s = SettingsStore.Load();
+        s.ComplementosApagados = _puestos.Where(p => !p.Activo).Select(p => p.Cual.Id).ToList();
+        SettingsStore.Save(s);
     }
 
     // ── el detalle ──────────────────────────────────────────────────────────

@@ -53,6 +53,21 @@ public sealed class Settings
     // --- Renombrado de la salida (estilo PowerRename) ---
     public RenameRule Rename { get; set; } = new();
     public List<string> RenameSearchHistory { get; set; } = new();    // valores recientes de «Buscar»
+
+    /// <summary>
+    /// Los complementos apagados a mano, por su id.
+    ///
+    /// <para>
+    /// Se guarda lo APAGADO y no lo encendido a propósito: así un complemento que se instale
+    /// mañana nace encendido sin que nadie tenga que apuntarlo, que es lo que espera quien lo
+    /// acaba de instalar.
+    /// </para>
+    /// <para>
+    /// Existe porque el interruptor «apágalo sin desinstalarlo» no apagaba nada: se movía, se
+    /// veía moverse, y ni se respetaba ni se recordaba al recargar la lista.
+    /// </para>
+    /// </summary>
+    public List<string> ComplementosApagados { get; set; } = new();
     public List<string> RenameReplaceHistory { get; set; } = new();   // valores recientes de «Reemplazar por»
 
     /// <summary>Complejidad del contenido aprendida al medir una muestra (1 = imagen real típica).</summary>

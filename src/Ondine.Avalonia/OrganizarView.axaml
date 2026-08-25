@@ -810,8 +810,11 @@
                   </Grid>
 
                   <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <!-- Enlazada, que antes no lo estaba: se pintaba, se podia marcar y no la
+                         leia nadie. La decision se guardaba siempre, dijera lo que dijera. -->
                     <CheckBox Name="chkRecordar" Content="{i:T OrganizarRecordarDecision}"
                               Foreground="{StaticResource Neutral400}" FontSize="12" VerticalAlignment="Center"
+                              IsChecked="{Binding RecordarDecisionActiva, Mode=TwoWay}"
                               IsVisible="{Binding VerSelector}"/>
                     <!-- Un fichero con dos episodios dentro no se arregla eligiendo número:
                          hay que partirlo. Por eso este botón va el PRIMERO y destacado

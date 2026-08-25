@@ -53,6 +53,20 @@ es un acuerdo de buena voluntad: está verificado.
   películas salía una banda de temporada vacía en cada fila. Lo segundo también pasaba en
   Windows.
 
+- **El interruptor de «apagar un complemento sin desinstalarlo» no apagaba nada** y volvía a
+  encenderse al recargar la lista. Ahora se respeta y se recuerda, en las dos interfaces.
+
+- **La casilla «Recordar esta decisión» no la leía nadie:** la decisión se guardaba siempre,
+  estuviera marcada o no.
+
+- **El desplegable estaba vestido solo por fuera:** al abrirlo salía una lista con los colores
+  claros de serie dentro de la app oscura. Y el selector de vídeos enseñaba como nombre del tipo
+  la cadena entera con tuberías y asteriscos, además de haber perdido la opción «todos los
+  archivos».
+
+- **Un vídeo a medio bajar de la nube se contaba como códec desconocido**, mientras el aviso de
+  arriba decía «descargando». Ahora lo dice bien y reintenta solo cuando acaba de bajar.
+
 - **Los círculos de «espera un momento» no latían** —solo parpadeaban— y **no se paraban nunca**:
   seguían animándose escondidos desde que la app abría hasta que se cerraba.
 
