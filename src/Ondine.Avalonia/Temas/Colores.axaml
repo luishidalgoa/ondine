@@ -69,4 +69,28 @@
   <SolidColorBrush x:Key="OrgWarnBg" Color="#1FE3C36B"/>
   <SolidColorBrush x:Key="OrgWarnBorder" Color="#4DE3C36B"/>
 
+
+  <!-- ══ Las dos tipografias ═══════════════════════════════════════════════════
+       Estaban en el tema de WPF como «Segoe UI» y «Consolas», que son de Windows, y en esta
+       interfaz NO ESTABAN DEFINIDAS: veinte sitios las pedian y no existia ninguna. No daba
+       error —una fuente que no se encuentra se sustituye por la de serie y ya— asi que en
+       Windows se veia parecido por casualidad y en Linux se habria visto con la fuente por
+       defecto de Avalonia en toda la app, incluidas las columnas que van en monoespaciada.
+
+       Se declaran como LISTA, que es lo que permite tener una sola definicion para los tres
+       sistemas: se usa la primera que este instalada.
+
+       El orden va del sistema a lo generico:
+         · Segoe UI / Cascadia Mono → Windows
+         · Ubuntu / Ubuntu Mono     → Linux Mint y Ubuntu, que las traen de serie
+         · Cantarell / DejaVu Sans Mono → el resto de escritorios de Linux
+         · SF Pro Text / SF Mono    → macOS
+         · sans-serif / monospace   → lo que haya, para no quedarse sin nada
+
+       Ubuntu va antes que Cantarell a proposito: Mint viene con las Ubuntu instaladas y su
+       interfaz esta hecha con ellas, asi que la app se parece a lo que hay alrededor en vez
+       de a una cosa traida de fuera. -->
+  <FontFamily x:Key="FontUI">Segoe UI, Ubuntu, Cantarell, Noto Sans, DejaVu Sans, SF Pro Text, sans-serif</FontFamily>
+  <FontFamily x:Key="FontMono">Cascadia Mono, Consolas, Ubuntu Mono, DejaVu Sans Mono, Liberation Mono, SF Mono, monospace</FontFamily>
+
 </ResourceDictionary>
