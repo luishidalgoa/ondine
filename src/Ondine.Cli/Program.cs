@@ -213,7 +213,9 @@ static (List<string> paths, Opts o) Parse(string[] args)
             case "--codec": opt.VideoCodec = Next(ref i).ToLowerInvariant(); break;
             case "-q" or "--calidad": opt.Quality = NextInt(ref i); break;
             case "--alto": opt.MaxHeight = NextInt(ref i); break;
-            case "--audio": opt.AudioBitrate = NextInt(ref i); break;
+            // Por la puerta del nucleo, no a pelo: «--audio 128» promete recodificar (lo dice
+            // su ayuda) y desde que el motor dejo de suponerlo hay que pedirlo explicitamente.
+            case "--audio": OpcionesSalida.PonerCaudalDeAudio(opt, NextInt(ref i)); break;
             case "--idioma": opt.Lang = Next(ref i); break;
             case "--idiomas": opt.KeepLangs = Next(ref i).Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToList(); break;
             case "--sin-subs": opt.NoSubs = true; break;

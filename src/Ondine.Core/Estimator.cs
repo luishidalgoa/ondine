@@ -22,8 +22,6 @@ public sealed class Estimate
 /// </summary>
 public static class Estimator
 {
-    private static readonly string[] Mp4Audio = { "aac", "ac3", "eac3", "mp3", "alac" };
-
     /// <summary>Bits por píxel·frame de referencia (HEVC a CRF 28, imagen real típica).</summary>
     public const double BaseBpp = 0.040;
 
@@ -110,13 +108,19 @@ public static class Estimator
         int crf = o.Quality > 0 ? o.Quality : 27;   // 0 = automático → referencia 27
         int estVideoKbps = ModelVideoKbps(r, o, ComplexityFactor);
 
-        // ¿el audio se copia tal cual o se recodifica? (WebM siempre Opus; MP4 no copia FLAC/PCM…)
+        // ¿el audio se copia tal cual o se recodifica? SE LE PREGUNTA AL MOTOR, no se
+        // vuelve a decidir aquí. Este bloque tenía su propia copia de la regla y su propia
+        // lista de lo que cabe en MP4, y decían cosas distintas: el estimador daba por
+        // recodificado cualquier caudal > 0 —que era el atajo viejo— así que en cuanto el
+        // motor dejó de hacerlo, el pronóstico habría empezado a mentir en la otra dirección.
         bool webm = o.Container == "webm";
-        bool willCopy = o.AudioBitrate == 0 && !webm
-                        && !(o.Container == "mp4" && !Mp4Audio.Contains(r.AudioCodec));
+        var plan = Audio.PlanDeAudio.Para(o.Container, o.AudioCodec, o.AudioMezcla,
+                                          o.AudioBitrate, r.AudioCodec ?? "",
+                                          r.Channels > 0 ? r.Channels : 2, 0);
+        bool willCopy = plan.Codec.Copiar;
         int estAudioKbps = willCopy
             ? (r.AudioBitrateKbps > 0 ? r.AudioBitrateKbps : 192)
-            : (o.AudioBitrate > 0 ? o.AudioBitrate : (webm ? 160 : 192));
+            : (plan.Kbps > 0 ? plan.Kbps : (webm ? 160 : 192));
         if (willCopy && r.AudioBitrateKbps > 0) estAudioKbps = Math.Min(estAudioKbps, r.AudioBitrateKbps);
 
         int numAudio = KeptAudioTracks(r, o);

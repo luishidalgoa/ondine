@@ -206,6 +206,12 @@ public partial class MainWindow : Window
         foreach (var c in new[] { cboFmt, cboCodec, cboQ, cboRes, cboAud, cboVel, cboACodec, cboMezcla })
             c.SelectionChanged += (_, _) => UpdateEstimate();
 
+        // El caudal se apaga cuando no se va a usar: con «Sin tocar» se copian los bytes tal
+        // cual y un «128 kbps» encendido al lado solo puede confundir — de hecho confundió, y
+        // el motor lo resolvía recodificando en silencio. Esta es la mitad visible del arreglo.
+        cboACodec.SelectionChanged += (_, _) => SincronizarCaudalDeAudio();
+        SincronizarCaudalDeAudio();
+
         btnPreview.Click += async (_, _) => await OnPreviewAsync();
         btnMeasure.Click += async (_, _) => await OnMeasureAsync();
         _scrubTimer.Tick += async (_, _) => { _scrubTimer.Stop(); await ShowScrubFrameAsync(); };
@@ -1504,12 +1510,25 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// «Sin tocar» copia los bytes, así que el caudal no pinta nada: se apaga.
+    ///
+    /// <para>
+    /// Antes los dos desplegables se contradecían sin que nada los sincronizara —«Sin tocar» en
+    /// uno, «AAC 128 kbps» en el otro— y el motor desempataba solo, recodificando. Se quitó
+    /// aquel desempate; esto impide que la contradicción se pueda ni plantear.
+    /// </para>
+    /// </summary>
+    private void SincronizarCaudalDeAudio() =>
+        cboAud.IsEnabled = cboACodec.SelectedIndex != 0;
+
     private void ApplyPreset()
     {
         if (_applyingPreset || cboPreset.SelectedItem is not Preset p) return;
         _applyingPreset = true;
         cboFmt.SelectedIndex = p.Fmt; cboCodec.SelectedIndex = p.Codec;
         cboQ.SelectedIndex = p.Quality; cboRes.SelectedIndex = p.Res; cboAud.SelectedIndex = p.Audio;
+        cboACodec.SelectedIndex = p.ACodec;
         cboLang.Text = p.Lang;
         // «Subcarpetas» NO se toca aquí: es un ajuste de exploración del disco que manda
         // el usuario desde Preferencias, no parte de la receta de codificación. Antes el
@@ -1528,6 +1547,7 @@ public partial class MainWindow : Window
         {
             Name = name, Fmt = cboFmt.SelectedIndex, Codec = cboCodec.SelectedIndex,
             Quality = cboQ.SelectedIndex, Res = cboRes.SelectedIndex, Audio = cboAud.SelectedIndex,
+            ACodec = cboACodec.SelectedIndex,
             Lang = cboLang.Text,
         });
         PresetStore.SaveUser(user);

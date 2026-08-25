@@ -227,7 +227,7 @@ public static class TraduccionTests
         t.Length <= 4                              // siglas y unidades: MB, GB, s, %
         || Regex.IsMatch(t, @"^[A-Z0-9./+\- ]+$")  // HEVC, H.264, AV1, MKV
         || Regex.IsMatch(t, @"^\d+p$")             // resoluciones: 1080p, 720p, 480p
-        || Regex.IsMatch(t, @"^AAC \d+ kbps$")     // caudales del audio: AAC 192 kbps
+        || Regex.IsMatch(t, @"^\d+ kbps$")     // caudales del audio: «192 kbps». El códec lo elige el desplegable de al lado
         || t is "Ondine" or "Plex" or "Jellyfin" or "Kodi" or "ffmpeg" or "ffprobe"
              or "Error" or "No" or "Total" or "Windows" or "Linux" or "macOS"
              or "General"   // rótulo de pestaña: se escribe igual en los dos idiomas
