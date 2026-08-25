@@ -32,6 +32,26 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Los desplegables no se veían en Linux ni en macOS.** En la ventana principal salían nueve
+  rótulos —Idioma, Formato, Códec, Calidad, Esfuerzo…— con un hueco vacío debajo de cada uno, y
+  en Preferencias no había forma de elegir el idioma ni el preset. La aplicación no servía para
+  nada. Ya se ven.
+
+- **La ventana no se podía mover ni estirar.** La barra de título propia no tenía puesto el
+  arrastre, así que la ventana se quedaba clavada donde el sistema la abriera, y sin marco del
+  sistema tampoco había bordes que agarrar. Ahora se arrastra por la barra, se maximiza con doble
+  clic y se estira por los cuatro bordes y las cuatro esquinas.
+
+- **En Linux Mint el lanzador salía sin icono**, con un engranaje genérico. El icono va ahora
+  también en `/usr/share/pixmaps`, que es la ruta que se mira sin depender del tema de iconos.
+
+- **Los paquetes dicen para qué sistema son.** Se llamaban `Ondine-1.14.0-x64.dmg` y
+  `Ondine-1.14.0-x86_64.AppImage`, y en la página de versiones hay diez ficheros juntos: alguien
+  con un Linux de 64 bits vio «x64», se bajó el `.dmg` —que es de macOS— y su sistema lo detectó
+  como un comprimido cualquiera. Ahora llevan `macos` y `linux` en el nombre.
+
 ## [1.14.0] - 2026-08-25
 
 ### Añadido

@@ -115,22 +115,14 @@
   </ControlTheme>
 
   <!-- ══ Desplegable ═══════════════════════════════════════════════════════════
-       Se viste con Setters y no con plantilla propia: la de Fluent ya trae el popup, el
-       desplazamiento y el teclado resueltos, y rehacerla entera para cambiar cuatro
-       colores es mucho codigo por poco. Los botones si la necesitaban porque su forma es
-       distinta -el haz del foco no existe en ningun tema de serie-. -->
-  <ControlTheme x:Key="{x:Type ComboBox}" TargetType="ComboBox">
-    <Setter Property="Background" Value="{StaticResource Field}"/>
-    <Setter Property="Foreground" Value="{StaticResource Text}"/>
-    <Setter Property="BorderBrush" Value="{StaticResource Neutral800}"/>
-    <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="6"/>
-    <Setter Property="Padding" Value="8,4"/>
-    <Setter Property="FontSize" Value="13"/>
-    <Setter Property="MinHeight" Value="30"/>
-    <Setter Property="VerticalContentAlignment" Value="Center"/>
-    <Setter Property="Cursor" Value="Hand"/>
-  </ControlTheme>
+       NO ESTA AQUI, y el motivo merece leerse: era un ControlTheme con diez Setters de
+       color y sin plantilla, y un ControlTheme sin plantilla deja al control SIN NINGUNA.
+       Los nueve desplegables de la ventana principal salieron como huecos vacios debajo de
+       su rotulo, y Preferencias sin forma de elegir idioma. Compilaba perfectamente.
+
+       Lo que solo cambia valores va como Style, que se aplica ENCIMA en vez de sustituir:
+       Temas/Estilos.axaml. -->
+
 
   <!-- ══ Una fila del desplegable de sugerencias ═══════════════════════════════
        Va con nombre y no como estilo implicito a proposito: se lo pone SOLO la lista de

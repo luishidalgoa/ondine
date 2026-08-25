@@ -11,10 +11,25 @@ macOS se facturan **a diez veces**.
 |---|---|---|
 | `Ondine-Setup-X.Y.Z.exe` | Windows | La app de escritorio de siempre, con auto-actualización |
 | `ondine_X.Y.Z_amd64.deb` | Linux Mint, Ubuntu, Debian | Quien va a usar Ondine a menudo: se integra en el menú y en «Abrir con» |
-| `Ondine-X.Y.Z-x86_64.AppImage` | Cualquier Linux | Probarlo sin instalar nada, o distribuciones que no son Debian |
-| `Ondine-X.Y.Z-arm64.dmg` | macOS con chip de Apple | — |
-| `Ondine-X.Y.Z-x64.dmg` | macOS Intel | — |
+| `Ondine-X.Y.Z-linux-x86_64.AppImage` | Cualquier Linux | Probarlo sin instalar nada, o distribuciones que no son Debian |
+| `Ondine-X.Y.Z-macos-arm64.dmg` | macOS con chip de Apple | — |
+| `Ondine-X.Y.Z-macos-x64.dmg` | macOS Intel | — |
 | `ondine-<plataforma>` | los cinco | La herramienta de terminal, que comparte el mismo motor |
+
+## El nombre dice el sistema
+
+Los tres llevan **el sistema en el nombre**, y no es adorno. La v1.14.0 se publicó con
+`Ondine-1.14.0-x64.dmg` y `Ondine-1.14.0-x86_64.AppImage`, y en la página de versiones hay diez
+ficheros juntos: alguien con un Linux de 64 bits vio «x64», se lo bajó, y su Mint lo detectó
+como **un comprimido cualquiera** — un `.dmg` es una imagen de disco de macOS.
+
+La extensión ya lo decía, pero solo a quien se sepa las extensiones. **La arquitectura sola es
+peor que no poner nada**, porque coincide entre sistemas y da una pista falsa que se lee con
+confianza.
+
+El `.deb` es la excepción: su nombre lo fija la política de Debian
+(`nombre_version_arquitectura.deb`) y ahí «amd64» no se puede tocar. A cambio, es el único de
+los tres que el escritorio abre e instala él solo.
 
 ## Lo que NO va dentro, y por qué
 

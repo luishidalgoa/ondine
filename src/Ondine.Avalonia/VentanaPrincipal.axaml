@@ -136,7 +136,7 @@
            minimizar, maximizar y cerrar: un panel no puede mover los mandos de la
            ventana. Ademas es lo que fija el borde superior del panel, que empieza
            justo donde acaba esta franja. -->
-      <Grid Grid.Row="0" Grid.ColumnSpan="2" Height="40" ZIndex="20">
+      <Grid Name="barraTitulo" Grid.Row="0" Grid.ColumnSpan="2" Height="40" ZIndex="20">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>

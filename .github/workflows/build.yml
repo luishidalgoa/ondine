@@ -296,7 +296,7 @@ jobs:
               ./opt/ondine/Ondine.Avalonia \
               ./usr/bin/ondine \
               ./usr/share/applications/ondine.desktop \
-              ./usr/share/icons/hicolor/256x256/apps/ondine.png; do
+              ./usr/share/icons/hicolor/256x256/apps/ondine.png               ./usr/share/pixmaps/ondine.png; do
             grep -q "$esperado" lista.txt || { echo "::error::falta $esperado en el paquete"; exit 1; }
           done
           # Y que NO se ha colado libVLC de Windows, que ya pasó una vez: 283 MB que se

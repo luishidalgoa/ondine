@@ -1,0 +1,43 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    LO QUE SOLO CAMBIA VALORES VA AQUI, Y NO EN UN ControlTheme.
+
+    La diferencia parece de estilo y no lo es. Un ControlTheme SUSTITUYE al del tema base:
+    si el nuestro no trae plantilla, el control se queda SIN NINGUNA. No da error, no avisa
+    y no aparece en el registro — sencillamente no se dibuja nada.
+
+    Eso es exactamente lo que le pasó al desplegable. Estaba escrito como ControlTheme con
+    diez Setters de color y ni una linea de plantilla, con un comentario que decia -con toda
+    la razon- que rehacer la de Fluent para cambiar cuatro colores era mucho codigo por poco.
+    Lo que faltaba era el resto de la frase: si no la rehaces, hay que DECIR que se hereda.
+    Resultado: en la ventana principal salieron nueve rotulos -Idioma, Formato, Codec,
+    Calidad, Esfuerzo...- con un hueco vacio debajo de cada uno, y en Preferencias no habia
+    forma de elegir idioma. La aplicacion no servia para nada, y compilaba perfectamente.
+
+    Un Style no sustituye: se aplica ENCIMA. Es la herramienta correcta cuando lo unico que
+    se quiere es cambiar colores, margenes o tamanos, y no puede provocar este fallo.
+    Ver Temas/Campos.axaml, donde estan los que si necesitan plantilla propia.
+  -->
+
+  <!-- ══ Desplegable ═══════════════════════════════════════════════════════════ -->
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="{StaticResource Field}"/>
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Neutral800}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="6"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="MinHeight" Value="30"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Cursor" Value="Hand"/>
+  </Style>
+
+  <!-- El borde se enciende al pasar por encima, como los campos de texto. -->
+  <Style Selector="ComboBox:pointerover /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="{StaticResource Neutral600}"/>
+  </Style>
+
+</Styles>

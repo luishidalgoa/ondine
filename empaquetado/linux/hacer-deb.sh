@@ -31,7 +31,8 @@ rm -rf "$arbol"
 mkdir -p "$arbol/DEBIAN" "$arbol/opt/ondine" "$arbol/usr/bin" \
          "$arbol/usr/share/applications" \
          "$arbol/usr/share/icons/hicolor/scalable/apps" \
-         "$arbol/usr/share/icons/hicolor/256x256/apps"
+         "$arbol/usr/share/icons/hicolor/256x256/apps" \
+         "$arbol/usr/share/pixmaps"
 
 # ── La app ───────────────────────────────────────────────────────────────────
 # AUTOCONTENIDA a propósito. Linux Mint no trae .NET 9 en sus repositorios, así que un
@@ -66,6 +67,18 @@ cp "$raiz/docs/marca/ondine-marca-oscuro.svg" \
 cp "$raiz/docs/icon.png" \
    "$arbol/usr/share/icons/hicolor/256x256/apps/ondine.png"
 
+# Y EL MISMO ICONO EN /usr/share/pixmaps, que parece redundante y no lo es.
+#
+# En Linux Mint el lanzador salio en el menu SIN ICONO: un engranaje generico. El icono
+# estaba instalado y el .desktop lo pedia bien; lo que falla en medio es el tema de iconos,
+# que son varias piezas -el indice del tema, la cache de GTK, el cargador de SVG- y basta
+# con que una no este para que la busqueda por nombre no devuelva nada. Ninguna avisa: se
+# cae al icono generico y ya.
+#
+# /usr/share/pixmaps es la ruta de toda la vida, anterior a los temas: se mira por nombre,
+# sin indice y sin cache. Es la que queda cuando lo otro falla, y ocupa tres kilobytes.
+cp "$raiz/docs/icon.png" "$arbol/usr/share/pixmaps/ondine.png"
+
 # ── El control ───────────────────────────────────────────────────────────────
 # ffmpeg es OBLIGATORIO: sin él la app no comprime, no saca miniaturas y no corta. En
 # Windows el instalador lo descarga; en Mint está en los repositorios y lo pone apt.
@@ -73,6 +86,10 @@ cp "$raiz/docs/icon.png" \
 # vlc es RECOMENDADO y no obligatorio: solo hace falta para el reproductor integrado, y
 # quien solo venga a renombrar su biblioteca no tiene por qué arrastrar VLC entero. Si
 # falta, el reproductor lo dice con el nombre del paquete en vez de fallar en seco.
+#
+# hicolor-icon-theme es lo que crea el árbol de carpetas donde va el icono y lo que trae el
+# disparador que refresca el tema al instalar. En un escritorio completo ya está, pero
+# declararlo cuesta nada y sin él el icono se instalaría en un sitio que nadie mira.
 tamano=$(du -sk "$arbol" | cut -f1)
 cat > "$arbol/DEBIAN/control" <<CONTROL
 Package: ondine
@@ -80,7 +97,7 @@ Version: $version
 Section: video
 Priority: optional
 Architecture: $arquitectura
-Depends: ffmpeg
+Depends: ffmpeg, hicolor-icon-theme
 Recommends: vlc
 Installed-Size: $tamano
 Maintainer: luishidalgoa <https://github.com/luishidalgoa/ondine>

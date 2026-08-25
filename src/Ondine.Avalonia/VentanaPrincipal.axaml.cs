@@ -116,6 +116,47 @@ public partial class VentanaPrincipal : Window
             emptyState.IsVisible = _rows.Count == 0;
 
         // barra de título propia
+        // ── MOVER Y ESTIRAR LA VENTANA ────────────────────────────────────────────
+        // SIN ESTO LA VENTANA NO SE PODIA MOVER. Y no salio en ninguna comprobacion: se
+        // encontro abriendo la aplicacion en Linux Mint e intentando arrastrarla.
+        //
+        // El comentario de arriba del XAML decia que «el arrastre se pide con
+        // BeginMoveDrag», y era verdad a medias: describia lo que HABIA QUE HACER y nadie
+        // lo hizo. WindowChrome de WPF daba dos cosas gratis -arrastrar por la franja del
+        // titulo y estirar por los bordes- y SystemDecorations="None" se lleva las dos por
+        // delante. La ventana quedo clavada donde el sistema la abriera.
+        //
+        // El doble clic para maximizar entra aqui tambien, por lo mismo: es lo que hace
+        // cualquier barra de titulo del sistema, y sin marco no lo hace nadie.
+        barraTitulo.PointerPressed += (_, e) =>
+        {
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+
+            if (e.ClickCount == 2)
+            {
+                WindowState = WindowState == WindowState.Maximized
+                    ? WindowState.Normal : WindowState.Maximized;
+                return;
+            }
+            BeginMoveDrag(e);
+        };
+
+        // Los bordes. Se resuelven con el raton sobre el marco raiz en vez de con ocho
+        // rectangulos invisibles en el XAML: son ocho zonas que hay que mantener alineadas
+        // con el redondeo y el hueco de maximizar, y una que se descoloque deja un borde
+        // que no agarra sin que nada lo diga.
+        rootBorder.PointerMoved += (_, e) =>
+        {
+            var borde = BordeEn(e.GetPosition(rootBorder), rootBorder.Bounds.Size, GrosorDelBorde);
+            Cursor = new Cursor(CursorDe(borde));
+        };
+        rootBorder.PointerPressed += (_, e) =>
+        {
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+            if (BordeEn(e.GetPosition(rootBorder), rootBorder.Bounds.Size, GrosorDelBorde) is { } borde)
+                BeginResizeDrag(borde, e);
+        };
+
         btnMin.Click += (_, _) => WindowState = WindowState.Minimized;
         btnMax.Click += (_, _) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         btnClose.Click += (_, _) => Close();
@@ -1639,6 +1680,50 @@ public partial class VentanaPrincipal : Window
     }
 
     private Window? Ventana => this;
+
+    /// <summary>
+    /// Cuántos píxeles del borde agarran para estirar. Seis: cuatro se fallan con el ratón
+    /// y diez se comen el clic de lo que haya pegado al borde por dentro.
+    /// </summary>
+    private const double GrosorDelBorde = 6;
+
+    /// <summary>
+    /// Qué borde de la ventana hay bajo un punto, o <c>null</c> si no hay ninguno.
+    ///
+    /// <para>
+    /// Aparte y sin tocar nada a propósito: es la única parte de «estirar la ventana» que se
+    /// puede comprobar sin un ratón de verdad, y es donde está lo que se puede equivocar —las
+    /// esquinas tienen que ganar a los lados, o estirar en diagonal es imposible.
+    /// </para>
+    /// </summary>
+    internal static WindowEdge? BordeEn(Point p, Size tamano, double grosor)
+    {
+        bool izq = p.X <= grosor, der = p.X >= tamano.Width - grosor;
+        bool arr = p.Y <= grosor, aba = p.Y >= tamano.Height - grosor;
+
+        // Las esquinas primero: en una esquina se cumplen dos condiciones a la vez, y si
+        // ganara el lado no se podría estirar en diagonal, que es como se estira de verdad.
+        if (arr && izq) return WindowEdge.NorthWest;
+        if (arr && der) return WindowEdge.NorthEast;
+        if (aba && izq) return WindowEdge.SouthWest;
+        if (aba && der) return WindowEdge.SouthEast;
+
+        if (arr) return WindowEdge.North;
+        if (aba) return WindowEdge.South;
+        if (izq) return WindowEdge.West;
+        if (der) return WindowEdge.East;
+        return null;
+    }
+
+    /// <summary>El puntero que corresponde a cada borde. Sin flecha, nadie sabe que agarra.</summary>
+    private static StandardCursorType CursorDe(WindowEdge? borde) => borde switch
+    {
+        WindowEdge.North or WindowEdge.South => StandardCursorType.SizeNorthSouth,
+        WindowEdge.West or WindowEdge.East => StandardCursorType.SizeWestEast,
+        WindowEdge.NorthWest or WindowEdge.SouthEast => StandardCursorType.TopLeftCorner,
+        WindowEdge.NorthEast or WindowEdge.SouthWest => StandardCursorType.TopRightCorner,
+        _ => StandardCursorType.Arrow,
+    };
 
     /// <summary>
     /// La rejilla de la ventana. Se llega a ella para tocar el ancho de la columna del panel

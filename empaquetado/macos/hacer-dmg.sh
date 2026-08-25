@@ -147,7 +147,12 @@ PLIST
   cp -R "$app" "$monte/Ondine.app"
   ln -s /Applications "$monte/Aplicaciones"
 
-  dmg="$salida/Ondine-${version}-${nombre_arq}.dmg"
+  # EL NOMBRE DICE «macos», y no es adorno. Se publico la v1.14.0 con estos llamados
+  # «Ondine-1.14.0-x64.dmg», y en la pagina de versiones hay diez ficheros juntos: alguien
+  # con un Linux de 64 bits vio «x64», se lo bajo, y su escritorio lo detecto como un
+  # comprimido cualquiera. La arquitectura sola es peor que nada, porque coincide entre
+  # sistemas y da una pista falsa que se lee con confianza.
+  dmg="$salida/Ondine-${version}-macos-${nombre_arq}.dmg"
   rm -f "$dmg"
   hdiutil create -quiet -volname "Ondine $version" -srcfolder "$monte" \
                  -ov -format UDZO "$dmg"
