@@ -1460,12 +1460,19 @@ public partial class OrganizarView : UserControl
     /// <summary>
     /// Marca qué fila abre cada temporada, que es la que lleva encima la banda separadora.
     ///
+    /// <para>
     /// Se calcula sobre la vista YA FILTRADA, no sobre <c>_filas</c>: si escondes las limpias,
     /// la banda tiene que salir sobre la primera que quede —no sobre una que no se ve— y el
-    /// recuento tiene que ser el de las visibles.
-    ///
-    /// Solo se separa si hay más de una carpeta: con una sola, la banda repetiría lo que ya
-    /// dice el cuadro de la carpeta y se comería una fila por nada.
+    /// recuento tiene que ser el de las visibles. Por eso lo que se le pasa al motor son los
+    /// grupos de <c>visibles</c> y no los de la colección entera.
+    /// </para>
+    /// <para>
+    /// Dónde va cada banda y cuántas filas cubre lo dice <see cref="BandasDeGrupo"/>, que vive
+    /// en el motor y tiene sus pruebas —incluida la de que con una sola temporada no se pone
+    /// ninguna, porque repetiría lo que ya dice el cuadro de la carpeta y se comería una fila
+    /// por nada—. Aquí queda lo de la pantalla: apagar las de antes y escribir el rótulo, que
+    /// es el único trozo que necesita el catálogo de textos.
+    /// </para>
     /// </summary>
     /// <returns>Cuántas temporadas han quedado separadas. 0 = no hay nada que separar.</returns>
     private int RecalcularSeparadores()
@@ -1476,26 +1483,15 @@ public partial class OrganizarView : UserControl
         var visibles = vista.Cast<OrganizarRow>().ToList();
         foreach (var f in visibles) { f.PrimeraDeGrupo = false; f.GrupoConteo = ""; }
 
-        // Con un orden por cabecera activo las temporadas se entremezclan, así que las bandas
-        // de separación dejan de significar nada: se ocultan hasta que se quite el orden.
-        if (_ordenManual) return 0;
-
-        if (visibles.Select(f => f.Grupo).Distinct().Count() <= 1) return 0;
-
-        int bandas = 0;
-        for (int i = 0; i < visibles.Count;)
+        var bandas = BandasDeGrupo.Calcular(visibles.Select(f => f.Grupo).ToList(), _ordenManual);
+        foreach (var b in bandas)
         {
-            int j = i;
-            while (j < visibles.Count && visibles[j].Grupo == visibles[i].Grupo) j++;
-
-            visibles[i].PrimeraDeGrupo = true;
-            visibles[i].GrupoConteo = j - i == 1
+            visibles[b.Indice].PrimeraDeGrupo = true;
+            visibles[b.Indice].GrupoConteo = b.Cuantos == 1
                 ? Textos.Instancia.OrganizarGrupoUnFichero
-                : string.Format(Textos.Instancia.OrganizarGrupoFicheros, j - i);
-            bandas++;
-            i = j;
+                : string.Format(Textos.Instancia.OrganizarGrupoFicheros, b.Cuantos);
         }
-        return bandas;
+        return bandas.Count;
     }
 
     private void AplicarFiltro()
@@ -1503,7 +1499,6 @@ public partial class OrganizarView : UserControl
         var vista = CollectionViewSource.GetDefaultView(_filas);
         if (vista == null) return;
 
-        bool soloDudas = chipDudas.IsChecked == true;
         var estados = new List<ReindexEstado>();
         if (chipLimpios.IsChecked == true) estados.Add(ReindexEstado.Limpio);
         if (chipCorregidos.IsChecked == true) estados.Add(ReindexEstado.Corregido);
@@ -1511,23 +1506,17 @@ public partial class OrganizarView : UserControl
         if (chipConflictos.IsChecked == true) estados.Add(ReindexEstado.Conflicto);
         if (chipErrores.IsChecked == true) estados.Add(ReindexEstado.Error);
 
-        // La regla de la busqueda -incluida la de que una fila ya aplicada solo se
-        // encuentra por su nombre nuevo- vive en el motor y tiene pruebas.
-        // Se normaliza UNA vez, no por fila: esto corre a cada tecla sobre la tabla entera.
-        var consulta = BusquedaDeFilas.Consulta.De(txtBuscarTabla.Text);
-        bool PasaTexto(OrganizarRow f) => BusquedaDeFilas.Pasa(
-            new FilaBuscable(f.Aplicado, f.Original, f.Propuesta, f.NombreNuevo), consulta);
+        // La regla entera —los distintivos que se suman, «solo dudas», y la búsqueda con lo
+        // de que una fila ya aplicada solo se encuentra por su nombre nuevo— vive en el
+        // motor y tiene pruebas. Aquí solo se recogen los interruptores.
+        var filtro = FiltroDeFilas.De(estados, chipDudas.IsChecked == true, txtBuscarTabla.Text);
 
-        if (estados.Count == 0 && !soloDudas && consulta.Vacia)
+        if (filtro.NoFiltraNada)
         { vista.Filter = null; RecalcularSeparadores(); return; }
 
-        vista.Filter = o =>
-        {
-            if (o is not OrganizarRow f) return false;
-            if (soloDudas && !f.EsDuda) return false;
-            if (!PasaTexto(f)) return false;
-            return estados.Count == 0 || estados.Contains(f.EstadoVisible);
-        };
+        vista.Filter = o => o is OrganizarRow f && filtro.Pasa(
+            new FiltroDeFilas.Fila(f.EstadoVisible, f.EsDuda,
+                new FilaBuscable(f.Aplicado, f.Original, f.Propuesta, f.NombreNuevo)));
 
         // Las bandas dependen de lo que quede visible, así que se rehacen tras cada filtro
         RecalcularSeparadores();
