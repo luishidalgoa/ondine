@@ -159,6 +159,25 @@ const es = {
     despues: "DESPUÉS",
   },
 
+  agente: {
+    rotulo: "NUEVO EN LA 1.15",
+    titulo: "Tu agente ya sabe usar Ondine.",
+    cuerpo:
+      "Ondine trae dentro un servidor MCP. Conectas Claude, Cursor o el agente que uses, le señalas una carpeta, y él lista los vídeos, los coteja con el catálogo y aplica los renombrados seguros. Llama al mismo motor que la ventana, con las mismas reglas.",
+    reglas: [
+      { clave: "Analizar", texto: "Propone y no escribe nada." },
+      { clave: "Escribir", texto: "Pide permiso. Sin él, te dice lo que haría." },
+      { clave: "Borrar", texto: "Va a la papelera del sistema, igual que en la app." },
+    ],
+    ordenRotulo: "Se conecta con una orden",
+    orden: "claude mcp add ondine -- /usr/bin/ondine-mcp",
+    copiar: "Copiar",
+    copiado: "Copiada",
+    pie: "Viaja dentro del .deb, del AppImage, del .dmg y del instalador de Windows.",
+    enlace: "Cómo se registra",
+    alt: "Un robot teclea en un portátil mientras Ondine ordena tres ficheros",
+  },
+
   spot: {
     activarSonido: "Activar sonido",
     silenciar: "Silenciar",
@@ -415,6 +434,25 @@ const en: typeof es = {
     titulo: "The same folder, before and after.",
     antes: "BEFORE",
     despues: "AFTER",
+  },
+
+  agente: {
+    rotulo: "NEW IN 1.15",
+    titulo: "Your agent can drive Ondine.",
+    cuerpo:
+      "Ondine ships an MCP server inside. Connect Claude, Cursor or whichever agent you use, point it at a folder, and it lists the videos, matches them against the catalogue and applies the safe renames. It calls the same engine the window does, under the same rules.",
+    reglas: [
+      { clave: "Analyse", texto: "It proposes and writes nothing." },
+      { clave: "Write", texto: "It asks first. Without a yes, it tells you what it would do." },
+      { clave: "Delete", texto: "Straight to the system bin, same as the app." },
+    ],
+    ordenRotulo: "One command to connect it",
+    orden: "claude mcp add ondine -- /usr/bin/ondine-mcp",
+    copiar: "Copy",
+    copiado: "Copied",
+    pie: "It travels inside the .deb, the AppImage, the .dmg and the Windows installer.",
+    enlace: "How to register it",
+    alt: "A robot types on a laptop while Ondine sorts three files",
   },
 
   spot: {

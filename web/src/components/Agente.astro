@@ -1,0 +1,245 @@
+---
+// El servidor MCP: que un agente use Ondine.
+//
+// La familia de composición es la de «escena ilustrada al lado del texto», y no se
+// repite en el resto de la página: aquí lo que hay que enseñar es a alguien
+// TRABAJANDO con la app, y una cifra enorme o una tabla no cuentan eso.
+//
+// La ilustración es un SVG animado con CSS que vive en /img/agente-mcp.svg, el mismo
+// fichero que enseñan los dos README. Va en un <img> y no incrustado: así el navegador
+// lo cachea, la página no engorda 9 kB de marcado, y el propio fichero se lleva dentro
+// su parada para quien tenga el movimiento desactivado.
+import { textos } from "../i18n/textos";
+
+const t = textos(Astro.currentLocale);
+const REPO = "https://github.com/luishidalgoa/ondine";
+---
+
+<section id="agente" class="agente">
+  <div class="marco">
+    <div class="escena">
+      <!-- La ilustración primero en el marcado y a la derecha en pantalla ancha: en
+           móvil entra antes que el texto, que es lo que engancha, y en escritorio el
+           orden de lectura lo pone la rejilla. -->
+      <figure class="lienzo">
+        <img src="/img/agente-mcp.svg" alt={t.agente.alt} width="400" height="226" loading="lazy" />
+      </figure>
+
+      <div class="palabra">
+        <p class="rotulo"><span class="asterisco">✳</span>{t.agente.rotulo}</p>
+        <h2 class="acero titulo">{t.agente.titulo}</h2>
+        <p class="cuerpo">{t.agente.cuerpo}</p>
+
+        <ul class="reglas">
+          {
+            t.agente.reglas.map((r) => (
+              <li>
+                <span class="clave">{r.clave}</span>
+                <span class="texto">{r.texto}</span>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="orden">
+          <p class="orden-rotulo">{t.agente.ordenRotulo}</p>
+          <div class="linea">
+            <code data-orden>{t.agente.orden}</code>
+            <button type="button" data-copiar data-hecho={t.agente.copiado}>{t.agente.copiar}</button>
+          </div>
+        </div>
+
+        <p class="pie">
+          {t.agente.pie}{" "}
+          <a href={`${REPO}/blob/main/docs/mcp.md`} rel="noopener">{t.agente.enlace}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .agente { padding: clamp(3.5rem, 7vh, 5.5rem) 0; }
+
+  .marco {
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+  }
+  @media (min-width: 1024px) { .marco { padding: 0 2.5rem; } }
+
+  .escena {
+    display: grid;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+  /* Dos columnas solo cuando caben las dos sin estrujar el texto. Por debajo, la
+     ilustración se pone encima y ocupa el ancho que quiera. */
+  @media (min-width: 900px) {
+    .escena { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); }
+    .lienzo { order: 2; }
+    .palabra { order: 1; }
+  }
+
+  /* ── La ilustración ──────────────────────────────────────────────────────── */
+  .lienzo {
+    margin: 0;
+    position: relative;
+    border: 1px solid rgba(150, 138, 224, 0.18);
+    border-radius: var(--radius-superficie);
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(150, 138, 224, 0.14), transparent 62%),
+      #0d0e14;
+    padding: clamp(1rem, 3vw, 2rem);
+  }
+  .lienzo img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ── El texto ────────────────────────────────────────────────────────────── */
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: #8a8fa3;
+  }
+  .asterisco { color: #968ae0; letter-spacing: 0; }
+
+  .titulo {
+    margin-top: 1.35rem;
+    font-size: clamp(30px, 4vw, 48px);
+    line-height: 1.1;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  .cuerpo {
+    margin-top: 1.15rem;
+    max-width: 52ch;
+    font-size: 17px;
+    line-height: 1.65;
+    color: #8a8fa3;
+  }
+
+  /* Las tres reglas. Van con raya a la izquierda y no con viñeta: son un contrato,
+     y una lista con puntos las leería como características. */
+  .reglas {
+    margin: clamp(1.5rem, 3vh, 2rem) 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+  .reglas li {
+    display: grid;
+    grid-template-columns: 8.5ch minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: baseline;
+    padding-left: 0.9rem;
+    border-left: 2px solid rgba(150, 138, 224, 0.35);
+  }
+  .clave {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b5abfc;
+  }
+  .texto { font-size: 15.5px; line-height: 1.5; color: #8a8fa3; }
+  @media (max-width: 520px) {
+    .reglas li { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+  }
+
+  /* ── La orden ────────────────────────────────────────────────────────────── */
+  .orden { margin-top: clamp(1.75rem, 3.5vh, 2.25rem); }
+  .orden-rotulo {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6c7080;
+  }
+  .linea {
+    margin-top: 0.6rem;
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .linea code {
+    flex: 1 1 22rem;
+    min-width: 0;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid #2a2d3a;
+    border-radius: var(--radius-campo);
+    background: #0d0e14;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #e9e9ed;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .linea button {
+    padding: 0.7rem 1rem;
+    border: 1px solid #2a2d3a;
+    border-radius: var(--radius-campo);
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a8fa3;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .linea button:hover { color: #e9e9ed; border-color: #4a4f63; }
+  .linea button[data-copiado] { color: #5db872; border-color: rgba(93, 184, 114, 0.5); }
+
+  .pie {
+    margin-top: 1.4rem;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: #6c7080;
+  }
+  .pie a {
+    color: #b5abfc;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .pie a:hover { color: #d2cefd; }
+</style>
+
+<script>
+  // Copiar la orden. Sin portapapeles disponible (http a secas, permiso denegado) el
+  // botón se retira en vez de fallar al pulsarlo: la orden se sigue pudiendo
+  // seleccionar a mano, que es lo que hace todo el mundo de todas formas.
+  const boton = document.querySelector<HTMLButtonElement>("[data-copiar]");
+  const orden = document.querySelector<HTMLElement>("[data-orden]");
+
+  if (boton && orden) {
+    if (!navigator.clipboard) {
+      boton.remove();
+    } else {
+      const rotulo = boton.textContent ?? "";
+      boton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(orden.textContent ?? "");
+          boton.textContent = boton.dataset.hecho ?? rotulo;
+          boton.dataset.copiado = "";
+          setTimeout(() => {
+            boton.textContent = rotulo;
+            delete boton.dataset.copiado;
+          }, 1800);
+        } catch {
+          boton.remove();
+        }
+      });
+    }
+  }
+</script>
