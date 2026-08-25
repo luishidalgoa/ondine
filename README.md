@@ -209,7 +209,10 @@ pwsh -File build.ps1
 Everything builds in the cloud, with no local dependencies:
 
 1. Add the version section to [`CHANGELOG.md`](CHANGELOG.md) (`## [X.Y.Z] - YYYY-MM-DD`).
-2. Bump `<Version>` in **both** `.csproj` files (`src/Ondine` and `src/Ondine.Cli`).
+2. Bump `<Version>` in **all four** `.csproj` files (`Ondine`, `Ondine.Core`, `Ondine.Cli`,
+   `Ondine.Avalonia`). They were two before the engine was split out and the second interface
+   arrived; the `verificar-version` job checks the four of them and fails the release if any
+   disagrees.
 3. `git tag vX.Y.Z && git push --follow-tags`.
 
 [GitHub Actions](.github/workflows/build.yml) **checks the CHANGELOG contract first**, that the

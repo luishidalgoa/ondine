@@ -198,7 +198,10 @@ pwsh -File build.ps1
 Todo se compila en la nube, sin dependencias locales:
 
 1. Añade la sección de la versión en [`CHANGELOG.md`](CHANGELOG.md) (`## [X.Y.Z] - AAAA-MM-DD`).
-2. Sube `<Version>` **en los dos** `.csproj` (`src/Ondine` y `src/Ondine.Cli`).
+2. Sube `<Version>` **en los cuatro** `.csproj` (`Ondine`, `Ondine.Core`, `Ondine.Cli`,
+   `Ondine.Avalonia`). Eran dos antes de separar el motor y de que llegara la segunda
+   interfaz; el trabajo `verificar-version` comprueba los cuatro y no publica si alguno no
+   cuadra.
 3. `git tag vX.Y.Z && git push --follow-tags`.
 
 [GitHub Actions](.github/workflows/build.yml) **verifica primero el contrato del CHANGELOG** —que la
