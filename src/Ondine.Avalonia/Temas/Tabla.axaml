@@ -1,0 +1,183 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    La tabla de Organizar: cabecera, celda, fila y la rejilla entera.
+
+    UNA CORRECCION DE ANTES. Estos cuatro estaban apuntados como «no se portan: visten el
+    ListView+GridView de Organizar, que en Avalonia es un DataGrid». Eso era falso y lo
+    apunte yo: Organizar YA usa un DataGrid en WPF, y el DataGrid existe en Avalonia. Lo que
+    viste un ListView es otra cosa -TableView y RowStyle, que son de la lista de comprimir-.
+    Asi que estos si se traducen.
+
+    Lo que si cambia son las PIEZAS de la plantilla de la fila. En WPF se escribia con
+    DataGridCellsPresenter y DataGridDetailsPresenter colgando de donde uno quisiera; el
+    DataGrid de Avalonia busca sus partes POR NOMBRE -PART_Root, PART_CellsPresenter,
+    PART_DetailsPresenter, PART_BottomGridLine- y si falta una, la fila no pinta y no hay
+    ningun error que lo diga.
+
+    Y LO QUE MAS CUESTA DE VER: los cuatro llevan BasedOn. Un Style de WPF HEREDA lo que no
+    dice -si no pone plantilla, se queda la de serie-; un ControlTheme de Avalonia la
+    REEMPLAZA ENTERA. Sin BasedOn, OrgGrid dejaba al DataGrid sin ninguna plantilla y la
+    tabla salia completamente vacia: ni filas, ni celdas, ni cabecera, y sin un solo error.
+    Se vio montando una tabla de dos filas y contando lo que pintaba.
+  -->
+
+  <!-- ══ Cabecera de columna ═══════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="OrgColHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+    <Setter Property="Foreground" Value="#99E9E9ED"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="FontWeight" Value="Normal"/>
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Setter Property="Padding" Value="10,8"/>
+    <Setter Property="Cursor" Value="Hand"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="fondo" Background="Transparent"
+                BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+                Padding="{TemplateBinding Padding}">
+          <Grid ColumnDefinitions="*,Auto">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="Center"/>
+            <!-- La flecha del orden. En WPF eran dos Trigger sobre SortDirection que ademas
+                 CAMBIABAN EL TEXTO; aqui el texto se pone con dos pseudoclases y el simbolo
+                 va en el propio Setter, porque un selector no puede escribir contenido. -->
+            <Path Name="flecha" Grid.Column="1" Margin="5,0,0,0" Width="8" Height="8"
+                  Stretch="Uniform" IsVisible="False"
+                  Fill="{StaticResource Accent}"
+                  Data="M 0,6 L 4,0 L 8,6 Z"/>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#fondo">
+      <Setter Property="Background" Value="{StaticResource RowHover}"/>
+    </Style>
+    <Style Selector="^:sortascending /template/ Path#flecha">
+      <Setter Property="IsVisible" Value="True"/>
+    </Style>
+    <Style Selector="^:sortdescending /template/ Path#flecha">
+      <Setter Property="IsVisible" Value="True"/>
+      <!-- La misma flecha del reves, en vez de un segundo dibujo: asi las dos tienen
+           exactamente el mismo tamano y peso, que a 8 px se nota. -->
+      <Setter Property="RenderTransform" Value="rotate(180deg)"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Celda ═════════════════════════════════════════════════════════════════
+       La seleccion se pinta en la FILA, no en la celda: si no, el tema de serie mete su
+       propio resaltado por encima y rompe el de la app. -->
+  <ControlTheme x:Key="OrgCell" TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="FontSize" Value="12.5"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="Transparent" Padding="10,0">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Fila ══════════════════════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="OrgRow" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <!-- Liston de 2 px a la izquierda para la fila activa: el diseno no confia el foco
+             solo al fondo. -->
+        <Border Name="strip" BorderBrush="Transparent" BorderThickness="2,0,0,0"
+                Background="Transparent">
+          <Border Name="fill" Background="Transparent">
+            <DataGridFrozenGrid Name="PART_Root"
+                                ColumnDefinitions="Auto,*"
+                                RowDefinitions="Auto,Auto,Auto,Auto">
+
+              <!-- Banda de temporada. Va DENTRO de la fila y no como grupo del DataGrid:
+                   agrupar deja de repartir las columnas en «*» contra el ancho real y se
+                   quedan aplastadas. Asi el presentador de celdas sigue siendo hijo directo
+                   de la fila y los anchos no se enteran.
+
+                   Enlace directo y no un disparador: al desplazar, el DataGrid RECICLA los
+                   contenedores de fila y solo les cambia el DataContext. Un enlace se
+                   reevalua con ese cambio por definicion; un disparador de plantilla es
+                   justo donde aparecen los «a veces si y a veces no». -->
+              <Border Name="banda" Grid.ColumnSpan="2" Padding="12,7"
+                      IsVisible="{Binding PrimeraDeGrupo}"
+                      Background="{StaticResource Accent900}"
+                      BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,1">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="{Binding Grupo}" FontSize="12" FontWeight="SemiBold"
+                             VerticalAlignment="Center" Foreground="{StaticResource Accent200}"/>
+                  <TextBlock Text="{Binding GrupoConteo}" FontSize="11.5"
+                             VerticalAlignment="Center" Foreground="{StaticResource Neutral500}"/>
+                </StackPanel>
+              </Border>
+
+              <DataGridRowHeader Name="PART_RowHeader" Grid.Row="1" Grid.RowSpan="3"
+                                 IsVisible="False"/>
+
+              <DataGridCellsPresenter Name="PART_CellsPresenter" Grid.Row="1" Grid.Column="1"
+                                      Margin="0,9"/>
+
+              <!-- Aqui se despliega el resolutor de conflictos. -->
+              <DataGridDetailsPresenter Name="PART_DetailsPresenter" Grid.Row="2" Grid.Column="1"/>
+
+              <Rectangle Name="PART_BottomGridLine" Grid.Row="3" Grid.ColumnSpan="2"
+                         Height="1" Fill="{StaticResource Divider}"/>
+            </DataGridFrozenGrid>
+          </Border>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#fill">
+      <Setter Property="Background" Value="{StaticResource RowHover}"/>
+    </Style>
+    <!-- La elegida va DESPUES del raton: pasar por encima de otra fila no puede borrar de
+         la vista cual estas mirando. -->
+    <Style Selector="^:selected /template/ Border#fill">
+      <Setter Property="Background" Value="{StaticResource RowSelected}"/>
+    </Style>
+    <Style Selector="^:selected /template/ Border#strip">
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ La rejilla ════════════════════════════════════════════════════════════ -->
+  <ControlTheme x:Key="OrgGrid" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="RowBackground" Value="Transparent"/>
+    <Setter Property="GridLinesVisibility" Value="None"/>
+    <Setter Property="HeadersVisibility" Value="Column"/>
+    <Setter Property="AutoGenerateColumns" Value="False"/>
+    <Setter Property="CanUserResizeColumns" Value="True"/>
+    <Setter Property="CanUserReorderColumns" Value="False"/>
+    <Setter Property="IsReadOnly" Value="True"/>
+    <Setter Property="SelectionMode" Value="Single"/>
+    <Setter Property="ColumnHeaderTheme" Value="{StaticResource OrgColHeader}"/>
+    <Setter Property="CellTheme" Value="{StaticResource OrgCell}"/>
+
+    <!-- El tema de la fila NO se pone aqui: en WPF habia RowStyle y en Avalonia el DataGrid
+         no expone nada equivalente. Va como estilo suelto sobre DataGridRow dentro de la
+         pantalla que usa esta tabla, que es lo que alcanza a las filas que crea. -->
+  </ControlTheme>
+
+</ResourceDictionary>

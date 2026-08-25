@@ -139,6 +139,103 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// El tema de la tabla de Organizar, antes de que haya ninguna pantalla que lo use.
+    ///
+    /// <para>
+    /// La plantilla de la fila es la pieza mas fragil del puerto entero. El DataGrid de
+    /// Avalonia busca sus partes <b>por nombre</b> —PART_Root, PART_CellsPresenter,
+    /// PART_DetailsPresenter, PART_BottomGridLine— y si falta una, <b>la fila no pinta y no
+    /// hay ningun error</b>: la tabla sale en blanco con los datos perfectamente cargados.
+    /// </para>
+    /// <para>
+    /// Se comprueba aqui y no al portar la pantalla a proposito: si se mezclara con mil
+    /// doscientas lineas de XAML nuevo, una tabla vacia no diria si el fallo es del tema o
+    /// de la pantalla.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerTablaDeOrganizar(Window dueno)
+    {
+        // Dos filas de mentira con lo justo que la plantilla mira: el grupo y si abre banda.
+        //
+        // Con un TIPO DE VERDAD y no uno anonimo. El primer intento usaba anonimos y la
+        // banda salia sobre las dos filas: un tipo anonimo es interno, el enlace no alcanza
+        // sus propiedades, y un enlace que no resuelve deja el valor por defecto —IsVisible
+        // en true—. O sea que el fallo era del fixture y acusaba al tema.
+        var filas = new[]
+        {
+            new FilaDePrueba(true,  "Temporada 1", "2 ficheros", "cap01.mkv"),
+            new FilaDePrueba(false, "Temporada 1", "",           "cap02.mkv"),
+        };
+
+        var tabla = new DataGrid
+        {
+            Theme = Avalonia.Application.Current!.TryFindResource("OrgGrid", out var t)
+                ? t as Avalonia.Styling.ControlTheme : null,
+            ItemsSource = filas,
+        };
+        tabla.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Fichero",
+            Binding = new Avalonia.Data.Binding("Nombre"),
+            Width = new DataGridLength(1, DataGridLengthUnitType.Star),
+        });
+
+        // El tema de la fila va como estilo suelto: el DataGrid de Avalonia no expone nada
+        // como el RowStyle de WPF. Es asi como lo va a poner la pantalla de verdad.
+        var v = new Window { Width = 700, Height = 300, Content = tabla };
+        if (Avalonia.Application.Current.TryFindResource("OrgRow", out var tf)
+            && tf is Avalonia.Styling.ControlTheme temaFila)
+        {
+            var estilo = new Avalonia.Styling.Style(x => Avalonia.Styling.Selectors.Is<DataGridRow>(x));
+            estilo.Setters.Add(new Avalonia.Styling.Setter(DataGridRow.ThemeProperty, temaFila));
+            v.Styles.Add(estilo);
+        }
+
+        v.Show(dueno);
+        await Task.Delay(500);
+
+        var filasPintadas = tabla.GetVisualDescendants().OfType<DataGridRow>().ToList();
+        Dice(filasPintadas.Count == 2,
+            $"la tabla pinta sus dos filas ({filasPintadas.Count})");
+
+        // Y que dentro de la fila esten las CELDAS. Sin PART_CellsPresenter la fila existe,
+        // ocupa su alto y esta vacia — que es el fallo que esto viene a coger.
+        var celdas = tabla.GetVisualDescendants().OfType<DataGridCell>().ToList();
+        Dice(celdas.Count >= 2, $"con sus celdas dentro, no filas vacias ({celdas.Count})");
+
+        var textos = tabla.GetVisualDescendants().OfType<TextBlock>()
+                          .Select(x => x.Text ?? "").ToList();
+        Dice(textos.Any(x => x.Contains("cap01")), "y el contenido de la celda llega");
+
+        // La banda de temporada: la primera fila la abre y la segunda no.
+        //
+        // Se cuentan las BANDAS y su IsVisible, no los textos. Contar textos no valia:
+        // GetVisualDescendants devuelve tambien los hijos de lo oculto —IsVisible quita del
+        // dibujo, no del arbol— asi que los dos rotulos aparecian y parecia que la banda
+        // salia sobre las dos filas. La comprobacion acusaba al tema de algo que hacia ella.
+        var bandas = tabla.GetVisualDescendants().OfType<Border>()
+                          .Where(b => b.Name == "banda").ToList();
+        Dice(bandas.Count == 2, $"cada fila trae su banda en la plantilla ({bandas.Count})");
+        Dice(bandas.Count(b => b.IsVisible) == 1,
+            $"pero solo se ve la de la fila que abre grupo ({bandas.Count(b => b.IsVisible)} de 2)");
+
+        var visible = bandas.FirstOrDefault(b => b.IsVisible);
+        var rotulo = visible?.GetVisualDescendants().OfType<TextBlock>()
+                             .Select(x => x.Text ?? "").ToList() ?? [];
+        Dice(rotulo.Any(x => x.Contains("Temporada 1")) && rotulo.Any(x => x.Contains("2 ficheros")),
+            "y dice de qué temporada es y cuántos ficheros trae");
+
+        // La cabecera, con su tema.
+        var cabeceras = tabla.GetVisualDescendants().OfType<DataGridColumnHeader>().ToList();
+        Dice(cabeceras.Count >= 1, $"y la cabecera de columna esta ({cabeceras.Count})");
+
+        v.Close();
+    }
+
+    /// <summary>Una fila para la prueba de la tabla. Publica: un enlace no ve lo interno.</summary>
+    public sealed record FilaDePrueba(bool PrimeraDeGrupo, string Grupo, string GrupoConteo, string Nombre);
+
+    /// <summary>
     /// Que la tipografia LLEGUE a la pantalla, no solo que este definida.
     ///
     /// <para>
