@@ -29,7 +29,11 @@ se resuelve en la aplicación, con una persona delante.
 | `.deb` (Mint, Ubuntu, Debian) | `/usr/bin/ondine-mcp` |
 | `.dmg` (macOS) | `/Applications/Ondine.app/Contents/MacOS/ondine-mcp` |
 | AppImage | dentro del AppImage, que es un archivo comprimido: no se puede ejecutar desde fuera. Descarga el binario suelto. |
-| Instalador de Windows | no lo trae: descarga el binario suelto. |
+| Instalador de Windows | `%LOCALAPPDATA%\Programs\Ondine\ondine-mcp.exe`, al lado de `Ondine.exe`. |
+
+> **En Windows pesa aparte.** Ahí la app se publica en un solo fichero autocontenido, así que
+> el servidor no puede compartir el runtime con ella y lleva el suyo: el instalador engorda unos
+> 26 MB. Es el precio de que la app instalada lo traiga sin bajar nada más.
 
 El **binario suelto** sale en cada Release, uno por plataforma:
 `ondine-mcp-linux-x64.tar.gz`, `ondine-mcp-macos-arm64.tar.gz`, `ondine-mcp-windows-x64.exe`…
@@ -46,6 +50,12 @@ En **Claude Code**:
 
 ```bash
 claude mcp add ondine -- /usr/bin/ondine-mcp
+```
+
+En Windows, la misma orden con su ruta:
+
+```bash
+claude mcp add ondine -- %LOCALAPPDATA%\Programs\Ondine\ondine-mcp.exe
 ```
 
 En **Claude Desktop**, en `claude_desktop_config.json`:

@@ -126,6 +126,14 @@ public static class ElMcpNoSeQuedaAtrasTests
         var flujo = Path.Combine(raiz, ".github", "workflows", "build.yml");
         Program.Assert(File.Exists(flujo) && File.ReadAllText(flujo).Contains("./opt/ondine/ondine-mcp"),
             "y CI comprueba que el .deb lo trae dentro");
+
+        // Windows va por otro camino -build.ps1 arma la carpeta que se traga Inno Setup-, así
+        // que se mira aparte. Es el único de los cuatro donde el servidor cuesta dinero en
+        // megas, y por eso mismo es el primero del que alguien lo quitaría «para adelgazar».
+        var guion = Path.Combine(raiz, "build.ps1");
+        var texto = File.Exists(guion) ? File.ReadAllText(guion) : "";
+        Program.Assert(texto.Contains("Ondine.Mcp") && texto.Contains("ondine-mcp.exe"),
+            "el instalador de Windows también lo lleva (build.ps1 lo publica en la carpeta del instalador)");
     }
 
     /// <summary>
