@@ -17,6 +17,7 @@
         <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Reproductor.axaml"/>
         <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Tabla.axaml"/>
         <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Lista.axaml"/>
+        <ResourceInclude Source="avares://Ondine.Avalonia/Temas/Ventana.axaml"/>
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

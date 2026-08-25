@@ -135,6 +135,9 @@ public static class Program
         Ondine.Reindex.Tests.PaqueteDeEscritorioTests.Todas();
         Ondine.Reindex.Tests.BandasDeGrupoTests.Todas();
         Ondine.Reindex.Tests.FiltroDeFilasTests.Todas();
+        Ondine.Reindex.Tests.RotuloDeColaTests.Todas();
+        Ondine.Reindex.Tests.VideosQueLleganTests.Todas();
+        Ondine.Reindex.Tests.EstadoDeLaFilaTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
         return _fallos == 0 ? 0 : 1;

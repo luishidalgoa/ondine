@@ -54,6 +54,26 @@ internal static class Selector
         return elegidos.Count == 0 ? null : Ruta(elegidos[0]);
     }
 
+    /// <summary>
+    /// Varios ficheros a la vez. Devuelve solo los que están en el disco: si se eligen diez
+    /// de una carpeta de red, entran los que el sistema sabe dar como ruta y los demás no,
+    /// que es mejor que rechazar la tanda entera.
+    /// </summary>
+    public static async Task<List<string>> FicherosAsync(Window? duena, string titulo,
+                                                         string nombreDelTipo, params string[] extensiones)
+    {
+        if (duena is null) return [];
+
+        var elegidos = await duena.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = titulo,
+            AllowMultiple = true,
+            FileTypeFilter = [new FilePickerFileType(nombreDelTipo) { Patterns = extensiones }],
+        });
+
+        return elegidos.Select(Ruta).Where(r => r is not null).Select(r => r!).ToList();
+    }
+
     /// <summary>Dónde guardar, o <c>null</c>.</summary>
     public static async Task<string?> GuardarComoAsync(Window? duena, string titulo, string nombreSugerido,
                                                        string nombreDelTipo, params string[] extensiones)

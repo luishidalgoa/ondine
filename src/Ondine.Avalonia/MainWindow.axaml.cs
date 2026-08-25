@@ -40,6 +40,7 @@ public partial class MainWindow : Window
                     await Comprobacion.CorrerPeliculas(this);
                     await Comprobacion.CorrerComplementos(this);
                     await Comprobacion.CorrerReproductor(this);
+                    await Comprobacion.CorrerVentanaPrincipal(this);
                 }
                 catch (Exception ex) { Comprobacion.Resultados.Add("REVENTO: " + ex); }
                 Close();
