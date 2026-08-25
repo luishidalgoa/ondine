@@ -64,7 +64,11 @@ public partial class MainWindow : Window
         // La papelera de la app manda los borrados VIEJOS a la Papelera del sistema; los recientes
         // se pueden deshacer al instante. Aquí se le da la vía a la Papelera real y sus triggers de
         // finalizado: al cerrar (todo) y cada pocos minutos (los que hayan envejecido).
-        Reindex.PapeleraApp.EnviarASistema = RecycleBin.Send;
+        // La papelera del sistema ya viene puesta en el motor; lo que se conecta aquí es la
+        // variante de Windows, que es la que sabe de shell32. Antes se rellenaba el hueco
+        // entero desde aquí, y quien no lo rellenara —la interfaz de Avalonia— acababa
+        // borrando en vez de mandando a la papelera.
+        PapeleraDelSistema.EnWindows = RecycleBin.Send;
         Closed += (_, _) => Reindex.PapeleraApp.VaciarAlCerrar();
         var relojPapelera = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
         relojPapelera.Tick += (_, _) => Reindex.PapeleraApp.FinalizarViejos();
@@ -1181,7 +1185,7 @@ public partial class MainWindow : Window
         if (!DialogWindow.Confirmar(this, Textos.Instancia.MainEliminarCarpeta,
                                     string.Format(Textos.Instancia.MainEliminarCarpetaPregunta,
                                                   dirs.Count, string.Join("\n", dirs)))) return;
-        foreach (var d in dirs) RecycleBin.Send(d);
+        foreach (var d in dirs) PapeleraDelSistema.Mandar(d);
         foreach (var r in _rows.Where(r => Path.GetDirectoryName(r.Path) is { } d && dirs.Contains(d)).ToList()) _rows.Remove(r);
         lblProg.Text = Textos.Instancia.MainCarpetasALaPapelera;
     }
@@ -2050,7 +2054,7 @@ public partial class MainWindow : Window
             if (!Engine.ShouldRecycleSource(_del, r)) return;
             Task.Run(() =>
             {
-                bool ok = RecycleBin.Send(r.SourcePath);
+                bool ok = PapeleraDelSistema.Mandar(r.SourcePath);
                 _w.Dispatcher.BeginInvoke(() =>
                 {
                     if (ok)
