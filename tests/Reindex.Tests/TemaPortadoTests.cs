@@ -31,9 +31,6 @@ public static class TemaPortadoTests
         // Estos cuatro visten un ListView + GridView de WPF. En Avalonia esa pantalla NO
         // va a ser un ListView: el spike ya estableció que la sustituye un DataGrid, que
         // es otro control con otras partes. Portar su tema ahora sería trabajo tirado.
-        ["TableView"] = "la tabla pasa a ser un DataGrid: otro control, otro tema",
-        ["RowStyle"] = "idem, va con el DataGrid",
-        ["ColHeader"] = "idem, va con el DataGrid",
 
         // Las barras de desplazamiento de Avalonia ya son finas y oscuras con el tema
         // Fluent. Portar las de WPF antes de ver si hacen falta es adornar a ciegas.
@@ -63,6 +60,33 @@ public static class TemaPortadoTests
         ["EvidenciaMenos"] = "idem",
 
 
+    };
+
+    /// <summary>
+    /// Los que NO se traducen porque su control no existe en Avalonia, y lo que hace su
+    /// trabajo ahora.
+    ///
+    /// <para>
+    /// Esta tercera lista se añadió al portar la lista de comprimir, y hacía falta: había
+    /// solo dos casillas —«portado» o «pendiente»— y ninguna decía la verdad de un estilo que
+    /// se <b>rehizo con otro nombre</b>. Marcarlo como portado obligaba a llamar al tema
+    /// nuevo igual que al viejo, mintiendo sobre lo que es; dejarlo como pendiente hacía que
+    /// la cuenta dijera que queda más de lo que queda.
+    /// </para>
+    /// <para>
+    /// El valor no es un comentario: es <b>el nombre del que lo sustituye</b>, y se comprueba
+    /// que exista. Así «rehecho» no puede quedarse en una promesa.
+    /// </para>
+    /// </summary>
+    private static readonly Dictionary<string, string> Rehechos = new()
+    {
+        // El ListView + GridView de la lista de comprimir. Este es el caso en que aquel
+        // motivo era verdad: en Avalonia ese par no existe y la tabla pasa a DataGrid, que
+        // es otro control con otras partes. (En Organizar NO lo era, y estuvo mal apuntado
+        // un tiempo: allí ya había un DataGrid en WPF.)
+        ["TableView"] = "TablaLista",
+        ["RowStyle"] = "FilaLista",
+        ["ColHeader"] = "CabeceraLista",
     };
 
     public static void Todas()
@@ -104,12 +128,16 @@ public static class TemaPortadoTests
 
         // ══ Cada uno, en una de las dos listas ═══════════════════════════════════
         var sinDecidir = enWpf
-            .Where(k => !enAvalonia.Contains(k) && !Pendientes.ContainsKey(k))
+            .Where(k => !enAvalonia.Contains(k)
+                     && !Pendientes.ContainsKey(k)
+                     && !Rehechos.ContainsKey(k))
             .ToList();
 
         Program.Assert(sinDecidir.Count == 0,
             sinDecidir.Count == 0
-                ? $"los {enWpf.Count} estilos de los {wpf.Count} diccionarios están decididos: {enAvalonia.Count} portados y {Pendientes.Count} pendientes con su motivo"
+                ? $"los {enWpf.Count} estilos de los {wpf.Count} diccionarios están decididos: " +
+                  $"{enAvalonia.Count} portados, {Rehechos.Count} rehechos con otro nombre y " +
+                  $"{Pendientes.Count} pendientes con su motivo"
                 : $"{sinDecidir.Count} estilos sin decidir: {string.Join(", ", sinDecidir.Take(6))}. " +
                   "Pórtalos, o apúntalos como pendientes con el motivo — un hueco que nadie ha escrito no se rellena.");
 
@@ -122,8 +150,28 @@ public static class TemaPortadoTests
                 ? "y ninguno está en las dos listas a la vez"
                 : $"{string.Join(", ", yaHechos)} ya están portados: quítalos de la lista de pendientes");
 
+        // ── Un «rehecho» tiene que existir de verdad ──────────────────────────────
+        // Sin esto, «rehecho como TablaLista» sería una promesa: bastaría escribir el nombre
+        // para que la cuenta lo diera por hecho.
+        var prometidos = Rehechos
+            .Where(r => !enAvalonia.Contains(r.Value))
+            .ToList();
+        Program.Assert(prometidos.Count == 0,
+            prometidos.Count == 0
+                ? $"y los {Rehechos.Count} rehechos apuntan a un tema que existe de verdad"
+                : $"{string.Join(", ", prometidos.Select(r => $"{r.Key} dice ser {r.Value}"))}, " +
+                  "y ese tema no está: un «rehecho» que no existe es un pendiente disfrazado");
+
+        // Y no puede estar a la vez portado y rehecho.
+        var dobles = Rehechos.Keys.Where(enAvalonia.Contains).ToList();
+        Program.Assert(dobles.Count == 0,
+            dobles.Count == 0
+                ? "ni hay ninguno portado y rehecho a la vez"
+                : $"{string.Join(", ", dobles)} están portados con su nombre: quítalos de los rehechos");
+
         // ── Ni se inventa pendientes que no existen ───────────────────────────────
-        var fantasmas = Pendientes.Keys.Where(k => !enWpf.Contains(k)).ToList();
+        var fantasmas = Pendientes.Keys.Concat(Rehechos.Keys)
+            .Where(k => !enWpf.Contains(k)).ToList();
         Program.Assert(fantasmas.Count == 0,
             fantasmas.Count == 0
                 ? "ni hay pendientes de estilos que ya no existen en WPF"
