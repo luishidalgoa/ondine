@@ -41,9 +41,11 @@ es un acuerdo de buena voluntad: está verificado.
   preguntar dónde guarda Ondine sus cosas. Las tres reglas de la app se mantienen: analizar
   propone y no toca nada, lo que escribe pide `confirmar` —y sin él contesta lo que haría, con la
   lista entera—, y lo borrado va a la papelera del sistema. Las dudas siguen sin aplicarse en
-  bloque. Viaja dentro del `.deb`, del AppImage y del `.dmg` (en `/usr/bin/ondine-mcp` en Linux),
-  y sale también como binario suelto por plataforma en cada Release. Cómo registrarlo, en
-  [`docs/mcp.md`](docs/mcp.md).
+  bloque. Viaja **dentro de los cuatro paquetes**: `.deb` y AppImage, `.dmg`, y el instalador de
+  Windows (en `/usr/bin/ondine-mcp` en Linux y junto a `Ondine.exe` en Windows) — y sale también
+  como binario suelto por plataforma en cada Release. En Windows el instalador engorda unos 26 MB,
+  porque allí la app va en un solo fichero y el servidor no puede compartirle el runtime. Cómo
+  registrarlo, en [`docs/mcp.md`](docs/mcp.md).
 
 ### Cambiado
 

@@ -8,6 +8,7 @@ obj/
 
 # Artefactos de build (se generan con build.ps1)
 publish/
+publish-mcp/
 installer/Output/
 src/Ondine/Assets/app-256.png
 
