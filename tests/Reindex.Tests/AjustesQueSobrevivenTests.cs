@@ -39,7 +39,7 @@ public static class AjustesQueSobrevivenTests
 
             ElIdiomaVuelveAlArrancar();
             LoDemasTambien();
-            LasDosAppsLoAplicanAlArrancar();
+            LasTresLoAplicanAlArrancar();
         }
         finally
         {
@@ -81,16 +81,21 @@ public static class AjustesQueSobrevivenTests
     /// <para>
     /// Se mira el código fuente porque el arranque de una app de escritorio no se puede invocar
     /// desde aquí. Es tosco y es lo que hay; lo importante es que mira a las dos, porque el
-    /// fallo fue precisamente que una lo hacía y la otra no.
+    /// fallo fue precisamente que una lo hacía y las otras no.
     /// </para>
     /// </summary>
-    private static void LasDosAppsLoAplicanAlArrancar()
+    private static void LasTresLoAplicanAlArrancar()
     {
         var raiz = LocalizarRaiz();
         var arranques = new[]
         {
             Path.Combine(raiz, "src", "Ondine", "App.xaml.cs"),
             Path.Combine(raiz, "src", "Ondine.Avalonia", "App.axaml.cs"),
+            // Y TRES, el servidor MCP. Arrancaba sin mirar los ajustes, y se notaba en la misma
+            // respuesta: el texto del servidor en castellano y los motivos que vienen del motor
+            // en ingles, mezclados en el mismo parrafo. Quien lee eso es el agente del usuario,
+            // asi que el idioma elegido tambien le toca a el.
+            Path.Combine(raiz, "src", "Ondine.Mcp", "Program.cs"),
         };
 
         foreach (var f in arranques)

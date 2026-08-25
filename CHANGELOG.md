@@ -32,6 +32,19 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Ondine por MCP: un agente puede usar la app.** Un servidor
+  [MCP](https://modelcontextprotocol.io) que habla con el motor —el mismo `Ondine.Core` que usan
+  las dos interfaces, no la ventana— con cinco herramientas: listar los vídeos de una carpeta,
+  analizarlos contra un catálogo, aplicar el renombrado seguro, mandar algo a la papelera y
+  preguntar dónde guarda Ondine sus cosas. Las tres reglas de la app se mantienen: analizar
+  propone y no toca nada, lo que escribe pide `confirmar` —y sin él contesta lo que haría, con la
+  lista entera—, y lo borrado va a la papelera del sistema. Las dudas siguen sin aplicarse en
+  bloque. Viaja dentro del `.deb`, del AppImage y del `.dmg` (en `/usr/bin/ondine-mcp` en Linux),
+  y sale también como binario suelto por plataforma en cada Release. Cómo registrarlo, en
+  [`docs/mcp.md`](docs/mcp.md).
+
 ### Cambiado
 
 - **Si no se puede escribir en la carpeta de destino, la compresión se para antes de empezar** y
