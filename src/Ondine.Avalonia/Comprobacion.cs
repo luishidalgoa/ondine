@@ -139,6 +139,52 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// Recortes: que abra sin video y no prometa nada que no pueda hacer.
+    ///
+    /// <para>
+    /// Esta pantalla <b>corta ficheros</b>, asi que su estado de partida importa mas que el de
+    /// las otras: con los botones de exportar vivos y sin video cargado, pulsar seria pedirle
+    /// que corte la nada. Lo que se mira es que arranque apagada.
+    /// </para>
+    /// <para>
+    /// Y que la pista este montada. Es un Canvas dibujado a mano —bloques, juntas y cabezal
+    /// colocados por pixel contra la duracion— y si no cuajara al portar, la pantalla abre
+    /// con una franja vacia donde deberia estar la linea de tiempo.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerRecortes(Window dueno)
+    {
+        var vista = new RecortesView();
+        var v = new Window { Width = 1100, Height = 720, Content = vista };
+        v.Show(dueno);
+        await Task.Delay(600);
+
+        Control? Cual(string n) => vista.GetVisualDescendants().OfType<Control>()
+                                       .FirstOrDefault(c => c.Name == n);
+
+        Dice(true, "la pantalla de Recortes abre sin reventar");
+
+        // Sin video: lo que corta esta apagado.
+        var exportar = Cual("btnExportar") as Button;
+        Dice(exportar is not null, "el boton de exportar esta");
+        Dice(exportar?.IsEnabled == false,
+            "y arranca apagado: sin video cargado no hay nada que cortar");
+
+        // La pista existe y tiene alto: es un Canvas a mano, no un control de serie.
+        var pista = Cual("pista");
+        Dice(pista is not null, "la pista esta montada");
+        Dice(pista?.Bounds.Height > 10, $"y ocupa su alto ({pista?.Bounds.Height:0})");
+
+        // El rotulo dice que no hay video, en vez de dejar el hueco en blanco.
+        var lbl = vista.GetVisualDescendants().OfType<TextBlock>()
+                       .FirstOrDefault(t => t.Name == "lblVideo");
+        Dice(!string.IsNullOrWhiteSpace(lbl?.Text),
+            $"y se dice que no hay video en vez de dejarlo en blanco ({lbl?.Text})");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// Organizar: que la pantalla abra y pinte su estado de partida.
     ///
     /// <para>
