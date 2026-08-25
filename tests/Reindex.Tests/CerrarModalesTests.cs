@@ -45,6 +45,7 @@ public static class CerrarModalesTests
 
         TodosLosModalesSeAbrenPidiendoUnBool(ficheros);
         NadieCierraConAlgoQueNoSeaUnBool(ficheros);
+        NingunaVentanaSeQuedaClavada(raiz, ficheros);
     }
 
     /// <summary>
@@ -104,6 +105,50 @@ public static class CerrarModalesTests
                 ? "nadie cierra con nada que no sea true o false: el dato va en una propiedad"
                 : $"{malos.Count} cierran con algo que no es un bool y revientan al devolverlo: " +
                   string.Join(" · ", malos));
+    }
+
+    /// <summary>
+    /// Ninguna ventana sin marco del sistema se queda sin arrastre.
+    ///
+    /// <para>
+    /// Todas las ventanas de Ondine van con <c>SystemDecorations="None"</c> porque dibujan su
+    /// propia barra de título. Eso se lleva por delante el arrastre y los bordes para estirar,
+    /// que en WPF daba <c>WindowChrome</c> gratis. <b>De las diez, ocho no los pedían</b>: se
+    /// quedaban clavadas donde el sistema las abriera, y no había manera de moverlas.
+    /// </para>
+    /// <para>
+    /// No da error ni sale en ninguna comprobación de arranque: mover una ventana necesita un
+    /// ratón de verdad. Lo que sí se puede comprobar sin abrir nada es que cada ventana lo
+    /// haya <b>pedido</b>, y eso es lo que se mira aquí.
+    /// </para>
+    /// </summary>
+    private static void NingunaVentanaSeQuedaClavada(string raiz, List<string> ficheros)
+    {
+        var sinMarco = Directory
+            .GetFiles(Path.Combine(raiz, "src", "Ondine.Avalonia"), "*.axaml", SearchOption.AllDirectories)
+            .Where(f => File.ReadAllText(f).Contains("SystemDecorations=\"None\""))
+            .Select(f => Path.GetFileName(f).Replace(".axaml", ""))
+            .ToList();
+
+        Program.Assert(sinMarco.Count >= 8,
+            $"se encuentran las ventanas sin marco del sistema ({sinMarco.Count})");
+
+        var clavadas = new List<string>();
+        foreach (var v in sinMarco)
+        {
+            var cs = ficheros.FirstOrDefault(f => Path.GetFileName(f) == v + ".axaml.cs");
+            if (cs is null) { clavadas.Add(v + " (sin code-behind)"); continue; }
+
+            var texto = File.ReadAllText(cs);
+            // O usa el ayudante compartido, o pide el arrastre por su cuenta.
+            if (!texto.Contains("ArrastrarLaVentana.Enganchar") && !texto.Contains("BeginMoveDrag"))
+                clavadas.Add(v);
+        }
+
+        Program.Assert(clavadas.Count == 0,
+            clavadas.Count == 0
+                ? $"y las {sinMarco.Count} piden el arrastre: ninguna se queda clavada"
+                : $"{clavadas.Count} no se pueden mover: {string.Join(", ", clavadas)}");
     }
 
     private static string LocalizarRaiz()

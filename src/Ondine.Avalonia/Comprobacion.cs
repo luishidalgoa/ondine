@@ -550,9 +550,19 @@ public static class Comprobacion
             // entonces reporta duracion. Se le da margen de sobra.
             await Task.Delay(2500);
 
-            var dur = v.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "lblDur");
-            var barra = v.GetVisualDescendants().OfType<Slider>().FirstOrDefault(s2 => s2.Name == "barra");
-            var fallo = v.GetVisualDescendants().OfType<StackPanel>().FirstOrDefault(p2 => p2.Name == "panelFallo");
+            // POR NOMBRE Y NO POR EL ARBOL VISUAL, y el motivo es del reproductor.
+            //
+            // Todo lo que va encima del video vive dentro de VideoView.Content, porque un
+            // NativeControlHost se pinta por encima de lo que dibuja Avalonia y como hermanos
+            // los controles quedaban tapados. Content se hospeda en una capa aparte, asi que
+            // esos controles YA NO SON descendientes visuales de la ventana: buscarlos por el
+            // arbol devuelve null, y un null aqui se lee igual que «esta mal».
+            //
+            // FindControl busca por el ambito de nombres del XAML, que es el mismo, y es lo
+            // que usa el propio reproductor para todo. Se le sigue.
+            var dur = v.FindControl<TextBlock>("lblDur");
+            var barra = v.FindControl<Slider>("barra");
+            var fallo = v.FindControl<StackPanel>("panelFallo");
 
             Dice(fallo?.IsVisible == false, "el video abre: no sale el panel de fallo");
             Dice(barra?.Maximum > 0.5, $"y LibVLC reporta la duracion ({barra?.Maximum:0.0}s)");
@@ -569,7 +579,7 @@ public static class Comprobacion
             // de los 2,6 s del apagon en arrancar, asi que para cuando se miraba ya se
             // habian escondido con toda la razon. Medir contra el reloj de arranque de otro
             // no mide nada.
-            var abajo = v.GetVisualDescendants().OfType<Grid>().FirstOrDefault(g => g.Name == "capaInferior");
+            var abajo = v.FindControl<Grid>("capaInferior");
 
             // Quieto: se esconden.
             await Task.Delay(3200);

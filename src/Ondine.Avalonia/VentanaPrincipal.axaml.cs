@@ -829,7 +829,14 @@ public partial class VentanaPrincipal : Window
             e.Pointer.Capture(lst);
             marquee.IsVisible = true;
         }
-        PintarYSeleccionar(new Rect(_marqueeStart, cur));
+        // .Normalize() NO ES ADORNO. El Rect de WPF toma dos esquinas CUALESQUIERA y las
+        // ordena; el de Avalonia es Rect(topLeft, bottomRight) y resta sin mas, asi que
+        // arrastrando hacia arriba o hacia la izquierda salian ancho y alto NEGATIVOS. Con eso
+        // el rectangulo no se dibuja -la medida recorta a cero- y Intersects no casa con
+        // ninguna fila: la seleccion por banda funcionaba en un sentido y en el otro no hacia
+        // absolutamente nada. Avalonia trae Normalize precisamente porque su constructor no
+        // garantiza lo que el de WPF si.
+        PintarYSeleccionar(new Rect(_marqueeStart, cur).Normalize());
         // Si el ratón roza el borde superior/inferior, desplazar solo para alcanzar lo de fuera.
         double h = lst.Bounds.Height;
         if (curV.Y < MarqueeBorde || curV.Y > h - MarqueeBorde) _marqueeAutoScroll.Start();
@@ -865,7 +872,9 @@ public partial class VentanaPrincipal : Window
             sv.Offset = new Vector(sv.Offset.X, Math.Min(Math.Max(0, sv.Extent.Height - sv.Viewport.Height), sv.Offset.Y + MarqueePaso));
         else { _marqueeAutoScroll.Stop(); return; }
         // el ratón no se ha movido, pero el contenido sí: recomputar el punto de contenido
-        PintarYSeleccionar(new Rect(_marqueeStart, PuntoContenido(_marqueeUltimoV)));
+        // Normalizada tambien aqui: el auto-scroll rehace la banda con el desplazamiento
+        // nuevo, y si esta va sin ordenar se pierde justo cuando el raton llega al borde.
+        PintarYSeleccionar(new Rect(_marqueeStart, PuntoContenido(_marqueeUltimoV)).Normalize());
     }
 
     /// <summary>Dibuja la banda (convertida a viewport) y selecciona lo que abarca, en coordenadas de contenido.</summary>
@@ -1735,46 +1744,24 @@ public partial class VentanaPrincipal : Window
     }
 
     /// <summary>
-    /// Cuántos píxeles del borde agarran para estirar. Seis: cuatro se fallan con el ratón
-    /// y diez se comen el clic de lo que haya pegado al borde por dentro.
+    /// Cuántos píxeles del borde agarran para estirar. Seis: cuatro se fallan con el ratón y
+    /// diez se comen el clic de lo que haya pegado al borde por dentro.
     /// </summary>
     private const double GrosorDelBorde = 6;
 
     /// <summary>
-    /// Qué borde de la ventana hay bajo un punto, o <c>null</c> si no hay ninguno.
-    ///
-    /// <para>
-    /// Aparte y sin tocar nada a propósito: es la única parte de «estirar la ventana» que se
-    /// puede comprobar sin un ratón de verdad, y es donde está lo que se puede equivocar —las
-    /// esquinas tienen que ganar a los lados, o estirar en diagonal es imposible.
-    /// </para>
+    /// Qué borde hay bajo un punto. Vive en <see cref="ArrastrarLaVentana"/> desde que las
+    /// otras ocho ventanas necesitaron lo mismo: aquí solo se le llama.
     /// </summary>
-    internal static WindowEdge? BordeEn(Point p, Size tamano, double grosor)
+    internal static Avalonia.Controls.WindowEdge? BordeEn(Point p, Size tamano, double grosor) =>
+        ArrastrarLaVentana.BordeEn(p, tamano, grosor);
+
+    private static StandardCursorType CursorDe(Avalonia.Controls.WindowEdge? borde) => borde switch
     {
-        bool izq = p.X <= grosor, der = p.X >= tamano.Width - grosor;
-        bool arr = p.Y <= grosor, aba = p.Y >= tamano.Height - grosor;
-
-        // Las esquinas primero: en una esquina se cumplen dos condiciones a la vez, y si
-        // ganara el lado no se podría estirar en diagonal, que es como se estira de verdad.
-        if (arr && izq) return WindowEdge.NorthWest;
-        if (arr && der) return WindowEdge.NorthEast;
-        if (aba && izq) return WindowEdge.SouthWest;
-        if (aba && der) return WindowEdge.SouthEast;
-
-        if (arr) return WindowEdge.North;
-        if (aba) return WindowEdge.South;
-        if (izq) return WindowEdge.West;
-        if (der) return WindowEdge.East;
-        return null;
-    }
-
-    /// <summary>El puntero que corresponde a cada borde. Sin flecha, nadie sabe que agarra.</summary>
-    private static StandardCursorType CursorDe(WindowEdge? borde) => borde switch
-    {
-        WindowEdge.North or WindowEdge.South => StandardCursorType.SizeNorthSouth,
-        WindowEdge.West or WindowEdge.East => StandardCursorType.SizeWestEast,
-        WindowEdge.NorthWest or WindowEdge.SouthEast => StandardCursorType.TopLeftCorner,
-        WindowEdge.NorthEast or WindowEdge.SouthWest => StandardCursorType.TopRightCorner,
+        Avalonia.Controls.WindowEdge.North or Avalonia.Controls.WindowEdge.South => StandardCursorType.SizeNorthSouth,
+        Avalonia.Controls.WindowEdge.West or Avalonia.Controls.WindowEdge.East => StandardCursorType.SizeWestEast,
+        Avalonia.Controls.WindowEdge.NorthWest or Avalonia.Controls.WindowEdge.SouthEast => StandardCursorType.TopLeftCorner,
+        Avalonia.Controls.WindowEdge.NorthEast or Avalonia.Controls.WindowEdge.SouthWest => StandardCursorType.TopRightCorner,
         _ => StandardCursorType.Arrow,
     };
 
@@ -2377,6 +2364,32 @@ public partial class VentanaPrincipal : Window
     private UpdateInfo? _pendingUpdate;
 
     /// <summary>
+    /// Le da permiso de ejecución al fichero descargado.
+    ///
+    /// <para>
+    /// Un AppImage bajado de internet viene sin él, así que abrirlo no hace nada: el sistema
+    /// no lo ejecuta y el escritorio, según cuál sea, o no responde o lo abre como un
+    /// comprimido. Es el mismo <c>chmod +x</c> que hay que teclear a mano, hecho aquí.
+    /// </para>
+    /// <para>
+    /// En Windows no existe ese permiso y la llamada no hace nada, así que no hace falta
+    /// preguntar por el sistema.
+    /// </para>
+    /// </summary>
+    private static void DarPermisoDeEjecucion(string ruta)
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows()) return;
+            var modo = File.GetUnixFileMode(ruta);
+            File.SetUnixFileMode(ruta, modo | UnixFileMode.UserExecute
+                                            | UnixFileMode.GroupExecute
+                                            | UnixFileMode.OtherExecute);
+        }
+        catch { /* si no se puede, el aviso de abajo dice cómo hacerlo a mano */ }
+    }
+
+    /// <summary>
     /// Qué se le dice al usuario según lo que se haya bajado. Cada paquete se instala de una
     /// forma y decir «ya está descargado» a secas deja a medias justo al final.
     /// </summary>
@@ -2423,7 +2436,27 @@ public partial class VentanaPrincipal : Window
             lblProg.Text = Textos.Instancia.MainDescargaEsperandoATi;
             updateBar.IsVisible = false;
 
-            EnElGestorDeArchivos.Ensenar(paquete);
+            // SE ABRE EL PAQUETE, no su carpeta.
+            //
+            // Antes se descargaba y se enseñaba dónde estaba, y eso deja un paso de más: hay
+            // que ir a buscarlo y hacerle doble clic. Abrirlo con su programa es exactamente
+            // ese doble clic — en Linux sale el instalador gráfico con su botón «Instalar», y
+            // en un Mac se monta el .dmg y aparece la ventana para arrastrar Ondine a
+            // Aplicaciones.
+            //
+            // El AppImage es aparte: no se instala, se ejecuta, y descargado viene SIN permiso
+            // de ejecución. Sin dárselo, abrirlo no haría nada.
+            if (Updater.ComoSeInstala(_pendingUpdate.Paquete) == Updater.Entrega.MarcarEjecutableYEnsenar)
+            {
+                DarPermisoDeEjecucion(paquete);
+                EnElGestorDeArchivos.Ensenar(paquete);
+            }
+            else if (!EnElGestorDeArchivos.AbrirConSuPrograma(paquete))
+            {
+                // Sin programa asignado -pasa en escritorios pelados- al menos se enseña.
+                EnElGestorDeArchivos.Ensenar(paquete);
+            }
+
             await Dialogo.Aviso(this, Textos.Instancia.MainActualizarTitulo,
                 string.Format(QueHacerCon(_pendingUpdate.Paquete),
                               System.IO.Path.GetFileName(paquete)));

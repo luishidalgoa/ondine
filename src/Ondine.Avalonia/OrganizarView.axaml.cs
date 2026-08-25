@@ -319,10 +319,16 @@ public partial class OrganizarView : UserControl
         btnVaciarCola.Click += async (_, _) => await VaciarCola();
 
         tabla.KeyDown += OnTablaKeyDown;
-        tabla.PointerPressed += OnTablaClic;
         // Arrastrar para marcar varias filas de una pasada. En WPF eran los eventos
         // «Preview», que aqui no existen: se pide la fase de tunel con AddHandler.
-        tabla.PointerMoved += OnTablaArrastre;
+        //
+        // Y AQUI ESTABA ESCRITO Y NO HECHO: estas dos lineas usaban el evento normal, que es
+        // burbuja, asi que el DataGrid se quedaba la pulsacion para hacer su propia seleccion
+        // antes de que llegara. La tabla va en SelectionMode=Single, o sea que marcar varias
+        // filas arrastrando -que es lo unico que da seleccion multiple en esta pantalla- no
+        // arrancaba nunca. La tercera, la de soltar, si estaba bien.
+        tabla.AddHandler(InputElement.PointerPressedEvent, OnTablaClic, RoutingStrategies.Tunnel);
+        tabla.AddHandler(InputElement.PointerMovedEvent, OnTablaArrastre, RoutingStrategies.Tunnel);
         tabla.AddHandler(InputElement.PointerReleasedEvent, (_, _) => _pintando = null,
                          RoutingStrategies.Tunnel);
         tabla.PointerExited += (_, _) => _pintando = null;

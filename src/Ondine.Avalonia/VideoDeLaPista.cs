@@ -37,6 +37,23 @@ internal sealed class VideoDeLaPista : IDisposable
     /// <summary>No se pudo abrir. El texto es de LibVLC: es un diagnóstico, no un rótulo.</summary>
     public event Action<string>? Fallo;
 
+    /// <summary>
+    /// Si lo que falló fue que <b>no hay motor de vídeo</b> (libVLC sin instalar), y no que el
+    /// vídeo tenga un códec raro.
+    ///
+    /// <para>
+    /// Son dos cosas distintas con dos respuestas distintas, y quien escucha
+    /// <see cref="Fallo"/> tiraba el mensaje y contaba siempre la del códec. En Linux o macOS
+    /// sin VLC, eso significaba culpar al fichero cuando lo que falta es un paquete — y el
+    /// mensaje bueno, con la orden para instalarlo, se perdía por el camino.
+    /// </para>
+    /// <para>
+    /// Es una bandera y no una comparación de cadenas: el texto cambia con el idioma y con la
+    /// versión, y comparar textos es la forma de que esto vuelva a romperse en silencio.
+    /// </para>
+    /// </summary>
+    public bool MotorAusente { get; private set; }
+
     public VideoDeLaPista(LibVLCSharp.Avalonia.VideoView vista) => _vista = vista;
 
     /// <summary>Si el motor llegó a arrancar. Sin libVLC instalado, no.</summary>
@@ -64,6 +81,7 @@ internal sealed class VideoDeLaPista : IDisposable
             // en Linux es lo normal la primera vez y se arregla con una línea.
             bool falta = ex is DllNotFoundException or VLCException
                          or TypeInitializationException { InnerException: DllNotFoundException };
+            MotorAusente = falta;
             Fallo?.Invoke(falta ? Ondine.Localizacion.Textos.Instancia.ReproductorFaltaLibVlc : ex.Message);
             return false;
         }

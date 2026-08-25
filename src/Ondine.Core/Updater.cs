@@ -118,6 +118,49 @@ public static class Updater
         _ => false,
     };
 
+    /// <summary>Qué se hace con el paquete una vez descargado.</summary>
+    public enum Entrega
+    {
+        /// <summary>Se lanza y la aplicación se cierra para dejarle trabajar. Solo Windows.</summary>
+        EjecutarYSalir,
+        /// <summary>
+        /// Se abre con el programa que el escritorio le tenga asignado: el <c>.deb</c> saca su
+        /// instalador gráfico con el botón «Instalar», el <c>.dmg</c> se monta y enseña la
+        /// ventana para arrastrar la app a Aplicaciones. Lo mismo que el doble clic.
+        /// </summary>
+        AbrirConSuPrograma,
+        /// <summary>
+        /// Se le da permiso de ejecución y se enseña dónde está. Un AppImage no se instala, se
+        /// ejecuta — y descargado viene <b>sin</b> permiso, así que sin esto es peso muerto.
+        /// </summary>
+        MarcarEjecutableYEnsenar,
+    }
+
+    /// <summary>
+    /// Qué hacer con lo descargado.
+    ///
+    /// <para>
+    /// La primera versión solo distinguía dos casos: Windows se ejecuta, los demás «se dejan
+    /// descargados». Eso arregló el fallo gordo —lanzar el <c>.exe</c> de Windows en Linux
+    /// acababa en el gestor de archivadores— pero se quedaba corto: descargar el <c>.deb</c> y
+    /// abrir su carpeta es un paso más de los necesarios.
+    /// </para>
+    /// <para>
+    /// <b>Lo que NO se hace, y por qué:</b> instalar el <c>.deb</c> por nuestra cuenta con
+    /// <c>pkexec apt install</c>. Se puede, y es un paso menos, pero significa que Ondine pide
+    /// la contraseña de administrador y ejecuta un gestor de paquetes como root. Eso es una
+    /// promesa mucho más grande —y una superficie mucho más grande— que abrir el fichero y
+    /// dejar que el instalador del sistema haga su trabajo, con su propio diálogo y su propia
+    /// autorización.
+    /// </para>
+    /// </summary>
+    public static Entrega ComoSeInstala(Paquete paquete) => paquete switch
+    {
+        Paquete.InstaladorDeWindows => Entrega.EjecutarYSalir,
+        Paquete.AppImageDeLinux => Entrega.MarcarEjecutableYEnsenar,
+        _ => Entrega.AbrirConSuPrograma,
+    };
+
     /// <summary>
     /// ¿Puede este paquete instalarse él solo?
     ///
@@ -128,7 +171,8 @@ public static class Updater
     /// arrastra: ninguno es «ejecutar y salir», y tratarlos así fue el fallo.
     /// </para>
     /// </summary>
-    public static bool SeInstalaSolo(Paquete paquete) => paquete == Paquete.InstaladorDeWindows;
+    public static bool SeInstalaSolo(Paquete paquete) =>
+        ComoSeInstala(paquete) == Entrega.EjecutarYSalir;
 
     /// <summary>
     /// Con qué se actualiza ESTA instalación, mirando dónde está.

@@ -136,66 +136,84 @@
                 <GradientStop Color="#090A11" Offset="1"/>
               </LinearGradientBrush>
             </Grid.Background>
-            <vlc:VideoView Name="video"/>
+            <!--
+                  TODO LO QUE VA ENCIMA DEL VIDEO VA DENTRO DE VideoView.Content, y no como hermano.
+            
+                  VideoView es un NativeControlHost: una ventana del sistema metida en la nuestra. Y una
+                  ventana nativa se pinta ENCIMA de todo lo que dibuja Avalonia, diga lo que diga el orden
+                  del XAML o el ZIndex. Puestos como hermanos, los controles no se veian y no recibian el
+                  raton: el titulo, el transporte, la barra de posicion y el lienzo de clic quedaban
+                  tapados por el video.
+            
+                  LibVLCSharp trae Content precisamente para esto: lo que se le da se pinta en una capa
+                  por encima del video nativo. Compilaba igual de las dos formas, y de una de ellas no se
+                  veia nada.
+                -->
+            <vlc:VideoView Name="video">
+              <vlc:VideoView.Content>
+                <Grid Name="encimaDelVideo">
 
-            <!-- Plan B cuando Windows no sabe decodificar el vídeo (AV1, HEVC…): los
-                 fotogramas los saca ffmpeg, que sí sabe, y son los mismos que ya tiende
-                 la tira del fondo. Cortar nunca dependió de esto -eso también lo hace
-                 ffmpeg-, lo que faltaba era poder VER dónde cortas. -->
-            <Image Name="imgFotograma" Stretch="Uniform" IsVisible="False"/>
-            <!-- El texto del estado vacío va en una pastilla translúcida: así se lee igual de
-                 bien sobre el fondo que sobre el vídeo. -->
-            <Border Name="chipSinVideo" HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Background="#66101018" CornerRadius="8" Padding="14,7">
-              <TextBlock Name="lblSinVideo" Text="{i:T RecortesElegirParaEmpezar}"
-                         FontSize="12.5" Foreground="{StaticResource Neutral300}"/>
-            </Border>
+                <!-- Plan B cuando Windows no sabe decodificar el vídeo (AV1, HEVC…): los
+                     fotogramas los saca ffmpeg, que sí sabe, y son los mismos que ya tiende
+                     la tira del fondo. Cortar nunca dependió de esto -eso también lo hace
+                     ffmpeg-, lo que faltaba era poder VER dónde cortas. -->
+                <Image Name="imgFotograma" Stretch="Uniform" IsVisible="False"/>
+                <!-- El texto del estado vacío va en una pastilla translúcida: así se lee igual de
+                     bien sobre el fondo que sobre el vídeo. -->
+                <Border Name="chipSinVideo" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="#66101018" CornerRadius="8" Padding="14,7">
+                  <TextBlock Name="lblSinVideo" Text="{i:T RecortesElegirParaEmpezar}"
+                             FontSize="12.5" Foreground="{StaticResource Neutral300}"/>
+                </Border>
 
-            <!-- Mientras se prepara el vídeo, la página entera está deshabilitada: dejar
-                 tocar los controles con el material a medio cargar solo produce estados
-                 raros. Aquí se dice qué está pasando y cuánto queda. -->
-            <Border Name="capaCarga" IsVisible="False" Background="#CC08090F">
-              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="300">
-                <TextBlock Name="lblCarga" Text="{i:T RecortesPreparandoVideo}" FontSize="12.5"
-                           HorizontalAlignment="Center" Foreground="{StaticResource Neutral300}"/>
-                <ProgressBar Name="barCarga" Height="4" Margin="0,10,0,0" Minimum="0" Maximum="1"/>
-                <TextBlock Name="lblCargaDet" Margin="0,7,0,0" FontSize="11" HorizontalAlignment="Center"
-                           Foreground="{StaticResource Neutral600}" Text=""/>
-              </StackPanel>
-            </Border>
+                <!-- Mientras se prepara el vídeo, la página entera está deshabilitada: dejar
+                     tocar los controles con el material a medio cargar solo produce estados
+                     raros. Aquí se dice qué está pasando y cuánto queda. -->
+                <Border Name="capaCarga" IsVisible="False" Background="#CC08090F">
+                  <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="300">
+                    <TextBlock Name="lblCarga" Text="{i:T RecortesPreparandoVideo}" FontSize="12.5"
+                               HorizontalAlignment="Center" Foreground="{StaticResource Neutral300}"/>
+                    <ProgressBar Name="barCarga" Height="4" Margin="0,10,0,0" Minimum="0" Maximum="1"/>
+                    <TextBlock Name="lblCargaDet" Margin="0,7,0,0" FontSize="11" HorizontalAlignment="Center"
+                               Foreground="{StaticResource Neutral600}" Text=""/>
+                  </StackPanel>
+                </Border>
 
-            <!-- ══ Mientras se exporta ══
-                 El reproductor se apaga a propósito: el motor necesita el fichero suelto
-                 para poder codificarlo. En vez de dejar un rectángulo negro que parece una
-                 avería, se vela la imagen y se dice por qué. Los pulsos de luz son el mismo
-                 lenguaje que el fondo de la app —manchas radiales muy tenues— pero latiendo,
-                 para que se lea como «trabajando» y no como «colgado». -->
-            <!-- Capa de exportación: solo el mensaje sobre un velo RADIAL —oscuro en el centro
-                 para que el texto se lea, transparente en los cantos para que asome el fondo
-                 degradado del reproductor—, no un velo plano. -->
-            <Border Name="capaExportando" IsVisible="False">
-              <Border.Background>
-                <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.75" RadiusY="0.75">
-                  <GradientStop Color="#8C0C0E16" Offset="0"/>
-                  <GradientStop Color="#000C0E16" Offset="1"/>
-                </RadialGradientBrush>
-              </Border.Background>
-              <Grid ClipToBounds="True">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="360">
-                  <!-- Triángulo de aviso, dibujado: nada de fuentes de iconos. -->
-                  <Path HorizontalAlignment="Center" Stretch="Uniform" Width="34" Height="34"
-                        Stroke="White" StrokeThickness="1.6" StrokeJoin="Round"
-                        Data="M12,3.4 L22,20.6 L2,20.6 Z M12,9.5 L12,14.5 M12,17.2 L12,17.4"
-                        StrokeLineCap="Round"/>
-                  <TextBlock Margin="0,12,0,0" FontSize="13" FontWeight="Medium" Foreground="White"
-                             TextAlignment="Center" TextWrapping="Wrap"
-                             Text="{i:T RecortesReproductorEnPausa}"/>
-                  <TextBlock Margin="0,5,0,0" FontSize="11.5" Foreground="#CBD0E2"
-                             TextAlignment="Center" TextWrapping="Wrap"
-                             Text="{i:T RecortesReproductorEnPausaDetalle}"/>
-                </StackPanel>
-              </Grid>
-            </Border>
+                <!-- ══ Mientras se exporta ══
+                     El reproductor se apaga a propósito: el motor necesita el fichero suelto
+                     para poder codificarlo. En vez de dejar un rectángulo negro que parece una
+                     avería, se vela la imagen y se dice por qué. Los pulsos de luz son el mismo
+                     lenguaje que el fondo de la app —manchas radiales muy tenues— pero latiendo,
+                     para que se lea como «trabajando» y no como «colgado». -->
+                <!-- Capa de exportación: solo el mensaje sobre un velo RADIAL —oscuro en el centro
+                     para que el texto se lea, transparente en los cantos para que asome el fondo
+                     degradado del reproductor—, no un velo plano. -->
+                <Border Name="capaExportando" IsVisible="False">
+                  <Border.Background>
+                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.75" RadiusY="0.75">
+                      <GradientStop Color="#8C0C0E16" Offset="0"/>
+                      <GradientStop Color="#000C0E16" Offset="1"/>
+                    </RadialGradientBrush>
+                  </Border.Background>
+                  <Grid ClipToBounds="True">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="360">
+                      <!-- Triángulo de aviso, dibujado: nada de fuentes de iconos. -->
+                      <Path HorizontalAlignment="Center" Stretch="Uniform" Width="34" Height="34"
+                            Stroke="White" StrokeThickness="1.6" StrokeJoin="Round"
+                            Data="M12,3.4 L22,20.6 L2,20.6 Z M12,9.5 L12,14.5 M12,17.2 L12,17.4"
+                            StrokeLineCap="Round"/>
+                      <TextBlock Margin="0,12,0,0" FontSize="13" FontWeight="Medium" Foreground="White"
+                                 TextAlignment="Center" TextWrapping="Wrap"
+                                 Text="{i:T RecortesReproductorEnPausa}"/>
+                      <TextBlock Margin="0,5,0,0" FontSize="11.5" Foreground="#CBD0E2"
+                                 TextAlignment="Center" TextWrapping="Wrap"
+                                 Text="{i:T RecortesReproductorEnPausaDetalle}"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                </Grid>
+              </vlc:VideoView.Content>
+            </vlc:VideoView>
           </Grid>
 
           <StackPanel Grid.Row="1" Margin="14,8,14,12">

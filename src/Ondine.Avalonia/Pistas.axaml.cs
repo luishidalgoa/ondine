@@ -55,7 +55,16 @@ public partial class Pistas : Window
 
     public bool SeCambioAlgo { get; private set; }
 
-    public Pistas() => AvaloniaXamlLoader.Load(this);
+        /// <summary>
+    /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
+    /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
+    /// abriera.
+    /// </summary>
+    public Pistas()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ArrastrarLaVentana.Enganchar(this);
+    }
 
     public Pistas(Engine engine, string path, IReadOnlyList<Pista> pistas, int duracionSeg) : this()
     {

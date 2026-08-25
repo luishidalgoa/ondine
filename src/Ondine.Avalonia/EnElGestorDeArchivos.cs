@@ -49,6 +49,39 @@ internal static class EnElGestorDeArchivos
     ];
 
     /// <summary>
+    /// Abre un fichero con el programa que el escritorio le tenga asignado. Devuelve si se
+    /// pudo lanzar algo.
+    ///
+    /// <para>
+    /// Es lo mismo que hacerle doble clic, y por eso vale para entregar una actualización: un
+    /// <c>.deb</c> abre su instalador gráfico con el botón «Instalar», y un <c>.dmg</c> se monta
+    /// y enseña la ventana para arrastrar la app a Aplicaciones.
+    /// </para>
+    /// <para>
+    /// No es lo mismo que <see cref="Ensenar"/>, que abre la carpeta y señala el fichero
+    /// <b>dentro</b>. Descargar una actualización y dejarte el explorador abierto es un paso
+    /// más de los necesarios.
+    /// </para>
+    /// </summary>
+    public static bool AbrirConSuPrograma(string ruta)
+    {
+        if (string.IsNullOrWhiteSpace(ruta) || !File.Exists(ruta)) return false;
+
+        try
+        {
+            // Los tres sistemas tienen su forma de decir «abre esto con lo que le toque».
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return Lanzar("cmd.exe", $"/c start \"\" \"{ruta}\"");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                return Lanzar("open", $"\"{ruta}\"");
+
+            return Lanzar("xdg-open", $"\"{ruta}\"");
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
     /// Abre una carpeta en el gestor de archivos. Devuelve si se pudo lanzar algo.
     ///
     /// <para>

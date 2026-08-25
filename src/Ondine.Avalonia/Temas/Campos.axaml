@@ -43,15 +43,30 @@
                        Foreground="{StaticResource Neutral600}"
                        IsVisible="False"
                        VerticalAlignment="Center"/>
-            <TextPresenter Name="PART_TextPresenter"
-                           Text="{TemplateBinding Text, Mode=TwoWay}"
-                           CaretBrush="{TemplateBinding CaretBrush}"
-                           SelectionBrush="{TemplateBinding SelectionBrush}"
-                           SelectionStart="{TemplateBinding SelectionStart}"
-                           SelectionEnd="{TemplateBinding SelectionEnd}"
-                           TextWrapping="{TemplateBinding TextWrapping}"
-                           Margin="{TemplateBinding Padding}"
-                           VerticalAlignment="Center"/>
+            <!-- EL VISOR ES OBLIGATORIO, Y FALTABA.
+
+                 Un ControlTheme sustituye al del tema base, asi que esta plantilla es la
+                 unica que hay: sin ScrollViewer, el texto que no cabe en la caja NO SE PUEDE
+                 DESPLAZAR. Ni con la rueda, ni con las flechas, ni arrastrando. En una caja
+                 de una linea casi no se nota; en la de Encargo -que es donde se lee el
+                 prompt entero para la IA- deja fuera casi todo el texto.
+
+                 Se llama PART_ScrollViewer porque es el nombre que busca el TextBox para
+                 llevar el cursor a la vista al escribir. Con otro nombre compila igual y el
+                 cursor se sale de la caja. -->
+            <ScrollViewer Name="PART_ScrollViewer"
+                          HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                          VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+              <TextPresenter Name="PART_TextPresenter"
+                             Text="{TemplateBinding Text, Mode=TwoWay}"
+                             CaretBrush="{TemplateBinding CaretBrush}"
+                             SelectionBrush="{TemplateBinding SelectionBrush}"
+                             SelectionStart="{TemplateBinding SelectionStart}"
+                             SelectionEnd="{TemplateBinding SelectionEnd}"
+                             TextWrapping="{TemplateBinding TextWrapping}"
+                             Margin="{TemplateBinding Padding}"
+                             VerticalAlignment="Center"/>
+            </ScrollViewer>
           </Panel>
         </Border>
       </ControlTemplate>

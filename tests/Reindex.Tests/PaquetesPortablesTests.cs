@@ -42,6 +42,7 @@ public static class PaquetesPortablesTests
         ElNombreDiceElSistema(raiz);
         ElIconoNoDependeDeUnSoloSitio(raiz);
         UnaSolaPuertaAlGestorDeArchivos(raiz);
+        NadaAlLadoDelVideo(raiz);
     }
 
     /// <summary>
@@ -235,6 +236,48 @@ public static class PaquetesPortablesTests
             culpables.Count == 0
                 ? "solo EnElGestorDeArchivos sabe de explorer.exe: los demás pasan por él"
                 : $"{culpables.Count} llaman a explorer.exe a pelo, y fuera de Windows eso no hace nada: {string.Join(", ", culpables)}");
+    }
+
+    /// <summary>
+    /// Nada se pone AL LADO del vídeo: todo lo que va encima va dentro de
+    /// <c>VideoView.Content</c>.
+    ///
+    /// <para>
+    /// <c>VideoView</c> es un <c>NativeControlHost</c>: una ventana del sistema metida en la
+    /// nuestra. Y una ventana nativa se pinta <b>encima de todo</b> lo que dibuja Avalonia,
+    /// diga lo que diga el orden del XAML o el <c>ZIndex</c>. Puestos como hermanos, el título,
+    /// el transporte, la barra de posición y el lienzo de clic quedaban tapados y sin ratón —y
+    /// en Recortes tapaba <c>imgFotograma</c>, que es justo el plan B que se enseña cuando
+    /// libVLC falla—.
+    /// </para>
+    /// <para>
+    /// La forma de detectarlo sin abrir nada: un <c>VideoView</c> que se cierra solo
+    /// —<c>&lt;vlc:VideoView Name="video"/&gt;</c>— no puede tener contenido, así que lo que
+    /// haya encima está por fuerza al lado.
+    /// </para>
+    /// </summary>
+    private static void NadaAlLadoDelVideo(string raiz)
+    {
+        var carpeta = Path.Combine(raiz, "src", "Ondine.Avalonia");
+        if (!Directory.Exists(carpeta)) { Program.Assert(false, "no encuentro Ondine.Avalonia"); return; }
+
+        var conVideo = Directory.GetFiles(carpeta, "*.axaml", SearchOption.AllDirectories)
+            .Where(f => File.ReadAllText(f).Contains("vlc:VideoView"))
+            .ToList();
+
+        Program.Assert(conVideo.Count >= 2,
+            $"se encuentran las pantallas con vídeo ({conVideo.Count})");
+
+        var malas = conVideo
+            .Where(f => System.Text.RegularExpressions.Regex
+                .IsMatch(File.ReadAllText(f), @"<vlc:VideoView[^>]*/>"))
+            .Select(Path.GetFileName)
+            .ToList();
+
+        Program.Assert(malas.Count == 0,
+            malas.Count == 0
+                ? "ningún VideoView se cierra solo: lo que va encima va dentro de su Content"
+                : $"{malas.Count} tienen un VideoView vacío, así que lo de encima está al lado y queda tapado: {string.Join(", ", malas)}");
     }
 
     private static string Entre(string texto, string desde, string hasta)

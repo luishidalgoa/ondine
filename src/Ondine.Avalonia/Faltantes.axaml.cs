@@ -41,7 +41,16 @@ public partial class Faltantes : Window
     private readonly bool _porAnio;
     private CoberturaCatalogo.Informe _informe = null!;
 
-    public Faltantes() => AvaloniaXamlLoader.Load(this);
+        /// <summary>
+    /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
+    /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
+    /// abriera.
+    /// </summary>
+    public Faltantes()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ArrastrarLaVentana.Enganchar(this);
+    }
 
     public Faltantes(ReindexCatalog catalogo, IReadOnlyList<ReindexResolution> resoluciones) : this()
     {

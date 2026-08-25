@@ -156,7 +156,16 @@ public partial class Catalogo : Window
     /// </summary>
     private readonly Dictionary<int, CoberturaCatalogo.Tenencia> _tenencia = [];
 
-    public Catalogo() => AvaloniaXamlLoader.Load(this);
+        /// <summary>
+    /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
+    /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
+    /// abriera.
+    /// </summary>
+    public Catalogo()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ArrastrarLaVentana.Enganchar(this);
+    }
 
     /// <param name="loQueHay">
     /// Lo identificado en la carpeta, para poder decir de cada episodio si lo tienes y dónde.

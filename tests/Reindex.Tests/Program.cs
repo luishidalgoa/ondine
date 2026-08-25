@@ -138,6 +138,7 @@ public static class Program
         Ondine.Reindex.Tests.PaqueteDeEscritorioTests.Todas();
         Ondine.Reindex.Tests.PaquetesPortablesTests.Todas();
         Ondine.Reindex.Tests.ActualizarEnCadaSistemaTests.Todas();
+        Ondine.Reindex.Tests.ComoSeInstalaTests.Todas();
         Ondine.Reindex.Tests.NombreValidoEnTodasPartesTests.Todas();
         Ondine.Reindex.Tests.CerrarModalesTests.Todas();
         Ondine.Reindex.Tests.PuntoDeMontajeTests.Todas();
