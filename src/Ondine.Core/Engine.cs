@@ -83,6 +83,17 @@ public sealed class FileResult
     public string OutputPath { get; set; } = "";   // ruta del comprimido resultante
     /// <summary>Si se perdió algún subtítulo por el contenedor elegido, el motivo (para avisar en la UI).</summary>
     public string? SubtitleWarning { get; set; }
+
+    /// <summary>
+    /// Por qué falló, cuando falló. Lo que ffmpeg escribió, ya limpio.
+    ///
+    /// <para>
+    /// Existe porque no existía: la fila decía «Error» y el registro un número, y la salida de
+    /// error de ffmpeg —que dice el motivo— se tiraba. Aquí viaja hasta la tabla, que la enseña
+    /// al pasar el ratón por encima del estado.
+    /// </para>
+    /// </summary>
+    public string? Detalle { get; set; }
     public bool Ok => OutBytes is > 0;
 }
 
@@ -830,8 +841,13 @@ public sealed class Engine
                 else
                 {
                     try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
-                    rep.Log(string.Format(t.MotorErrorCodificar, code));
-                    var r = new FileResult { Name = name, InBytes = fi.Length, OutBytes = null, Status = t.Error, SourcePath = f, OutputPath = outPath };
+                    // EL MOTIVO, no el número. «err» ya estaba aquí -se usa dos líneas arriba
+                    // para detectar el disco lleno- y en cualquier otro fallo se tiraba: doce
+                    // capítulos fallaron con doce «código 243» y ninguna pista de que era un
+                    // permiso de escritura.
+                    var motivo = MotivoDeFfmpeg.De(code, err);
+                    rep.Log(string.Format(t.MotorErrorCodificar, motivo));
+                    var r = new FileResult { Name = name, InBytes = fi.Length, OutBytes = null, Status = t.Error, SourcePath = f, OutputPath = outPath, Detalle = motivo };
                     results.Add(r); rep.FileDone(r);
                 }
             }

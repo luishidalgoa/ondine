@@ -107,8 +107,13 @@
                 <TextBlock><Run Text="+ "/><Run Text="{i:T PromptAnadirIdioma}"/></TextBlock>
               </ToggleButton>
 
+              <!-- IsLightDismissEnabled: en WPF era StaysOpen="False" y al portar se perdió,
+                   así que este emergente se quedaba abierto hasta volver a pulsar el botón.
+                   Los otros dos del mismo patrón -las marcas y la cola de Organizar- sí lo
+                   llevan; este se olvidó. -->
               <Popup Name="popIdiomas" PlacementTarget="{Binding #btnAnadirIdioma}"
                      Placement="Bottom" HorizontalOffset="-232"
+                     IsLightDismissEnabled="True"
                      IsOpen="{Binding #btnAnadirIdioma.IsChecked, Mode=TwoWay}">
                 <Border Background="{StaticResource Surface}"
                         BorderBrush="{StaticResource Neutral800}"

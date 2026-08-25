@@ -2217,6 +2217,11 @@ public partial class OrganizarView : UserControl
 
     private void RecordarDecision(OrganizarRow fila, CatalogEpisode ep, string? seg = null)
     {
+        // SE PREGUNTA A LA CASILLA. Antes no: «Recordar esta decisión» se pintaba, se podía
+        // desmarcar y daba igual — la decisión se guardaba siempre. Se comprueba aquí y no en
+        // los tres sitios que llaman, para que no se pueda olvidar en el cuarto.
+        if (!fila.RecordarDecisionActiva) return;
+
         _decisiones[fila.Res.Archivo.Fingerprint] = new ReindexOverride
         {
             Num = ep.Num,

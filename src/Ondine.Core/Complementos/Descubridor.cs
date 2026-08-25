@@ -64,4 +64,25 @@ public static class Descubridor
             buenos.OrderBy(c => c.Nombre, StringComparer.CurrentCultureIgnoreCase).ToList(),
             malos.OrderBy(m => m.Item1.Id, StringComparer.OrdinalIgnoreCase).ToList());
     }
+
+    /// <summary>
+    /// Los complementos que de verdad se ofrecen: los que están bien Y no se han apagado a
+    /// mano en el panel.
+    ///
+    /// <para>
+    /// Existe porque el interruptor de apagar no se respetaba en ninguna parte: el panel lo
+    /// pintaba y los dos sitios que ofrecen complementos —el botón de la barra en cada
+    /// interfaz— seguían contándolos y ofreciéndolos. Un interruptor que se mueve y no apaga
+    /// es peor que no tenerlo.
+    /// </para>
+    /// <para>
+    /// Aquí y no en cada interfaz: son dos, y la segunda se habría olvidado.
+    /// </para>
+    /// </summary>
+    public static List<Complemento> Encendidos()
+    {
+        var apagados = new HashSet<string>(SettingsStore.Load().ComplementosApagados,
+                                           StringComparer.OrdinalIgnoreCase);
+        return Buscar().Bueno.Where(c => !apagados.Contains(c.Id)).ToList();
+    }
 }

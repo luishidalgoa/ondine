@@ -33,6 +33,23 @@ public sealed class VideoRow : INotifyPropertyChanged
     /// <summary>Ya está en un códec eficiente con bitrate bajo: no merece la pena recomprimirlo.</summary>
     public bool YaComprimido { get; set; }
 
+    private string? _detalle;
+
+    /// <summary>
+    /// El por qué del estado, cuando hay uno que contar. Es lo que se enseña al pasar el ratón
+    /// por encima de la celda.
+    ///
+    /// <para>
+    /// Existe porque la columna dice «Error» y nada más, y el motivo -que ffmpeg sí da- no
+    /// llegaba a ninguna parte. Con doce ficheros fallando, doce «Error» y ninguna pista.
+    /// </para>
+    /// </summary>
+    public string? Detalle
+    {
+        get => _detalle;
+        set { _detalle = value; N(); }
+    }
+
     /// <summary>
     /// Color del estado. Verde = terminado con ahorro · rojo = error · morado = en curso ·
     /// apagado = saltado o pendiente. El texto ya distingue por sí solo, así que el color

@@ -514,7 +514,7 @@
              para las filas que no tienen nada que resolver. -->
         <!-- La separación por temporada la pinta cada fila (ver «banda» en OrgRow), no
              DataGrid.GroupStyle: agrupar rompe el reparto de las columnas en «*». -->
-        <DataGrid x:Name="tabla" Style="{StaticResource OrgGrid}"
+        <DataGrid x:Name="tabla" Style="{StaticResource OrgGrid}" RowStyle="{StaticResource OrgRow}"
                   RowDetailsVisibilityMode="VisibleWhenSelected"
                   Sorting="OnTablaSorting">
           <!-- Va en la tabla y no en el estilo de fila: el estilo vive en un diccionario

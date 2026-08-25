@@ -467,8 +467,15 @@ public partial class VentanaPrincipal : Window
     {
         // Las extensiones salen del motor y no de una lista escrita aquí: es la misma que
         // decide luego si un fichero es un video, y dos listas se separan sin avisar.
+        // El NOMBRE del tipo, no el filtro entero de WPF.
+        //
+        // Aqui se pasaba MainFiltroVideos, que es la cadena de WPF -«Videos|*.mkv;*.mp4|Todos
+        // los archivos|*.*»-, y el selector la usa como ETIQUETA del tipo: en el desplegable
+        // salia esa frase con tuberias y asteriscos. Y de paso se perdia lo que aquella cadena
+        // traia de segundo: la opcion «todos los archivos», que hace falta para abrir algo con
+        // una extension rara.
         var ficheros = await Selector.FicherosAsync(
-            this, Textos.Instancia.MainElegirVideosTitulo, Textos.Instancia.MainFiltroVideos,
+            this, Textos.Instancia.MainElegirVideosTitulo, Textos.Instancia.MainTipoVideos,
             [.. Engine.VideoExtensions.Select(e => "*" + e)]);
 
         if (ficheros.Count > 0) await AddFilesAsync(ficheros);
@@ -1909,7 +1916,9 @@ public partial class VentanaPrincipal : Window
     private void RefrescarComplementos()
     {
         var modo = ModoDe(_paginaActual);
-        var suyos = Complementos.Descubridor.Buscar().Bueno.Where(c => c.SaleEn(modo)).ToList();
+        // Encendidos() y no Buscar().Bueno: respeta el interruptor de apagar del panel, que
+        // antes se movía y no apagaba nada aquí.
+        var suyos = Complementos.Descubridor.Encendidos().Where(c => c.SaleEn(modo)).ToList();
 
         btnComplementos.IsVisible = suyos.Count > 0;
         lblCuantosComplementos.Text = suyos.Count.ToString();
@@ -2289,7 +2298,12 @@ public partial class VentanaPrincipal : Window
             Dispatcher.UIThread.Post(() =>
             {
                 if (RowOf(r.SourcePath) is { } row)
+                {
                     row.Estado = r.Ok ? $"{r.Status} · {Human(r.OutBytes!.Value)}" : Textos.Instancia.Error;
+                    // El motivo del fallo viaja a la fila para que la celda lo cuente al pasar
+                    // el ratón: «Error» a secas no deja arreglar nada.
+                    row.Detalle = r.Detalle;
+                }
                 if (_current != null && string.Equals(_current.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase))
                     _current = null;
             });

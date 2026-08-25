@@ -37,11 +37,14 @@
       <Setter Property="Background" Value="{StaticResource Accent800}"/>
     </Style>
 
-    <!-- El tema de la fila. El DataGrid de Avalonia no tiene nada como el RowStyle de WPF,
-         asi que se pone con un estilo suelto que alcanza a las filas que crea. -->
-    <Style Selector="DataGridRow">
-      <Setter Property="Theme" Value="{StaticResource OrgRow}"/>
-    </Style>
+    <!-- AQUI NO VA EL TEMA DE LA FILA, y estuvo yendo.
+         Un estilo suelto con selector «DataGridRow» alcanza a las filas de CUALQUIER tabla de
+         esta pantalla, y hay dos: la de capitulos y la de peliculas. El tema de fila lleva
+         encima la banda separadora de temporada, asi que en la tabla de peliculas salia una
+         banda de 30 px EN TODAS LAS FILAS y vacia -PeliculaFila no tiene temporada que
+         mostrar, el enlace no resuelve y la banda se queda visible-.
+         El DataGrid de Avalonia SI tiene RowTheme, asi que se le pone a la tabla que lo
+         necesita y a la otra no. -->
   </UserControl.Styles>
 
   <Grid>
@@ -539,7 +542,7 @@
              para las filas que no tienen nada que resolver. -->
         <!-- La separación por temporada la pinta cada fila (ver «banda» en OrgRow), no
              DataGrid.GroupStyle: agrupar rompe el reparto de las columnas en «*». -->
-        <DataGrid Name="tabla" Theme="{StaticResource OrgGrid}"
+        <DataGrid Name="tabla" Theme="{StaticResource OrgGrid}" RowTheme="{StaticResource OrgRow}"
                   RowDetailsVisibilityMode="VisibleWhenSelected"
                   Sorting="OnTablaSorting">
           <!-- Va en la tabla y no en el estilo de fila: el estilo vive en un diccionario
@@ -807,8 +810,11 @@
                   </Grid>
 
                   <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <!-- Enlazada, que antes no lo estaba: se pintaba, se podia marcar y no la
+                         leia nadie. La decision se guardaba siempre, dijera lo que dijera. -->
                     <CheckBox Name="chkRecordar" Content="{i:T OrganizarRecordarDecision}"
                               Foreground="{StaticResource Neutral400}" FontSize="12" VerticalAlignment="Center"
+                              IsChecked="{Binding RecordarDecisionActiva, Mode=TwoWay}"
                               IsVisible="{Binding VerSelector}"/>
                     <!-- Un fichero con dos episodios dentro no se arregla eligiendo número:
                          hay que partirlo. Por eso este botón va el PRIMERO y destacado

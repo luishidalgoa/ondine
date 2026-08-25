@@ -1796,7 +1796,21 @@ public partial class RecortesView : UserControl
                 opt.Output = destino;
                 opt.Desde = t.Inicio;
                 opt.Duracion = t.Duracion;
-                opt.NombreSalida = t.Nombre;
+
+                // EL NOMBRE SE RESERVA AQUI, con la misma bolsa que la rama de copiar.
+                //
+                // Sin esto, dos tramos con el mismo nombre se pisaban y quedaba UN fichero. El
+                // motor tiene su propia proteccion contra nombres repetidos, pero es un
+                // conjunto en memoria que nace vacio en CADA llamada -y aqui se le llama una
+                // vez por tramo-, y su unica comprobacion de disco la anula el Force que hay
+                // dos lineas mas abajo. Encima la cuenta de «hechos» cuadraba, asi que la
+                // pantalla ofrecia mandar el original a la papelera con un tramo de menos.
+                //
+                // La rama de copiar ya lo hacia bien; esta no. Ahora comparten la reserva, asi
+                // que tampoco se pisan entre ellas.
+                var extSalida = "." + opt.Container;
+                var rutaLibre = RutaDeSalida.Libre(destino, t.Nombre, extSalida, File.Exists, reservadas);
+                opt.NombreSalida = Path.GetFileNameWithoutExtension(rutaLibre);
                 // Force: el original puede estar ya en H.265 y aquí no se comprime por
                 // comprimir — se está cortando, así que hay que procesarlo igual.
                 opt.Force = true;

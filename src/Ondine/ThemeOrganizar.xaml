@@ -303,7 +303,11 @@
     <Setter Property="RowDetailsVisibilityMode" Value="Collapsed"/>
     <Setter Property="ColumnHeaderStyle" Value="{StaticResource OrgColHeader}"/>
     <Setter Property="CellStyle" Value="{StaticResource OrgCell}"/>
-    <Setter Property="RowStyle" Value="{StaticResource OrgRow}"/>
+    <!-- EL TEMA DE FILA NO VA AQUI, y estuvo yendo. Este estilo lo usan las DOS tablas de
+         Organizar -capitulos y peliculas- y OrgRow lleva encima la banda separadora de
+         temporada. En la de peliculas salia una banda en cada fila, y vacia: PeliculaFila no
+         tiene temporada, asi que el enlace no resuelve y la banda se queda visible. Se le
+         pone a la tabla que la necesita (OrganizarView.xaml, el DataGrid «tabla»). -->
     <Setter Property="FontFamily" Value="{StaticResource FontUI}"/>
     <!-- Con cientos de ficheros la virtualización no es un lujo: sin reciclar contenedores
          el desplazamiento se vuelve pegajoso. -->

@@ -43,6 +43,7 @@ public static class PaquetesPortablesTests
         ElIconoNoDependeDeUnSoloSitio(raiz);
         UnaSolaPuertaAlGestorDeArchivos(raiz);
         NadaAlLadoDelVideo(raiz);
+        TodoLoQueSeEscribeSePuedeLeer(raiz);
     }
 
     /// <summary>
@@ -278,6 +279,60 @@ public static class PaquetesPortablesTests
             malas.Count == 0
                 ? "ningún VideoView se cierra solo: lo que va encima va dentro de su Content"
                 : $"{malas.Count} tienen un VideoView vacío, así que lo de encima está al lado y queda tapado: {string.Join(", ", malas)}");
+    }
+
+    /// <summary>
+    /// Toda caja de texto con plantilla propia tiene su visor.
+    ///
+    /// <para>
+    /// Un <c>ControlTheme</c> sustituye al del tema base, así que si su plantilla no lleva
+    /// <c>ScrollViewer</c> el texto que no cabe <b>no se puede desplazar</b>: ni con la rueda,
+    /// ni con las flechas, ni arrastrando. Se puede escribir y no se puede leer.
+    /// </para>
+    /// <para>
+    /// Pasó dos veces con el mismo fallo. La primera se arregló el <c>TextBox</c> y se quedó
+    /// fuera <c>CampoTexto</c>, que es justo el que más se nota: ahí van las <b>rutas</b>, y sin
+    /// poder recorrerlas no hay forma de comprobar que están bien metidas. Lo dijo el usuario
+    /// con una captura de una ruta cortada a media palabra.
+    /// </para>
+    /// <para>
+    /// El nombre importa: el control busca <c>PART_ScrollViewer</c> para llevar el cursor a la
+    /// vista al escribir. Con otro nombre compila igual y el cursor se sale de la caja.
+    /// </para>
+    /// </summary>
+    private static void TodoLoQueSeEscribeSePuedeLeer(string raiz)
+    {
+        var temas = Path.Combine(raiz, "src", "Ondine.Avalonia", "Temas");
+        if (!Directory.Exists(temas)) { Program.Assert(false, "no encuentro Temas"); return; }
+
+        var sinVisor = new List<string>();
+        int mirados = 0;
+
+        foreach (var f in Directory.GetFiles(temas, "*.axaml"))
+        {
+            var texto = File.ReadAllText(f);
+
+            // Cada ControlTheme por separado: en un fichero puede haber varios y solo alguno
+            // presentar texto editable.
+            foreach (var trozo in texto.Split("<ControlTheme").Skip(1))
+            {
+                var cuerpo = trozo.Split("</ControlTheme>")[0];
+                if (!cuerpo.Contains("PART_TextPresenter")) continue;
+
+                mirados++;
+                if (!cuerpo.Contains("PART_ScrollViewer"))
+                {
+                    var clave = cuerpo.Split("x:Key=\"")[1].Split('"')[0];
+                    sinVisor.Add($"{Path.GetFileName(f)}: {clave}");
+                }
+            }
+        }
+
+        Program.Assert(mirados >= 2, $"se encuentran las cajas de texto con plantilla propia ({mirados})");
+        Program.Assert(sinVisor.Count == 0,
+            sinVisor.Count == 0
+                ? $"y las {mirados} llevan su visor: lo que no cabe se puede recorrer"
+                : $"{sinVisor.Count} no llevan visor, así que su texto se escribe y no se lee: {string.Join(", ", sinVisor)}");
     }
 
     private static string Entre(string texto, string desde, string hasta)
