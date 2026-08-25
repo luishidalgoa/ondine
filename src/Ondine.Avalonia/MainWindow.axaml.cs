@@ -43,6 +43,7 @@ public partial class MainWindow : Window
                     await Comprobacion.CorrerVentanaPrincipal(this);
                     await Comprobacion.CorrerTodoSeDibuja(this);
                     await Comprobacion.CorrerMoverLaVentana(this);
+                    await Comprobacion.CorrerLoQueSeEscapo(this);
                 }
                 catch (Exception ex) { Comprobacion.Resultados.Add("REVENTO: " + ex); }
                 Close();

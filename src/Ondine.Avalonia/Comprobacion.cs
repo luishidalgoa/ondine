@@ -1520,6 +1520,21 @@ public static class Comprobacion
         Dice(barra?.Bounds.Height >= 30,
             $"y ocupa su alto ({barra?.Bounds.Height:0} px), que es la zona de arrastre");
 
+        // Y RECIBE EL RATON EN SUS HUECOS. Una rejilla sin Background no se puede pulsar
+        // donde no hay nada dibujado: solo le llegan los eventos que suben desde un hijo. Con
+        // la barra sin fondo, la ventana se arrastraba desde la marca y desde el menu, y en el
+        // resto de la franja no pasaba nada. Lo encontro una persona usandola.
+        Dice(barra is Panel rejilla && rejilla.Background is not null,
+            "y tiene fondo, que es lo que hace que se pueda agarrar por el hueco vacio");
+
+        // El menu vive DENTRO de la franja, y un menu de Avalonia se abre en la pulsacion.
+        // Si el arrastre no distinguiera de donde viene el clic, se lo llevaria y habria que
+        // pulsar dos veces cada menu.
+        var menu = v.GetVisualDescendants().OfType<Menu>().FirstOrDefault();
+        Dice(menu is not null, "la barra de menus esta dentro de la franja de arrastre");
+        Dice(menu is null || menu.GetVisualAncestors().Any(x => (x as Control)?.Name == "barraTitulo"),
+            "y por eso el arrastre tiene que preguntar de donde viene la pulsacion");
+
         // ── Los bordes ────────────────────────────────────────────────────────
         var tam = new Size(1000, 700);
 
@@ -1540,6 +1555,160 @@ public static class Comprobacion
 
         v.Close();
     }
+
+    /// <summary>
+    /// Los cuatro que se escaparon: lo que una auditoría encontró y estas comprobaciones no.
+    ///
+    /// <para>
+    /// <b>Merece la pena entender por qué se escaparon</b>, porque el patrón se repite: cada
+    /// una de las que ya había preguntaba por <i>el estado del modelo</i> en vez de recorrer
+    /// <i>el camino que recorre el usuario</i>. La de Preferencias es el ejemplo perfecto:
+    /// abría la ventana con <c>Show</c>, pulsaba «Guardar» y leía <c>v.Result</c> — y todo eso
+    /// funcionaba. Lo que estaba roto era el paso que la comprobación no daba: cerrar
+    /// devolviendo el resultado por <c>ShowDialog&lt;bool&gt;</c>, que es como la abre la
+    /// aplicación de verdad.
+    /// </para>
+    /// <para>
+    /// Así que estas cuatro pasan por donde pasa el usuario, aunque cueste más de escribir.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerLoQueSeEscapo(Window dueno)
+    {
+        await ElViajeDeVueltaDeUnModal(dueno);
+        CadaFilaDePeliculasSePinta();
+        await CambiarDePaginaCambiaLaPagina(dueno);
+        await LaTablaDeOrganizarTieneVista(dueno);
+    }
+
+    /// <summary>
+    /// Que un modal devuelva de verdad lo que dice devolver.
+    ///
+    /// <para>
+    /// Preferencias, Renombrar y el explorador del catálogo cerraban con
+    /// <c>Close(unObjeto)</c> mientras quien los abría pedía <c>ShowDialog&lt;bool&gt;</c>.
+    /// Avalonia intenta convertir ese objeto en el tipo pedido <b>dentro</b> de <c>Close</c>,
+    /// y revienta: la excepción sale por el <c>await</c> de quien esperaba. Guardar no
+    /// guardaba, renombrar no renombraba y elegir episodio a mano no elegía nada.
+    /// </para>
+    /// </summary>
+    private static async Task ElViajeDeVueltaDeUnModal(Window dueno)
+    {
+        var v = new Preferencias(SettingsStore.Load(), ["Archivar"]);
+
+        // ShowDialog<bool> y no Show: es lo único que distingue esta comprobación de la que
+        // ya había, y es exactamente donde estaba el fallo.
+        var tarea = v.ShowDialog<bool>(dueno);
+        await Task.Delay(400);
+
+        v.GetVisualDescendants().OfType<Button>().First(b => b.Name == "btnSave")
+         .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        // SIN RED, Y A PROPOSITO. Se intento envolver esto en un try para que el sabotaje diera
+        // un ✗ legible, y no funciona: la excepcion se lanza en el camino de CIERRE de la
+        // ventana, dentro del bucle de mensajes de Avalonia, y desde aqui no se puede recoger.
+        // El sabotaje se lleva la comprobacion entera por delante — lo que tambien es una
+        // alarma, pero mala, porque esconde las demas.
+        //
+        // Asi que esta comprobacion vale para lo que vale: confirma que el viaje de vuelta
+        // funciona. Que nadie vuelva a cerrar con un objeto lo vigila una prueba de codigo
+        // fuente, CerrarModalesTests, que es donde ese fallo si se puede cazar sin abrir nada.
+        var devuelto = await tarea;
+        Dice(devuelto, "Preferencias devuelve «sí» al guardar, por el mismo camino que usa la app");
+        Dice(v.Result is not null, "y los ajustes llegan en Result");
+    }
+
+    /// <summary>
+    /// Que pintar una fila de películas no mate el proceso.
+    ///
+    /// <para>
+    /// Su ayudante de colores se llamaba a sí mismo. No es una excepción que se pueda
+    /// capturar: un <c>StackOverflowException</c> <b>se lleva el proceso por delante</b>, sin
+    /// diálogo y sin registro. Si vuelve, esta comprobación no falla — <b>desaparece</b>, y
+    /// eso también se ve.
+    /// </para>
+    /// </summary>
+    private static void CadaFilaDePeliculasSePinta()
+    {
+        foreach (var motivo in Enum.GetValues<Ondine.Reindex.PlanDePeliculas.Porque>())
+        {
+            var fila = new PeliculaFila
+            {
+                Paso = new Ondine.Reindex.PlanDePeliculas.Paso("/x/peli.mkv", "/x/Peli (2001).mkv", motivo),
+                Raiz = "/x",
+            };
+
+            // Los tres a la vez: el que se desbordaba era el del borde, por el sufijo.
+            Dice(fila.EstadoFg is not null && fila.EstadoBg is not null && fila.EstadoBorde is not null,
+                $"una fila de películas «{motivo}» se pinta sin llevarse el proceso por delante");
+        }
+    }
+
+    /// <summary>
+    /// Que cambiar de pestaña cambie la página.
+    ///
+    /// <para>
+    /// En Avalonia hay <b>un solo evento</b> para marcar y desmarcar, así que al cambiar de
+    /// página saltan dos: el de la nueva y el de la vieja al apagarse. Sin preguntar quién
+    /// avisa, la última pasada era la de la página que acabas de dejar.
+    /// </para>
+    /// </summary>
+    private static async Task CambiarDePaginaCambiaLaPagina(Window dueno)
+    {
+        var v = new VentanaPrincipal { Width = 1180, Height = 780 };
+        v.Show(dueno);
+        await Task.Delay(600);
+
+        Control? Cual(string n) => v.GetVisualDescendants().OfType<Control>()
+                                    .FirstOrDefault(c => c.Name == n);
+
+        var organizar = Cual("pageOrganizar");
+        var recortes = Cual("pageRecortes");
+        Dice(organizar?.IsVisible == false, "se arranca con Organizar recogida");
+
+        // Se pulsa por donde se pulsa: las pestañas son el modelo de estado, y marcarlas es
+        // lo que hace el menú del conmutador.
+        if (Cual("tabOrganizar") is RadioButton org) org.IsChecked = true;
+        await Task.Delay(350);
+        Dice(organizar?.IsVisible == true, "al elegir Organizar, se ve Organizar");
+        Dice(recortes?.IsVisible == false, "y Recortes no");
+
+        if (Cual("tabRecortes") is RadioButton rec) rec.IsChecked = true;
+        await Task.Delay(350);
+        Dice(recortes?.IsVisible == true, "al elegir Recortes, se ve Recortes");
+        Dice(organizar?.IsVisible == false, "y Organizar se recoge");
+
+        if (Cual("tabComprimir") is RadioButton com) com.IsChecked = true;
+        await Task.Delay(350);
+        Dice(organizar?.IsVisible == false && recortes?.IsVisible == false,
+            "y al volver a Comprimir se recogen las dos");
+
+        v.Close();
+    }
+
+    /// <summary>
+    /// Que la tabla de Organizar tenga VISTA y no la colección a pelo.
+    ///
+    /// <para>
+    /// El comentario del campo lo decía entero —«hay que dársela como ItemsSource, y si se le
+    /// da la colección a pelo el filtro no se aplica y no hay ningún error»— y se le daba la
+    /// colección a pelo. El campo se quedaba en nulo, así que «Analizar» reventaba con un
+    /// <c>NullReferenceException</c> que el <c>catch</c> presentaba como «el análisis falló», y
+    /// con él caían los chips de filtro, el buscador, el orden por cabecera y las bandas.
+    /// </para>
+    /// </summary>
+    private static async Task LaTablaDeOrganizarTieneVista(Window dueno)
+    {
+        var vista = new OrganizarView();
+        var v = new Window { Width = 1200, Height = 780, Content = vista };
+        v.Show(dueno);
+        await Task.Delay(700);
+
+        var tabla = vista.GetVisualDescendants().OfType<DataGrid>()
+                         .FirstOrDefault(t => t.Name == "tabla");
+        Dice(tabla is not null, "la tabla de Organizar está montada");
+        Dice(tabla?.ItemsSource is Avalonia.Collections.DataGridCollectionView,
+            $"y recibe una VISTA, no la colección a pelo ({tabla?.ItemsSource?.GetType().Name})");
+
+        v.Close();
+    }
 }
-
-

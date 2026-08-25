@@ -32,6 +32,30 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Cambiar de pestaña te llevaba a otra página.** Organizar abría Recortes, Recortes abría
+  Comprimir y Comprimir abría Organizar. En Avalonia hay un solo aviso para marcar y desmarcar,
+  así que al cambiar de página llegaban dos —el de la pestaña nueva y el de la vieja al apagarse—
+  y ganaba el de la que acabas de dejar. De paso apagaba el reloj y el vídeo de la pantalla que
+  sí estabas mirando.
+
+- **Guardar en Preferencias no guardaba nada**, así que cambiar el idioma no cambiaba el idioma.
+  Y cerrar con la X o con «Cancelar» **se llevaba la aplicación por delante**. Lo mismo en
+  «Renombrar» y en el explorador del catálogo: aplicar una regla o elegir un episodio a mano no
+  hacía nada.
+
+- **El modo Películas cerraba la aplicación de golpe**, sin aviso: pintar la primera fila
+  desbordaba la pila.
+
+- **En Organizar, «Analizar» decía que el análisis había fallado** cuando no había fallado nada, y
+  con él se caían los chips de filtro, el buscador de la tabla, el orden por cabecera y las bandas
+  de temporada.
+
+- **La barra de título solo se podía agarrar donde había algo dibujado**, y al pulsar un menú el
+  arrastre le robaba el clic: había que pulsar dos veces «Archivo», «Selección» o «Ayuda». Ahora se
+  agarra por toda la franja y los menús responden al primer clic.
+
 ## [1.14.2] - 2026-08-25
 
 ### Corregido

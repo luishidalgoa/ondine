@@ -136,7 +136,12 @@
            minimizar, maximizar y cerrar: un panel no puede mover los mandos de la
            ventana. Ademas es lo que fija el borde superior del panel, que empieza
            justo donde acaba esta franja. -->
-      <Grid Name="barraTitulo" Grid.Row="0" Grid.ColumnSpan="2" Height="40" ZIndex="20">
+      <!-- Background="Transparent" NO ES DECORACION: sin el, una rejilla no recibe el raton
+           en sus huecos vacios -solo llegan los eventos que suben desde un hijo-. Con la
+           barra sin fondo, la ventana solo se arrastraba desde donde habia algo dibujado (la
+           marca, el menu) y en el resto de la franja no pasaba nada. -->
+      <Grid Name="barraTitulo" Grid.Row="0" Grid.ColumnSpan="2" Height="40" ZIndex="20"
+            Background="Transparent">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>

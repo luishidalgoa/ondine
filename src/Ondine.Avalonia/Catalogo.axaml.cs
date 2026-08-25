@@ -344,7 +344,10 @@ public partial class Catalogo : Window
     {
         Elegido = ep;
         SegElegido = seg;
-        Close(ep);
+        // Close(true), no Close(ep): quien abre pide ShowDialog<bool> y lee Elegido.
+        // Devolver el episodio hacía que la conversión reventara dentro de Close, así que
+        // elegir a mano no elegía nada.
+        Close(true);
     }
 
     /// <summary>
