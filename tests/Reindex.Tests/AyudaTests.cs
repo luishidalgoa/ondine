@@ -41,7 +41,7 @@ public static class AyudaTests
     /// </summary>
     private static readonly (string Pantalla, int Casillas, string Apartado)[] Congelado =
     [
-        ("MainWindow.xaml",     3, "Ayuda → Comprimir"),
+        ("MainWindow.xaml",     4, "Ayuda → Comprimir"),
         ("OrganizarView.xaml",  6, "Ayuda → Organizar"),
         ("RecortesView.xaml",   1, "Ayuda → Recortes"),
     ];

@@ -375,6 +375,17 @@ public sealed partial class Textos
         "Ensayo en seco: recorre la lista y dice qué haría con cada vídeo, pero no crea ni borra ningún archivo.");
 
     // ── Idiomas detectados ──────────────────────────────────────────────────
+    /// <summary>La casilla que conserva TODAS las pistas de audio, pase lo que pase.</summary>
+    public string MainConservarTodos => Idioma.Elegir("Keep them all", "Conservar todas");
+
+    /// <summary>
+    /// Su globo de ayuda. Dice lo que los chips NO pueden decir: que hay pistas sin etiqueta de
+    /// idioma, que no tienen chip, y que sin esta casilla se caen.
+    /// </summary>
+    public string MainConservarTodosTip => Idioma.Elegir(
+        "Keeps every audio track, including any without a language tag — those have no chip of their own, so they are the ones that quietly go missing.",
+        "Conserva todas las pistas de audio, incluidas las que no traen etiqueta de idioma: esas no tienen chip propio, así que son las que desaparecen sin que se note.");
+
     public string MainAudioDetectado => Idioma.Elegir("Audio detected", "Audio detectado");
     public string MainSubtitulos => Idioma.Elegir("Subtitles", "Subtítulos");
 

@@ -49,6 +49,12 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **«Conservar todas» las pistas de audio, con una casilla.** Al lado de los chips de «Audio
+  detectado». Los chips solo cubren los idiomas detectados, así que una pista **sin etiqueta de
+  idioma** no tenía forma de marcarse y se caía sin que se notara. El motor ya entendía el
+  centinela, pero solo era alcanzable con `ondine comprimir --idiomas all` — y ni siquiera estaba
+  documentado en la ayuda de la orden. Ahora está en la interfaz, en la Ayuda y en `--help`.
+
 - **Decodificación por hardware: la GPU también descomprime el original.** Ondine codificaba en
   la tarjeta y descomprimía siempre en el procesador. Un usuario lo midió sobre media hora de
   compresión: **NVDEC al 0,0 % incluso de máximo** —en treinta minutos no se usó ni una vez— con
@@ -61,6 +67,20 @@ es un acuerdo de buena voluntad: está verificado.
   lo que hay, y `--aceleracion <cual>` la fija.
 
 ### Corregido
+
+- **El registro dice qué pista de audio se descarta y por qué.** Antes decía «pistas de audio:
+  spa+eng (descarto 1)»: ni cuál era la descartada, ni por qué. Ahora dice
+  «(descarto por: no está entre los idiomas que se conservan, spa+eng)», con la lista contra la
+  que se decidió — que cuando no eliges idiomas **la pone el código**: tu preferido más el
+  inglés. Y de paso: **el pronóstico de tamaño contaba mal**. El estimador leía «sin idiomas
+  elegidos» como «se conservan todas» mientras el motor conservaba dos, así que con un fichero de
+  tres idiomas el tamaño previsto no cuadraba nunca con el real. Los dos preguntan ya al mismo
+  sitio.
+
+- **Desmarcar el idioma preferido ahora lo quita.** Si «spa» era tu idioma preferido, su pista se
+  conservaba aunque desmarcaras su chip: el motor la salvaba sin consultar la lista, o sea que
+  ese control no hacía nada justo para ese caso. El idioma preferido sigue decidiendo **cuál
+  suena primero**, que es su otro trabajo.
 
 - **«Sin tocar» en el códec de audio ya no recodifica.** Con ese ajuste puesto, un E-AC-3 de
   224 kbps salía en AAC de 128 —pérdida irreversible del ajuste que existe justamente para
