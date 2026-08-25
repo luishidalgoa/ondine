@@ -165,7 +165,13 @@
     <Setter Property="Background" Value="Transparent"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="RowBackground" Value="Transparent"/>
-    <Setter Property="GridLinesVisibility" Value="None"/>
+    <!-- HORIZONTAL Y NO None, y esto es un arreglo. La plantilla de la fila trae su
+         PART_BottomGridLine -la raya de separacion, pintada del color del divisor- pero el
+         DataGrid la apaga segun ESTA propiedad, asi que con None la raya no se pintaba nunca:
+         la plantilla la declaraba y el control la escondia. Solo horizontales: las verticales
+         entre columnas no las quiere el diseno. -->
+    <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+    <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource Divider}"/>
     <Setter Property="HeadersVisibility" Value="Column"/>
     <Setter Property="AutoGenerateColumns" Value="False"/>
     <Setter Property="CanUserResizeColumns" Value="True"/>

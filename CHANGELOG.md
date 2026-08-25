@@ -34,6 +34,28 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **La configuración no sobrevivía a reiniciar en Linux y macOS.** Cambiabas el idioma, se
+  aplicaba al momento, y al volver a abrir Ondine estaba como antes. El ajuste **sí se
+  guardaba**: lo que faltaba era leerlo al arrancar.
+
+- **«ERROR al codificar (código 243)» y nada más.** Ahora dice qué pasó: ese 243 era «permiso
+  denegado al escribir el resultado», y ffmpeg lo decía en un mensaje que se estaba tirando. El
+  motivo sale además al pasar el ratón por encima del estado de cada fila, que antes solo decía
+  «Error».
+
+- **En Recortes, dos tramos con el mismo nombre se pisaban** y quedaba un solo fichero — y la
+  pantalla ofrecía mandar el original a la papelera con un tramo de menos.
+
+- **El foco del teclado no se veía en ningún botón:** el resalte se dibujaba justo debajo del
+  borde del propio botón, tapado.
+
+- **La raya que separa las filas de la tabla de Organizar no se pintaba**, y en la tabla de
+  películas salía una banda de temporada vacía en cada fila. Lo segundo también pasaba en
+  Windows.
+
+- **Los círculos de «espera un momento» no latían** —solo parpadeaban— y **no se paraban nunca**:
+  seguían animándose escondidos desde que la app abría hasta que se cerraba.
+
 - **Actualizar en Linux y macOS se quedaba a medias:** descargaba el paquete y te abría la
   carpeta. Ahora **abre el paquete**, que es lo mismo que hacerle doble clic: en Linux sale su
   instalador con el botón «Instalar», y en un Mac se monta el `.dmg` con la ventana para

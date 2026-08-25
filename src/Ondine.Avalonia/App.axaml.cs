@@ -25,6 +25,21 @@ public partial class App : Application
     /// </summary>
     public override void OnFrameworkInitializationCompleted()
     {
+        // EL IDIOMA GUARDADO, ANTES DE CONSTRUIR NINGUNA VENTANA.
+        //
+        // Esto FALTABA, y el síntoma era exacto: cambiabas el idioma en Preferencias, se
+        // aplicaba al momento -eso sí funcionaba, la propia ventana lo pone al guardar- y al
+        // reiniciar volvía al de antes. El ajuste se guardaba bien; nadie lo leía al arrancar.
+        // La versión de WPF sí lo hace (App.xaml.cs), y al portar se quedó fuera.
+        //
+        // Y va antes de crear la ventana por lo mismo que allí: los textos se enlazan al crear
+        // los controles, así que ponerlo después también los refrescaría, pero la primera
+        // ventana llegaría a pintarse en el idioma anterior y se vería el cambio.
+        //
+        // Vacío significa «no he elegido»: manda el sistema.
+        Ondine.Localizacion.Idioma.Actual =
+            Ondine.Localizacion.Idioma.Resolver(SettingsStore.Load().Idioma);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime escritorio)
         {
             if (escritorio.Args?.Contains("--auto") == true)

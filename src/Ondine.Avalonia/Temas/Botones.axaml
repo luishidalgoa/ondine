@@ -42,14 +42,24 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Panel>
-          <!-- El haz: un borde con degradado que gira al enfocar con el teclado. En WPF
-               era un Storyboard con RepeatBehavior="Forever"; aqui es una animacion de
-               Avalonia, y se enciende con el selector de foco de mas abajo.
+          <!-- El haz de foco del teclado: un borde con degradado alrededor del boton.
+               Se enciende con el selector de foco de mas abajo.
 
-               Nace invisible a proposito: encendido siempre seria una animacion corriendo
-               en cada boton de la pantalla, y eso se paga en CPU aunque no se vea. Ya
-               costo medirlo una vez en la version de WPF. -->
-          <Border Name="haz" Opacity="0" CornerRadius="9.5" BorderThickness="1">
+               DOS COSAS QUE ESTABAN MAL, y las dos se veian -o mejor dicho, no se veian-.
+
+               UNA, LA GEOMETRIA. Iba sin margen y con 1 px, asi que se dibujaba justo
+               DEBAJO del borde propio del boton y quedaba tapado: el foco del teclado no se
+               veia en ninguna parte, que es exactamente lo contrario de para lo que existe.
+               La version de WPF lo desplazaba hacia fuera, y ese desplazamiento se perdio al
+               portar. Margin negativo para salirse, y 1,5 px para que asome.
+
+               Y DOS, LA VUELTA: el comentario decia «gira al enfocar» y «aqui es una
+               animacion de Avalonia», y no habia ninguna animacion en todo el fichero. El
+               degradado se quedaba quieto. Se le pone la que se prometia — y se queda como
+               estaba en lo unico que importaba de aquel comentario: nace apagada, porque una
+               animacion por boton corriendo siempre se paga en CPU aunque no se vea, y eso ya
+               costo medirlo una vez. -->
+          <Border Name="haz" Opacity="0" CornerRadius="9.5" BorderThickness="1.5" Margin="-1.5">
             <Border.BorderBrush>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
                 <GradientStop Color="#00968AE0" Offset="0.00"/>
@@ -84,11 +94,19 @@
     <!-- El haz solo con el foco del TECLADO, no con el raton: es una ayuda para quien
          navega con tabulador, y encendiendolo al pasar por encima seria un adorno que
          distrae y consume. -->
+    <!-- LA VUELTA QUE EL COMENTARIO PROMETIA. Se anima el desplazamiento del degradado y no
+         una rotacion: el haz es un borde fino, y girarlo entero haria dar vueltas al boton.
+         Moviendo el brillo de un lado a otro se lee como un barrido, que es lo que se
+         describia. Solo corre mientras el boton tiene el foco del teclado, que es la razon
+         por la que nace apagado. -->
     <Style Selector="^:focus-visible /template/ Border#haz">
-      <Setter Property="Opacity" Value="1"/>
-      <Setter Property="Transitions">
-        <Transitions><DoubleTransition Property="Opacity" Duration="0:0:0.18"/></Transitions>
-      </Setter>
+      <Style.Animations>
+        <Animation Duration="0:0:2.8" IterationCount="Infinite">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="0.55"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="0.55"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
     </Style>
   </ControlTheme>
 
