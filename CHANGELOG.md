@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-08-26
+
 ### Añadido
 
 - **Ondine por MCP: un agente puede usar la app.** Un servidor
@@ -46,8 +48,6 @@ es un acuerdo de buena voluntad: está verificado.
   como binario suelto por plataforma en cada Release. En Windows el instalador engorda unos 26 MB,
   porque allí la app va en un solo fichero y el servidor no puede compartirle el runtime. Cómo
   registrarlo, en [`docs/mcp.md`](docs/mcp.md).
-
-### Añadido
 
 - **«Conservar todas» las pistas de audio, con una casilla.** Al lado de los chips de «Audio
   detectado». Los chips solo cubren los idiomas detectados, así que una pista **sin etiqueta de
