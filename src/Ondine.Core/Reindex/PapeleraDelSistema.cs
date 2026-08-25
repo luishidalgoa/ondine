@@ -28,10 +28,23 @@ namespace Ondine;
 public static class PapeleraDelSistema
 {
     /// <summary>
-    /// Cómo se manda en Windows. Lo pone la app al arrancar, porque la llamada vive en la
-    /// capa nativa; aquí no se sabe nada de <c>shell32</c>.
+    /// Cómo se manda en Windows: por la Shell, que es la única que hace la papelera de verdad
+    /// -con su cuenta de lo que ocupa y su «deshacer» en el Explorador-.
+    ///
+    /// <para>
+    /// <b>Viene puesta.</b> Antes era un hueco que rellenaba la ventana principal de WPF al
+    /// arrancar, y ese es exactamente el reparto que ya falló una vez: la interfaz nueva no lo
+    /// rellenó. Aquí no había pérdida de ficheros -sin nadie enchufado se cae a la forma de
+    /// freedesktop-, pero el resultado en Windows era peor de explicar: lo «enviado a la
+    /// papelera» acababa en <c>~/.local/share/Trash</c>, una carpeta que el Explorador no
+    /// mira, sin «Restaurar» y sin aparecer en la papelera de verdad.
+    /// </para>
+    /// <para>
+    /// La llamada nativa vive en este mismo ensamblado, así que no hacía falta pedírsela a
+    /// nadie. Se deja como propiedad para poder sustituirla en pruebas.
+    /// </para>
     /// </summary>
-    public static Func<string, bool>? EnWindows { get; set; }
+    public static Func<string, bool>? EnWindows { get; set; } = ruta => RecycleBin.Send(ruta);
 
     /// <summary>
     /// Manda una ruta a la papelera. Devuelve si se pudo.

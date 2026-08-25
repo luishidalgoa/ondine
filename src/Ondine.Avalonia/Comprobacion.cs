@@ -1271,4 +1271,141 @@ public static class Comprobacion
             "cerrar con Esc cuenta como NO — se pregunta antes de tocar ficheros, " +
             "y un «cancelar» leido como «si» borraria cosas");
     }
+
+    /// <summary>
+    /// La ventana principal: que abra, que arranque donde debe y que la tabla PINTE.
+    ///
+    /// <para>
+    /// Es la última del puerto y la que aloja a las demás, así que esto es también lo más
+    /// cerca que se puede estar de arrancar la aplicación: novecientas líneas de XAML donde
+    /// un recurso que falte, una plantilla mal cerrada o un tema que reemplace en vez de
+    /// heredar aparecen aquí y en ningún otro sitio.
+    /// </para>
+    /// <para>
+    /// <b>Lo que se mira de la tabla es la CELDA pintada, no la fila del modelo.</b> Ese
+    /// error ya se cometió una vez en esta misma tanda: preguntar al objeto de datos pasa
+    /// aunque el DataGrid se haya quedado sin plantilla y la tabla salga en blanco, que es
+    /// justo lo que pasó al poner un ControlTheme sin BasedOn.
+    /// </para>
+    /// </summary>
+    public static async Task CorrerVentanaPrincipal(Window dueno)
+    {
+        var v = new VentanaPrincipal { Width = 1180, Height = 780 };
+        v.Show(dueno);
+        await Task.Delay(700);
+
+        Control? Cual(string n) => v.GetVisualDescendants().OfType<Control>()
+                                    .FirstOrDefault(c => c.Name == n);
+
+        Dice(true, "la ventana principal abre sin reventar");
+
+        // ══ Arranca en Comprimir ═════════════════════════════════════════════
+        // Las tres páginas comparten filas y se turnan por visibilidad. Si arrancara en
+        // Organizar saldría su pantalla de inicio y la lista de comprimir no estaría.
+        var comprimir = Cual("tabComprimir") as RadioButton;
+        Dice(comprimir?.IsChecked == true, "y arranca en la página de comprimir");
+        Dice(Cual("pageOrganizar")?.IsVisible == false, "con Organizar recogida");
+        Dice(Cual("pageRecortes")?.IsVisible == false, "y Recortes también");
+
+        // ══ La tabla, pintada ════════════════════════════════════════════════
+        var tabla = Cual("lst") as DataGrid;
+        Dice(tabla is not null, "la tabla de la lista está montada");
+        Dice(tabla?.Columns.Count == 8, $"con sus ocho columnas ({tabla?.Columns.Count})");
+
+        // Y que ordena por columna, que es lo que se gana al cambiar de control: el
+        // GridView de WPF no sabía, y había un ayudante de veintiséis líneas para suplirlo.
+        var porValor = tabla?.Columns.Count(c => c.SortMemberPath is not null) ?? 0;
+        Dice(porValor == 8, $"y todas ordenan por su campo ({porValor}/8)");
+
+        v.FilasDePrueba(("una.mkv", "Error: se acabó el disco"), ("otra.mp4", "…"));
+        await Task.Delay(400);
+
+        var filas = tabla?.GetVisualDescendants().OfType<DataGridRow>().ToList() ?? [];
+        Dice(filas.Count == 2, $"dos filas metidas, dos filas pintadas ({filas.Count})");
+
+        // La CELDA, no la fila: es lo único que demuestra que el tema de la tabla se aplicó.
+        var celdas = tabla?.GetVisualDescendants().OfType<TextBlock>()
+                          .Select(t => t.Text ?? "").ToList() ?? [];
+        Dice(celdas.Any(t => t.Contains("una.mkv")),
+            "y el nombre del fichero se lee en su celda");
+
+        // ══ El color del estado ══════════════════════════════════════════════
+        // Las clases se atan a tres booleanos de la fila. Enlazarlas a algo que no existe
+        // no da error: la clase no se pone y el estado deja de distinguirse. Se comprueba
+        // sobre el texto pintado, que es donde se vería.
+        var rotuloError = tabla?.GetVisualDescendants().OfType<TextBlock>()
+                               .FirstOrDefault(t => (t.Text ?? "").StartsWith("Error"));
+        Dice(rotuloError is not null, "el estado de error se pinta");
+        Dice(rotuloError?.Classes.Contains("estadoErr") == true,
+            "y lleva puesta su clase: sin ella el enlace estaría roto y no se vería");
+
+        // ══ La píldora: apagada Y sin latir ══════════════════════════════════
+        // Las dos cosas, no una. Oculta pero con la clase puesta es exactamente el fallo
+        // que esto viene a evitar: la animación corriendo sobre algo que nadie ve.
+        var pildora = Cual("pillFondo");
+        var punto = Cual("pillDot");
+        Dice(pildora?.IsVisible == false, "la píldora de trabajo en segundo plano arranca oculta");
+        Dice(punto?.Classes.Contains("late") == false,
+            "y su punto NO late: escondido y animándose es el 5 % de un núcleo por nada");
+
+        // ══ La cola ══════════════════════════════════════════════════════════
+        Dice(Cual("panelCola")?.IsVisible == false, "el panel de la cola arranca oculto");
+
+        // ══ El registro se despliega ═════════════════════════════════════════
+        // El plegado era un converter de booleano a visibilidad; aquí es un enlace directo
+        // al botón. Se prueba pulsándolo de verdad: con el enlace roto se queda como esté.
+        // Se mira el MARCO, que es lo que lleva el enlace, y no la caja de dentro. La caja
+        // dice IsVisible=true siempre: esa propiedad es la suya, no la de si se ve. Mi primer
+        // intento preguntaba por la caja y fallaba acusando al código de algo que hacía la
+        // comprobación — la tercera vez en esta tanda que pasa lo mismo.
+        var tgl = Cual("tglLog") as ToggleButton;
+        var marcoLog = Cual("txtLog")?.Parent as Control;
+        Dice(marcoLog is not null, "el registro está montado dentro de su marco");
+        Dice(marcoLog?.IsVisible == false, "y arranca plegado");
+
+        if (tgl is not null) tgl.IsChecked = true;
+        await Task.Delay(250);
+        Dice(marcoLog?.IsVisible == true, "y al pulsar «Registro» se despliega");
+
+        // ══ El panel lateral se pliega al estrechar ══════════════════════════
+        // Esto vigila la parte frágil del puerto: las columnas que se pliegan no tienen
+        // campo propio en Avalonia y se cogen por su POSICIÓN. Mover una columna en el XAML
+        // rompería esto sin que nada más avise — de ahí que se compruebe el ancho de verdad
+        // antes y después de estrechar la ventana.
+        // ESTO COSTÓ TRES INTENTOS, y merece la pena dejarlos escritos.
+        //
+        // El primero leía el ancho de la columna 1 y no valía para nada: el propio código
+        // acababa de escribir ahí ese número, así que la comprobación se leía a sí misma —
+        // movida la columna a otro sitio en el XAML, pasaba igual.
+        //
+        // El segundo miraba el ancho PINTADO del panel al estrechar, y acusaba al código de
+        // algo que no hacía: un control oculto no se vuelve a medir, así que sus Bounds se
+        // quedan con el último valor que tuvieron. Estaba plegado y la comprobación leía 252.
+        //
+        // Lo que sí ata las dos cosas es mirar la TABLA. Si la columna que el código
+        // dimensiona no fuera la del panel, la tabla se quedaría con el ancho fijo y el
+        // panel con el elástico: 1.180 px de ventana y una tabla de 262. Eso no se puede
+        // fingir desde el propio código.
+        var lateral = Cual("sideCol") as Grid;
+        var tablaAncho = tabla?.Bounds.Width ?? -1;
+        Dice(lateral is not null, "el panel lateral está montado");
+        Dice(lateral is not null && Grid.GetColumn(lateral) == 1,
+            "y vive en la columna 1, que es la que el código dimensiona");
+        Dice(lateral?.Bounds.Width > 200, $"con la ventana ancha se ve entero ({lateral?.Bounds.Width:0} px)");
+        Dice(tablaAncho > 600,
+            $"y la tabla se queda con el resto ({tablaAncho:0} px), no con el ancho fijo del panel");
+
+        v.Width = 800;
+        await Task.Delay(400);
+
+        // Al plegarse: la columna a cero y el panel fuera. Las dos, porque una columna a
+        // cero con el panel dentro seguiría empujando, y un panel oculto en una columna de
+        // 262 dejaría un hueco muerto — que es exactamente lo que pasaba en Organizar.
+        var col = (Cual("rowTabla") as Grid)?.ColumnDefinitions[1].Width.Value ?? -1;
+        Dice(col == 0, $"al estrechar, su columna se va a cero ({col})");
+        Dice(lateral?.IsVisible == false, "y el panel se retira: sin eso quedaría un hueco muerto");
+
+        v.Close();
+    }
 }
+

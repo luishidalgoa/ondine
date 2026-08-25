@@ -12,7 +12,23 @@ public sealed class VideoRow : INotifyPropertyChanged
 
     private string _estado = "…", _codec = "", _audio = "", _subs = "", _dur = "";
 
-    public string Estado { get => _estado; set { _estado = value; N(); N(nameof(EstadoBrush)); } }
+    public string Estado
+    {
+        get => _estado;
+        set
+        {
+            _estado = value;
+            N();
+            N(nameof(EstadoBrush));
+            // Las tres juntas, y no solo el color: una fila que cambia de «Comprimiendo» a
+            // «Error» y no avisa de estas se queda con la clase anterior puesta. Todas las
+            // filas pasan por aquí -la lista se llena mientras se trabaja-, así que
+            // olvidarse de una es un fallo permanente, no un caso raro.
+            N(nameof(EstadoEsOk));
+            N(nameof(EstadoEsError));
+            N(nameof(EstadoEsEnMarcha));
+        }
+    }
 
     /// <summary>Ya está en un códec eficiente con bitrate bajo: no merece la pena recomprimirlo.</summary>
     public bool YaComprimido { get; set; }
@@ -29,6 +45,24 @@ public sealed class VideoRow : INotifyPropertyChanged
         var s when s.StartsWith("Comprimiendo") || s.StartsWith("En pausa") => "Live",
         _ => "Muted",
     };
+    /// <summary>
+    /// El mismo estado, dicho en tres síes o noes.
+    ///
+    /// <para>
+    /// Sale de <see cref="EstadoBrush"/> para que no haya dos tablas de estados: si alguna
+    /// vez cambia lo que cuenta como «error», cambia en un sitio.
+    /// </para>
+    /// <para>
+    /// Existen porque las dos interfaces piden lo mismo de forma distinta. WPF comparaba el
+    /// texto del color con un <c>DataTrigger</c>; Avalonia no tiene disparadores por dato y
+    /// pinta con clases, y una clase se ata a un booleano. Que ninguna sea verdad es una
+    /// respuesta válida: lo pendiente y lo saltado se quedan con el color apagado.
+    /// </para>
+    /// </summary>
+    public bool EstadoEsOk => EstadoBrush == "Ok";
+    public bool EstadoEsError => EstadoBrush == "Err";
+    public bool EstadoEsEnMarcha => EstadoBrush == "Live";
+
     public string Codec { get => _codec; set { _codec = value; N(); } }
     public string Audio { get => _audio; set { _audio = value; N(); } }
     public string Subs { get => _subs; set { _subs = value; N(); } }

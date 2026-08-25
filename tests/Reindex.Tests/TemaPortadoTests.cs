@@ -38,13 +38,6 @@ public static class TemaPortadoTests
         ["ScrollThumbH"] = "idem",
         ["ScrollNoop"] = "idem",
 
-        ["TimelineSlider"] = "va con Recortes, que es de las ultimas",
-
-        // La barra de título propia. Se decide al portar la ventana principal, porque en
-        // Avalonia no es WindowChrome sino ExtendClientAreaToDecorationsHint.
-        ["BtnTitle"] = "la barra de título propia se resuelve distinto en Avalonia",
-        ["BtnClose"] = "idem",
-
         ["ChipStyle"] = "los chips van con la pantalla de Organizar",
         ["InlineTextBox"] = "la caja normal ya está; esta es la variante de edición en línea de la tabla",
         ["TextoRecortable"] = "un TextBlock con recorte; se resuelve con un Setter suelto",
@@ -54,8 +47,6 @@ public static class TemaPortadoTests
         // Aparecieron todos de golpe al empezar a mirar el segundo diccionario. Casi
         // todos son de la pantalla de Organizar, que es la última y la más grande del
         // puerto; los dos que hacen falta antes están dichos.
-        ["PageSelector"] = "el conmutador de páginas va con la tabla de Organizar",
-        ["PageTab"] = "idem, es una pestaña de ese conmutador",
         ["EvidenciaMas"] = "va con el detalle de fila de Organizar",
         ["EvidenciaMenos"] = "idem",
 

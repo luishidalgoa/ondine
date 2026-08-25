@@ -1,0 +1,930 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="clr-namespace:Ondine.Ava.Localizacion"
+        xmlns:o="clr-namespace:Ondine.Ava"
+        x:Class="Ondine.Ava.VentanaPrincipal"
+        Title="{i:T MainMarca}"
+        Width="1180" Height="780" MinWidth="820" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        SystemDecorations="None"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}">
+
+  <!--
+    La ventana principal, portada de MainWindow.xaml. Es la ultima del puerto: aloja a
+    Organizar y a Recortes, asi que no podia ir antes que ellas.
+
+    LA BARRA DE TITULO. En WPF esto era WindowChrome, que reserva para arrastrar los primeros
+    CaptionHeight pixeles de la VENTANA -no de la barra- y obliga a marcar cada boton como
+    «visible al pulsar» para que responda. Aqui no hay nada de eso: la barra es un control
+    normal y el arrastre se pide con BeginMoveDrag. Los botones de dentro responden porque
+    son botones, sin marcar nada.
+
+    Lo que SI se conserva es el motivo por el que la barra va la primera y no se mueve de
+    ahi: con el aviso de actualizacion encima, aquella franja de arrastre se la comia el
+    aviso y la ventana dejaba de poder moverse de ninguna de las dos formas.
+
+    LA LISTA pasa de ListView+GridView a DataGrid, con su tema en Temas/Lista.axaml.
+  -->
+
+  <Border Name="rootBorder" Background="{StaticResource Bg}">
+    <Grid Name="rejillaRaiz" Margin="0">
+      <!-- La barra de título va la PRIMERA y no se mueve de ahí. WindowChrome reserva
+           para arrastrar los primeros CaptionHeight píxeles de la VENTANA, no de la
+           barra: con el aviso de actualización encima, esa franja se la comía el aviso
+           (que además es no-arrastrable para que respondan sus botones) y la barra de
+           título quedaba fuera. Resultado: no se podía mover la ventana de ninguna de
+           las dos formas. Con la barra siempre arriba, el arrastre, el doble clic para
+           maximizar y el Aero Snap siguen siendo los del sistema, sin parches. -->
+      <!-- El panel lateral vive en una SEGUNDA COLUMNA, no encima. Empuja el
+           contenido en vez de taparlo: lo que se está mirando en Organizar es
+           justo contra lo que se coteja la lista, y esconderlo para enseñar la
+           lista obliga a cerrarla para mirar. Todo lo demás se queda en la
+           columna 0 sin tocar nada, que es la de por defecto. -->
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" MinWidth="320"/>
+        <ColumnDefinition Width="0"/><!-- «colPanel»: la del panel desplegable -->
+      </Grid.ColumnDefinitions>
+
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/><!-- titlebar -->
+        <RowDefinition Height="Auto"/><!-- banner -->
+        <RowDefinition Height="Auto"/><!-- origen/destino -->
+        <RowDefinition Height="Auto"/><!-- opciones -->
+        <RowDefinition Height="*"/><!-- tabla+lateral -->
+        <RowDefinition Height="Auto"/><!-- progreso -->
+        <RowDefinition Height="Auto"/><!-- cola -->
+        <RowDefinition Height="Auto"/><!-- acciones -->
+        <RowDefinition Height="Auto"/><!-- log -->
+      </Grid.RowDefinitions>
+
+      <!-- ══ Luz ambiental ══
+           Tres manchas radiales muy tenues detrás de TODO (RowSpan de las 8 filas,
+           sin participar en el hit-test). El latido va en la opacidad del conjunto,
+           muy lento y de recorrido corto (0,82→1 en 9 s): a esa velocidad se percibe
+           como que la sala respira, no como una animación pidiendo atención.
+
+           El BitmapCache pinta los degradados una sola vez; el DesiredFrameRate del
+           latido (abajo) es el que de verdad importa — la historia completa está en
+           el comentario de la animación. -->
+      <Grid Name="ambiente" Grid.Row="0" Grid.RowSpan="8" Grid.ColumnSpan="2" IsHitTestVisible="False" ZIndex="-1">
+        <Grid.Styles>
+          <!-- QUIETO. La rampa de opacidad hace su pasada al abrir y se para.
+
+               Aquí hubo una animación que respiraba para siempre, y bajarla de 60 a 5 fps
+               NO la abarató como se creyó. Medido en agosto de 2026, con la app abierta y
+               sin tocarla:
+
+                  con las dos animaciones vivas ............ 12,2 % de un núcleo
+                  sin el latido de la píldora ..............  7,2 %
+                  sin ninguna de las dos ...................  0,3 %
+
+               O sea: esta costaba ~7 % ella sola, a 5 fps y con la caché de mapa de bits
+               puesta. El motivo es que está DEBAJO de toda la ventana: cambiar su opacidad
+               obliga a recomponer la interfaz entera, y eso no lo arregla bajar los
+               fotogramas porque lo caro es cada paso, no cuántos hay. Si alguna vez se echa
+               de menos, devolverla es poner IterationCount="Infinite" aquí — pero ese es el
+               precio, y está medido.
+
+               DOS COSAS CAMBIAN AL PORTARLA. El tope de fotogramas no existe en Avalonia, y
+               da igual: era el parche que no funcionaba, y una pasada única no lo necesita.
+               Y el ida y vuelta, que en WPF era AutoReverse, aquí se escribe con los tres
+               fotogramas clave — 18 s en total, los mismos 9 de ida y 9 de vuelta. -->
+          <Style Selector="Grid#ambiente">
+            <Style.Animations>
+              <Animation Duration="0:0:18" IterationCount="1" FillMode="Forward">
+                <KeyFrame Cue="0%"><Setter Property="Opacity" Value="0.82"/></KeyFrame>
+                <KeyFrame Cue="50%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+                <KeyFrame Cue="100%"><Setter Property="Opacity" Value="0.82"/></KeyFrame>
+              </Animation>
+            </Style.Animations>
+          </Style>
+        </Grid.Styles>
+        <Rectangle Fill="{StaticResource AmbienteA}"/>
+        <Rectangle Fill="{StaticResource AmbienteB}"/>
+        <Rectangle Fill="{StaticResource AmbienteC}"/>
+      </Grid>
+
+      <!-- ══ Banner de actualización ══ -->
+      <!-- Va DEBAJO de la barra de título: puesto encima se quedaba con la franja que
+           WindowChrome reserva para arrastrar y la ventana dejaba de poder moverse.
+           IsHitTestVisibleInChrome ya no hace falta aquí, pero se conserva por si algún
+           día vuelve a caer dentro de esa franja: no cuesta nada y evita repetir el fallo. -->
+      <Border Name="updateBar" Grid.Row="1" Background="{StaticResource Accent900}" BorderBrush="{StaticResource Accent800}"
+              BorderThickness="0,0,0,1" Padding="16,8" IsVisible="False">
+        <StackPanel Orientation="Horizontal">
+          <Viewbox Width="15" Height="15" VerticalAlignment="Center">
+            <Path Data="M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3M3.5 3.5l2 2M10.5 10.5l2 2M12.5 3.5l-2 2M5.5 10.5l-2 2"
+                  Stroke="{StaticResource Accent300}" StrokeThickness="1.5" StrokeLineCap="Round"/>
+          </Viewbox>
+          <TextBlock Name="lblUpdate" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="12.5"
+                     Foreground="{StaticResource Accent200}" Text="{i:T MainActualizacionDisponible}"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right" Margin="20,0,0,0">
+            <Button Name="btnUpdateNow" Theme="{StaticResource BtnPrimary}" Content="{i:T MainActualizarAhora}" FontSize="12" Padding="12,4"/>
+            <Button Name="btnUpdateLater" Theme="{StaticResource BtnGhost}" Content="{i:T MainActualizarDespues}" FontSize="12" Foreground="{StaticResource Accent300}" Margin="6,0,0,0"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- ══ Barra de título ══ -->
+      <!-- Tres columnas para que la tira de pestañas viva en el hueco flexible del centro y
+           nunca pise ni el menú (izq., Auto) ni los botones de ventana (der., Auto): así el
+           conmutador escala a muchas más páginas —se desplaza y ofrece un menú «▾»— sin
+           romper la cabecera. -->
+      <!-- ColumnSpan="2": la barra cruza la ventana ENTERA, tambien por debajo del
+           panel lateral. Sin esto vivia solo en la columna del contenido, asi que
+           al abrir el panel se encogia y se llevaba por delante los botones de
+           minimizar, maximizar y cerrar: un panel no puede mover los mandos de la
+           ventana. Ademas es lo que fija el borde superior del panel, que empieza
+           justo donde acaba esta franja. -->
+      <Grid Grid.Row="0" Grid.ColumnSpan="2" Height="40" ZIndex="20">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+          <!-- La marca «Corrientes»: tres pasadas que van de onda a recta. Misma geometría que
+               Assets\app.ico y docs\marca\*.svg (retícula 64, grosor 6, extremos redondos).
+               SIN contenedor a propósito: ni squircle, ni fondo, ni degradado, ni halo. El trazo
+               se sostiene solo, que es justo lo que el anterior no hacía. -->
+          <Viewbox Width="24" Height="24" VerticalAlignment="Center">
+            <Canvas Width="64" Height="64">
+              <Canvas.Styles>
+                <!-- #B5ABFC y no el acento a secas: a 24 px sobre el fondo oscuro el tono claro
+                     tiene más presencia, que es lo que pide el diseño para tamaños pequeños.
+
+                     Un extremo redondo y no dos: WPF distinguía el de salida del de llegada,
+                     Avalonia tiene uno para los dos. La geometría no cambia — los tres trazos
+                     los querían iguales por los dos lados. -->
+                <Style Selector="Path">
+                  <Setter Property="Stroke" Value="#B5ABFC"/>
+                  <Setter Property="StrokeThickness" Value="6"/>
+                  <Setter Property="StrokeLineCap" Value="Round"/>
+                  <Setter Property="StrokeJoin" Value="Round"/>
+                </Style>
+              </Canvas.Styles>
+              <Path Data="M7,17 C15.5,9 26.5,25 35,17 C43.5,9 48.5,25 57,17"/>
+              <Path Data="M7,32 C16,28 26,36 35,32 C44,28 48,36 57,32"/>
+              <Path Data="M7,47 L57,47"/>
+            </Canvas>
+          </Viewbox>
+          <!-- Separación: media altura de la marca (24/2 = 12), como dice el bloque del diseño. -->
+          <TextBlock Text="{i:T MainMarca}" FontSize="15" FontWeight="Medium" Foreground="{StaticResource Text}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+          <TextBlock Name="lblVersion" Text="v0.3.0" FontSize="11" Foreground="{StaticResource Neutral600}" VerticalAlignment="Center" Margin="8,2,0,0"/>
+          <Menu Name="menuBar" VerticalAlignment="Center" Margin="20,0,0,0" Background="Transparent">
+            <!-- La hamburguesa recoge los cuatro menús cuando no caben. Los mismos
+                 objetos se mueven de sitio, no se duplican: dos copias del menú son
+                 dos sitios donde añadir la próxima entrada, y una se olvida. -->
+            <MenuItem Name="miHamburguesa" IsVisible="False" Padding="8,4">
+              <MenuItem.Header>
+                <Viewbox Width="15" Height="12">
+                  <Canvas Width="16" Height="12">
+                    <Path Data="M0,1 H16 M0,6 H16 M0,11 H16"
+                          Stroke="{StaticResource Text}" StrokeThickness="1.6"
+                          StrokeLineCap="Round"/>
+                  </Canvas>
+                </Viewbox>
+              </MenuItem.Header>
+            </MenuItem>
+            <MenuItem Name="miArchivo" Header="{i:T MainMenuArchivo}">
+              <MenuItem Name="miPickSrc" Header="{i:T MainMenuElegirOrigen}"/>
+              <MenuItem Name="miAddFiles" Header="{i:T MainMenuAnadirArchivos}"/>
+              <MenuItem Name="miOpenDest" Header="{i:T MainMenuAbrirDestino}"/>
+              <Separator/>
+              <MenuItem Name="miExit" Header="{i:T MainMenuSalir}"/>
+            </MenuItem>
+            <MenuItem Name="miSeleccion" Header="{i:T MainMenuSeleccion}">
+              <MenuItem Name="miSelAll" Header="{i:T MainSeleccionarTodo}"/>
+              <MenuItem Name="miSelNone" Header="{i:T MainQuitarSeleccion}"/>
+              <MenuItem Name="miSelInvert" Header="{i:T MainInvertirSeleccion}"/>
+              <Separator/>
+              <MenuItem Name="miDelSel" Header="{i:T MainEnviarSeleccionPapelera}"/>
+            </MenuItem>
+            <MenuItem Name="miHerramientas" Header="{i:T MainMenuHerramientas}">
+              <MenuItem Name="miRename" Header="{i:T MainMenuRenombrarSalida}"/>
+              <Separator/>
+              <MenuItem Name="miComplementos" Header="{i:T MainMenuComplementos}"/>
+              <Separator/>
+              <MenuItem Name="miPrefs" Header="{i:T MainMenuPreferencias}"/>
+              <Separator/>
+              <MenuItem Name="miCheckUpd" Header="{i:T MainBuscarActualizaciones}"/>
+            </MenuItem>
+            <MenuItem Name="miAyuda" Header="{i:T MainMenuAyuda}">
+              <MenuItem Name="miTutoriales" Header="{i:T MainMenuTutoriales}"/>
+              <Separator/>
+              <MenuItem Name="miAbout" Header="{i:T MainMenuAcercaDe}"/>
+            </MenuItem>
+          </Menu>
+        </StackPanel>
+        <!-- ══ Conmutador de páginas: desplegable compacto ══ -->
+        <!-- Un solo control muestra la página ACTUAL y abre la lista al pulsarlo, en lugar de una
+             tira de pestañas anchas: así el conmutador ocupa lo MÍNIMO del header y escala a
+             cualquier número de páginas sin comérselo. Los RadioButton de abajo (ocultos) siguen
+             siendo el modelo de estado —IsChecked manda el cambio de página—; el desplegable solo
+             los refleja y los activa. Cae dentro de los 40 px de CaptionHeight, así que necesita
+             IsHitTestVisibleInChrome o se tragaría los clics. -->
+        <Grid Grid.Column="1" HorizontalAlignment="Right">
+          <!-- Modelo de estado OCULTO: los RadioButton deciden la página (IsChecked → CambiarPagina).
+               El Content es el nombre de la página: OnMasTabs arma el desplegable copiándolo, así que
+               el menú habla el idioma en curso sin una segunda tabla de nombres que mantener. -->
+          <StackPanel Name="panelTabs" Orientation="Horizontal" IsVisible="False">
+            <RadioButton Name="tabComprimir" Theme="{StaticResource PageTab}" IsChecked="True" GroupName="pagina"
+                         Content="{i:T MainPaginaComprimir}"/>
+            <RadioButton Name="tabOrganizar" Theme="{StaticResource PageTab}" GroupName="pagina" Content="{i:T MainPaginaOrganizar}"/>
+            <RadioButton Name="tabRecortes" Theme="{StaticResource PageTab}" GroupName="pagina" Content="{i:T MainPaginaRecortes}"/>
+          </StackPanel>
+
+          <!-- En fila. El Grid de fuera NO tiene columnas, así que apila a sus hijos
+               en la misma celda: el botón de complementos quedaba DEBAJO del
+               conmutador y no se veía. Un contenedor que coloca en capas no sirve
+               para poner dos cosas al lado. -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
+          <!-- El botón de complementos, al estilo de las extensiones de un navegador:
+               una pieza, y detrás los que sirvan AQUÍ. Va pegado al conmutador de
+               página porque lo que enseña depende de en qué página estés, y ponerlo
+               lejos rompería esa relación. Se esconde cuando no hay ninguno: un botón
+               que solo dice «no hay nada» es un botón que estorba. -->
+          <Button Name="btnComplementos" Theme="{StaticResource PageSelector}"
+                  Margin="0,0,4,0" IsVisible="False" Click="OnBotonComplementos"
+                  ToolTip.Tip="{i:T MainComplementosTip}">
+            <StackPanel Orientation="Horizontal">
+              <!-- Una pieza de puzle dibujada con la geometría mínima: no hay
+                   librería de iconos en el proyecto y no se va a traer una por esto. -->
+              <Path Data="M4,4 h3 a1.6,1.6 0 1 1 3,0 h3 v3 a1.6,1.6 0 1 0 0,3 v3 h-3 a1.6,1.6 0 1 0 -3,0 h-3 v-3 a1.6,1.6 0 1 1 0,-3 z"
+                    Fill="{StaticResource Neutral400}" Width="17" Height="17" Stretch="Uniform"
+                    VerticalAlignment="Center"/>
+              <TextBlock Name="lblCuantosComplementos" Margin="7,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+
+          <!-- Desplegable compacto: página actual + «▾». Al pulsarlo se despliega la lista. -->
+          <Button Name="btnPagina" Theme="{StaticResource PageSelector}" Click="OnMasTabs"
+                  Margin="0,0,4,0" ToolTip.Tip="{i:T MainCambiarPagina}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Name="lblPaginaActual" Text="{i:T MainPaginaComprimir}" VerticalAlignment="Center"/>
+              <Path Data="M2,4 L6,8 L10,4" Stroke="{StaticResource Neutral400}" StrokeThickness="1.4"
+                    Width="12" Height="12" Stretch="None" Margin="9,1,0,0" VerticalAlignment="Center"
+                    StrokeLineCap="Round"/>
+            </StackPanel>
+          </Button>
+          </StackPanel>
+        </Grid>
+
+        <!-- ══ Grupo derecho: píldora de proceso + botones de ventana ══ -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+
+          <!-- ══ Píldora de trabajo en segundo plano ══ -->
+          <!-- Al cambiar de página la compresión sigue: si no se dijera aquí, parecería
+               que se ha detenido. El punto late para que se lea como «vivo» sin ruido. -->
+          <Border Name="pillFondo" Background="{StaticResource Surface}" BorderBrush="{StaticResource Divider}"
+                  BorderThickness="1" CornerRadius="8" Padding="11,4" Margin="0,0,14,0"
+                  IsVisible="False" Cursor="Hand" ToolTip.Tip="{i:T MainPildoraTip}">
+            <StackPanel Orientation="Horizontal">
+              <Ellipse Name="pillDot" Width="7" Height="7" Fill="{StaticResource Accent}" VerticalAlignment="Center"
+                       Margin="0,0,8,0">
+                <!-- El latido arranca al ponerse la clase «late» y se para al quitarla, que
+                     es lo que hace ActualizarTextoPildora al mostrar y ocultar la píldora.
+
+                     ES EL MISMO ARREGLO CON OTRA FORMA. Antes esto colgaba de «Loaded», y
+                     ahí estaba el problema: la píldora nace oculta y pasa casi todo el
+                     tiempo así, pero Loaded se dispara igual. El latido corría SIEMPRE, a
+                     60 fps, sobre algo que nadie ve — medido apagándolo: 5 % de un núcleo,
+                     constante, con la app parada. En WPF hubo que atarlo a un DataTrigger
+                     sobre la visibilidad, porque la colección de disparadores de un elemento
+                     solo admite EventTrigger. Aquí una clase basta, y se ve desde el código
+                     quién la pone.
+
+                     Lo que NO se puede escribir es el tope de 15 fps: Avalonia no lo tiene.
+                     Que ya no corra escondido —que era el 5 %— sigue en pie; el tope era la
+                     otra mitad, y esa se pierde. Cuánto cuesta ahora no está medido, así que
+                     no se dice. Solo late la OPACIDAD, como antes, y el halo se atenúa con
+                     ella sin recalcular el desenfoque. -->
+                <Ellipse.Styles>
+                  <Style Selector="Ellipse.late">
+                    <Style.Animations>
+                      <Animation Duration="0:0:1.2" IterationCount="Infinite"
+                                 PlaybackDirection="Alternate">
+                        <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+                        <KeyFrame Cue="100%"><Setter Property="Opacity" Value="0.4"/></KeyFrame>
+                      </Animation>
+                    </Style.Animations>
+                  </Style>
+                </Ellipse.Styles>
+              </Ellipse>
+              <TextBlock Name="lblPill" Text="{i:T MainPildoraComprimiendo}" FontSize="12" Foreground="{StaticResource Neutral300}"
+                         VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+
+          <Button Name="btnMin" Theme="{StaticResource BtnTitle}">
+            <Path Data="M2,8 H12" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.2" Width="14" Height="14" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Button>
+          <Button Name="btnMax" Theme="{StaticResource BtnTitle}">
+            <Border Width="9" Height="9" BorderBrush="{Binding $parent[Button].Foreground}" BorderThickness="1.2" CornerRadius="1.5"/>
+          </Button>
+          <Button Name="btnClose" Theme="{StaticResource BtnClose}">
+            <Path Data="M2,2 L11,11 M11,2 L2,11" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.2" Width="13" Height="13" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Button>
+        </StackPanel>
+      </Grid>
+
+      <!-- ══ Origen / Destino ══ -->
+      <Grid Name="rowOrigen" Grid.Row="2" Margin="16,4,16,10">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="1.5*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+          <TextBlock Text="{i:T MainOrigen}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+          <!-- Grid y no StackPanel horizontal: el horizontal da ancho infinito a sus hijos,
+               asi que el campo se quedaba clavado en 330 px y la ventana no podia encoger. -->
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <o:CampoTexto Name="txtSrc" Icono="M1.5 3.5h4l1.5 2h7.5v7h-13z" MinWidth="120"/>
+            <Button Name="btnSrc" Grid.Column="1" Theme="{StaticResource BtnSecondary}" Width="34" Height="34" Padding="0" Margin="6,0,0,0" ToolTip.Tip="{i:T MainElegirCarpetaTip}">
+              <Viewbox Width="15" Height="15"><Path Data="M1.5 3.5h4l1.5 2h7.5l-2 7h-11z M1.5 3.5v9h11" Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeJoin="Round"/></Viewbox>
+            </Button>
+            <Button Name="btnSrcFile" Grid.Column="2" Theme="{StaticResource BtnSecondary}" Height="34" Margin="6,0,0,0" ToolTip.Tip="{i:T MainAnadirArchivosTip}">
+              <StackPanel Orientation="Horizontal">
+                <Viewbox Width="14" Height="14" Margin="0,0,6,0"><Path Data="M4 1.5h5l3 3v10h-8z M9 1.5v3h3 M6.5 9.5h3 M8 8v3" Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeJoin="Round" StrokeLineCap="Round"/></Viewbox>
+                <TextBlock Text="{i:T MainAnadirArchivos}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </Grid>
+        </StackPanel>
+        <StackPanel Grid.Column="2">
+          <TextBlock VerticalAlignment="Center" Margin="0,0,0,4"><Run Text="{i:T MainDestino}" FontSize="11" Foreground="#9397AB"/><Run Text="{i:T MainOpcional}" FontSize="11" Foreground="#595D6C"/></TextBlock>
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <o:CampoTexto Name="txtOut" MinWidth="100"
+                              ToolTip.Tip="{i:T MainDestinoTip}"/>
+            <Button Name="btnOut" Grid.Column="1" Theme="{StaticResource BtnSecondary}" Width="34" Height="34" Padding="0" Margin="6,0,0,0" ToolTip.Tip="{i:T MainElegirDestinoTip}">
+              <Viewbox Width="15" Height="15"><Path Data="M1.5 3.5h4l1.5 2h7.5l-2 7h-11z M1.5 3.5v9h11" Stroke="{StaticResource Text}" StrokeThickness="1.4" StrokeJoin="Round"/></Viewbox>
+            </Button>
+          </Grid>
+        </StackPanel>
+      </Grid>
+
+      <!-- ══ Panel de opciones ══ -->
+      <Border Name="rowOpciones" Grid.Row="3" Margin="16,0,16,0" Background="{StaticResource Surface}" CornerRadius="8" Padding="12,10">
+        <StackPanel>
+          <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MaxWidth="260"/>
+              <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{i:T MainPreset}" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <!-- DisplayMemberBinding y no DisplayMemberPath: mismo trabajo -de cada ajuste
+                 guardado se ensena su nombre-, dicho como enlace en vez de como ruta. -->
+            <ComboBox Name="cboPreset" Grid.Column="1" MinWidth="90" VerticalAlignment="Center"
+                      DisplayMemberBinding="{Binding Name}"
+                      ToolTip.Tip="{i:T MainPresetTip}"/>
+            <Button Name="btnSavePreset" Grid.Column="2" Theme="{StaticResource BtnSecondary}" Content="{i:T MainGuardarPreset}" FontSize="12" Padding="10,4" Margin="8,0,0,0"
+                    ToolTip.Tip="{i:T MainGuardarPresetTip}"/>
+            <Button Name="btnRename" Grid.Column="3" Theme="{StaticResource BtnSecondary}" FontSize="12" Padding="10,4" Margin="8,0,0,0"
+                    ToolTip.Tip="{i:T MainRenombrarTip}">
+              <StackPanel Orientation="Horizontal">
+                <Viewbox Width="13" Height="13" Margin="0,0,6,0">
+                  <Path Data="M2 11.5l7.5-7.5 2.5 2.5-7.5 7.5H2z M9.5 4l2.5 2.5 1.5-1.5-2.5-2.5z"
+                        Stroke="{StaticResource Neutral400}" StrokeThickness="1.3" StrokeJoin="Round"/>
+                </Viewbox>
+                <TextBlock Name="lblRename" Text="{i:T MainRenombrarSalida}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </Grid>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="1.2*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainIdiomaPrincipal}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <!-- El valor de partida («spa») lo pone el constructor: aquí sería texto suelto, y
+                   además lo pisa en cuanto arranca el idioma por defecto de Preferencias. -->
+              <ComboBox Name="cboLang" IsEditable="True"
+                        ToolTip.Tip="{i:T MainIdiomaPrincipalTip}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainFormato}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <!-- El ORDEN de estos elementos está acoplado a los índices de BuildOptions: se
+                   traduce el rótulo, nunca se reordena la lista. -->
+              <ComboBox Name="cboFmt" SelectedIndex="0"
+                        ToolTip.Tip="{i:T MainFormatoTip}">
+                <ComboBoxItem Content="{i:T MainFormatoMkv}"/><ComboBoxItem Content="{i:T MainFormatoMp4}"/><ComboBoxItem Content="{i:T MainFormatoWebm}"/>
+                <ComboBoxItem Content="{i:T MainFormatoMp3}"/><ComboBoxItem Content="{i:T MainFormatoM4a}"/>
+                <ComboBoxItem Content="{i:T MainFormatoFlac}"/><ComboBoxItem Content="{i:T MainFormatoOpus}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainCodec}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboCodec" SelectedIndex="0"
+                        ToolTip.Tip="{i:T MainCodecTip}">
+                <ComboBoxItem Content="{i:T MainCodecH265}"/><ComboBoxItem Content="{i:T MainCodecH264}"/><ComboBoxItem Content="{i:T MainCodecAv1}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="3" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainCalidad}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboQ" SelectedIndex="0"
+                        ToolTip.Tip="{i:T MainCalidadTip}">
+                <ComboBoxItem Content="{i:T MainCalidadAuto}"/><ComboBoxItem Content="{i:T MainCalidad22}"/><ComboBoxItem Content="{i:T MainCalidad24}"/>
+                <ComboBoxItem Content="{i:T MainCalidad27}"/><ComboBoxItem Content="{i:T MainCalidad30}"/>
+                <ComboBoxItem Content="{i:T MainCalidadObjetivo}"/>
+              </ComboBox>
+              <!-- Solo sale con «Tamaño objetivo…» elegido: un campo permanente que casi
+                   nunca se usa es ruido en la fila de ajustes. -->
+              <Grid Name="filaObjetivo" IsVisible="False" Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Name="txtObjetivoMB" ToolTip.Tip="{i:T MainObjetivoTip}"/>
+                <TextBlock Grid.Column="1" Text="{i:T MainObjetivoMB}" FontSize="10.5" Margin="6,0,0,0"
+                           VerticalAlignment="Center" Foreground="{StaticResource Neutral600}"/>
+              </Grid>
+            </StackPanel>
+            <StackPanel Grid.Column="4" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainVelocidad}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboVel" SelectedIndex="2"
+                        ToolTip.Tip="{i:T MainVelocidadTip}">
+                <ComboBoxItem Content="{i:T MainVelocidadMuyRapido}"/><ComboBoxItem Content="{i:T MainVelocidadRapido}"/>
+                <ComboBoxItem Content="{i:T MainVelocidadEquilibrado}"/><ComboBoxItem Content="{i:T MainVelocidadLento}"/>
+                <ComboBoxItem Content="{i:T MainVelocidadMuyLento}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="5" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainResolucionMax}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboRes" SelectedIndex="0"
+                        ToolTip.Tip="{i:T MainResolucionTip}">
+                <ComboBoxItem Content="{i:T MainResolucionSinCambio}"/><ComboBoxItem Content="{i:T MainResolucion1080}"/><ComboBoxItem Content="{i:T MainResolucion720}"/><ComboBoxItem Content="{i:T MainResolucion480}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="6" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainAudioCodec}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <!-- El ORDEN esta acoplado a BuildOptions, como el resto de la fila. -->
+              <ComboBox Name="cboACodec" SelectedIndex="0"
+                        ToolTip.Tip="{i:T MainAudioCodecTip}">
+                <ComboBoxItem Content="{i:T MainAudioSinTocar}"/><ComboBoxItem Content="{i:T MainAudioAac}"/>
+                <ComboBoxItem Content="{i:T MainAudioAc3}"/><ComboBoxItem Content="{i:T MainAudioEac3}"/>
+                <ComboBoxItem Content="{i:T MainAudioOpus}"/><ComboBoxItem Content="{i:T MainAudioFlac}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="7" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainMezcla}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboMezcla" SelectedIndex="0"
+                        ToolTip.Tip="{i:T MainMezclaTip}">
+                <ComboBoxItem Content="{i:T MainMezclaComoEste}"/><ComboBoxItem Content="{i:T MainMezclaEstereo}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="8" Margin="0,0,10,0">
+              <TextBlock Text="{i:T MainAudio}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+              <ComboBox Name="cboAud" SelectedIndex="0"
+                        ToolTip.Tip="{i:T MainAudioTip}">
+                <ComboBoxItem Content="{i:T MainAudioCopiar}"/><ComboBoxItem Content="{i:T MainAudioAac192}"/>
+                <ComboBoxItem Content="{i:T MainAudioAac160}"/><ComboBoxItem Content="{i:T MainAudioAac128}"/><ComboBoxItem Content="{i:T MainAudioAac96}"/>
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="9" Margin="4,0,0,0" Orientation="Vertical">
+              <StackPanel.Styles><Style Selector="CheckBox"><Setter Property="Margin" Value="8,1"/></Style></StackPanel.Styles>
+              <Border BorderBrush="{StaticResource Divider}" BorderThickness="1,0,0,0" Padding="10,0,0,0">
+                <StackPanel>
+                  <CheckBox Name="chkRec" Content="{i:T MainSubcarpetas}"
+                            ToolTip.Tip="{i:T MainSubcarpetasTip}"/>
+                  <CheckBox Name="chkForce" Content="{i:T MainReprocesar}"
+                            ToolTip.Tip="{i:T MainReprocesarTip}"/>
+                  <CheckBox Name="chkDry" Content="{i:T MainSoloSimular}"
+                            ToolTip.Tip="{i:T MainSoloSimularTip}"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Grid>
+          <Border BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0" Margin="0,8,0,0" Padding="0,8,0,0">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Text="{i:T MainAudioDetectado}" Width="106" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+                <WrapPanel Name="pnlALang" VerticalAlignment="Center"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{i:T MainSubtitulos}" Width="106" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+                <WrapPanel Name="pnlSLang" VerticalAlignment="Center"/>
+                <TextBlock Name="lblLangHint" Text="{i:T MainPistaIdiomas}" FontSize="11" Foreground="{StaticResource Neutral700}" VerticalAlignment="Center" Margin="4,0,0,0"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- ══ Tabla + panel lateral ══ -->
+      <Grid Name="rowTabla" Grid.Row="4" Margin="16,10,16,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <!-- Se pliega solo por debajo de cierto ancho: con la ventana estrecha, 262 px de
+               panel secundario le quitan a la tabla justo lo que necesita para leerse. -->
+          <ColumnDefinition Width="262"/><!-- «colLateral»: la del panel lateral -->
+        </Grid.ColumnDefinitions>
+        <Border Background="{StaticResource Surface}" CornerRadius="8" Padding="0,4" ClipToBounds="True">
+          <Grid>
+            <DataGrid Name="lst" Theme="{StaticResource TablaLista}"
+                      SelectionChanged="OnSelectionChanged">
+              <DataGrid.Styles>
+                <!-- El tema de la fila. El DataGrid de Avalonia no tiene nada como el
+                     RowStyle de WPF, asi que va como estilo suelto. -->
+                <Style Selector="DataGridRow">
+                  <Setter Property="Theme" Value="{StaticResource FilaLista}"/>
+                </Style>
+                <!-- Los tres estados del rotulo. En WPF eran DataTrigger sobre EstadoBrush
+                     dentro de un Style local; aqui son clases atadas a booleanos. El color
+                     solo REFUERZA: el texto ya distingue por si solo. -->
+                <Style Selector="TextBlock.estadoOk">
+                  <Setter Property="Foreground" Value="{StaticResource EstadoOk}"/>
+                  <Setter Property="FontWeight" Value="Medium"/>
+                </Style>
+                <Style Selector="TextBlock.estadoErr">
+                  <Setter Property="Foreground" Value="{StaticResource EstadoErr}"/>
+                </Style>
+                <Style Selector="TextBlock.estadoVivo">
+                  <Setter Property="Foreground" Value="{StaticResource Accent300}"/>
+                </Style>
+              </DataGrid.Styles>
+
+              <DataGrid.ContextMenu>
+                <ContextMenu Name="ctxTable">
+                  <MenuItem Name="miCtxRemove" Header="{i:T MainCtxQuitar}" InputGesture="Delete"/>
+                  <MenuItem Name="miCtxRecycle" Header="{i:T MainCtxPapelera}"/>
+                  <Separator/>
+                  <!-- Quitar un doblaje o unos subtitulos que no vas a usar NO necesita
+                       recomprimir: se reempaqueta copiando los datos, en segundos y sin tocar
+                       la imagen. Y un fichero con cinco audios lleva cientos de megas de mas. -->
+                  <MenuItem Name="miCtxPistas" Header="{i:T MainCtxPistas}"/>
+                  <Separator/>
+                  <MenuItem Name="miCtxOpenFolder" Header="{i:T MainCtxAbrirCarpeta}"/>
+                  <MenuItem Name="miCtxCopyPath" Header="{i:T MainCtxCopiarRuta}"/>
+                  <Separator/>
+                  <MenuItem Name="miCtxSelectAll" Header="{i:T MainSeleccionarTodo}" InputGesture="Ctrl+A"/>
+                  <MenuItem Name="miCtxInvert" Header="{i:T MainInvertirSeleccion}"/>
+                </ContextMenu>
+              </DataGrid.ContextMenu>
+
+              <DataGrid.Columns>
+                <!-- El HeaderSort de WPF desaparece: SortMemberPath viene de serie.
+                     TAMANO y DURACION siguen ordenando por su valor numerico y no por el
+                     texto formateado, que es lo que aquel ayudante venia a permitir. -->
+                <DataGridTextColumn Header="{i:T MainColVideo}" Width="316"
+                                    Binding="{Binding Name}" SortMemberPath="Name"/>
+                <DataGridTextColumn Header="{i:T MainColCarpeta}" Width="130"
+                                    Binding="{Binding Dir}" SortMemberPath="Dir"/>
+                <DataGridTextColumn Header="{i:T MainColTamano}" Width="80"
+                                    Binding="{Binding SizeMB}" SortMemberPath="Bytes"/>
+                <DataGridTextColumn Header="{i:T MainColDuracion}" Width="76"
+                                    Binding="{Binding Dur}" SortMemberPath="DurationSec"/>
+                <DataGridTextColumn Header="{i:T MainColCodec}" Width="64"
+                                    Binding="{Binding Codec}" SortMemberPath="Codec"/>
+                <DataGridTextColumn Header="{i:T MainColAudio}" Width="88"
+                                    Binding="{Binding Audio}" SortMemberPath="Audio"/>
+                <DataGridTextColumn Header="{i:T MainColSubs}" Width="64"
+                                    Binding="{Binding Subs}" SortMemberPath="Subs"/>
+                <DataGridTemplateColumn Header="{i:T MainColEstado}" Width="132"
+                                        SortMemberPath="Estado">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Estado}" TextTrimming="CharacterEllipsis"
+                                 Foreground="{StaticResource Neutral500}"
+                                 Classes.estadoOk="{Binding EstadoEsOk}"
+                                 Classes.estadoErr="{Binding EstadoEsError}"
+                                 Classes.estadoVivo="{Binding EstadoEsEnMarcha}"/>
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+              </DataGrid.Columns>
+            </DataGrid>
+            <!-- estado vacío: guía en vez de un hueco en negro -->
+            <StackPanel Name="emptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
+                        MaxWidth="420" IsHitTestVisible="False">
+              <Viewbox Width="46" Height="46" HorizontalAlignment="Center" Opacity="0.5">
+                <Path Data="M1.5 3.5h4l1.5 2h7.5v7h-13z" Stroke="{StaticResource Neutral600}"
+                      StrokeThickness="1.1" StrokeJoin="Round"/>
+              </Viewbox>
+              <TextBlock Text="{i:T MainVacioTitulo}" FontSize="13.5" Foreground="{StaticResource Neutral400}"
+                         HorizontalAlignment="Center" Margin="0,14,0,6"/>
+              <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11.5" Foreground="{StaticResource Neutral600}"
+                         Text="{i:T MainVacioTexto}"/>
+            </StackPanel>
+
+            <!-- banda de selección (rubber-band), estilo explorador -->
+            <Canvas Name="marqueeCanvas" IsHitTestVisible="False">
+              <Border Name="marquee" IsVisible="False" Background="#33968AE0"
+                      BorderBrush="{StaticResource Accent}" BorderThickness="1" CornerRadius="1"/>
+            </Canvas>
+          </Grid>
+        </Border>
+
+        <Grid Name="sideCol" Grid.Column="1" Margin="10,0,0,0">
+          <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Border Grid.Row="0" Background="{StaticResource Surface}" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+            <DockPanel>
+              <!-- pestañas del panel lateral (fijas arriba) -->
+              <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+                <Border Name="tabDetalle" BorderThickness="0,0,0,2" BorderBrush="{StaticResource Accent}" Padding="2,0,2,5" Margin="0,0,14,0" Cursor="Hand"
+                        ToolTip.Tip="{i:T MainDetalleTip}">
+                  <TextBlock Text="{i:T MainDetalle}" FontSize="12.5" Foreground="{StaticResource Accent300}"/>
+                </Border>
+                <Border Name="tabEstim" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="2,0,2,5" Cursor="Hand"
+                        ToolTip.Tip="{i:T MainEstimacionTip}">
+                  <TextBlock Text="{i:T MainEstimacion}" FontSize="12.5" Foreground="{StaticResource Neutral400}"/>
+                </Border>
+              </StackPanel>
+
+              <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+              <!-- Detalle -->
+              <StackPanel Name="panelDetalle">
+                <Border CornerRadius="4" Height="130" ClipToBounds="True">
+                  <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#292B31" Offset="0"/><GradientStop Color="#161826" Offset="0.7"/></LinearGradientBrush>
+                  </Border.Background>
+                  <Image Name="imgPrev" Stretch="Uniform"/>
+                </Border>
+                <TextBlock Name="lblPrevName" Margin="0,10,0,2" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" FontWeight="Medium" FontSize="12.5"/>
+                <TextBlock Name="lblPrevInfo" Foreground="{StaticResource Neutral500}" TextWrapping="Wrap" FontSize="11.5"/>
+                <Border BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
+                  <StackPanel>
+                    <!-- El rótulo lleva dentro el segundo de partida, así que lo escribe el
+                         constructor con MainPrevisualizarDesde: una sola clave con {0} en vez
+                         de dos (una con el «0:00» pegado) que se separarían a la primera. -->
+                    <TextBlock Name="lblPreviewAt" FontSize="11" Foreground="{StaticResource Neutral500}"/>
+                    <Slider Name="sldPreview" Theme="{StaticResource TimelineSlider}" Minimum="0" Maximum="0"
+                            Margin="0,6,0,8" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                    <Button Name="btnPreview" Theme="{StaticResource BtnSecondary}" HorizontalContentAlignment="Center"
+                            ToolTip.Tip="{i:T MainPrevisualizarTip}">
+                      <StackPanel Orientation="Horizontal">
+                        <Viewbox Width="12" Height="12" Margin="0,0,6,0"><Path Data="M4 3l8 5-8 5z" Fill="{StaticResource Accent}"/></Viewbox>
+                        <TextBlock Text="{i:T MainPrevisualizar10s}" VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+
+              <!-- Estimación -->
+              <StackPanel Name="panelEstim" IsVisible="False">
+                <Border Background="{StaticResource Accent900}" CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+                  <StackPanel>
+                    <TextBlock Text="{i:T MainEstTamano}" FontSize="10" Foreground="{StaticResource Accent400}"/>
+                    <TextBlock Name="lblEstSize" Text="—" FontSize="18" FontWeight="Medium" Foreground="{StaticResource Accent200}" Margin="0,2,0,0"/>
+                    <TextBlock Name="lblEstSaving" Text="{i:T MainEstSinSeleccion}" FontSize="11.5" Foreground="{StaticResource Accent300}"/>
+                  </StackPanel>
+                </Border>
+                <TextBlock Text="{i:T MainEstVideo}" FontSize="10" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="54"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <TextBlock Text="{i:T MainCalidad}" FontSize="11" Foreground="{StaticResource Neutral400}" VerticalAlignment="Center"/>
+                  <StackPanel Name="barVQ" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"/>
+                </Grid>
+                <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="54"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <TextBlock Text="{i:T MainAhorro}" FontSize="11" Foreground="{StaticResource Neutral400}" VerticalAlignment="Center"/>
+                  <StackPanel Name="barVS" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock Text="{i:T MainEstAudio}" FontSize="10" Foreground="{StaticResource Neutral500}" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,5"><Grid.ColumnDefinitions><ColumnDefinition Width="54"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <TextBlock Text="{i:T MainCalidad}" FontSize="11" Foreground="{StaticResource Neutral400}" VerticalAlignment="Center"/>
+                  <StackPanel Name="barAQ" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"/>
+                </Grid>
+                <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="54"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <TextBlock Text="{i:T MainAhorro}" FontSize="11" Foreground="{StaticResource Neutral400}" VerticalAlignment="Center"/>
+                  <StackPanel Name="barAS" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock Name="lblEstDetail" FontSize="10.5" Foreground="{StaticResource Neutral600}" TextWrapping="Wrap"/>
+                <Border BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
+                  <StackPanel>
+                    <Button Name="btnMeasure" Theme="{StaticResource BtnSecondary}" HorizontalContentAlignment="Center"
+                            ToolTip.Tip="{i:T MainMedirTip}">
+                      <StackPanel Orientation="Horizontal">
+                        <Viewbox Width="12" Height="12" Margin="0,0,6,0">
+                          <Path Data="M2 12h12 M4 12V7 M8 12V3 M12 12V9" Stroke="{StaticResource Accent}" StrokeThickness="1.6" StrokeLineCap="Round"/>
+                        </Viewbox>
+                        <TextBlock Text="{i:T MainMedir}" VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Button>
+                    <TextBlock Name="lblMeasure" FontSize="10.5" Foreground="{StaticResource Neutral600}" TextWrapping="Wrap" Margin="0,6,0,0"
+                               Text="{i:T MainMedirNota}"/>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+                </StackPanel>
+              </ScrollViewer>
+            </DockPanel>
+          </Border>
+          <Border Grid.Row="1" Background="{StaticResource Surface}" CornerRadius="8" Padding="8">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <Button Name="btnMarkAll" Theme="{StaticResource BtnSecondary}" Content="{i:T MainSeleccionarTodo}" FontSize="12" Padding="5,6" Width="112" Margin="0,0,6,0"
+                        ToolTip.Tip="{i:T MainSeleccionarTodoTip}"/>
+                <Button Name="btnMarkNone" Theme="{StaticResource BtnSecondary}" Content="{i:T MainQuitarSeleccion}" FontSize="12" Padding="5,6" Width="112"
+                        ToolTip.Tip="{i:T MainQuitarSeleccionTip}"/>
+              </StackPanel>
+              <Button Name="btnDelSel" Theme="{StaticResource BtnSecondary}" HorizontalContentAlignment="Left" FontSize="12" Padding="10,6" Margin="0,0,0,6" ToolTip.Tip="{i:T MainEnviarSeleccionPapelera}">
+                <StackPanel Orientation="Horizontal">
+                  <Viewbox Width="13" Height="13" Margin="0,0,7,0"><Path Data="M2.5 4h11 M5.5 4V2.5h5V4 M4 4l.8 9.5h6.4L12 4 M6.7 6.5v4.5 M9.3 6.5v4.5" Stroke="{StaticResource Neutral400}" StrokeThickness="1.4" StrokeJoin="Round" StrokeLineCap="Round"/></Viewbox>
+                  <TextBlock Text="{i:T MainEliminarSeleccion}" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Button>
+              <Button Name="btnDelDir" Theme="{StaticResource BtnSecondary}" HorizontalContentAlignment="Left" FontSize="12" Padding="10,6" ToolTip.Tip="{i:T MainEliminarCarpetaTip}">
+                <StackPanel Orientation="Horizontal">
+                  <Viewbox Width="13" Height="13" Margin="0,0,7,0"><Path Data="M2.5 4h11 M5.5 4V2.5h5V4 M4 4l.8 9.5h6.4L12 4" Stroke="{StaticResource Neutral400}" StrokeThickness="1.4" StrokeJoin="Round" StrokeLineCap="Round"/></Viewbox>
+                  <TextBlock Text="{i:T MainEliminarCarpeta}" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Grid>
+
+      <!-- ══ Progreso ══ -->
+      <Grid Name="progRow" Grid.Row="5" Margin="16,8,16,0" IsVisible="False">
+        <ProgressBar Name="bar" Minimum="0" Maximum="1" Value="0"/>
+      </Grid>
+
+      <!-- ══ La cola ══
+           Nace oculta y aparece con el primer trabajo: una cola vacia ocupando sitio
+           permanente es ruido para quien no la use, que hoy es todo el mundo. -->
+      <Border Name="panelCola" Grid.Row="6" Margin="16,8,16,0" IsVisible="False"
+              Background="{StaticResource Surface}" CornerRadius="8" Padding="12,10"
+              BorderBrush="{StaticResource Divider}" BorderThickness="1">
+        <StackPanel>
+          <Grid Margin="0,0,0,8">
+            <TextBlock Text="{i:T MainColaTitulo}" FontSize="11" FontWeight="Medium"
+                       Foreground="{StaticResource Accent400}" VerticalAlignment="Center"/>
+            <TextBlock Name="lblCola" HorizontalAlignment="Right" FontSize="11"
+                       Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <ItemsControl Name="listaCola">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,0,0,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" CornerRadius="9" Padding="8,2" Margin="0,0,10,0"
+                          Background="{Binding ColorEstado}" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Estado}" FontSize="10.5" Foreground="White"/>
+                  </Border>
+
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Resumen}" FontSize="12.5"
+                               Foreground="{StaticResource Text}"/>
+                    <TextBlock Text="{Binding Destino}" FontSize="10.5"
+                               Foreground="{StaticResource Neutral600}"
+                               TextTrimming="CharacterEllipsis" MaxWidth="520"/>
+                  </StackPanel>
+
+                  <Button Grid.Column="3" Theme="{StaticResource BtnGhostMuted}" FontSize="11"
+                          Padding="8,3" Content="↑" ToolTip.Tip="{i:T MainColaSubir}"
+                          Tag="{Binding Id}" Click="OnColaSubir"/>
+                  <Button Grid.Column="4" Theme="{StaticResource BtnGhostMuted}" FontSize="11"
+                          Padding="8,3" Content="↓" ToolTip.Tip="{i:T MainColaBajar}"
+                          Tag="{Binding Id}" Click="OnColaBajar"/>
+                  <Button Grid.Column="5" Theme="{StaticResource BtnGhostMuted}" FontSize="11"
+                          Padding="8,3" Content="✕" ToolTip.Tip="{i:T MainColaQuitar}"
+                          Tag="{Binding Id}" Click="OnColaQuitar"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- ══ Acciones ══ -->
+      <Grid Name="rowAcciones" Grid.Row="7" Margin="16,10,16,8">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <!-- WrapPanel: al estrechar, los botones bajan a otra linea en vez de recortarse.
+             Es lo que hace que la ventana pueda encoger sin perder ninguna accion. -->
+        <WrapPanel Orientation="Horizontal">
+          <Button Name="btnScan" Theme="{StaticResource BtnPrimary}" Margin="0,0,8,0"
+                  ToolTip.Tip="{i:T MainAnalizarTip}">
+            <StackPanel Orientation="Horizontal">
+              <Viewbox Width="14" Height="14" Margin="0,0,6,0"><Canvas Width="16" Height="16"><Ellipse Width="9" Height="9" Canvas.Left="2.5" Canvas.Top="2.5" Stroke="#968AE0" StrokeThickness="1.5"/><Path Data="M10.5 10.5L14 14" Stroke="#968AE0" StrokeThickness="1.5" StrokeLineCap="Round"/></Canvas></Viewbox>
+              <TextBlock Text="{i:T MainAnalizar}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+          <Button Name="btnRun" Theme="{StaticResource BtnPrimary}" Margin="0,0,8,0"
+                  ToolTip.Tip="{i:T MainComprimirTip}">
+            <StackPanel Orientation="Horizontal">
+              <Viewbox Width="14" Height="14" Margin="0,0,6,0"><Path Data="M2 2l4 4M6 3.5V6H3.5M14 14l-4-4M10 12.5V10h2.5" Stroke="#968AE0" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/></Viewbox>
+              <TextBlock Text="{i:T MainComprimirSeleccion}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+          <Button Name="btnEncolar" Theme="{StaticResource BtnSecondary}" Margin="0,0,8,0"
+                  Content="{i:T MainEncolar}" ToolTip.Tip="{i:T MainEncolarTip}"/>
+          <Button Name="btnPause" Theme="{StaticResource BtnSecondary}" Content="{i:T MainPausar}" IsEnabled="False" Margin="0,0,8,0"
+                  ToolTip.Tip="{i:T MainPausarTip}"/>
+          <Button Name="btnCancel" Theme="{StaticResource BtnSecondary}" Content="{i:T MainDetener}" IsEnabled="False" Margin="0,0,8,0"
+                  ToolTip.Tip="{i:T MainDetenerTip}"/>
+          <Button Name="btnOpen" Theme="{StaticResource BtnGhost}"
+                  ToolTip.Tip="{i:T MainAbrirDestinoTip}">
+            <StackPanel Orientation="Horizontal">
+              <Viewbox Width="14" Height="14" Margin="0,0,6,0"><Path Data="M1.5 3.5h4l1.5 2h7.5l-2 7h-11z M1.5 3.5v9h11" Stroke="#968AE0" StrokeThickness="1.4" StrokeJoin="Round"/></Viewbox>
+              <TextBlock Text="{i:T MainAbrirDestino}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+        </WrapPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <TextBlock Name="lblProg" Text="{i:T MainProgresoListo}" VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource Neutral500}"
+                     Margin="0,0,12,0" MaxWidth="420" TextTrimming="CharacterEllipsis"/>
+          <Button Name="btnCheckUpdate" Theme="{StaticResource BtnGhostMuted}" Content="{i:T MainBuscarActualizaciones}"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- ══ Página «Organizar» ══ -->
+      <!-- Ocupa las mismas filas que la página de compresión (2..6) y se turnan por
+           visibilidad: cada oficio tiene su propia lista y su propio ciclo de vida, pero
+           comparten ventana, barra de título y registro. -->
+      <o:OrganizarView Name="pageOrganizar" Grid.Row="2" Grid.RowSpan="5" IsVisible="False"/>
+      <o:RecortesView Name="pageRecortes" Grid.Row="2" Grid.RowSpan="5" IsVisible="False"/>
+
+      <!-- ══ Registro ══ -->
+      <StackPanel Grid.Row="8" Margin="16,0,16,10">
+        <Rectangle Height="1" Fill="{StaticResource FadedRule}" Margin="0,0,0,6"/>
+        <ToggleButton Name="tglLog" Cursor="Hand" HorizontalAlignment="Left" Background="Transparent" BorderThickness="0">
+          <ToggleButton.Template>
+            <ControlTemplate>
+              <StackPanel Orientation="Horizontal" Background="Transparent">
+                <Path Name="car" Data="M5 3l6 5-6 5" Stroke="{StaticResource Neutral500}" StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round" Width="10" Height="10" Stretch="Uniform" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5"/>
+                <TextBlock Text="{i:T MainRegistro}" Margin="7,0,0,0" FontSize="11.5" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </ControlTemplate>
+          </ToggleButton.Template>
+          <!-- La flecha gira al desplegarse. En WPF era un Trigger dentro de la plantilla
+               apuntando a la pieza por nombre; aquí la pieza se alcanza con /template/ y el
+               estado con la pseudoclase, que es lo mismo dicho en un selector. Va en los
+               estilos del propio botón para no soltarlo en la ventana: es suyo. -->
+          <ToggleButton.Styles>
+            <Style Selector="ToggleButton:checked /template/ Path#car">
+              <Setter Property="RenderTransform" Value="rotate(90deg)"/>
+            </Style>
+          </ToggleButton.Styles>
+        </ToggleButton>
+        <Border Margin="0,6,0,0" Background="{StaticResource Field}" CornerRadius="4"
+                IsVisible="{Binding #tglLog.IsChecked}">
+          <TextBox Name="txtLog" Height="120" IsReadOnly="True" Background="Transparent" BorderThickness="0"
+                   Foreground="{StaticResource Neutral400}" FontFamily="{StaticResource FontMono}" FontSize="11"
+                   Padding="10,8" ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
+        </Border>
+      </StackPanel>
+
+      <!-- ══ Panel lateral de complementos ══
+           Desde la fila 1: la barra de título sigue cruzando entera, porque es
+           la franja que WindowChrome reserva para arrastrar la ventana y
+           partirla deja media ventana sin agarre. -->
+      <Grid Name="panelLateral" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
+            IsVisible="False">
+        <ContentControl Name="huecoPanel" Margin="9,0,0,0"/>
+      </Grid>
+
+      <!-- El tirador va AQUÍ, hermano del panel y no dentro de él: un
+           GridSplitter solo mueve las columnas de SU Grid padre. Metido dentro
+           estiraba las columnas interiores del panel -que no son la que manda- y
+           por fuera no se movía nada. Se dibuja sobre el borde izquierdo de la
+           columna del panel, que es donde se busca con el ratón. -->
+      <!-- El tirador SE VE. Transparente cumplía como zona de arrastre y no
+           existía como pista: un borde que se puede mover y no lo parece no lo
+           mueve nadie. Lleva la línea divisoria dentro -es la misma cosa, no dos-
+           y al pasar por encima se enciende, que es lo que dice «esto se agarra». -->
+      <GridSplitter Name="tirador" Grid.Column="1" Grid.Row="1" Grid.RowSpan="7"
+                    Width="9" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                    ResizeDirection="Columns" ResizeBehavior="PreviousAndCurrent"
+                    Cursor="SizeWestEast" ZIndex="10" IsVisible="False">
+                    <!-- SizeWestEast y no el SizeWE de WPF: son los mismos punteros con
+                         otros nombres, y el nombre malo NO da error al compilar -reventaba
+                         al abrir la ventana-. Lo cazo la comprobacion de arranque. -->
+        <GridSplitter.Template>
+          <ControlTemplate>
+            <Grid Background="Transparent">
+              <Border Name="linea" Width="1" HorizontalAlignment="Center"
+                      Background="{StaticResource Divider}"/>
+              <!-- Tres puntos en el centro: la señal de agarre de toda la vida,
+                   y no cuesta ni una línea de altura. -->
+              <StackPanel Name="puntos" VerticalAlignment="Center" HorizontalAlignment="Center"
+                          Opacity="0.55">
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+                <Ellipse Width="2.5" Height="2.5" Margin="0,2" Fill="{StaticResource Neutral500}"/>
+              </StackPanel>
+            </Grid>
+          </ControlTemplate>
+        </GridSplitter.Template>
+        <!-- Al pasar por encima se enciende: es lo que dice «esto se agarra». -->
+        <GridSplitter.Styles>
+          <Style Selector="GridSplitter:pointerover /template/ Border#linea">
+            <Setter Property="Background" Value="{StaticResource Accent300}"/>
+            <Setter Property="Width" Value="2"/>
+          </Style>
+          <Style Selector="GridSplitter:pointerover /template/ StackPanel#puntos">
+            <Setter Property="Opacity" Value="1"/>
+          </Style>
+        </GridSplitter.Styles>
+      </GridSplitter>
+    </Grid>
+  </Border>
+</Window>

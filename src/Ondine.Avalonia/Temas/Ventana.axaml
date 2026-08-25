@@ -1,0 +1,219 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Lo que solo usa la ventana principal: la luz de fondo, la regla que se desvanece, los
+    botones de la barra de título y el conmutador de páginas.
+
+    Está aparte y no en Botones.axaml porque son de una pantalla, no del vocabulario común;
+    Botones.axaml es lo que usan las ocho.
+  -->
+
+  <!-- ══ Luz ambiental ═══════════════════════════════════════════════════════
+       Tres manchas radiales muy tenues detrás de todo. El degradado radial de Avalonia
+       lleva los mismos datos que el de WPF -centro, origen y dos radios relativos-, así que
+       los números son idénticos y el resultado también. -->
+  <RadialGradientBrush x:Key="AmbienteA" Center="0.10,0.02" GradientOrigin="0.10,0.02"
+                       RadiusX="0.62" RadiusY="0.95">
+    <GradientStop Color="#40968AE0" Offset="0"/>
+    <GradientStop Color="#14968AE0" Offset="0.45"/>
+    <GradientStop Color="#00968AE0" Offset="1"/>
+  </RadialGradientBrush>
+
+  <RadialGradientBrush x:Key="AmbienteB" Center="0.92,1.0" GradientOrigin="0.92,1.0"
+                       RadiusX="0.70" RadiusY="1.0">
+    <GradientStop Color="#357C6BD8" Offset="0"/>
+    <GradientStop Color="#0F7C6BD8" Offset="0.5"/>
+    <GradientStop Color="#007C6BD8" Offset="1"/>
+  </RadialGradientBrush>
+
+  <!-- Un apunte de cian, al 6 %: es lo que separa «morado tintado» de «neón».
+       Más alpha y empieza a pelearse con la marca. -->
+  <RadialGradientBrush x:Key="AmbienteC" Center="0.72,0.06" GradientOrigin="0.72,0.06"
+                       RadiusX="0.42" RadiusY="0.55">
+    <GradientStop Color="#1A63D2E8" Offset="0"/>
+    <GradientStop Color="#0063D2E8" Offset="1"/>
+  </RadialGradientBrush>
+
+  <!-- ══ Regla que se desvanece por los extremos ═════════════════════════════
+       Separa el registro del resto sin cortar la ventana de lado a lado. -->
+  <LinearGradientBrush x:Key="FadedRule" StartPoint="0%,0%" EndPoint="100%,0%">
+    <GradientStop Color="#00E9E9ED" Offset="0"/>
+    <GradientStop Color="#29E9E9ED" Offset="0.06"/>
+    <GradientStop Color="#29E9E9ED" Offset="0.94"/>
+    <GradientStop Color="#00E9E9ED" Offset="1"/>
+  </LinearGradientBrush>
+
+  <!-- ══ Botones de la barra de título ═══════════════════════════════════════ -->
+  <ControlTheme x:Key="BtnTitle" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+    <Setter Property="Foreground" Value="{StaticResource Neutral500}"/>
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="Width" Value="34"/>
+    <Setter Property="Height" Value="26"/>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="#14E9E9ED"/>
+    </Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- El de cerrar se enciende en rojo, que es la convención de todos los sistemas. -->
+  <ControlTheme x:Key="BtnClose" TargetType="Button" BasedOn="{StaticResource BtnTitle}">
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="#C0392B"/>
+    </Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ Conmutador de páginas «Comprimir | Organizar | Recortes» ════════════
+       Metáfora de páginas de oficio (DaVinci Resolve), no pestañas de documento.
+
+       El botón compacto muestra la página actual y abre la lista. Siempre «encendido»
+       (fondo Surface + borde de acento), porque siempre representa dónde estás. -->
+  <ControlTheme x:Key="PageSelector" TargetType="Button">
+    <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Padding" Value="12,6"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b" Background="{StaticResource Surface}" CornerRadius="7"
+                Padding="{TemplateBinding Padding}" BorderThickness="1"
+                BorderBrush="{StaticResource Accent700}">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource Accent900}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- La tira de páginas. Vive oculta y es el modelo de estado del conmutador: el menú
+       compacto se arma leyéndola, así que hay un solo sitio donde están las páginas. -->
+  <ControlTheme x:Key="PageTab" TargetType="RadioButton">
+    <Setter Property="Foreground" Value="{StaticResource Neutral400}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Padding" Value="14,6"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <!--
+          EL HALO SE HACE DE OTRA MANERA, y conviene saber cuál.
+
+          En WPF el borde llevaba dentro un DropShadowEffect con opacidad 0, y al marcarse
+          la página se animaba esa opacidad a 0,42 en 0,18 s. Un efecto por elemento,
+          apagado casi siempre, que aun apagado formaba parte del árbol de render.
+
+          Aquí es una BoxShadow del propio borde: se pone al marcarse y se quita al
+          desmarcarse, y la transición la hace el propio control. Es el mismo resplandor con
+          el mismo color de acento, y no hay ningún efecto vivo mientras no toca.
+        -->
+        <Border Name="b" Background="Transparent" CornerRadius="7"
+                Padding="{TemplateBinding Padding}" BorderThickness="1"
+                BorderBrush="Transparent">
+          <Border.Transitions>
+            <Transitions>
+              <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.18"/>
+            </Transitions>
+          </Border.Transitions>
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="#14E9E9ED"/>
+    </Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    </Style>
+
+    <!-- La página activa se queda encendida: es el único indicador de en qué oficio
+         estás, y conviene que se vea sin buscarlo. -->
+    <Style Selector="^:checked /template/ Border#b">
+      <Setter Property="Background" Value="{StaticResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Accent700}"/>
+      <Setter Property="BoxShadow" Value="0 0 14 0 #6B968AE0"/>
+    </Style>
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- ══ La barra del fotograma de previsualización ══════════════════════════
+       Dice de qué segundo del vídeo se saca la miniatura. Es gruesa y con los dos topes
+       marcados a propósito: no es un volumen que se ajusta al oído, es una posición que se
+       elige a ojo y hay que ver dónde cae.
+
+       Se parece a BarraVideo (Temas/Reproductor.axaml) y no comparte tema con ella porque
+       el diseño es otro: 18 px de alto pintados, no 3, y el tirador es una pinza vertical
+       en vez de una bola. Lo que sí se hereda es la lección de allí: los botones de
+       repetición se quedan sin borde ni fondo, y el Track lleva atados mínimo, máximo y
+       valor — en WPF venían solos, aquí hay que enlazarlos o la barra no se mueve. -->
+  <ControlTheme x:Key="TimelineSlider" TargetType="Slider">
+    <Setter Property="Height" Value="24"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Orientation" Value="Horizontal"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent">
+          <Border Height="18" CornerRadius="4" Background="{StaticResource Field}"
+                  BorderBrush="{StaticResource Neutral800}" BorderThickness="1"
+                  VerticalAlignment="Center"/>
+          <Track Name="PART_Track" Minimum="{TemplateBinding Minimum}"
+                 Maximum="{TemplateBinding Maximum}"
+                 Value="{TemplateBinding Value, Mode=TwoWay}"
+                 Orientation="Horizontal">
+            <Track.DecreaseButton>
+              <RepeatButton Name="PART_DecreaseButton" Focusable="False">
+                <RepeatButton.Template>
+                  <ControlTemplate>
+                    <Border Height="18" CornerRadius="4,0,0,4" Background="#33968AE0"
+                            VerticalAlignment="Center"/>
+                  </ControlTemplate>
+                </RepeatButton.Template>
+              </RepeatButton>
+            </Track.DecreaseButton>
+            <Track.IncreaseButton>
+              <RepeatButton Name="PART_IncreaseButton" Focusable="False">
+                <RepeatButton.Template><ControlTemplate><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+              </RepeatButton>
+            </Track.IncreaseButton>
+            <Thumb Name="pinza" Width="12" Background="Transparent">
+              <Thumb.Template>
+                <ControlTemplate>
+                  <Panel Width="12" Background="Transparent">
+                    <Rectangle Width="2" Fill="{StaticResource Accent}" HorizontalAlignment="Center"/>
+                    <Border Width="11" Height="11" CornerRadius="6"
+                            Background="{StaticResource Accent}" VerticalAlignment="Top"/>
+                    <Border Width="11" Height="11" CornerRadius="6"
+                            Background="{StaticResource Accent}" VerticalAlignment="Bottom"/>
+                  </Panel>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
+          </Track>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+</ResourceDictionary>

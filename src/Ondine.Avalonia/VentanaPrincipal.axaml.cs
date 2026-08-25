@@ -1,0 +1,2315 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Threading;
+using Avalonia;
+using Avalonia.Collections;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Reactive;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
+using Avalonia.Styling;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Ondine.Complementos;
+using Ondine.Localizacion;
+using Ondine.Peliculas;
+using Ondine.Recortes;
+using Ondine.Reindex;
+using Ondine.Rutas;
+using Ondine.Trabajos;
+using Path = System.IO.Path;
+using Visual = Avalonia.Visual;
+
+
+namespace Ondine.Ava;
+
+public partial class VentanaPrincipal : Window
+{
+    private readonly ObservableCollection<VideoRow> _rows = new();
+
+    private readonly Engine _engine = new();
+    private readonly string _thumbDir = Path.Combine(Path.GetTempPath(), "shrinkvideo_thumbs");
+    private readonly string _previewDir = Path.Combine(Path.GetTempPath(), "shrinkvideo_preview");
+    private readonly DispatcherTimer _scrubTimer = new() { Interval = TimeSpan.FromMilliseconds(220) };
+    private CancellationTokenSource? _scrubCts;
+    private CancellationTokenSource? _previewCts;
+    private object? _previewBtnContent;
+    private CancellationTokenSource? _cts;
+    private bool _running;
+    private Pagina _paginaActual = Pagina.Comprimir;   // la pestaña que se está viendo
+    // Filas enviadas a la Papelera propia (Comprimir), en orden, para deshacer con Ctrl+Z: al
+    // restaurar el fichero también vuelve su fila a la lista, sin re-analizarlo.
+    private readonly Stack<VideoRow> _pilaPapelera = new();
+    private bool _paused;
+    private bool _applyingPreset;
+    private Settings _settings = new();
+
+    // banda de selección (rubber-band). El ancla se guarda en coordenadas de CONTENIDO (viewport
+    // + desplazamiento del scroll), no de viewport: así, al auto-desplazar durante el arrastre, la
+    // banda sigue anclada a la misma fila y selecciona también lo que quedaba fuera de la vista.
+    private Point _marqueeStart;         // coordenadas de CONTENIDO
+    private Point _marqueeUltimoV;       // última posición del ratón en coordenadas de viewport
+    private bool _marqueeActive;
+    private bool _marqueeDragging;
+    private readonly HashSet<object> _marqueeBase = new();
+    private ScrollViewer? _lstScroll;
+    private const double MarqueeBorde = 22;   // franja del borde que dispara el auto-scroll
+    private const double MarqueePaso = 26;     // píxeles por tic de auto-scroll
+    private readonly DispatcherTimer _marqueeAutoScroll =
+        new() { Interval = TimeSpan.FromMilliseconds(30) };
+
+    // orden por cabecera de la tabla de «Comprimir»
+
+    public VentanaPrincipal()
+    {
+        // InitializeComponent y no AvaloniaXamlLoader.Load: es el que rellena los campos de
+        // los elementos con nombre, y aqui hay cientos.
+        InitializeComponent();
+        Directory.CreateDirectory(_thumbDir);
+        // La papelera de la app manda los borrados VIEJOS a la Papelera del sistema; los recientes
+        // se pueden deshacer al instante. Aquí se le da la vía a la Papelera real y sus triggers de
+        // finalizado: al cerrar (todo) y cada pocos minutos (los que hayan envejecido).
+        // La papelera del sistema ya viene puesta en el motor; lo que se conecta aquí es la
+        // variante de Windows, que es la que sabe de shell32. Antes se rellenaba el hueco
+        // entero desde aquí, y quien no lo rellenara —la interfaz de Avalonia— acababa
+        // borrando en vez de mandando a la papelera.
+        PapeleraDelSistema.EnWindows = RecycleBin.Send;
+        Closed += (_, _) => Reindex.PapeleraApp.VaciarAlCerrar();
+        var relojPapelera = new DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
+        relojPapelera.Tick += (_, _) => Reindex.PapeleraApp.FinalizarViejos();
+        relojPapelera.Start();
+        lst.ItemsSource = _rows;
+        // Clic en una cabecera de la tabla = ordenar por esa columna (asc/desc alterno).
+#if DEV_BUILD
+        // Compilación local/dev: se marca «dev» + hora del build para no confundirla con la
+        // release de GitHub (misma versión) y saber si es la última que se acaba de compilar.
+        string marcaDev = " · dev";
+        try { marcaDev += " " + System.IO.File.GetLastWriteTime(Environment.ProcessPath!).ToString("dd/MM HH:mm"); }
+        catch { /* sin ruta de proceso: basta con «dev» */ }
+        lblVersion.Text = "v" + Updater.Current + marcaDev;
+        lblVersion.ToolTip = Textos.Instancia.MainVersionDevTip;
+#else
+        lblVersion.Text = "v" + Updater.Current;
+#endif
+        _previewBtnContent = btnPreview.Content;   // para restaurar tras "Cancelar"
+
+        // Valores de partida que llevan dentro un dato (el segundo del timeline) o un código
+        // que no se traduce (el idioma de la pista): se escriben aquí y no en el XAML.
+        TextosDeArranque();
+
+        // Lo escrito a mano NO es un enlace, así que cambiar de idioma no lo
+        // toca. Los textos que se reescriben al hacer algo se arreglan solos la
+        // próxima vez; estos no, porque solo se ponen al abrir, y se quedaban en
+        // el idioma viejo para siempre.
+        Idioma.Cambio += (_, _) => Dispatcher.UIThread.Post(TextosDeArranque);
+
+        _settings = SettingsStore.Load();
+        ApplySettings();
+
+        // el estado vacío solo se ve cuando no hay nada en la lista
+        _rows.CollectionChanged += async (_, _) =>
+            emptyState.IsVisible = _rows.Count == 0;
+
+        // barra de título propia
+        btnMin.Click += (_, _) => WindowState = WindowState.Minimized;
+        btnMax.Click += (_, _) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        btnClose.Click += (_, _) => Close();
+        // El hueco de 7 px al maximizar: sin el, la ventana maximizada se sale por los
+        // bordes de la pantalla. Avalonia no tiene el StateChanged de WPF, pero cualquier
+        // propiedad se puede observar, que es lo mismo con otro nombre.
+        this.GetObservable(WindowStateProperty).Subscribe(new AnonymousObserver<WindowState>(
+            est => rootBorder.Padding = est == WindowState.Maximized ? new Thickness(7) : new Thickness(0)));
+
+        btnSrc.Click += async (_, _) => await PickFolder(txtSrc);
+        btnOut.Click += async (_, _) => await PickFolder(txtOut);
+        btnSrcFile.Click += async (_, _) => await AddFilesDialogAsync();
+        btnOpen.Click += (_, _) => OpenDestination();
+        btnScan.Click += async (_, _) => await ScanAsync();
+        btnRun.Click += async (_, _) => await RunAsync();
+        btnEncolar.Click += async (_, _) => await EncolarAsync();
+        cboQ.SelectionChanged += (_, _) => AlCambiarModoDeCalidad();
+        btnCancel.Click += (_, _) => _cts?.Cancel();
+        btnPause.Click += (_, _) => TogglePause();
+        btnMarkAll.Click += (_, _) => lst.SelectAll();
+        btnMarkNone.Click += (_, _) => lst.SelectedItems.Clear();
+        btnDelSel.Click += (_, _) => DeleteSelected();
+        btnDelDir.Click += (_, _) => DeleteFolders();
+        btnCheckUpdate.Click += async (_, _) => await CheckUpdateAsync(manual: true);
+        btnUpdateLater.Click += (_, _) => updateBar.IsVisible = false;
+
+        // barra de menú
+        miPickSrc.Click += async (_, _) => await PickFolder(txtSrc);
+        miAddFiles.Click += async (_, _) => await AddFilesDialogAsync();
+        miOpenDest.Click += (_, _) => OpenDestination();
+        miExit.Click += (_, _) => Close();
+        miSelAll.Click += (_, _) => lst.SelectAll();
+        miSelNone.Click += (_, _) => lst.SelectedItems.Clear();
+        miSelInvert.Click += (_, _) => InvertSelection();
+        miDelSel.Click += (_, _) => DeleteSelected();
+        miRename.Click += (_, _) => OpenRenameDialog();
+        btnRename.Click += (_, _) => OpenRenameDialog();
+        // El catálogo y lo resuelto se le pasan a la ventana en vez de que ella
+        // los busque: así la pantalla de complementos no sabe nada de Organizar,
+        // solo recibe dos datos, y se puede abrir desde otro sitio mañana.
+        miComplementos.Click += (_, _) => AbrirComplementos(null);
+
+        miPrefs.Click += (_, _) => OpenPreferences();
+        miCheckUpd.Click += async (_, _) => await CheckUpdateAsync(manual: true);
+        miAbout.Click += async (_, _) => await ShowAbout();
+        miTutoriales.Click += (_, _) => new Ayuda().Show(this);
+
+        // «Subcarpetas» es el mismo ajuste que el de Preferencias: se mantienen en sync
+        chkRec.IsCheckedChanged += (_, _) => PersistRecurse();
+
+        // arrastrar vídeos (o carpetas) desde el Explorador y soltarlos en la ventana
+        DragDrop.SetAllowDrop(this, true);
+        AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        AddHandler(DragDrop.DropEvent, OnDropFiles);
+
+        // quitar de la lista con Supr + menú contextual de la tabla
+        lst.KeyDown += Lst_KeyDown;
+        lst.AddHandler(PointerPressedEvent, Lst_RightButtonDown, RoutingStrategies.Tunnel);
+        ctxTable.Opened += (_, _) => UpdateContextMenu();
+        miCtxRemove.Click += (_, _) => RemoveSelectedRows();
+        miCtxRecycle.Click += (_, _) => DeleteSelected();
+        miCtxOpenFolder.Click += (_, _) => OpenContainingFolder();
+        miCtxCopyPath.Click += async (_, _) => await CopySelectedPaths();
+        miCtxPistas.Click += async (_, _) => await QuitarPistasDeSeleccionado();
+        miCtxSelectAll.Click += (_, _) => lst.SelectAll();
+        miCtxInvert.Click += (_, _) => InvertSelection();
+
+        // banda de selección estilo explorador
+        // Tunel y no burbuja: la banda de seleccion tiene que enterarse ANTES que la tabla,
+        // que se queda el evento para hacer su propia seleccion. Es lo que hacian los
+        // Preview* de WPF; aqui la estrategia se pide al enganchar.
+        lst.AddHandler(PointerPressedEvent, Lst_MouseDown, RoutingStrategies.Tunnel);
+        lst.AddHandler(PointerMovedEvent, Lst_MouseMove, RoutingStrategies.Tunnel);
+        lst.AddHandler(PointerReleasedEvent, Lst_MouseUp, RoutingStrategies.Tunnel);
+        _marqueeAutoScroll.Tick += (_, _) => MarqueeAutoScrollPaso();
+
+        // El panel lateral se pliega solo cuando la ventana se queda estrecha
+        SizeChanged += (_, _) => AjustarAAncho();
+
+        // conmutador de páginas «Comprimir | Organizar»
+        tabComprimir.IsCheckedChanged += (_, _) => CambiarPagina(Pagina.Comprimir);
+        tabOrganizar.IsCheckedChanged += (_, _) => CambiarPagina(Pagina.Organizar);
+        tabRecortes.IsCheckedChanged += (_, _) => CambiarPagina(Pagina.Recortes);
+        pageOrganizar.Log += AppendLog;
+        pageRecortes.Log += AppendLog;
+        // Recortes reporta su export al indicador global: se ve desde cualquier pestaña.
+        pageRecortes.EstadoProceso += (activo, etiqueta) =>
+        {
+            _recortesEtiqueta = activo ? etiqueta : null;
+            ActualizarIndicadorGlobal();
+        };
+        pageOrganizar.AbrirEnRecortes += (ruta, partirPorLaMitad) =>
+        {
+            tabRecortes.IsChecked = true;
+            pageRecortes.Cargar(ruta, partirPorLaMitad);
+        };
+        // La píldora lleva a la pestaña de la tarea que muestra, no siempre a «Comprimir».
+        pillFondo.PointerReleased += (_, _) => IrAPestaña(_pillDestino);
+
+        tabDetalle.PointerReleased += (_, _) => ShowSideTab("detalle");
+        tabEstim.PointerReleased += (_, _) => ShowSideTab("estim");
+
+        foreach (var c in new[] { cboFmt, cboCodec, cboQ, cboRes, cboAud, cboVel, cboACodec, cboMezcla })
+            c.SelectionChanged += (_, _) => UpdateEstimate();
+
+        btnPreview.Click += async (_, _) => await OnPreviewAsync();
+        btnMeasure.Click += async (_, _) => await OnMeasureAsync();
+        _scrubTimer.Tick += async (_, _) => { _scrubTimer.Stop(); await ShowScrubFrameAsync(); };
+        sldPreview.ValueChanged += async (_, _) =>
+        {
+            lblPreviewAt.Text = string.Format(Textos.Instancia.MainPrevisualizarDesde, FmtTime((int)sldPreview.Value));
+            _scrubTimer.Stop(); _scrubTimer.Start();   // debounce: muestra el fotograma al soltar/pausar
+        };
+
+        cboFmt.SelectionChanged += async (_, _) =>
+        {
+            bool audioOnly = cboFmt.SelectedIndex >= 3;   // MP3/M4A/FLAC/Opus
+            cboCodec.IsEnabled = cboQ.IsEnabled = cboRes.IsEnabled = !audioOnly;
+        };
+        btnSavePreset.Click += async (_, _) => await SavePreset();
+        cboPreset.SelectionChanged += (_, _) => ApplyPreset();
+        ReloadPresets(_settings.DefaultPreset);   // aplica el preset por defecto si lo hay
+        if (string.IsNullOrEmpty(_settings.DefaultPreset)) cboLang.Text = _settings.DefaultLang;
+
+        Loaded += async (_, _) =>
+        {
+            if (cboPreset.SelectedItem == null) cboLang.Text = _settings.DefaultLang;
+            if (!await Engine.ToolsAvailableAsync())
+                await Dialogo.Aviso(this, Textos.Instancia.MainFaltaFfmpegTitulo, Textos.Instancia.MainFaltaFfmpegTexto);
+            if (_settings.CheckUpdatesOnStart) await CheckUpdateAsync(manual: false);
+        };
+    }
+
+    // ---------- preferencias / ajustes ----------
+    private void ApplySettings()
+    {
+        Engine.MinFreeBytes = _settings.MinFreeMb * 1024L * 1024;
+        Engine.AllowHardware = _settings.UseHardware;
+        Estimator.ComplexityFactor = Math.Clamp(_settings.ComplexityFactor, 0.15, 4.0);
+        chkRec.IsChecked = _settings.Recurse;
+        UpdateRenameStatus();
+    }
+
+    /// <summary>La casilla «Subcarpetas» y la preferencia son lo mismo: al cambiarla, se guarda.</summary>
+    private void PersistRecurse()
+    {
+        bool v = chkRec.IsChecked == true;
+        if (v == _settings.Recurse) return;   // evita reescribir al aplicar los ajustes
+        _settings.Recurse = v;
+        SettingsStore.Save(_settings);
+    }
+
+    private async Task OpenPreferences()
+    {
+        var names = (cboPreset.ItemsSource as IEnumerable<Preset>)?.Select(p => p.Name) ?? Enumerable.Empty<string>();
+        var dlg = new Preferencias(_settings, names) ;
+        if (await dlg.ShowDialog<bool>(this) && dlg.Result != null)
+        {
+            _settings = dlg.Result;
+            SettingsStore.Save(_settings);
+            ApplySettings();
+            lblProg.Text = Textos.Instancia.MainPreferenciasGuardadas;
+        }
+    }
+
+    // ---------- renombrado de la salida (estilo PowerRename) ----------
+    private async Task OpenRenameDialog()
+    {
+        string ext = Engine.OutputExtension(BuildOptions());
+        var rows = SelectedRows();
+        if (rows.Count == 0) rows = _rows.ToList();   // sin selección: previsualiza con toda la lista
+
+        var items = rows
+            .Select(r => (name: Path.GetFileNameWithoutExtension(r.Name) + ext, created: SafeCreated(r.Path)))
+            .ToList();
+
+        var dlg = new Renombrar(_settings.Rename, items,
+                                   _settings.RenameSearchHistory, _settings.RenameReplaceHistory) ;
+        if (await dlg.ShowDialog<bool>(this) && dlg.Result != null)
+        {
+            _settings.Rename = dlg.Result;   // los historiales se mutan dentro del diálogo
+            SettingsStore.Save(_settings);
+            UpdateRenameStatus();
+            lblProg.Text = _settings.Rename.HasEffect
+                ? Textos.Instancia.MainRenombradoActivo
+                : Textos.Instancia.MainRenombradoDesactivado;
+        }
+    }
+
+    private static DateTime SafeCreated(string path)
+    {
+        try { return File.GetCreationTime(path); } catch { return DateTime.Now; }
+    }
+
+    /// <summary>Refleja en el botón si hay una regla de renombrado activa (para que nunca sea silenciosa).</summary>
+    private void UpdateRenameStatus()
+    {
+        bool on = _settings.Rename.HasEffect;
+        lblRename.Text = on ? Textos.Instancia.MainRenombrarSalidaActiva : Textos.Instancia.MainRenombrarSalida;
+        lblRename.Foreground = on ? Pincel("Accent300") : Pincel("Text");
+    }
+
+    /// <summary>
+    /// Los textos que se escriben a mano y NO los vuelve a tocar nadie.
+    ///
+    /// <para>
+    /// El resto de lo imperativo se reescribe al analizar, al seleccionar o al
+    /// mover el deslizador, así que un cambio de idioma se le nota a la
+    /// siguiente. Estos dos solo se ponen al abrir la ventana: si no se
+    /// rehacen aquí, se quedan en el idioma con el que arrancó la app.
+    /// </para>
+    /// </summary>
+    private void TextosDeArranque()
+    {
+        cboLang.Text = Textos.Instancia.MainIdiomaPistaPorDefecto;
+        lblPreviewAt.Text = string.Format(
+            Textos.Instancia.MainPrevisualizarDesde, FmtTime((int)sldPreview.Value));
+    }
+
+    private async Task ShowAbout() => await Dialogo.Aviso(this, Textos.Instancia.MainMenuAcercaDe,
+        string.Format(Textos.Instancia.MainAcercaDeTexto, Updater.Current));
+
+    /// <summary>Modal antes de comprimir: ¿enviar cada original a la Papelera al terminar? Devuelve (proceder, borrar, recordar).</summary>
+    private async Task<(bool proceed, bool delete, bool remember)> AskAfterCompress(int count)
+    {
+        var win = new Window
+        {
+            Title = Textos.Instancia.MainPaginaComprimir, Width = 470, SizeToContent = SizeToContent.Height, 
+            WindowStartupLocation = WindowStartupLocation.CenterOwner, CanResize = false, Background = Brushes.Transparent, TransparencyLevelHint = [WindowTransparencyLevel.Transparent],
+        };
+        var panel = new StackPanel { Margin = new Thickness(22) };
+        panel.Children.Add(new TextBlock
+        {
+            Text = string.Format(Textos.Instancia.MainAvisoComprimirCuantos, count),
+            FontSize = 14, FontWeight = FontWeight.Medium,
+            Foreground = Pincel("Text"), Margin = new Thickness(0, 0, 0, 14),
+        });
+        var chkDel = new CheckBox
+        {
+            Content = Textos.Instancia.MainAvisoComprimirPapelera,
+            Foreground = Pincel("Neutral300"), Margin = new Thickness(0, 0, 0, 9),
+        };
+        var chkRemember = new CheckBox
+        {
+            Content = Textos.Instancia.MainAvisoComprimirNoPreguntar,
+            Foreground = Pincel("Neutral500"),
+        };
+        panel.Children.Add(chkDel);
+        panel.Children.Add(chkRemember);
+        panel.Children.Add(new TextBlock
+        {
+            Text = Textos.Instancia.MainAvisoComprimirNota,
+            FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Pincel("Neutral600"),
+            Margin = new Thickness(0, 12, 0, 16),
+        });
+        var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var cancel = new Button { Content = Textos.Instancia.Cancelar, Width = 100, Theme = TemaDe("BtnSecondary"), Margin = new Thickness(0, 0, 8, 0), IsCancel = true };
+        var okb = new Button { Content = Textos.Instancia.MainPaginaComprimir, Width = 110, Theme = TemaDe("BtnPrimary"), IsDefault = true };
+        row.Children.Add(cancel);
+        row.Children.Add(okb);
+        panel.Children.Add(row);
+        win.Content = new Border
+        {
+            Background = Pincel("Bg"), BorderBrush = Pincel("Divider"),
+            BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Child = panel,
+        };
+        bool proceed = false;
+        okb.Click += (_, _) => { proceed = true; win.Close(true); };
+        await win.ShowDialog(this);
+        return (proceed, chkDel.IsChecked == true, chkRemember.IsChecked == true);
+    }
+
+    // ---------- selección de rutas ----------
+    private async Task PickFolder(TextBox target)
+    {
+        var elegida = await Selector.CarpetaAsync(this, Textos.Instancia.MainElegirCarpetaTitulo);
+        if (elegida is not null) target.Text = elegida;
+    }
+
+    private async Task AddFilesDialogAsync()
+    {
+        // Las extensiones salen del motor y no de una lista escrita aquí: es la misma que
+        // decide luego si un fichero es un video, y dos listas se separan sin avisar.
+        var ficheros = await Selector.FicherosAsync(
+            this, Textos.Instancia.MainElegirVideosTitulo, Textos.Instancia.MainFiltroVideos,
+            [.. Engine.VideoExtensions.Select(e => "*" + e)]);
+
+        if (ficheros.Count > 0) await AddFilesAsync(ficheros);
+    }
+
+    /// <summary>Añade archivos sueltos a la lista (sin reemplazarla) y analiza los nuevos.</summary>
+    private async Task AddFilesAsync(IEnumerable<string> paths)
+    {
+        var nuevos = new List<VideoRow>();
+        foreach (var f in paths.Where(File.Exists))
+        {
+            if (_rows.Any(r => string.Equals(r.Path, f, StringComparison.OrdinalIgnoreCase))) continue;
+            var fi = new FileInfo(f);
+            var row = new VideoRow
+            {
+                Name = fi.Name,
+                Dir = fi.Directory?.Name ?? "",
+                Path = fi.FullName,
+                Bytes = fi.Length,
+                SizeMB = $"{fi.Length / 1048576.0:n0} MB",
+                // También aquí: un fichero arrastrado desde el Explorador puede ser
+                // un marcador de la nube igual que uno encontrado al escanear, y
+                // sondearlo lo descargaría entero por la puerta de atrás.
+                EnLaNube = Nube.EsMarcador(fi.Attributes),
+            };
+            _rows.Add(row);
+            nuevos.Add(row);
+        }
+        if (nuevos.Count == 0) return;
+        foreach (var row in nuevos) lst.SelectedItems.Add(row);   // los recién añadidos entran seleccionados
+        lblLangHint.Text = Textos.Instancia.MainDetectando;
+        int enNube = await ProbeRowsAsync(nuevos);
+        lblLangHint.Text = enNube > 0 ? string.Format(Textos.Instancia.MainSaltadosEnLaNube, enNube) : "";
+    }
+    // ---------- arrastrar y soltar desde el Explorador ----------
+    private void OnDragOver(object? sender, DragEventArgs e)
+    {
+        e.DragEffects = e.DataTransfer?.TryGetFiles() is not null
+            ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Lo soltado entra por el mismo camino que el menu contextual del Explorador.
+    ///
+    /// <para>
+    /// En WPF el paquete que traia el raton era un DataObject con formatos con nombre, y de
+    /// ahi salia un array de rutas. Avalonia 12 lo cambio por DataTransfer, que devuelve
+    /// FICHEROS y no cadenas: cada uno puede no estar en el disco -algo arrastrado desde una
+    /// aplicacion de nube- y entonces no tiene ruta. Los que no la tengan se caen aqui.
+    /// </para>
+    /// </summary>
+    private void OnDropFiles(object? sender, DragEventArgs e)
+    {
+        e.Handled = true;
+
+        var rutas = e.DataTransfer?.TryGetFiles()
+            ?.Select(f => f.TryGetLocalPath())
+            .Where(r => !string.IsNullOrEmpty(r)).Select(r => r!).ToList();
+        if (rutas is null or { Count: 0 }) return;
+
+        var vids = Rutas.VideosQueLlegan.Expandir(rutas, chkRec.IsChecked == true);
+        if (vids.Count == 0) { lblProg.Text = Textos.Instancia.MainSinVideosQueAnadir; return; }
+        AddFilesFromShell(vids);
+    }
+
+    /// <summary>
+    /// Añade a la tabla los vídeos que llegan desde el Explorador (menú contextual,
+    /// «Enviar a», arrastrar y soltar), y deja la ventana lista para trabajar.
+    /// </summary>
+    public async void AddFilesFromShell(IReadOnlyList<string> paths)
+    {
+        var nuevos = paths.Where(File.Exists).ToList();
+        if (nuevos.Count == 0) return;
+
+        // si aún no hay origen, se toma la carpeta del primer archivo (para «Abrir destino»)
+        if (string.IsNullOrWhiteSpace(txtSrc.Text))
+            txtSrc.Text = Path.GetDirectoryName(nuevos[0]) ?? "";
+
+        int antes = _rows.Count;
+        lblProg.Text = string.Format(Textos.Instancia.MainAnadiendoDesdeExplorador, nuevos.Count);
+        await AddFilesAsync(nuevos);
+
+        int añadidos = _rows.Count - antes;
+        lblProg.Text = añadidos == 0
+            ? Textos.Instancia.MainYaEstabanEnLista
+            : string.Format(Textos.Instancia.MainAnadidosDesdeExplorador, añadidos);
+    }
+
+    private string EffectiveOutput()
+    {
+        if (!string.IsNullOrWhiteSpace(txtOut.Text)) return txtOut.Text.Trim();
+        var src = txtSrc.Text.Trim();
+        if (string.IsNullOrEmpty(src)) return "";
+        try
+        {
+            var baseDir = Directory.Exists(src) ? src : Path.GetDirectoryName(src) ?? "";
+            return Path.Combine(baseDir, "comprimido");
+        }
+        catch { return ""; }
+    }
+    private void OpenDestination()
+    {
+        var o = EffectiveOutput();
+        if (string.IsNullOrEmpty(o)) return;
+        Directory.CreateDirectory(o);
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{o}\"") { UseShellExecute = true });
+    }
+
+    // ---------- analizar ----------
+    private async Task ScanAsync()
+    {
+        var src = txtSrc.Text.Trim();
+        if (string.IsNullOrEmpty(src) || (!Directory.Exists(src) && !File.Exists(src)))
+        {
+            await Dialogo.Aviso(this, Textos.Instancia.MainOrigen, Textos.Instancia.MainOrigenInvalido);
+            return;
+        }
+        // Un segundo clic mientras el primero corre apilaba OTRA tanda concurrente
+        // sobre la misma carpeta. Con 1411 ficheros eso son dos filas de ffprobe
+        // peleando por el mismo disco.
+        if (_escaneando) { _cortarEscaneo?.Cancel(); return; }
+        _cortarEscaneo?.Dispose();
+        _cortarEscaneo = new CancellationTokenSource();
+        var corte = _cortarEscaneo.Token;
+
+        _escaneando = true;
+        btnScan.Content = Textos.Instancia.MainDetenerAnalisis;
+        try
+        {
+            _rows.Clear(); pnlALang.Children.Clear(); pnlSLang.Children.Clear();
+            lblLangHint.Text = Textos.Instancia.MainDetectando;
+
+            var outDir = EffectiveOutput();
+            bool recursivo = chkRec.IsChecked == true;
+
+            // Enumerar y leer el tamaño de 1411 ficheros son ~100 ms con la ventana
+            // tiesa. Fuera del hilo de interfaz, y con DirectoryInfo.EnumerateFiles,
+            // que devuelve los FileInfo YA poblados: con `new FileInfo(f)`, cada
+            // `.Length` disparaba una consulta al sistema de ficheros por vídeo.
+            var nuevas = await Task.Run(() =>
+            {
+                var opt = recursivo ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                IEnumerable<FileInfo> encontrados = Directory.Exists(src)
+                    ? new DirectoryInfo(src).EnumerateFiles("*.*", opt)
+                        .Where(fi => Engine.VideoExtensions.Contains(fi.Extension.ToLowerInvariant()))
+                        .Where(fi => !string.Equals(fi.DirectoryName, outDir, StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(fi => fi.FullName)
+                    : new[] { new FileInfo(src) };
+
+                return encontrados.Select(fi => new VideoRow
+                {
+                    Name = fi.Name,
+                    Dir = fi.Directory?.Name ?? "",
+                    Path = fi.FullName,
+                    Bytes = fi.Length,
+                    SizeMB = $"{fi.Length / 1048576.0:n0} MB",
+                    // Se pregunta AQUÍ, de paso, aprovechando que ya se han leído los
+                    // atributos: saber que un fichero solo está en la nube es lo que
+                    // evita descargarlo entero al sondearlo.
+                    EnLaNube = Nube.EsMarcador(fi.Attributes),
+                }).ToList();
+            }, corte);
+
+            if (corte.IsCancellationRequested) return;
+            foreach (var r in nuevas) _rows.Add(r);
+
+            lblProg.Text = string.Format(Textos.Instancia.MainVideosEncontrados, _rows.Count);
+            if (_rows.Count == 0) { lblLangHint.Text = Textos.Instancia.MainNadaQueAnalizar; return; }
+            lst.SelectAll();   // por defecto se procesan todos; el usuario acota con la selección
+
+            int enNube = await ProbeRowsAsync(_rows.ToList(), corte);
+            // Lo de la nube manda sobre el aviso de subtítulos: explica por qué hay
+            // filas sin códec ni duración, que si no se leen como un fallo de la app.
+            lblLangHint.Text = enNube > 0
+                ? string.Format(Textos.Instancia.MainSaltadosEnLaNube, enNube)
+                : pnlSLang.Children.Count == 0 ? Textos.Instancia.MainSinSubtitulosDetectados : "";
+        }
+        catch (OperationCanceledException) { lblLangHint.Text = Textos.Instancia.MainAnalisisDetenido; }
+        finally
+        {
+            _escaneando = false;
+            btnScan.Content = Textos.Instancia.MainAnalizar;
+        }
+    }
+
+    private bool _escaneando;
+    private CancellationTokenSource? _cortarEscaneo;
+
+    /// <summary>
+    /// Lee las pistas de cada fila con ffprobe y va poblando los idiomas detectados.
+    ///
+    /// <para>
+    /// <b>Los ficheros que solo están en la nube NO se sondean.</b> ffprobe abre el
+    /// fichero, y abrir un marcador de OneDrive obliga a Windows a <b>descargarlo
+    /// entero</b>. Sobre una biblioteca en la nube, pulsar «Analizar» se convertía
+    /// en bajar decenas de gigas sin haberlo pedido ni haber sido avisado. La
+    /// duración de esos se lee de la ficha que Windows ya guarda, que no los toca.
+    /// </para>
+    /// <para>
+    /// Y se dice por dónde va. Antes se ponía «Detectando…» una vez y no se
+    /// volvía a tocar en 1411 vueltas: una pantalla que no cambia en varios
+    /// minutos es indistinguible de una colgada.
+    /// </para>
+    /// </summary>
+    /// <returns>Cuántos se saltaron por estar solo en la nube.</returns>
+    private async Task<int> ProbeRowsAsync(IReadOnlyList<VideoRow> rows, CancellationToken corte = default)
+    {
+        int hechos = 0, enNube = 0;
+        foreach (var row in rows)
+        {
+            corte.ThrowIfCancellationRequested();
+
+            hechos++;
+            // Cada 25, no en cada vuelta: refrescar un rótulo 1411 veces cuesta
+            // más pases de layout que información aporta.
+            if (hechos % 25 == 1 || hechos == rows.Count)
+                lblLangHint.Text = string.Format(Textos.Instancia.MainAnalizandoNde, hechos, rows.Count);
+
+            if (row.EnLaNube)
+            {
+                enNube++;
+                row.Estado = Textos.Instancia.MainEnLaNubeSinSondear;
+                row.Probed = false;
+                continue;
+            }
+
+            var info = await _engine.ProbeAsync(row.Path);
+            row.Codec = info.Codec;
+            row.Dur = $"{info.DurationSec / 3600:D1}:{info.DurationSec % 3600 / 60:D2}:{info.DurationSec % 60:D2}";
+            row.Audio = string.Join("+", info.AudioLangs);
+            row.Subs = string.Join("+", info.SubLangs);
+            // El estado dice algo útil desde el análisis: si ya está bien comprimido, se
+            // avisa aquí y no se preselecciona, en vez de descubrirlo al lanzar la tanda.
+            int totalKbps = row.DurationSec > 0 ? (int)(row.Bytes * 8.0 / row.DurationSec / 1000.0) : 0;
+            row.YaComprimido = Engine.AlreadyCompressed(info.Codec, totalKbps);
+            row.Estado = row.YaComprimido
+                ? string.Format(Textos.Instancia.MainEstadoYaEn, info.Codec.ToUpperInvariant())
+                : Textos.Instancia.Pendiente;
+            row.Width = info.Width; row.Height = info.Height; row.Fps = info.Fps;
+            row.DurationSec = info.DurationSec;
+            row.VideoBitrateKbps = info.VideoBitrateKbps; row.AudioBitrateKbps = info.AudioBitrateKbps;
+            row.Channels = info.Channels; row.AudioCodec = info.AudioCodec; row.Probed = true;
+            foreach (var l in info.AudioLangs) if (l != "?") EnsureLangChip(pnlALang, l);
+            foreach (var l in info.SubLangs) if (l != "?") EnsureLangChip(pnlSLang, l);
+        }
+        UpdateLangCombo();
+
+        // Preselección inteligente: se marcan solo los que conviene comprimir. Los que ya
+        // están en un códec eficiente se dejan fuera, que era justo lo que prometía el
+        // texto de la lista vacía y no cumplía nadie.
+        int utiles = _rows.Count(r => !r.YaComprimido);
+        if (utiles > 0 && utiles < _rows.Count)
+        {
+            lst.SelectedItems.Clear();
+            foreach (var r in _rows.Where(r => !r.YaComprimido)) lst.SelectedItems.Add(r);
+            lblProg.Text = string.Format(Textos.Instancia.MainResumenPreseleccion,
+                                         _rows.Count, utiles, _rows.Count - utiles);
+        }
+        else lblProg.Text = utiles == 0 && _rows.Count > 0
+            ? string.Format(Textos.Instancia.MainResumenTodosComprimidos, _rows.Count)
+            : string.Format(Textos.Instancia.MainResumenEnLista, _rows.Count);
+
+        return enNube;
+    }
+
+    /// <summary>Llena el combo de idioma principal con los idiomas de audio realmente detectados.</summary>
+    private void UpdateLangCombo()
+    {
+        var detected = pnlALang.Children.OfType<CheckBox>().Select(c => (string)c.Content).Distinct().ToList();
+        if (detected.Count == 0) return;
+        var current = cboLang.Text;
+        cboLang.ItemsSource = detected;
+        cboLang.Text = detected.Contains(current) ? current : (detected.Contains("spa") ? "spa" : detected[0]);
+    }
+
+    private void EnsureLangChip(WrapPanel panel, string code)
+    {
+        if (panel.Children.OfType<CheckBox>().Any(c => (string)c.Content == code)) return;
+        AddLangChip(panel, code);
+    }
+
+    private void AddLangChip(WrapPanel panel, string code)
+    {
+        var cb = new CheckBox { Content = code, IsChecked = true, Theme = TemaDe("ChipStyle") };
+        cb.IsCheckedChanged += (_, _) => UpdateEstimate();
+        panel.Children.Add(cb);
+    }
+    private static List<string> CheckedLangs(WrapPanel panel) =>
+        panel.Children.OfType<CheckBox>().Where(c => c.IsChecked == true).Select(c => (string)c.Content).ToList();
+
+    // ---------- previsualización ----------
+    private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_marqueeDragging) return;   // durante el arrastre no recalculamos la vista (una vez al soltar)
+        await UpdateForSelectionAsync();
+    }
+
+    private async Task UpdateForSelectionAsync()
+    {
+        if (lst.SelectedItem is not VideoRow r) return;
+        UpdateEstimate();
+        sldPreview.Maximum = Math.Max(0, r.DurationSec - 10);
+        if (sldPreview.Value > sldPreview.Maximum) sldPreview.Value = 0;
+        lblPreviewAt.Text = string.Format(Textos.Instancia.MainPrevisualizarDesde, FmtTime((int)sldPreview.Value));
+        lblPrevName.Text = r.Name;
+        lblPrevInfo.Text = string.Format(Textos.Instancia.MainDetalleInfo, r.Dir, r.SizeMB, r.Dur, r.Codec, r.Audio)
+                         + (string.IsNullOrEmpty(r.Subs)
+                                ? ""
+                                : string.Format(Textos.Instancia.MainDetalleSubs, r.Subs));
+
+        await ShowScrubFrameAsync();   // muestra el fotograma del punto de previsualización
+    }
+
+    // ---------- selección estilo explorador (rubber-band) ----------
+    private ScrollViewer? LstScroll => _lstScroll ??= FindDescendant<ScrollViewer>(lst);
+
+    /// <summary>Punto del ratón en coordenadas de CONTENIDO (viewport + desplazamiento del scroll).</summary>
+    private Point PuntoContenido(Point viewport)
+    {
+        var sv = LstScroll;
+        return sv == null ? viewport
+            : new Point(viewport.X + sv.Offset.X, viewport.Y + sv.Offset.Y);
+    }
+
+    private void Lst_MouseDown(object? sender, PointerPressedEventArgs e)
+    {
+        // Solo el boton izquierdo. En WPF esto lo decidia el nombre del evento
+        // (PreviewMouseLeftButtonDown); aqui hay UN evento para los tres botones y hay que
+        // mirar cual viene, o el derecho arrancaria una banda de seleccion.
+        if (!e.GetCurrentPoint(lst).Properties.IsLeftButtonPressed) return;
+        // ignorar si el click es sobre la barra de desplazamiento
+        if (FindAncestor<ScrollBar>(e.Source as Visual) != null) return;
+        _marqueeStart = PuntoContenido(e.GetPosition(lst));
+        _marqueeActive = true;
+        _marqueeDragging = false;
+        // no capturamos ni marcamos manejado aún: un click simple debe seleccionar la fila con normalidad
+    }
+
+    private void Lst_MouseMove(object? sender, PointerEventArgs e)
+    {
+        if (!_marqueeActive || !e.GetCurrentPoint(lst).Properties.IsLeftButtonPressed) return;
+        var curV = e.GetPosition(lst);            // viewport (para el borde del auto-scroll)
+        _marqueeUltimoV = curV;
+        var cur = PuntoContenido(curV);           // contenido
+        if (!_marqueeDragging)
+        {
+            if (Math.Abs(cur.X - _marqueeStart.X) < 5 && Math.Abs(cur.Y - _marqueeStart.Y) < 5) return;   // umbral
+            _marqueeDragging = true;
+            _marqueeBase.Clear();
+            if ((e.KeyModifiers & KeyModifiers.Control) != 0)   // Ctrl = añadir a lo ya seleccionado
+                foreach (var it in lst.SelectedItems) _marqueeBase.Add(it);
+            e.Pointer.Capture(lst);
+            marquee.IsVisible = true;
+        }
+        PintarYSeleccionar(new Rect(_marqueeStart, cur));
+        // Si el ratón roza el borde superior/inferior, desplazar solo para alcanzar lo de fuera.
+        double h = lst.Bounds.Height;
+        if (curV.Y < MarqueeBorde || curV.Y > h - MarqueeBorde) _marqueeAutoScroll.Start();
+        else _marqueeAutoScroll.Stop();
+        e.Handled = true;
+    }
+
+    private void Lst_MouseUp(object? sender, PointerReleasedEventArgs e)
+    {
+        _marqueeAutoScroll.Stop();
+        if (_marqueeDragging)
+        {
+            marquee.IsVisible = false;
+            e.Pointer.Capture(null);
+            _marqueeDragging = false;
+            _marqueeActive = false;
+            _ = UpdateForSelectionAsync();   // refresca la vista de detalle una sola vez
+            e.Handled = true;
+            return;
+        }
+        _marqueeActive = false;   // fue un click simple: lo gestiona la tabla
+    }
+
+    /// <summary>Un tic de auto-scroll: desplaza hacia el borde tocado y rehace la banda con el nuevo offset.</summary>
+    private void MarqueeAutoScrollPaso()
+    {
+        var sv = LstScroll;
+        if (sv == null || !_marqueeDragging) { _marqueeAutoScroll.Stop(); return; }
+        double v = _marqueeUltimoV.Y, h = lst.Bounds.Height;
+        if (v < MarqueeBorde && sv.Offset.Y > 0)
+            sv.Offset = new Vector(sv.Offset.X, Math.Max(0, sv.Offset.Y - MarqueePaso));
+        else if (v > h - MarqueeBorde && sv.Offset.Y < Math.Max(0, sv.Extent.Height - sv.Viewport.Height))
+            sv.Offset = new Vector(sv.Offset.X, Math.Min(Math.Max(0, sv.Extent.Height - sv.Viewport.Height), sv.Offset.Y + MarqueePaso));
+        else { _marqueeAutoScroll.Stop(); return; }
+        // el ratón no se ha movido, pero el contenido sí: recomputar el punto de contenido
+        PintarYSeleccionar(new Rect(_marqueeStart, PuntoContenido(_marqueeUltimoV)));
+    }
+
+    /// <summary>Dibuja la banda (convertida a viewport) y selecciona lo que abarca, en coordenadas de contenido.</summary>
+    private void PintarYSeleccionar(Rect band)
+    {
+        var sv = LstScroll;
+        double hoff = sv?.Offset.X ?? 0, voff = sv?.Offset.Y ?? 0;
+        Canvas.SetLeft(marquee, band.X - hoff);
+        Canvas.SetTop(marquee, band.Y - voff);
+        marquee.Width = band.Width;
+        marquee.Height = band.Height;
+        ApplyMarqueeSelection(band);
+    }
+
+    /// <summary>Selecciona las filas cuyo rectángulo (en coordenadas de contenido) intersecta la banda.</summary>
+    private void ApplyMarqueeSelection(Rect band)
+    {
+        var sv = LstScroll;
+        double hoff = sv?.Offset.X ?? 0, voff = sv?.Offset.Y ?? 0;
+        for (int i = 0; i < _rows.Count; i++)
+        {
+            if (FilaEn(i) is not { } lvi) continue;
+            Rect r;
+            try
+            {
+                // TranslatePoint devuelve null cuando la fila no comparte arbol con la
+                // tabla -pasa mientras la virtualizacion la esta montando o soltando-. En
+                // WPF eso era una excepcion y por eso hay un try; aqui es un null, que es
+                // mas facil de leer pero igual de necesario de mirar.
+                if (lvi.TranslatePoint(new Point(0, 0), lst) is not { } tlV) continue;
+                r = new Rect(new Point(tlV.X + hoff, tlV.Y + voff),   // → contenido
+                             new Size(lvi.Bounds.Width, lvi.Bounds.Height));
+            }
+            catch { continue; }
+            bool want = r.Intersects(band) || _marqueeBase.Contains(_rows[i]);
+            if (lvi.IsSelected != want) lvi.IsSelected = want;
+        }
+    }
+
+    // ---------- quitar de la lista / menú contextual ----------
+    private void Lst_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Z && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            DeshacerPapelera();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key != Key.Delete) return;
+        RemoveSelectedRows();
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Ctrl+Z en la lista de Comprimir: restaura el último vídeo enviado a la Papelera propia
+    /// (a su sitio en disco) y devuelve su fila a la lista. Si su sitio ya se reocupó, no pisa nada.
+    /// </summary>
+    private void DeshacerPapelera()
+    {
+        var nombre = Reindex.PapeleraApp.DeshacerUltimo();
+        if (nombre == null)
+        {
+            lblProg.Text = _pilaPapelera.Count == 0
+                ? Textos.Instancia.MainNadaQueRecuperar
+                : Textos.Instancia.MainNoSePudoRecuperar;
+            return;
+        }
+        if (_pilaPapelera.Count > 0 && Path.GetFileName(_pilaPapelera.Peek().Path) == nombre)
+        {
+            var r = _pilaPapelera.Pop();
+            if (!_rows.Contains(r)) _rows.Add(r);
+        }
+        lblProg.Text = string.Format(Textos.Instancia.MainRecuperado, nombre);
+    }
+
+    /// <summary>Con el botón derecho, si la fila no estaba seleccionada pasa a serlo (como el explorador).</summary>
+    private void Lst_RightButtonDown(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(lst).Properties.IsRightButtonPressed) return;
+        if (FindAncestor<DataGridRow>(e.Source as Visual) is not { } item) return;
+        if (!item.IsSelected) { lst.SelectedItems.Clear(); item.IsSelected = true; }
+    }
+
+    /// <summary>
+    /// Quita las filas de la lista. NO toca los archivos: solo deja de tenerlos en cuenta.
+    /// Para borrar de verdad está «Enviar el archivo a la Papelera», que además pregunta.
+    /// </summary>
+    private void RemoveSelectedRows()
+    {
+        var sel = SelectedRows();
+        if (sel.Count == 0) return;
+        foreach (var r in sel) _rows.Remove(r);
+        lblProg.Text = sel.Count == 1
+            ? Textos.Instancia.MainQuitadoUno
+            : string.Format(Textos.Instancia.MainQuitadosVarios, sel.Count);
+    }
+
+    /// <summary>
+    /// Quitar pistas del fichero seleccionado SIN recomprimir. Es de uno en uno a propósito: las
+    /// pistas de cada fichero son distintas (idiomas, orden), y aplicar «quita la segunda de
+    /// audio» en bloque se llevaría por delante la equivocada en cuanto uno no coincida.
+    /// </summary>
+    private async Task QuitarPistasDeSeleccionado()
+    {
+        if (SelectedRows().FirstOrDefault() is not { } r || !File.Exists(r.Path)) return;
+
+        lblProg.Text = Textos.Instancia.MainLeyendoPistas;
+        var (pistas, dur) = await _engine.PistasDeAsync(r.Path);
+        if (pistas.Count == 0)
+        {
+            lblProg.Text = "";
+            await Dialogo.Aviso(this, Textos.Instancia.MainPistasTitulo, Textos.Instancia.MainPistasNoLeidas);
+            return;
+        }
+        if (pistas.Count(p => p.Tipo != TipoPista.Video) == 0)
+        {
+            lblProg.Text = "";
+            await Dialogo.Aviso(this, Textos.Instancia.MainPistasTitulo, Textos.Instancia.MainPistasSoloVideo);
+            return;
+        }
+
+        lblProg.Text = "";
+        var win = new Pistas(_engine, r.Path, pistas, dur) ;
+        await win.ShowDialog(this);
+        if (!win.SeCambioAlgo) return;
+
+        // El fichero es OTRO: pesa menos y tiene otras pistas. La fila se rehace en vez de
+        // parchearla —su tamaño es de solo lectura— y así vuelve a sondearse con lo que hay ahora.
+        var ruta = r.Path;
+        _rows.Remove(r);
+        await AddFilesAsync(new[] { ruta });
+        lblProg.Text = string.Format(Textos.Instancia.MainPistasQuitadas, Path.GetFileName(ruta));
+    }
+
+    private void UpdateContextMenu()
+    {
+        int n = SelectedRows().Count;
+        miCtxRemove.IsEnabled = miCtxRecycle.IsEnabled = miCtxCopyPath.IsEnabled = n > 0;
+        miCtxOpenFolder.IsEnabled = n > 0;
+        miCtxInvert.IsEnabled = _rows.Count > 0;
+        miCtxSelectAll.IsEnabled = _rows.Count > 0;
+        miCtxRemove.Header = n > 1
+            ? string.Format(Textos.Instancia.MainCtxQuitarVarias, n)
+            : Textos.Instancia.MainCtxQuitar;
+        miCtxRecycle.Header = n > 1
+            ? string.Format(Textos.Instancia.MainCtxPapeleraVarios, n)
+            : Textos.Instancia.MainCtxPapelera;
+    }
+
+    private void OpenContainingFolder()
+    {
+        if (SelectedRows().FirstOrDefault() is not { } r) return;
+        try
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{r.Path}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) { lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoAbrirCarpeta, ex.Message); }
+    }
+
+    private async Task CopySelectedPaths()
+    {
+        var sel = SelectedRows();
+        if (sel.Count == 0) return;
+        try
+        {
+            // El portapapeles cuelga de la ventana y no de la aplicación, y es asíncrono:
+            // en Linux el contenido no se copia, se OFRECE, y la respuesta llega cuando
+            // alguien pega. Por eso hay que esperar a que quede ofrecido antes de decir
+            // que se ha copiado.
+            if (Clipboard is not { } papel) return;
+            var datos = new DataTransfer();
+            datos.Add(DataTransferItem.CreateText(string.Join(Environment.NewLine, sel.Select(r => r.Path))));
+            await papel.SetDataAsync(datos);
+            lblProg.Text = sel.Count == 1
+                ? Textos.Instancia.MainRutaCopiada
+                : string.Format(Textos.Instancia.MainRutasCopiadas, sel.Count);
+        }
+        catch (Exception ex) { lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoCopiar, ex.Message); }
+    }
+
+    private void InvertSelection()
+    {
+        for (int i = 0; i < _rows.Count; i++)
+            if (FilaEn(i) is { } lvi)
+                lvi.IsSelected = !lvi.IsSelected;
+    }
+
+    /// <summary>Las filas seleccionadas, en el orden de la lista.</summary>
+    private List<VideoRow> SelectedRows() => _rows.Where(r => lst.SelectedItems.Contains(r)).ToList();
+
+    // Las dos búsquedas por el árbol visual se caen: en WPF había que escribirlas a mano
+    // sobre VisualTreeHelper, y Avalonia las trae como extensiones. Se quedan los nombres
+    // -los usan una docena de sitios- pero por dentro ya no hay recorrido propio.
+    private static T? FindAncestor<T>(Visual? d) where T : Visual =>
+        d as T ?? d?.FindAncestorOfType<T>();
+
+    /// <summary>Primer descendiente del tipo pedido en el árbol visual.</summary>
+    private static T? FindDescendant<T>(Visual? raiz) where T : Visual =>
+        raiz?.GetVisualDescendants().OfType<T>().FirstOrDefault();
+
+    /// <summary>Genera y muestra el fotograma del vídeo seleccionado en el punto del timeline.</summary>
+    private async Task ShowScrubFrameAsync()
+    {
+        if (lst.SelectedItem is not VideoRow r || !r.Probed) return;
+        _scrubCts?.Cancel();
+        var cts = _scrubCts = new CancellationTokenSource();
+        var token = cts.Token;
+
+        Directory.CreateDirectory(_thumbDir);
+        var scrub = Path.Combine(_thumbDir, $"frame_{Guid.NewGuid():N}.jpg");   // archivo único: sin carreras
+        bool ok = await Engine.MakeThumbnailAsync(r.Path, scrub, (int)sldPreview.Value);
+        if (token.IsCancellationRequested || !ok || !File.Exists(scrub)) { TryDelete(scrub); return; }
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(scrub, token);
+            // Se lee entero a memoria y se cierra: el fichero se borra dos líneas más
+            // abajo. En WPF eso lo pedía CacheOption=OnLoad más Freeze; aquí el Bitmap ya
+            // decodifica al construirse y no se queda con el flujo abierto.
+            using var flujo = new MemoryStream(bytes);
+            var bmp = new Bitmap(flujo);
+            if (!token.IsCancellationRequested) imgPrev.Source = bmp;
+        }
+        catch { }
+        TryDelete(scrub);
+    }
+
+    private static void TryDelete(string path) { try { if (File.Exists(path)) File.Delete(path); } catch { } }
+
+    // ---------- estimación de ahorro ----------
+    /// <summary>
+    /// Enseña una de las pestañas laterales. Va por nombre y no por booleano —como estaba—
+    /// porque un <c>bool</c> que significa «la segunda» solo se entiende si hay exactamente
+    /// dos, y añadir una tercera obligaba a reescribirlo entero.
+    /// </summary>
+    private void ShowSideTab(string cual)
+    {
+        var paneles = new (string Clave, Border Pestaña, Control Panel)[]
+        {
+            ("detalle", tabDetalle, panelDetalle),
+            ("estim",   tabEstim,   panelEstim),
+        };
+
+        foreach (var (clave, pestaña, panel) in paneles)
+        {
+            bool activa = clave == cual;
+            panel.IsVisible = activa;
+            pestaña.BorderBrush = activa ? Pincel("Accent") : Brushes.Transparent;
+            ((TextBlock)pestaña.Child).Foreground = Pincel(activa ? "Accent300" : "Neutral400");
+        }
+    }
+
+    private void UpdateEstimate()
+    {
+        if (lst.SelectedItem is not VideoRow r || !r.Probed) { ClearEstimate(); return; }
+        var est = Estimator.Compute(r, BuildOptions());
+        if (!est.Valid) { ClearEstimate(); return; }
+        lblEstSize.Text = "≈ " + Human(est.EstBytes);
+        lblEstSaving.Text = string.Format(Textos.Instancia.MainEstAhorroResumen, est.SavedPct, Human(est.SavedBytes));
+        SetBar(barVQ, est.VideoQuality); SetBar(barVS, est.VideoSaving);
+        SetBar(barAQ, est.AudioQuality); SetBar(barAS, est.AudioSaving);
+        lblEstDetail.Text = string.Format(Textos.Instancia.MainEstDetalle, est.EstVideoKbps, est.EstAudioKbps);
+    }
+
+    private void ClearEstimate()
+    {
+        lblEstSize.Text = "—";
+        lblEstSaving.Text = Textos.Instancia.MainEstSinSeleccion;
+        foreach (var b in new[] { barVQ, barVS, barAQ, barAS }) SetBar(b, 0);
+        lblEstDetail.Text = "";
+    }
+
+    private void SetBar(StackPanel panel, int value)
+    {
+        panel.Children.Clear();
+        var on = Pincel("Accent");
+        var off = Pincel("Neutral800");
+        for (int i = 0; i < 5; i++)
+            panel.Children.Add(new Border
+            {
+                Width = 20, Height = 6, CornerRadius = new CornerRadius(2),
+                Margin = new Thickness(0, 0, 3, 0),
+                Background = i < value ? on : off,
+            });
+    }
+
+    private static string Human(long bytes) => bytes switch
+    {
+        >= (1L << 30) => $"{bytes / (double)(1L << 30):n2} GB",
+        >= (1L << 20) => $"{bytes / (double)(1L << 20):n0} MB",
+        _ => $"{bytes / 1024.0:n0} KB",   // por debajo de 1 MB, «0 MB» no dice nada
+    };
+
+    private static string FmtTime(int sec) => $"{sec / 60}:{sec % 60:D2}";
+
+    // ---------- medición real del tamaño (muestreo) ----------
+    private async Task OnMeasureAsync()
+    {
+        if (lst.SelectedItem is not VideoRow r || !r.Probed)
+        {
+            await Dialogo.Aviso(this, Textos.Instancia.MainMedirTitulo, Textos.Instancia.MainSeleccionaVideoAnalizado);
+            return;
+        }
+        if (_running) { await Dialogo.Aviso(this, Textos.Instancia.MainMedirTitulo, Textos.Instancia.MainMedirEspera); return; }
+
+        var opt = BuildOptions();
+        if (opt.AudioOnly) { await Dialogo.Aviso(this, Textos.Instancia.MainMedirTitulo, Textos.Instancia.MainMedirSoloAudio); return; }
+
+        btnMeasure.IsEnabled = false;
+        progRow.IsVisible = true; bar.Value = 0;
+        lblProg.Text = Textos.Instancia.MainMidiendo;
+        lblMeasure.Text = Textos.Instancia.MainMidiendoFragmentos;
+        var cts = new CancellationTokenSource();
+        try
+        {
+            int kbps = await _engine.MeasureVideoBitrateAsync(r.Path, opt, new PreviewReporter(this), cts.Token);
+            if (kbps <= 0)
+            {
+                lblMeasure.Text = Textos.Instancia.MainMedirFallo;
+                lblProg.Text = Textos.Instancia.MainMedirFalloCorto;
+                return;
+            }
+            // el contenido manda: deducimos su factor de complejidad y recalibramos
+            double factor = Estimator.FactorFromMeasurement(r, opt, kbps);
+            Estimator.ComplexityFactor = factor;
+            _settings.ComplexityFactor = factor;
+            SettingsStore.Save(_settings);
+            UpdateEstimate();
+            var veredicto = factor < 0.85 ? Textos.Instancia.MainMedidoFacil
+                          : factor > 1.15 ? Textos.Instancia.MainMedidoExigente
+                          : Textos.Instancia.MainMedidoNormal;
+            lblMeasure.Text = string.Format(Textos.Instancia.MainMedidoResultado, kbps, veredicto, factor);
+            lblProg.Text = Textos.Instancia.MainMedicionAplicada;
+        }
+        catch (OperationCanceledException) { lblMeasure.Text = Textos.Instancia.MainMedicionCancelada; }
+        catch (Exception ex) { lblMeasure.Text = string.Format(Textos.Instancia.MainMedirError, ex.Message); }
+        finally
+        {
+            cts.Dispose();
+            btnMeasure.IsEnabled = true;
+            progRow.IsVisible = false;
+        }
+    }
+
+    // ---------- previsualización de 10 s ----------
+    private async Task OnPreviewAsync()
+    {
+        if (_previewCts != null) { _previewCts.Cancel(); return; }   // ya generando → el botón cancela
+        if (lst.SelectedItem is not VideoRow r || !r.Probed)
+        {
+            await Dialogo.Aviso(this, Textos.Instancia.MainPrevisualizarTitulo, Textos.Instancia.MainSeleccionaVideoAnalizado);
+            return;
+        }
+        _previewCts = new CancellationTokenSource();
+        btnPreview.Content = Textos.Instancia.MainCancelarPrevisualizacion;
+        progRow.IsVisible = true; bar.Value = 0;
+        lblProg.Text = Textos.Instancia.MainGenerandoPrevisualizacion;
+        try
+        {
+            Directory.CreateDirectory(_previewDir);
+            foreach (var old in Directory.GetFiles(_previewDir)) TryDelete(old);   // borra la anterior
+            var dest = Path.Combine(_previewDir, $"preview_{Guid.NewGuid():N}.mkv");
+            var path = await _engine.PreviewAsync(r.Path, BuildOptions(), (int)sldPreview.Value, dest,
+                                                  new PreviewReporter(this), _previewCts.Token);
+            if (path != null)
+            {
+                lblProg.Text = Textos.Instancia.MainPrevisualizacionLista;
+                Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            }
+            else lblProg.Text = Textos.Instancia.MainPrevisualizacionFallo;
+        }
+        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainPrevisualizacionCancelada; }
+        catch (Exception ex) { lblProg.Text = string.Format(Textos.Instancia.MainPrevisualizacionError, ex.Message); }
+        finally
+        {
+            progRow.IsVisible = false;
+            _previewCts?.Dispose(); _previewCts = null;
+            btnPreview.Content = _previewBtnContent;
+        }
+    }
+
+    // reportero de progreso para la preview (actualiza la barra)
+    private sealed class PreviewReporter : IEngineReporter
+    {
+        private readonly VentanaPrincipal _w;
+        public PreviewReporter(VentanaPrincipal w) => _w = w;
+        public void Log(string l) { }
+        public void FileStart(int i, int t, string n, double d) { }
+        public void FileProgress(double f, string raw) => Dispatcher.UIThread.Post(() => _w.bar.Value = f);
+        public void FileDone(FileResult r) { }
+    }
+
+    // ---------- eliminar (papelera) ----------
+    private async Task DeleteSelected()
+    {
+        var sel = SelectedRows();
+        if (sel.Count == 0) { await Dialogo.Aviso(this, Textos.Instancia.MainEliminarTitulo, Textos.Instancia.MainSinVideosSeleccionados); return; }
+        double mb = sel.Sum(r => r.Bytes) / 1048576.0;
+        if (!await Dialogo.Confirmar(this, Textos.Instancia.MainEliminarMarcadosTitulo,
+                                    string.Format(Textos.Instancia.MainEliminarMarcadosPregunta, sel.Count, mb))) return;
+        _pilaPapelera.Clear();   // una tanda nueva; el Ctrl+Z restaura de esta tanda hacia atrás
+        foreach (var r in sel)
+        {
+            // Papelera PROPIA de la app (no la de Windows): permite deshacer con Ctrl+Z de forma
+            // fiable y, al acumularse o cerrar, se finaliza en la Papelera del sistema.
+            if (Reindex.PapeleraApp.Enviar(r.Path) != null) { _rows.Remove(r); _pilaPapelera.Push(r); }
+            else r.Estado = Textos.Instancia.MainEstadoErrorAlBorrar;
+        }
+        lblProg.Text = _pilaPapelera.Count > 0
+            ? string.Format(Textos.Instancia.MainALaPapeleraDeshacer, Reindex.PapeleraApp.UltimoNombre)
+            : Textos.Instancia.MainEnviadosALaPapelera;
+    }
+    private async Task DeleteFolders()
+    {
+        var dirs = SelectedRows().Select(r => Path.GetDirectoryName(r.Path)!).Distinct().ToList();
+        if (dirs.Count == 0)
+        {
+            var s = txtSrc.Text.Trim();
+            if (!string.IsNullOrEmpty(s) && Directory.Exists(s)) dirs = new() { s };
+        }
+        if (dirs.Count == 0) { await Dialogo.Aviso(this, Textos.Instancia.MainEliminarCarpeta, Textos.Instancia.MainEliminarCarpetaSinNada); return; }
+        if (!await Dialogo.Confirmar(this, Textos.Instancia.MainEliminarCarpeta,
+                                    string.Format(Textos.Instancia.MainEliminarCarpetaPregunta,
+                                                  dirs.Count, string.Join("\n", dirs)))) return;
+        foreach (var d in dirs) PapeleraDelSistema.Mandar(d);
+        foreach (var r in _rows.Where(r => Path.GetDirectoryName(r.Path) is { } d && dirs.Contains(d)).ToList()) _rows.Remove(r);
+        lblProg.Text = Textos.Instancia.MainCarpetasALaPapelera;
+    }
+
+    // ---------- comprimir ----------
+    private EncodeOptions BuildOptions()
+    {
+        var opt = new EncodeOptions
+        {
+            Output = EffectiveOutput() is { Length: > 0 } o ? o : null,
+            Lang = string.IsNullOrWhiteSpace(cboLang.Text) ? "spa" : cboLang.Text.Trim(),
+            KeepLangs = CheckedLangs(pnlALang),
+            Force = chkForce.IsChecked == true,
+            DryRun = chkDry.IsChecked == true,
+            NameRule = _settings.Rename,
+            VideoCodec = cboCodec.SelectedIndex switch { 1 => "h264", 2 => "av1", _ => "hevc" },
+        };
+        switch (cboFmt.SelectedIndex)
+        {
+            case 1: opt.Container = "mp4"; break;
+            case 2: opt.Container = "webm"; break;
+            case 3: opt.AudioOnly = true; opt.AudioFormat = "mp3"; break;
+            case 4: opt.AudioOnly = true; opt.AudioFormat = "m4a"; break;
+            case 5: opt.AudioOnly = true; opt.AudioFormat = "flac"; break;
+            case 6: opt.AudioOnly = true; opt.AudioFormat = "opus"; break;
+            default: opt.Container = "mkv"; break;
+        }
+        // El indice 5 es «Tamano objetivo…»: entonces no hay calidad constante, hay un
+        // tamano al que llegar. Las dos juntas no las obedece ffmpeg, asi que es una o la
+        // otra y aqui se decide cual.
+        opt.Quality = cboQ.SelectedIndex switch { 1 => 22, 2 => 24, 3 => 27, 4 => 30, _ => 0 };
+        opt.TamanoObjetivoBytes = ObjetivoElegidoBytes();
+        // El orden del desplegable esta acoplado a este switch, igual que el resto de la
+        // fila: se traduce el rotulo, nunca se reordena la lista.
+        opt.AudioMezcla = cboMezcla.SelectedIndex == 1
+            ? Ondine.Audio.Mezcla.Estereo
+            : Ondine.Audio.Mezcla.SinTocar;
+                opt.AudioCodec = cboACodec.SelectedIndex switch
+        {
+            1 => Ondine.Audio.AudioElegido.Aac,
+            2 => Ondine.Audio.AudioElegido.Ac3,
+            3 => Ondine.Audio.AudioElegido.Eac3,
+            4 => Ondine.Audio.AudioElegido.Opus,
+            5 => Ondine.Audio.AudioElegido.Flac,
+            _ => Ondine.Audio.AudioElegido.Copiar,
+        };
+                opt.Velocidad = cboVel.SelectedIndex switch
+        {
+            0 => Ondine.Objetivo.Velocidad.MuyRapido,
+            1 => Ondine.Objetivo.Velocidad.Rapido,
+            3 => Ondine.Objetivo.Velocidad.Lento,
+            4 => Ondine.Objetivo.Velocidad.MuyLento,
+            _ => Ondine.Objetivo.Velocidad.Equilibrado,
+        };
+        opt.MaxHeight = cboRes.SelectedIndex switch { 1 => 1080, 2 => 720, 3 => 480, _ => 0 };
+        opt.AudioBitrate = cboAud.SelectedIndex switch { 1 => 192, 2 => 160, 3 => 128, 4 => 96, _ => 0 };
+
+        var sChips = pnlSLang.Children.OfType<CheckBox>().ToList();
+        var sChecked = CheckedLangs(pnlSLang);
+        if (sChips.Count > 0 && sChecked.Count == 0) opt.NoSubs = true;
+        else if (sChecked.Count > 0 && sChecked.Count < sChips.Count) opt.SubLangs = sChecked;
+        return opt;
+    }
+
+    // ── La cola de trabajos ─────────────────────────────────────────────────────
+    // Las reglas -que las opciones se copian, quien puede moverse, que estado queda-
+    // viven en ColaDeTrabajos, en el motor, y tienen pruebas. Aqui solo se pinta y se
+    // despacha.
+
+    private readonly ColaDeTrabajos _cola = new();
+
+    /// <summary>
+    /// Mete lo marcado en la cola con los ajustes de AHORA, y deja la pantalla libre para
+    /// preparar el siguiente trabajo con otros distintos. Es todo el sentido de la cola.
+    /// </summary>
+    private async Task EncolarAsync()
+    {
+        var filas = SelectedRows();
+        if (filas.Count == 0)
+        {
+            await Dialogo.Aviso(this, Textos.Instancia.MainPaginaComprimir,
+                               Textos.Instancia.MainComprimirSinSeleccion);
+            return;
+        }
+
+        var rutas = filas.Select(r => r.Path).ToList();
+
+        // Encolar el mismo fichero dos veces no se prohibe -pueden querer dos formatos del
+        // mismo original- pero se avisa: el segundo trabajo leeria un fichero que el primero
+        // puede haber mandado a la papelera, y descubrirlo a mitad de cola es tardisimo.
+        var repes = _cola.YaEnCola(rutas);
+        if (repes.Count > 0)
+        {
+            var nombres = string.Join(", ", repes.Take(4).Select(Path.GetFileName));
+            if (!await Dialogo.Confirmar(this, Textos.Instancia.MainColaTitulo,
+                    string.Format(Textos.Instancia.MainColaYaEnCola, nombres)))
+                return;
+        }
+
+        var opt = BuildOptions();
+        _cola.Encolar(rutas, opt, EffectiveOutput());
+        PintarCola();
+
+        // Si no habia nada corriendo, la cola arranca sola: encolar y que no pase nada
+        // obligaria a pulsar otra cosa, y entonces el boton no seria «anadir a la cola»
+        // sino «preparar algo que ya veremos».
+        if (!_running) await DespacharColaAsync();
+    }
+
+    /// <summary>
+    /// Va sacando trabajos hasta vaciar la cola. Uno cada vez, a proposito: dos ffmpeg a la
+    /// vez sobre el mismo disco tardan mas que en fila, y ademas se pelean por el espacio de
+    /// los temporales.
+    /// </summary>
+    private async Task DespacharColaAsync()
+    {
+        while (_cola.Siguiente() is { } t && !_running)
+        {
+            _cola.Empezar(t.Id);
+            PintarCola();
+
+            var r = await ComprimirTandaAsync(t.Ficheros, t.Opciones);
+
+            // Cancelar detiene la cola entera, no solo el trabajo: quien pulsa «Detener»
+            // quiere parar, no pasar al siguiente.
+            if (r.Cancelado) { _cola.Cancelar(t.Id); PintarCola(); return; }
+
+            _cola.Terminar(t.Id, r.Salieron, r.Fallaron);
+            PintarCola();
+        }
+    }
+
+    /// <summary>
+    /// Mete filas en la tabla sin tocar el disco, para la comprobacion de arranque.
+    ///
+    /// <para>
+    /// La tabla se llena analizando ficheros de verdad, que en una comprobacion no hay. Y
+    /// hace falta que tenga filas: lo que se quiere ver es una fila PINTADA -que el tema del
+    /// DataGrid se aplico y que las celdas dicen algo-, y una tabla vacia se ve igual de bien
+    /// que una tabla rota.
+    /// </para>
+    /// </summary>
+    internal void FilasDePrueba(params (string nombre, string estado)[] filas)
+    {
+        foreach (var (nombre, estado) in filas)
+            _rows.Add(new VideoRow { Name = nombre, Dir = "pruebas", SizeMB = "100 MB",
+                                     Path = nombre, Estado = estado });
+    }
+
+    /// <summary>
+    /// Encolar sin pasar por la seleccion ni por los dialogos, para el arnes de humo.
+    ///
+    /// <para>
+    /// Existe porque la alternativa era que la prueba manipulara la tabla y la lista de
+    /// seleccion de WPF para llegar al mismo sitio: mas codigo de prueba que de producto, y
+    /// atado a como esta montada la pantalla hoy. Esto entra por el MISMO camino -la cola y
+    /// su pintura- que es lo que se quiere comprobar.
+    /// </para>
+    /// </summary>
+    internal void EncolarParaPruebas(IReadOnlyList<string> ficheros)
+    {
+        _cola.Encolar(ficheros, BuildOptions(), EffectiveOutput());
+        PintarCola();
+    }
+
+    private void PintarCola()
+    {
+        var vivos = _cola.Trabajos;
+        panelCola.IsVisible = vivos.Count > 0;
+
+        listaCola.ItemsSource = vivos.Select(ColaFila.De).ToList();
+        lblCola.Text = string.Format(Textos.Instancia.MainColaResumen,
+                                     _cola.Pendientes, _cola.FicherosPorHacer);
+    }
+
+    private void OnColaSubir(object remitente, RoutedEventArgs e) => MoverEnCola(remitente, arriba: true);
+    private void OnColaBajar(object remitente, RoutedEventArgs e) => MoverEnCola(remitente, arriba: false);
+
+    private void MoverEnCola(object remitente, bool arriba)
+    {
+        if (remitente is not Button { Tag: int id }) return;
+
+        var pudo = arriba ? _cola.Subir(id) : _cola.Bajar(id);
+        if (pudo) PintarCola();
+        else lblProg.Text = Textos.Instancia.MainColaNoSeMueve;
+    }
+
+    private void OnColaQuitar(object remitente, RoutedEventArgs e)
+    {
+        if (remitente is not Button { Tag: int id }) return;
+
+        if (_cola.Quitar(id)) PintarCola();
+        else lblProg.Text = Textos.Instancia.MainColaNoSeMueve;
+    }
+
+    /// <summary>Si esta elegido «Tamano objetivo…», los bytes pedidos. Cero si no.</summary>
+    private long ObjetivoElegidoBytes()
+    {
+        if (cboQ.SelectedIndex != 5) return 0;
+
+        // Se acepta con coma o con punto: en una maquina en espanol se escribe «1,5» sin
+        // pensarlo, y rechazarlo por eso seria pelearse con el teclado del usuario.
+        var texto = (txtObjetivoMB.Text ?? "").Trim().Replace(',', '.');
+        return double.TryParse(texto, System.Globalization.NumberStyles.Float,
+                               System.Globalization.CultureInfo.InvariantCulture, out var mb) && mb > 0
+            ? (long)(mb * 1024 * 1024)
+            : 0;
+    }
+
+    private void AlCambiarModoDeCalidad()
+    {
+        filaObjetivo.IsVisible = cboQ.SelectedIndex == 5;
+    }
+
+    private async Task RunAsync()
+    {
+        var selRows = SelectedRows();
+        if (selRows.Count == 0) { await Dialogo.Aviso(this, Textos.Instancia.MainPaginaComprimir, Textos.Instancia.MainComprimirSinSeleccion); return; }
+        var sel = selRows.Select(r => r.Path).ToList();
+
+        var opt = BuildOptions();
+
+        // ¿enviar cada original a la Papelera tras comprimirlo? (según preferencias / modal)
+        bool deleteOriginals = false;
+        if (!opt.DryRun)
+        {
+            if (_settings.AfterCompress == AfterCompress.Ask)
+            {
+                var (proceed, del, remember) = await AskAfterCompress(selRows.Count);
+                if (!proceed) return;   // canceló el modal
+                deleteOriginals = del;
+                if (remember)
+                {
+                    _settings.AfterCompress = del ? AfterCompress.RecycleOriginal : AfterCompress.Keep;
+                    SettingsStore.Save(_settings);
+                }
+            }
+            else deleteOriginals = _settings.AfterCompress == AfterCompress.RecycleOriginal;
+        }
+
+        await ComprimirTandaAsync(sel, opt, selRows, deleteOriginals);
+    }
+
+    /// <summary>Como fue una tanda. Lo que la cola necesita saber para cerrar el trabajo.</summary>
+    private readonly record struct FinDeTanda(bool Cancelado, int Salieron, int Fallaron);
+
+    /// <summary>
+    /// Ejecuta UNA tanda: unos ficheros con unas opciones. Sin preguntar nada.
+    ///
+    /// <para>
+    /// Se separo de <c>RunAsync</c> para que la cola pudiera reutilizar exactamente este
+    /// camino. Una segunda ruta de codificacion para los trabajos encolados habria sido dos
+    /// caminos que mantener, y el que menos se usa se pudre.
+    /// </para>
+    /// </summary>
+    private async Task<FinDeTanda> ComprimirTandaAsync(
+        IReadOnlyList<string> sel, EncodeOptions opt,
+        IReadOnlyList<VideoRow>? filas = null, bool deleteOriginals = false)
+    {
+        // Viniendo de la cola no llegan filas: el trabajo guarda rutas, no controles. Se
+        // recuperan de la tabla, que es donde el informador pinta el progreso.
+        var selRows = filas ?? sel.Select(ruta => _rows.FirstOrDefault(r => r.Path == ruta))
+                                  .Where(r => r is not null).Select(r => r!).ToList();
+
+        _cts = new CancellationTokenSource();
+        _running = true;
+        btnRun.IsEnabled = false; btnCancel.IsEnabled = true; btnPause.IsEnabled = true;
+        _paused = false; btnPause.Content = Textos.Instancia.MainPausar;
+        progRow.IsVisible = true; bar.Value = 0;
+        tglLog.IsChecked = true;
+        txtLog.Clear();
+        lblProg.Text = string.Format(Textos.Instancia.MainProcesando, sel.Count);
+        ActualizarTextoPildora(0, sel.Count, 0);   // ya recalcula el indicador global
+
+        foreach (var r in selRows) r.Estado = Textos.Instancia.MainEstadoEnCola;
+        var reporter = new Reporter(this, deleteOriginals, selRows);
+        // «ok» vive fuera del try porque el resumen de subtítulos lo consulta al terminar
+        var ok = new List<FileResult>();
+        var cancelado = false;
+        try
+        {
+            // Task.Run: los trozos síncronos del motor (candados, sondeos, espacio) no
+            // deben correr en el hilo de interfaz — sobre OneDrive son viajes de red y la
+            // ventana se movía a tirones con la CPU libre.
+            var tok = _cts.Token;
+            var results = await Task.Run(() => _engine.CompressAsync(sel, opt, reporter, tok), tok);
+            ok = results.Where(r => r.OutBytes != null).ToList();
+            if (ok.Count > 0)
+            {
+                double inGb = ok.Sum(r => r.InBytes) / 1073741824.0;
+                double outGb = ok.Sum(r => r.OutBytes!.Value) / 1073741824.0;
+                int pct = (int)Math.Round(100 - (outGb / Math.Max(inGb, 1e-9) * 100));
+                lblProg.Text = string.Format(Textos.Instancia.MainTerminadoResumen, inGb, outGb, pct, ok.Count);
+            }
+            else lblProg.Text = Textos.Instancia.MainTerminado;
+        }
+        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainCancelado; cancelado = true; }
+        // «Error» sale de Comun; los dos puntos son puntuación, no texto que traducir.
+        catch (Exception ex) { lblProg.Text = Textos.Instancia.Error + ": " + ex.Message; AppendLog("ERROR: " + ex); }
+        finally
+        {
+            _running = false; _paused = false;
+            btnRun.IsEnabled = true; btnCancel.IsEnabled = false;
+            btnPause.IsEnabled = false; btnPause.Content = Textos.Instancia.MainPausar;
+            progRow.IsVisible = false;
+            _cts?.Dispose(); _cts = null;
+            // La píldora pasa a «✓ N hechos» un momento y se retira sola: si desapareciera
+            // de golpe, quien estuviera en «Organizar» no llegaría a saber que terminó.
+            AnunciarFinEnPildora(sel.Count);
+        }
+
+        // Con la ventana ya en reposo: si se han quedado subtítulos fuera, decirlo.
+        WarnAboutLostSubtitles(ok);
+
+        return new FinDeTanda(cancelado, ok.Count, sel.Count - ok.Count);
+    }
+
+    // ---------- presets ----------
+    private void ReloadPresets(string? select)
+    {
+        var all = PresetStore.Factory().Concat(PresetStore.LoadUser()).ToList();
+        _applyingPreset = true;
+        cboPreset.ItemsSource = all;
+        _applyingPreset = false;
+        // El nombre entra por NombreVigente y no crudo: los presets de fábrica se
+        // guardan por su nombre TRADUCIDO, así que el que se eligió con la app en
+        // castellano no existe con la app en inglés. Se quedaba sin casar y el
+        // preset por defecto parecía haberse borrado solo.
+        if (select != null)
+        {
+            var vigente = PresetStore.NombreVigente(select);
+            cboPreset.SelectedItem = all.FirstOrDefault(p => p.Name == vigente);
+        }
+    }
+
+    private void ApplyPreset()
+    {
+        if (_applyingPreset || cboPreset.SelectedItem is not Preset p) return;
+        _applyingPreset = true;
+        cboFmt.SelectedIndex = p.Fmt; cboCodec.SelectedIndex = p.Codec;
+        cboQ.SelectedIndex = p.Quality; cboRes.SelectedIndex = p.Res; cboAud.SelectedIndex = p.Audio;
+        cboLang.Text = p.Lang;
+        // «Subcarpetas» NO se toca aquí: es un ajuste de exploración del disco que manda
+        // el usuario desde Preferencias, no parte de la receta de codificación. Antes el
+        // preset lo reactivaba y pisaba la preferencia.
+        _applyingPreset = false;
+        UpdateEstimate();
+    }
+
+    private async Task SavePreset()
+    {
+        var name = await InputName(Textos.Instancia.MainNombrePresetPrompt, Textos.Instancia.MainGuardarPresetTitulo);
+        if (string.IsNullOrWhiteSpace(name)) return;
+        var user = PresetStore.LoadUser();
+        user.RemoveAll(x => x.Name == name);
+        user.Add(new Preset
+        {
+            Name = name, Fmt = cboFmt.SelectedIndex, Codec = cboCodec.SelectedIndex,
+            Quality = cboQ.SelectedIndex, Res = cboRes.SelectedIndex, Audio = cboAud.SelectedIndex,
+            Lang = cboLang.Text,
+        });
+        PresetStore.SaveUser(user);
+        ReloadPresets(name);
+        lblProg.Text = string.Format(Textos.Instancia.MainPresetGuardado, name);
+    }
+
+    private async Task<string?> InputName(string prompt, string title)
+    {
+        var win = new Window
+        {
+            Title = title, Width = 380, SizeToContent = SizeToContent.Height, 
+            WindowStartupLocation = WindowStartupLocation.CenterOwner, CanResize = false,
+            Background = Pincel("Surface"),
+        };
+        var tb = new TextBox { Margin = new Thickness(0, 0, 0, 12) };
+        var ok = new Button { Content = Textos.Instancia.Guardar, Width = 90, Theme = TemaDe("BtnPrimary"), IsDefault = true };
+        var panel = new StackPanel { Margin = new Thickness(16) };
+        panel.Children.Add(new TextBlock { Text = prompt, Foreground = Pincel("Text"), Margin = new Thickness(0, 0, 0, 8) });
+        panel.Children.Add(tb);
+        var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        row.Children.Add(ok);
+        panel.Children.Add(row);
+        win.Content = panel;
+        string? result = null;
+        ok.Click += (_, _) => { result = tb.Text.Trim(); win.Close(true); };
+        win.Opened += (_, _) => tb.Focus();
+        await win.ShowDialog(this);
+        return result;
+    }
+
+    /// <summary>
+    /// Si algún vídeo ha salido sin los subtítulos que el usuario tenía marcados, decírselo
+    /// a la cara al terminar. Antes solo constaba en el registro y se daba por hecho que iban.
+    /// </summary>
+    private async Task WarnAboutLostSubtitles(List<FileResult> done)
+    {
+        var afectados = done.Where(r => !string.IsNullOrEmpty(r.SubtitleWarning)).ToList();
+        if (afectados.Count == 0) return;
+
+        lblProg.Text += Textos.Instancia.MainAvisoSubsPie;
+
+        // Un motivo por línea; casi siempre será uno solo repetido en varios archivos.
+        var motivos = afectados.Select(r => r.SubtitleWarning!).Distinct().ToList();
+        string cuerpo = afectados.Count == 1
+            ? string.Format(Textos.Instancia.MainSubsUnoAfectado, afectados[0].Name, motivos[0])
+            : string.Format(Textos.Instancia.MainSubsVariosAfectados, afectados.Count, done.Count)
+              + string.Join("\n\n", motivos)
+              + Textos.Instancia.MainSubsAfectadosLista + string.Join("\n· ", afectados.Take(8).Select(r => r.Name))
+              + (afectados.Count > 8 ? string.Format(Textos.Instancia.MainSubsYMas, afectados.Count - 8) : "");
+
+        await Dialogo.Aviso(this, Textos.Instancia.MainSubsTitulo, cuerpo);
+    }
+
+    private void TogglePause()
+    {
+        if (!_running) return;
+        _paused = !_paused;
+        if (_paused) { _engine.Pause(); btnPause.Content = Textos.Instancia.MainReanudar; lblProg.Text = Textos.Instancia.MainEnPausa; }
+        else { _engine.Resume(); btnPause.Content = Textos.Instancia.MainPausar; lblProg.Text = Textos.Instancia.MainComprimiendoBarra; }
+    }
+
+    private Window? Ventana => this;
+
+    /// <summary>
+    /// La rejilla de la ventana. Se llega a ella para tocar el ancho de la columna del panel
+    /// lateral: una ColumnDefinition no es un control, así que no tiene nombre que buscar
+    /// —en WPF sí lo tenía—.
+    /// </summary>
+    private Grid RejillaRaiz() => this.FindControl<Grid>("rejillaRaiz")!;
+
+    /// <summary>
+    /// Una columna de una rejilla, por su posición.
+    ///
+    /// <para>
+    /// En WPF las dos columnas que se pliegan —la del panel lateral y la del panel de la
+    /// ventana— tenían nombre y campo propio. Avalonia genera campos para los <b>controles</b>
+    /// con nombre, y una <c>ColumnDefinition</c> no es un control: el nombre se queda en el
+    /// XAML —donde sirve para leer de qué columna se habla— pero no llega al código.
+    /// </para>
+    /// <para>
+    /// De ahí la posición. Es lo que hay, y tiene el filo evidente: mover una columna en el
+    /// XAML mueve esto sin que nada avise. Va contra la rejilla POR NOMBRE para que al menos
+    /// se sepa en cuál mirar.
+    /// </para>
+    /// </summary>
+    private ColumnDefinition Columna(string rejilla, int i) =>
+        this.FindControl<Grid>(rejilla)!.ColumnDefinitions[i];
+
+    /// <summary>La columna del panel lateral de la tabla (<c>colLateral</c> en el XAML).</summary>
+    private ColumnDefinition ColLateral => Columna("rowTabla", 1);
+
+    /// <summary>La columna del panel desplegable de la ventana (<c>colPanel</c>).</summary>
+    private ColumnDefinition ColPanel => Columna("rejillaRaiz", 1);
+
+    /// <summary>Un pincel del tema. En WPF era FindResource, que lanza si no está.</summary>
+    private IBrush Pincel(string clave) =>
+        this.TryFindResource(clave, out var v) && v is IBrush b ? b : Brushes.Gray;
+
+    private static object? RecursoDeLaApp(string clave) =>
+        Avalonia.Application.Current is { } app && app.TryFindResource(clave, out var v) ? v : null;
+
+    private ControlTheme? TemaDe(string clave) =>
+        this.TryFindResource(clave, out var v) ? v as ControlTheme : null;
+
+    /// <summary>
+    /// La fila que ocupa esa posición en la tabla, o <c>null</c> si no está realizada.
+    ///
+    /// <para>
+    /// En WPF se pedía al generador de contenedores. El DataGrid de Avalonia no expone uno,
+    /// así que se busca en el árbol — y hay que aceptar que <b>solo existen las filas que se
+    /// ven</b>: la tabla virtualiza, así que preguntar por la 900 de 1.400 devuelve null. Es
+    /// lo mismo que pasaba en WPF con la virtualización puesta; aquí es más evidente.
+    /// </para>
+    /// </summary>
+    private DataGridRow? FilaEn(int i) =>
+        i >= 0 && i < _rows.Count
+            ? lst.GetVisualDescendants().OfType<DataGridRow>().FirstOrDefault(f => f.GetIndex() == i)
+            : null;
+
+    /// <summary>
+    /// Escribe una linea en el registro y baja hasta ella.
+    ///
+    /// <para>
+    /// El TextBox de Avalonia no tiene AppendText ni ScrollToEnd. Lo que si tiene es el
+    /// cursor: se lleva al final y el control desplaza SOLO para que se vea, que es justo
+    /// lo que aquellos dos venian a hacer.
+    /// </para>
+    /// </summary>
+    private void AppendLog(string line)
+    {
+        txtLog.Text += line + "\n";
+        txtLog.CaretIndex = txtLog.Text?.Length ?? 0;
+    }
+
+    /// <summary>
+    /// Ancho por debajo del cual el panel lateral estorba más de lo que aporta. Sale de
+    /// sumar lo que la tabla necesita para que sus columnas se lean (≈620) más los 262 del
+    /// panel y los márgenes: por debajo, el panel se estaría quedando con espacio que la
+    /// tabla necesita más.
+    /// </summary>
+    private const double AnchoMinimoConLateral = 940;
+
+    /// <summary>
+    /// WPF no tiene consultas de medios, así que la adaptación al ancho se hace aquí. Es un
+    /// solo umbral a propósito: cuantos más puntos de corte, más difícil es que el resultado
+    /// siga siendo coherente en todos ellos.
+    /// </summary>
+    private void AjustarAAncho()
+    {
+        AjustarMenu();
+
+        // El panel se recorta con la ventana: si no, al estrechar se queda con su
+        // ancho y es el contenido el que desaparece.
+        if (panelLateral.IsVisible)
+            ColPanel.Width = new GridLength(AnchoQueCabe(ColPanel.Width.Value));
+
+        bool cabeElLateral = Bounds.Width >= AnchoMinimoConLateral;
+
+        ColLateral.Width = cabeElLateral ? new GridLength(262) : new GridLength(0);
+        if (sideCol != null)
+            sideCol.IsVisible = cabeElLateral;
+
+        // El texto del botón de renombrar sobra antes que el botón: se queda el icono, que
+        // con su descripción emergente sigue diciendo lo que hace.
+        if (lblRename != null)
+            lblRename.IsVisible = Bounds.Width >= 1080;
+
+        // La versión junto al nombre es lo primero que sobra en la barra de título.
+        if (lblVersion != null)
+            lblVersion.IsVisible = Bounds.Width >= 900;
+        // (El conmutador de páginas ya es un desplegable compacto: no hay texto de pestañas
+        //  que esconder cuando la ventana se estrecha.)
+    }
+
+    // ─────────────────────── páginas de oficio ───────────────────────
+
+    /// <summary>
+    /// Cambia entre «Comprimir» y «Organizar». Las dos páginas comparten ventana, barra de
+    /// título y registro, pero cada una tiene su lista y su ciclo de vida: cambiar de página
+    /// NO detiene lo que estuviera corriendo en la otra.
+    /// </summary>
+    private enum Pagina { Comprimir, Organizar, Recortes }
+
+    /// <summary>El nombre del modo tal y como lo declaran los complementos.</summary>
+    private static string ModoDe(Pagina p) => p switch
+    {
+        Pagina.Organizar => "organizar",
+        Pagina.Recortes => "recortes",
+        _ => "comprimir",
+    };
+
+    /// <summary>
+    /// Pone el botón de complementos al día para la página en la que estés.
+    ///
+    /// <para>
+    /// Se recuenta en cada cambio de página y no una vez al arrancar: uno
+    /// instalado con la aplicación abierta tiene que aparecer sin reiniciar, y
+    /// además cada página enseña un conjunto distinto.
+    /// </para>
+    /// <para>
+    /// Si no hay ninguno para esta página, el botón se esconde. Uno que solo
+    /// sirve para decir «aquí no hay nada» ocupa sitio y no informa de nada.
+    /// </para>
+    /// </summary>
+    private void RefrescarComplementos()
+    {
+        var modo = ModoDe(_paginaActual);
+        var suyos = Complementos.Descubridor.Buscar().Bueno.Where(c => c.SaleEn(modo)).ToList();
+
+        btnComplementos.IsVisible = suyos.Count > 0;
+        lblCuantosComplementos.Text = suyos.Count.ToString();
+        btnComplementos.Tag = suyos;
+    }
+
+    /// <summary>
+    /// El menú del botón. Cada complemento abre SU panel; abajo, la gestión.
+    ///
+    /// <para>
+    /// Se arma al pulsarlo y no al arrancar, por lo mismo que el recuento: lo
+    /// instalado puede cambiar mientras la aplicación está abierta.
+    /// </para>
+    /// </summary>
+    private void OnBotonComplementos(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = btnComplementos, Placement = PlacementMode.Bottom };
+
+        foreach (var c in (btnComplementos.Tag as List<Complementos.Complemento>) ?? new())
+        {
+            var it = new MenuItem { Header = c.Nombre };
+            ToolTip.SetTip(it, c.Descripcion);
+            var suyo = c;
+            it.Click += (_, _) => AbrirComplementos(suyo);
+            menu.Items.Add(it);
+        }
+
+        if (menu.Items.Count > 0) menu.Items.Add(new Separator());
+        var gestionar = new MenuItem { Header = Textos.Instancia.MainComplementosGestionar };
+        gestionar.Click += (_, _) => AbrirComplementos(null);
+        menu.Items.Add(gestionar);
+
+        menu.Open(lst);
+    }
+
+    private ComplementosPanel? _complementos;
+
+    /// <summary>
+    /// Lo que ocupa el panel al abrirse, y lo que recupera al volver de estar
+    /// encogido. Se guarda porque el tirador lo cambia y sería tonto olvidarlo
+    /// cada vez que se cierra.
+    /// </summary>
+    private double _anchoPanel = 460;
+
+    private void AbrirComplementos(Complementos.Complemento? cual)
+    {
+        // Ya estaba puesto: no se rehace. Volver a montarlo tiraría la lista que
+        // se acabase de traer, que es justo lo que costó minutos.
+        if (_complementos is not null)
+        {
+            if (!panelLateral.IsVisible) MostrarPanel(true);
+            _complementos.Enfocar(cual);
+            return;
+        }
+
+        // Se le pasa una PREGUNTA, no una foto: el panel se conserva entre
+        // aperturas y con una foto se quedaba con el catálogo que hubiera la
+        // primera vez. Así siempre coteja contra lo que haya puesto ahora.
+        var v = new ComplementosPanel(
+            () => new ComplementosPanel.EstadoDeOrganizar(
+                pageOrganizar.CatalogoAbierto,
+                pageOrganizar.LoQueHay,
+                pageOrganizar.RutaCatalogoAbierto),
+            cual);
+        _complementos = v;
+
+        v.IncorporarDescarga = pageOrganizar.IncorporarDescargadosAsync;
+
+        v.Traido += carpeta =>
+        {
+            CambiarPagina(Pagina.Organizar);
+            pageOrganizar.ApuntarA(carpeta);
+        };
+        v.Log += AppendLog;
+        v.Cerrar += () => MostrarPanel(false);
+
+        huecoPanel.Content = v;
+        MostrarPanel(true);
+    }
+
+    /// <summary>
+    /// Recoge los menús en la hamburguesa cuando la barra se queda sin sitio.
+    ///
+    /// <para>
+    /// Se MUEVEN los mismos objetos, no se duplican. Dos copias del menú son dos
+    /// sitios donde añadir la próxima entrada, y siempre se olvida una: el fallo
+    /// no sería que se vea raro, sería que una opción exista solo en una anchura
+    /// de ventana.
+    /// </para>
+    /// </summary>
+    private void AjustarMenu()
+    {
+        // El umbral no es un número redondo: es el ancho a partir del cual la
+        // marca, los cuatro menús y el conmutador de página dejan de caber sin
+        // pisarse. Con el panel abierto la barra no cambia -cruza entera-, así
+        // que solo depende de la ventana.
+        var estrecho = Bounds.Width > 0 && Bounds.Width < 1000;
+        if (estrecho == _menuRecogido) return;
+        _menuRecogido = estrecho;
+
+        var suyos = new[] { miArchivo, miSeleccion, miHerramientas, miAyuda };
+        var de = estrecho ? menuBar.Items : miHamburguesa.Items;
+        var a = estrecho ? miHamburguesa.Items : menuBar.Items;
+
+        foreach (var m in suyos)
+        {
+            de.Remove(m);
+            a.Add(m);
+        }
+
+        miHamburguesa.IsVisible = estrecho;
+    }
+
+    private bool _menuRecogido;
+
+    private void MostrarPanel(bool abierto)
+    {
+        if (!abierto)
+        {
+            // Se guarda lo ancho que estaba antes de cerrarlo: quien lo estiró
+            // lo estiró por algo, y devolvérselo estrecho la próxima vez es
+            // hacerle repetir el ajuste.
+            if (RejillaRaiz().ColumnDefinitions[1].Width.Value > 0) _anchoPanel = RejillaRaiz().ColumnDefinitions[1].Width.Value;
+            RejillaRaiz().ColumnDefinitions[1].Width = new GridLength(0);
+            panelLateral.IsVisible = false;
+            tirador.IsVisible = false;
+            RefrescarComplementos();
+            return;
+        }
+
+        panelLateral.IsVisible = true;
+        tirador.IsVisible = true;
+        RejillaRaiz().ColumnDefinitions[1].Width = new GridLength(AnchoQueCabe(_anchoPanel));
+    }
+
+    /// <summary>
+    /// El ancho pedido, recortado a lo que la ventana puede dar sin comerse la
+    /// tabla. En una ventana pequeña un panel de 460 px deja la tabla en un
+    /// canalón donde no se lee ni la columna de fichero.
+    /// </summary>
+    private double AnchoQueCabe(double pedido)
+    {
+        var disponible = Bounds.Width > 0 ? Bounds.Width : Width;
+        if (double.IsNaN(disponible) || disponible <= 0) return pedido;
+
+        // El contenido manda: lo que quede para la tabla no puede bajar de su
+        // minimo, o la rejilla se desborda y RECORTA por la izquierda en vez de
+        // encogerse -se pierde el desplegable de catalogo y media barra-.
+        // Antes de dejar que eso pase, el panel cede.
+        const double MinimoDelContenido = 320;
+        var techo = Math.Max(0, disponible - MinimoDelContenido);
+        return Math.Max(0, Math.Min(Math.Min(pedido, disponible * 0.5), techo));
+    }
+
+    private void CambiarPagina(Pagina pagina)
+    {
+        _paginaActual = pagina;
+        // El botón del conmutador refleja la página actual.
+        lblPaginaActual.Text = pagina switch
+        {
+            Pagina.Comprimir => Textos.Instancia.MainPaginaComprimir,
+            Pagina.Organizar => Textos.Instancia.MainPaginaOrganizar,
+            _ => Textos.Instancia.MainPaginaRecortes,
+        };
+
+        RefrescarComplementos();
+
+        var comprimir = pagina == Pagina.Comprimir ? true : false;
+        rowOrigen.IsVisible = comprimir;
+        rowOpciones.IsVisible = comprimir;
+        rowTabla.IsVisible = comprimir;
+        rowAcciones.IsVisible = comprimir;
+        // La barra de progreso solo reaparece si de verdad hay algo comprimiendo
+        progRow.IsVisible = pagina == Pagina.Comprimir && _running
+           ;
+
+        pageOrganizar.IsVisible = pagina == Pagina.Organizar;
+        pageRecortes.IsVisible = pagina == Pagina.Recortes;
+        // Recortes deja de trabajar (reloj, previsualizadores, vídeo, plasma) cuando no está a
+        // la vista, y lo retoma al volver. Un tab oculto ya no se DIBUJA —WPF lo hace solo—,
+        // pero sin esto seguiría decodificando vídeo y goteando fotogramas en segundo plano.
+        pageRecortes.EnPantalla(pagina == Pagina.Recortes);
+        ActualizarIndicadorGlobal();
+    }
+
+    // --- Indicador global de proceso -------------------------------------------------
+    // Una sola píldora en la cabecera para TODAS las pestañas. Cada tarea de proceso deja
+    // aquí su etiqueta (null = sin tarea); la píldora enseña la de mayor prioridad cuya
+    // pestaña NO es la que miras —esa ya te muestra su progreso en línea—, así nunca hay dos
+    // indicadores a la vez y desde cualquier tab sabes que algo sigue vivo.
+    private string? _compEtiqueta;      // «Comprimir»  (prioridad alta)
+    private string? _recortesEtiqueta;  // «Recortes»   (prioridad media)
+    private Pagina _pillDestino = Pagina.Comprimir;   // adónde te lleva al pulsar la píldora
+
+    /// <summary>Recalcula qué tarea (si alguna) muestra la píldora de la cabecera.</summary>
+    private void ActualizarIndicadorGlobal()
+    {
+        // (página, prioridad, texto) de cada tarea activa. Mayor prioridad manda.
+        var tareas = new List<(Pagina pag, int prio, string txt)>();
+        if (_compEtiqueta != null) tareas.Add((Pagina.Comprimir, 3, _compEtiqueta));
+        if (_recortesEtiqueta != null) tareas.Add((Pagina.Recortes, 2, _recortesEtiqueta));
+
+        var visible = tareas
+            .Where(t => t.pag != _paginaActual)      // la de tu propia pestaña ya se ve en línea
+            .OrderByDescending(t => t.prio)
+            .ToList();
+
+        if (visible.Count == 0) { pillFondo.IsVisible = false; Latir(false); return; }
+
+        var t0 = visible[0];
+        lblPill.Text = t0.txt;
+        _pillDestino = t0.pag;
+        // El punto pulsa solo mientras la tarea vive; en el «✓ … hecho» final no.
+        bool vivo = !t0.txt.StartsWith("✓");
+        pillDot.IsVisible = vivo;
+        pillFondo.IsVisible = true;
+        Latir(vivo);
+    }
+
+    /// <summary>
+    /// Enciende y apaga el latido del punto.
+    ///
+    /// <para>
+    /// En WPF esto no existía: el latido lo arrancaba y lo paraba un DataTrigger sobre la
+    /// visibilidad de la píldora, dentro del propio tema. En Avalonia la animación va atada a
+    /// una clase, y ponerla o quitarla es trabajo del código — de ahí este método.
+    /// </para>
+    /// <para>
+    /// <b>Apagarlo importa igual que antes.</b> El motivo por el que aquello se ató a la
+    /// visibilidad fue que el latido corría siempre, escondido, a 60 fps y por un 5 % de un
+    /// núcleo constante. Dejar la clase puesta con la píldora oculta es volver ahí.
+    /// </para>
+    /// </summary>
+    private void Latir(bool si)
+    {
+        if (si) pillDot.Classes.Add("late");
+        else pillDot.Classes.Remove("late");
+    }
+
+    /// <summary>Marca la pestaña destino de la píldora al pulsarla.</summary>
+    private void IrAPestaña(Pagina pag)
+    {
+        if (pag == Pagina.Comprimir) tabComprimir.IsChecked = true;
+        else if (pag == Pagina.Organizar) tabOrganizar.IsChecked = true;
+        else tabRecortes.IsChecked = true;
+    }
+
+    // --- Conmutador de páginas: desplegable compacto -----------------------------------
+    // El header muestra UN botón con la página actual; al pulsarlo se despliega la lista con
+    // TODAS las páginas. Así ocupa lo mínimo y escala a cualquier número. Los RadioButton
+    // (ocultos) siguen siendo el modelo de estado; el menú se arma solo desde ellos.
+
+    /// <summary>Despliega la lista de páginas bajo el botón. Se arma sola desde las pestañas.</summary>
+    private void OnMasTabs(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu
+        {
+            PlacementTarget = btnPagina,
+            Placement = PlacementMode.Bottom,
+        };
+        foreach (var rb in panelTabs.Children.OfType<RadioButton>())
+        {
+            var destino = rb;
+            // El rótulo sale del propio RadioButton: su Content ya viene del catálogo de
+            // textos, así que el menú habla el idioma en curso sin una segunda tabla.
+            var item = new MenuItem { Header = rb.Content ?? "", IsChecked = rb.IsChecked == true };
+            item.Click += (_, _) => destino.IsChecked = true;   // dispara Checked → CambiarPagina
+            menu.Items.Add(item);
+        }
+        menu.Open(lst);
+    }
+
+    // EL ORDEN POR CABECERA SE VA ENTERO, y eso es lo que se gana al cambiar de control.
+    //
+    // Aquí había un método que atendía el clic en la cabecera, decidía la dirección, movía
+    // la flecha ▲/▼ a mano y montaba las SortDescriptions de la vista — más un HeaderSort
+    // propio de veintiséis líneas, una propiedad adjunta, para decirle a cada columna por
+    // qué campo ordena. El GridView de WPF no sabía hacerlo.
+    //
+    // El DataGrid sí: cada columna lleva su SortMemberPath y el control se encarga del
+    // resto, flecha incluida. Lo que aquel ayudante venía a permitir —que TAMAÑO y DURACIÓN
+    // ordenen por su valor numérico y no por el texto formateado— sigue estando, declarado
+    // en el XAML, y ya no hay que acordarse de nada.
+
+
+    /// <summary>Etiqueta de la tarea de «Comprimir»: «Comprimiendo 3/8 · 31 %».</summary>
+    private void ActualizarTextoPildora(int hecho, int total, double fraccion)
+    {
+        _compEtiqueta = total > 0
+            ? string.Format(Textos.Instancia.MainPildoraProgreso, hecho, total, fraccion * 100)
+            : Textos.Instancia.MainPildoraComprimiendo;
+        ActualizarIndicadorGlobal();
+    }
+
+    /// <summary>
+    /// Al acabar la compresión, la píldora dice «✓ N hechos» unos segundos y se retira. Quitarla
+    /// de golpe dejaría a quien esté en otra pestaña sin enterarse de que terminó.
+    /// </summary>
+    private void AnunciarFinEnPildora(int total)
+    {
+        _compEtiqueta = string.Format(
+            total == 1 ? Textos.Instancia.MainPildoraFinUno : Textos.Instancia.MainPildoraFinVarios, total);
+        ActualizarIndicadorGlobal();
+
+        var reloj = new DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
+        reloj.Tick += (s, _) =>
+        {
+            reloj.Stop();
+            _compEtiqueta = null;
+            ActualizarIndicadorGlobal();
+        };
+        reloj.Start();
+    }
+
+    // reporter que marshaliza el avance del motor al hilo de la UI
+    private sealed class Reporter : IEngineReporter
+    {
+        private readonly VentanaPrincipal _w;
+        private readonly bool _del;
+        private readonly IReadOnlyList<VideoRow> _queue;   // mismo orden que las rutas del motor
+        private VideoRow? _current;
+        private int _lastPct = -1;
+
+        public Reporter(VentanaPrincipal w, bool deleteOriginals, IReadOnlyList<VideoRow> queue)
+        { _w = w; _del = deleteOriginals; _queue = queue; }
+
+        private VideoRow? RowOf(string path) =>
+            _w._rows.FirstOrDefault(r => string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase));
+
+        public void Log(string line) => Dispatcher.UIThread.Post(() => _w.AppendLog(line));
+        // El índice y el total se guardan para la píldora de la barra de título: cuando el
+        // usuario se va a «Organizar» deja de ver la barra de progreso, y esa píldora es lo
+        // único que le dice que la compresión sigue viva.
+        private int _idx, _total;
+
+        public void FileStart(int i, int t, string name, double dur) =>
+            Dispatcher.UIThread.Post(() =>
+            {
+                _idx = i; _total = t;
+                _w.lblProg.Text = $"[{i}/{t}] {name}";
+                _w.bar.Value = 0;
+                _lastPct = -1;
+                // el motor numera del 1 al total en el mismo orden en que se le pasó la cola
+                _current = i >= 1 && i <= _queue.Count ? _queue[i - 1] : null;
+                if (_current != null) _current.Estado = Textos.Instancia.MainEstadoComprimiendo;
+                _w.ActualizarTextoPildora(i, t, 0);
+            });
+
+        public void FileProgress(double frac, string raw)
+        {
+            int pct = (int)Math.Round(Math.Clamp(frac, 0, 1) * 100);
+            Dispatcher.UIThread.Post(() =>
+            {
+                _w.bar.Value = frac;
+                // solo se reescribe la fila al cambiar de entero: si no, repinta sin parar
+                if (_current != null && pct != _lastPct)
+                {
+                    _lastPct = pct;
+                    _current.Estado = string.Format(Textos.Instancia.MainEstadoComprimiendoPct, pct);
+                }
+                _w.ActualizarTextoPildora(_idx, _total, frac);
+            });
+        }
+
+        /// <summary>Un archivo que el motor se salta: la fila cuenta el motivo.</summary>
+        public void FileSkipped(string sourcePath, string reason) =>
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (RowOf(sourcePath) is { } row) row.Estado = reason;
+            });
+
+        // Borrado iteración a iteración: en cuanto un archivo se comprime OK, su original
+        // se envía a la Papelera (en segundo plano, sin bloquear la codificación siguiente).
+        public void FileDone(FileResult r)
+        {
+            // el resultado se queda escrito en la fila: cuánto se ahorró, o que falló
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (RowOf(r.SourcePath) is { } row)
+                    row.Estado = r.Ok ? $"{r.Status} · {Human(r.OutBytes!.Value)}" : Textos.Instancia.Error;
+                if (_current != null && string.Equals(_current.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase))
+                    _current = null;
+            });
+
+            if (!Engine.ShouldRecycleSource(_del, r)) return;
+            Task.Run(() =>
+            {
+                bool ok = PapeleraDelSistema.Mandar(r.SourcePath);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (ok)
+                    {
+                        var row = _w._rows.FirstOrDefault(x => string.Equals(x.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase));
+                        if (row != null) _w._rows.Remove(row);
+                        _w.AppendLog(string.Format(Textos.Instancia.MainLogOriginalAPapelera, r.Name));
+                    }
+                    else _w.AppendLog(string.Format(Textos.Instancia.MainLogPapeleraFallo, r.Name));
+                });
+            });
+        }
+
+        public void DiskFull(bool paused) => Dispatcher.UIThread.Post(() =>
+        {
+            _w.lblProg.Text = paused
+                ? Textos.Instancia.MainDiscoLleno
+                : Textos.Instancia.MainComprimiendoBarra;
+        });
+    }
+
+    // ---------- actualizaciones ----------
+    private async Task CheckUpdateAsync(bool manual)
+    {
+        if (manual)
+        {
+            btnCheckUpdate.IsEnabled = false;         // evita repetir la búsqueda a lo tonto
+            miCheckUpd.IsEnabled = false;
+            lblProg.Text = Textos.Instancia.MainBuscandoActualizaciones;
+        }
+        try
+        {
+            var res = await Updater.CheckAsync();
+
+            if (res.Failed)
+            {
+                // antes esto se confundía con «estás al día»: se decía que no había nada
+                // nuevo aunque en realidad no hubiera habido conexión
+                if (manual) lblProg.Text = string.Format(Textos.Instancia.MainNoSePudoComprobar, res.Error);
+                return;
+            }
+            if (!res.Available)
+            {
+                if (manual) lblProg.Text = string.Format(Textos.Instancia.MainYaAlDia, Updater.Current);
+                return;
+            }
+
+            var info = res.Info!;
+            lblUpdate.Text = string.Format(Textos.Instancia.MainVersionNuevaDetalle, info.Tag, Updater.Current);
+            updateBar.IsVisible = true;
+            btnUpdateNow.Click -= OnUpdateNow;   // evitar suscripción doble
+            btnUpdateNow.Click += OnUpdateNow;
+            _pendingUpdate = info;
+            // faltaba: sin esto se quedaba «Buscando actualizaciones…» para siempre
+            lblProg.Text = string.Format(Textos.Instancia.MainVersionNuevaProgreso, info.Tag);
+        }
+        finally
+        {
+            btnCheckUpdate.IsEnabled = true;
+            miCheckUpd.IsEnabled = true;
+        }
+    }
+
+    private UpdateInfo? _pendingUpdate;
+    private async void OnUpdateNow(object sender, RoutedEventArgs e)
+    {
+        if (_pendingUpdate == null) return;
+        btnUpdateNow.IsEnabled = false;
+        lblUpdate.Text = string.Format(Textos.Instancia.MainDescargando, _pendingUpdate.AssetName);
+        progRow.IsVisible = true; bar.Value = 0;
+        lblProg.Text = Textos.Instancia.MainDescargandoActualizacion;
+        try
+        {
+            var progress = new Progress<double>(p =>
+            {
+                lblUpdate.Text = string.Format(Textos.Instancia.MainDescargandoPct, _pendingUpdate.AssetName, p * 100);
+                bar.Value = p;
+            });
+            var installer = await Updater.DownloadAsync(_pendingUpdate, progress);
+            lblUpdate.Text = Textos.Instancia.MainDescargaLista;
+            lblProg.Text = Textos.Instancia.MainAbriendoInstalador;
+            Updater.LaunchInstallerAndExit(installer);
+        }
+        catch (Exception ex)
+        {
+            btnUpdateNow.IsEnabled = true;
+            progRow.IsVisible = false;
+            lblUpdate.Text = Textos.Instancia.MainDescargaFallo;
+            lblProg.Text = Textos.Instancia.MainDescargaFalloProgreso;
+            await Dialogo.Aviso(this, Textos.Instancia.MainActualizarTitulo,
+                               string.Format(Textos.Instancia.MainDescargaFalloDetalle, ex.Message));
+        }
+    }
+
+    // ---------- cierre ----------
+
+    /// <summary>Ya se preguntó y se dijo que sí: el segundo cierre no vuelve a preguntar.</summary>
+    private bool _cerrandoConfirmado;
+
+    /// <summary>
+    /// Al cerrar con una compresión en marcha se pregunta antes.
+    ///
+    /// <para>
+    /// <b>Esto se tuvo que dar la vuelta.</b> En WPF el modal era síncrono: se preguntaba
+    /// dentro del propio aviso de cierre y se respondía a tiempo de cancelarlo. En Avalonia
+    /// preguntar devuelve una tarea, y este método no puede esperarla — para cuando llegara
+    /// la respuesta, la ventana llevaría un rato cerrada.
+    /// </para>
+    /// <para>
+    /// Así que se cancela el cierre SIEMPRE, se pregunta, y si dicen que sí se cierra otra
+    /// vez con la respuesta ya sabida. Marcarlo con una bandera no es un adorno: sin ella el
+    /// segundo cierre volvería a preguntar, y no habría manera de salir.
+    /// </para>
+    /// </summary>
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        if (_running && !_cerrandoConfirmado)
+        {
+            e.Cancel = true;
+            _ = PreguntarYCerrar();
+            return;
+        }
+
+        // liberar miniaturas y previsualizaciones cacheadas en %TEMP% (foco: ahorro de almacenamiento)
+        try { if (Directory.Exists(_thumbDir)) Directory.Delete(_thumbDir, true); } catch { }
+        try { if (Directory.Exists(_previewDir)) Directory.Delete(_previewDir, true); } catch { }
+        base.OnClosing(e);
+    }
+
+    private async Task PreguntarYCerrar()
+    {
+        if (!await Dialogo.Confirmar(this, Textos.Instancia.MainMenuSalir,
+                                     Textos.Instancia.MainSalirEnCurso)) return;
+
+        _cts?.Cancel();
+        _cerrandoConfirmado = true;
+        Close();
+    }
+}

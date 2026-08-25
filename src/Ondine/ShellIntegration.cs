@@ -128,35 +128,13 @@ internal static class ShellIntegration
     }
 
     /// <summary>
-    /// Convierte lo que llega desde el Explorador —por argumentos, «Enviar a» o soltando
-    /// con el ratón— en una lista de vídeos: acepta archivos y también carpetas, que se
-    /// recorren buscando vídeos.
+    /// Lo que llega del Explorador, convertido en vídeos. La lógica vive en el motor
+    /// -<see cref="Rutas.VideosQueLlegan"/>-: no tiene nada de Windows y la otra interfaz
+    /// también deja soltar ficheros. Esto se queda como el nombre por el que se la llama
+    /// desde aquí.
     /// </summary>
-    public static List<string> ExpandVideos(IEnumerable<string> paths, bool recurse)
-    {
-        var res = new List<string>();
-        foreach (var p in paths)
-        {
-            if (string.IsNullOrWhiteSpace(p)) continue;
-            try
-            {
-                if (File.Exists(p))
-                {
-                    if (Engine.VideoExtensions.Contains(Path.GetExtension(p).ToLowerInvariant()))
-                        res.Add(Path.GetFullPath(p));
-                }
-                else if (Directory.Exists(p))
-                {
-                    var opt = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-                    res.AddRange(Directory.EnumerateFiles(p, "*.*", opt)
-                        .Where(f => Engine.VideoExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                        .Select(Path.GetFullPath));
-                }
-            }
-            catch { /* ruta inaccesible: se ignora */ }
-        }
-        return res.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
-    }
+    public static List<string> ExpandVideos(IEnumerable<string> paths, bool recurse) =>
+        Rutas.VideosQueLlegan.Expandir(paths, recurse);
 
     // ---------- «Abrir con» ----------
     // Tercera vía, y la más visible en Windows 11: la app aparece en el submenú

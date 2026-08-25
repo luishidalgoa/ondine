@@ -47,6 +47,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Cerrarse es lo unico del actualizador que no es igual en las dos interfaces.
+        Updater.Cerrar = () => Current.Shutdown();
+
         var files = FilterVideos(e.Args);
 
         _mutex = new Mutex(true, MutexName, out bool isFirst);

@@ -57,6 +57,14 @@ public static class PapeleraDelSistemaTests
     {
         Program.Assert(PapeleraApp.EnviarASistema is not null,
             "la papelera del sistema viene puesta de fábrica: nadie tiene que acordarse de conectarla");
+
+        // Y el mismo agujero, un piso más abajo: en Windows la papelera de verdad es shell32,
+        // y ESE hueco lo rellenaba también la ventana de WPF. Con él vacío no se pierde nada
+        // -se cae a la forma de freedesktop, que en Windows no lee nadie pero tampoco borra-,
+        // así que el fallo sería silencioso de otra manera: los ficheros "a la papelera"
+        // acabarían en una carpeta oculta que el Explorador ignora, y "Restaurar" no existiría.
+        Program.Assert(PapeleraDelSistema.EnWindows is not null,
+            "y la variante de Windows también: shell32 vive en el motor, no en una interfaz");
     }
 
     private static void LoBasico(string raiz)

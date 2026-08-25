@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
-using System.Windows;
 using Ondine.Localizacion;
 
 namespace Ondine;
@@ -145,10 +144,22 @@ public static class Updater
         return dest;
     }
 
+    /// <summary>
+    /// Cómo se cierra la app. Lo pone cada interfaz al arrancar, porque cerrarse es lo único
+    /// de aquí que no es igual en las dos: WPF y Avalonia lo dicen distinto.
+    ///
+    /// <para>
+    /// Era la ÚNICA línea de este fichero que hablaba de la interfaz, y por ella entero vivía
+    /// en el proyecto de WPF — ciento cincuenta líneas de HTTP y comparación de versiones que
+    /// no podía usar nadie más. Sacada de aquí, el resto se comparte.
+    /// </para>
+    /// </summary>
+    public static Action? Cerrar { get; set; }
+
     /// <summary>Lanza el instalador descargado y cierra la app para que pueda actualizar.</summary>
     public static void LaunchInstallerAndExit(string installerPath)
     {
         Process.Start(new ProcessStartInfo(installerPath) { UseShellExecute = true });
-        Application.Current.Shutdown();
+        Cerrar?.Invoke();
     }
 }
