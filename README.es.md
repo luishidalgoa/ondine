@@ -126,13 +126,22 @@ reglas:
 
 Las dudas se quedan fuera del renombrado en bloque, igual que en la app.
 
+La ruta depende del paquete que hayas instalado, así que coge tu línea:
+
 ```bash
+# Linux, desde el .deb
 claude mcp add ondine -- /usr/bin/ondine-mcp
+
+# macOS, desde el .dmg
+claude mcp add ondine -- /Applications/Ondine.app/Contents/MacOS/ondine-mcp
+
+# Windows, desde el instalador
+claude mcp add ondine -- %LOCALAPPDATA%\Programs\Ondine\ondine-mcp.exe
 ```
 
-Viaja dentro del `.deb`, del AppImage, del `.dmg` y del instalador de Windows, y cada versión trae
-además un binario suelto por plataforma. En [docs/mcp.md](docs/mcp.md) están la ruta de cada
-paquete, la configuración de Claude Desktop y lo que pide cada herramienta.
+El AppImage es la excepción: el servidor viaja dentro del paquete comprimido y desde fuera no se
+puede ejecutar, así que ahí toca el binario suelto que cada versión trae por plataforma. En
+[docs/mcp.md](docs/mcp.md) están la configuración de Claude Desktop y lo que pide cada herramienta.
 
 ## Instalación
 
