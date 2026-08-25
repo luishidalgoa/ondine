@@ -70,8 +70,12 @@ public partial class Preferencias : Window
         {
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) BeginMoveDrag(e);
         };
-        Btn("btnX").Click += (_, _) => Close(null);
-        Btn("btnCancel").Click += (_, _) => Close(null);
+        // Close(false) y NO Close(null): quien abre esta ventana pide ShowDialog<bool>, y un
+        // nulo no se convierte en bool. Reventaba igual que devolver el objeto de ajustes, y
+        // en el mismo sitio -dentro del cierre de la ventana, donde no lo recoge nadie-. O
+        // sea: cerrar con la X o con Cancelar tambien se llevaba la aplicacion por delante.
+        Btn("btnX").Click += (_, _) => Close(false);
+        Btn("btnCancel").Click += (_, _) => Close(false);
         Btn("btnSave").Click += (_, _) => Guardar();
 
         // ── General ──
@@ -281,7 +285,13 @@ public partial class Preferencias : Window
         Idioma.Actual = Idioma.Resolver(s.Idioma);
 
         Result = s;
-        Close(Result);
+
+        // Close(true) y NO Close(Result): quien abre esta ventana espera un bool
+        // -ShowDialog<bool>- y lee el resultado de la propiedad Result. Cerrar con el objeto
+        // hacía que Avalonia intentara convertir un Settings en bool al devolverlo, y eso
+        // revienta DENTRO de Close: la excepción sale por el await de quien esperaba, así que
+        // guardar no guardaba y el aviso que salía hablaba de una conversión, no de ajustes.
+        Close(true);
     }
 
     private IBrush Pincel(string clave) =>

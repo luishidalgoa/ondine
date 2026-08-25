@@ -145,6 +145,23 @@ public sealed class PeliculaFila : INotifyPropertyChanged
     public IBrush EstadoBg => Recurso == "Neutral500" ? Pincel("Field") : Pincel(Recurso + "Bg");
     public IBrush EstadoBorde => Recurso == "Neutral500" ? Pincel("Divider") : Pincel(Recurso + "Borde");
 
+    /// <summary>
+    /// Un pincel del tema, por su nombre.
+    ///
+    /// <para>
+    /// <b>Esto se llamaba a sí mismo.</b> Traducía el sufijo «Borde» a «Border» y luego, en vez
+    /// de buscar el recurso, volvía a entrar aquí — y en la segunda vuelta la clave ya no
+    /// acababa en «Borde», así que se llamaba con el mismo argumento para siempre. Pintar la
+    /// primera fila del modo Películas desbordaba la pila, y un
+    /// <c>StackOverflowException</c> <b>no se puede capturar en .NET</b>: el proceso se muere
+    /// sin diálogo, sin registro y sin nada que leer.
+    /// </para>
+    /// <para>
+    /// Compilaba, claro: una función que se llama a sí misma es perfectamente legal, y ninguna
+    /// prueba pinta filas de películas. La versión correcta estaba al lado desde el principio,
+    /// en <c>OrganizarRow.Rec</c>.
+    /// </para>
+    /// </summary>
     private static IBrush Pincel(string clave)
     {
         // «Borde» es el sufijo en castellano de este fichero; los recursos del tema
@@ -152,7 +169,10 @@ public sealed class PeliculaFila : INotifyPropertyChanged
         var real = clave.EndsWith("Borde", StringComparison.Ordinal)
             ? clave[..^5] + "Border"
             : clave;
-        return Pincel(real);
+
+        return Avalonia.Application.Current is { } app
+               && app.TryFindResource(real, out var v) && v is IBrush b
+            ? b : Brushes.Transparent;
     }
 
     // ── «Por qué», que es la columna que convierte un color en una razón ─────

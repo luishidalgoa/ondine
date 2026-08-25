@@ -69,16 +69,18 @@ public partial class Renombrar : Window
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) BeginMoveDrag(e);
         };
 
-        Btn("btnX").Click += (_, _) => Close(null);
-        Btn("btnCancel").Click += (_, _) => Close(null);
+        Btn("btnX").Click += (_, _) => Close(false);
+        Btn("btnCancel").Click += (_, _) => Close(false);
         Btn("btnApply").Click += (_, _) =>
         {
             Recordar(_histSearch, Txt("txtSearch").Text);
             Recordar(_histReplace, Txt("txtReplace").Text);
             Result = Montar(enabled: true);
-            Close(Result);
+            // Close(true), no Close(Result): quien abre pide ShowDialog<bool> y lee Result.
+            // Ver el mismo arreglo en Preferencias y en Catalogo.
+            Close(true);
         };
-        Btn("btnClear").Click += (_, _) => { Result = new RenameRule(); Close(Result); };
+        Btn("btnClear").Click += (_, _) => { Result = new RenameRule(); Close(true); };
 
         // Los desplegables se llenan por código: en WPF eran <ComboBoxItem> con {i:T}
         // dentro del XAML, y aquí una lista de textos es más corta y dice lo mismo.

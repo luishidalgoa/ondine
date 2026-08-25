@@ -78,7 +78,6 @@ public partial class OrganizarView : UserControl
     /// </para>
     /// </summary>
     private DataGridCollectionView _vista = null!;
-    private DataGridCollectionView _vistaPelis = null!;
 
 
     private readonly ObservableCollection<OrganizarRow> _filas = new();
@@ -141,7 +140,14 @@ public partial class OrganizarView : UserControl
         // pequenas van con FindControl y les da igual.
         InitializeComponent();
 
-        tabla.ItemsSource = _filas;
+        // LA VISTA, QUE NUNCA SE CREABA. El comentario de _vista lo explicaba entero -«hay
+        // que dársela como ItemsSource, y si se le da la colección a pelo el filtro no se
+        // aplica y no hay ningún error»- y aquí se le daba la colección a pelo. El campo se
+        // quedó en null!, así que «Analizar» reventaba con un nulo que el catch de arriba
+        // presentaba como «el análisis falló», y con él caían los chips de filtro, el
+        // buscador, el orden por cabecera y las bandas de temporada.
+        _vista = new DataGridCollectionView(_filas);
+        tabla.ItemsSource = _vista;
         listaCatalogos.ItemsSource = new ObservableCollection<CatalogoCard>();
 
         txtPlantilla.Text = LibraryTemplate.PatronPorDefecto;
@@ -1517,7 +1523,6 @@ public partial class OrganizarView : UserControl
         // En WPF se apagaba la flecha columna a columna; aquí SortDirection es de
         // solo lectura y el orden vive en la vista, así que se quita de ahí y las
         // cabeceras se enteran solas.
-        _vista.SortDescriptions.Clear();
         var vista = _vista;
         vista?.SortDescriptions.Clear();
     }

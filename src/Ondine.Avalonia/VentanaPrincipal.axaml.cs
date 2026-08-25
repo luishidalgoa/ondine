@@ -132,6 +132,20 @@ public partial class VentanaPrincipal : Window
         {
             if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
 
+            // NO SE ARRASTRA DESDE UN CONTROL, y esto costo un viaje de vuelta del usuario.
+            //
+            // La primera version arrastraba con cualquier pulsacion en la franja. Un menu de
+            // Avalonia se abre en la PULSACION, no al soltar, asi que las dos cosas pasaban a
+            // la vez: BeginMoveDrag le pedia el puntero al gestor de ventanas y el menu se
+            // cerraba al momento. Resultado: «Archivo», «Selección», «Herramientas» y «Ayuda»
+            // habia que pulsarlos dos veces, y a veces tres.
+            //
+            // Asi que se mira DE DONDE viene la pulsacion. Si viene de algo con lo que se
+            // puede hablar, es suyo; el arrastre es solo para el hueco de la barra. Se mira
+            // hacia arriba porque el origen es el elemento mas de dentro -el texto del menu, no
+            // el menu-, y ahi el tipo ya no dice nada.
+            if (e.Source is Visual origen && EsDeAlguien(origen)) return;
+
             if (e.ClickCount == 2)
             {
                 WindowState = WindowState == WindowState.Maximized
@@ -237,9 +251,22 @@ public partial class VentanaPrincipal : Window
         SizeChanged += (_, _) => AjustarAAncho();
 
         // conmutador de páginas «Comprimir | Organizar»
-        tabComprimir.IsCheckedChanged += (_, _) => CambiarPagina(Pagina.Comprimir);
-        tabOrganizar.IsCheckedChanged += (_, _) => CambiarPagina(Pagina.Organizar);
-        tabRecortes.IsCheckedChanged += (_, _) => CambiarPagina(Pagina.Recortes);
+        // LA GUARDA IMPORTA, y su ausencia dejaba el conmutador de páginas sin funcionar.
+        //
+        // En WPF esto colgaba de «Checked», que solo salta al MARCARSE. Avalonia tiene un
+        // solo evento para las dos cosas, así que al cambiar de página saltan DOS: el de la
+        // pestaña nueva y el de la vieja al apagarse. Sin preguntar quién avisa, la última
+        // pasada es la de la página que acabas de dejar — y de paso hace EnPantalla(true) y
+        // acto seguido EnPantalla(false) sobre la que sí estás mirando, apagándole el reloj y
+        // el vídeo.
+        //
+        // El propio puerto ya conocía la trampa: Ayuda.axaml.cs la guarda igual.
+        tabComprimir.IsCheckedChanged += (_, _) =>
+            { if (tabComprimir.IsChecked == true) CambiarPagina(Pagina.Comprimir); };
+        tabOrganizar.IsCheckedChanged += (_, _) =>
+            { if (tabOrganizar.IsChecked == true) CambiarPagina(Pagina.Organizar); };
+        tabRecortes.IsCheckedChanged += (_, _) =>
+            { if (tabRecortes.IsChecked == true) CambiarPagina(Pagina.Recortes); };
         pageOrganizar.Log += AppendLog;
         pageRecortes.Log += AppendLog;
         // Recortes reporta su export al indicador global: se ve desde cualquier pestaña.
@@ -1689,6 +1716,23 @@ public partial class VentanaPrincipal : Window
     }
 
     private Window? Ventana => this;
+
+    /// <summary>
+    /// Si la pulsación cayó sobre algo con lo que se puede hablar, y por tanto no es un
+    /// agarre de la barra de título.
+    ///
+    /// <para>
+    /// Se recorre hacia arriba hasta la propia barra: el origen de un evento es el elemento
+    /// más de dentro —el texto de un menú, no el menú— y ese no dice de quién es.
+    /// </para>
+    /// </summary>
+    private bool EsDeAlguien(Visual origen)
+    {
+        for (var v = origen; v is not null && v != barraTitulo; v = v.GetVisualParent())
+            if (v is Button or MenuItem or Menu or ToggleButton or ComboBox or TextBox)
+                return true;
+        return false;
+    }
 
     /// <summary>
     /// Cuántos píxeles del borde agarran para estirar. Seis: cuatro se fallan con el ratón
