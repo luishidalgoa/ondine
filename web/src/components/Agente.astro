@@ -44,7 +44,11 @@ const REPO = "https://github.com/luishidalgoa/ondine";
         <div class="orden">
           <p class="orden-rotulo">{t.agente.ordenRotulo}</p>
           <div class="linea">
-            <code data-orden>{t.agente.orden}</code>
+            <code
+              data-orden
+              data-linux={t.agente.rutas.linux}
+              data-mac={t.agente.rutas.mac}
+              data-windows={t.agente.rutas.windows}>{t.agente.orden}</code>
             <button type="button" data-copiar data-hecho={t.agente.copiado}>{t.agente.copiar}</button>
           </div>
         </div>
@@ -216,11 +220,37 @@ const REPO = "https://github.com/luishidalgoa/ondine";
 </style>
 
 <script>
+  // ── La ruta cambia con el sistema ──────────────────────────────────────────
+  // El servidor se instala donde cada paquete deja sus cosas, así que la orden no
+  // es la misma en los tres. Enseñar la de Linux a quien entra desde Windows es
+  // enseñarle una ruta que en su máquina no existe.
+  //
+  // El HTML sale de fábrica con la de Linux -es un sitio estático y hay que
+  // servir algo- y aquí se cambia por la que toque. Quien llegue sin JavaScript
+  // se queda con una orden que funciona en un sistema de los tres, que es mejor
+  // que un hueco.
+  const linea = document.querySelector<HTMLElement>("[data-orden]");
+
+  if (linea) {
+    const ua = navigator.userAgent;
+    const cual = /Windows|Win32|Win64/.test(ua)
+      ? "windows"
+      : // Cuidado con el iPad: desde iPadOS 13 dice «Macintosh» y solo se
+        // distingue por el táctil. Un iPad no va a instalar Ondine, pero
+        // tampoco tiene por qué leer la ruta de un Mac.
+        /Mac OS X|Macintosh/.test(ua) && navigator.maxTouchPoints <= 1
+        ? "mac"
+        : "linux";
+
+    const ruta = linea.dataset[cual];
+    if (ruta) linea.textContent = `claude mcp add ondine -- ${ruta}`;
+  }
+
   // Copiar la orden. Sin portapapeles disponible (http a secas, permiso denegado) el
   // botón se retira en vez de fallar al pulsarlo: la orden se sigue pudiendo
   // seleccionar a mano, que es lo que hace todo el mundo de todas formas.
   const boton = document.querySelector<HTMLButtonElement>("[data-copiar]");
-  const orden = document.querySelector<HTMLElement>("[data-orden]");
+  const orden = linea;
 
   if (boton && orden) {
     if (!navigator.clipboard) {

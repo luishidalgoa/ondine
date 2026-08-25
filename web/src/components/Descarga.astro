@@ -164,6 +164,27 @@ const PROMESAS = t.descarga.promesas;
       <p class="manual">{t.descarga.terminalManual}</p>
       <pre><code>{t.descarga.terminalComandos}</code></pre>
     </section>
+
+    <!-- El servidor MCP. Va aquí abajo y con las TRES órdenes a la vista, no con
+         una sola detectada: este modal ya está enseñando los tres sistemas a la
+         vez, y quien descarga para otra máquina -el portátil del salón, el
+         servidor de casa- necesita la de esa máquina, no la de esta. -->
+    <section class="terminal mcp">
+      <h4>{t.descarga.mcpTitulo}</h4>
+      <p>{t.descarga.mcpNota}</p>
+      {
+        t.descarga.mcpOrdenes.map((o) => (
+          <>
+            <p class="manual">{o.sistema}</p>
+            <pre><code>{o.orden}</code></pre>
+          </>
+        ))
+      }
+      <p class="manual apunte">
+        {t.descarga.mcpAppImage}{" "}
+        <a href={`${REPO}/blob/main/docs/mcp.md`}>{t.descarga.mcpEnlace}</a>.
+      </p>
+    </section>
     {
       []
     }
@@ -366,6 +387,13 @@ const PROMESAS = t.descarga.promesas;
     font-size: 12.5px;
     color: #8a8fa3;
   }
+
+  /* El bloque del MCP: tres órdenes seguidas, así que el rótulo de cada sistema
+     se pega a la suya. Con el margen de arriba quedaban tres islas y no se veía
+     qué orden era de qué sistema. */
+  .mcp .manual { margin-top: 0.85rem; margin-bottom: -0.15rem; color: #b5abfc; }
+  .mcp .apunte { margin-top: 1rem; color: #6c7080; }
+  .mcp .apunte a { color: #b5abfc; text-decoration: underline; text-underline-offset: 3px; }
 
   .grupos {
     padding: 1.25rem 1.5rem 1.5rem;

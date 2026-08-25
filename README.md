@@ -130,13 +130,22 @@ bin. It calls the same `Ondine.Core` the window calls, under the same three rule
 
 Doubtful rows stay out of bulk renames, the way they do in the app.
 
+The path depends on which package you installed, so pick your line:
+
 ```bash
+# Linux, from the .deb
 claude mcp add ondine -- /usr/bin/ondine-mcp
+
+# macOS, from the .dmg
+claude mcp add ondine -- /Applications/Ondine.app/Contents/MacOS/ondine-mcp
+
+# Windows, from the installer
+claude mcp add ondine -- %LOCALAPPDATA%\Programs\Ondine\ondine-mcp.exe
 ```
 
-It travels inside the `.deb`, the AppImage, the `.dmg` and the Windows installer, and every
-release also carries a standalone binary per platform. [docs/mcp.md](docs/mcp.md) has the path for
-each package, the Claude Desktop config and what every tool takes.
+The AppImage is the exception: the server travels inside the compressed package and cannot be run
+from outside, so grab the standalone binary that every release carries per platform.
+[docs/mcp.md](docs/mcp.md) has the Claude Desktop config and what every tool takes.
 
 ## Installing
 

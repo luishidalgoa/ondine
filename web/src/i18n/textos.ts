@@ -171,6 +171,11 @@ const es = {
     ],
     ordenRotulo: "Se conecta con una orden",
     orden: "claude mcp add ondine -- /usr/bin/ondine-mcp",
+    rutas: {
+      linux: "/usr/bin/ondine-mcp",
+      mac: "/Applications/Ondine.app/Contents/MacOS/ondine-mcp",
+      windows: "%LOCALAPPDATA%\\Programs\\Ondine\\ondine-mcp.exe",
+    },
     copiar: "Copiar",
     copiado: "Copiada",
     pie: "Viaja dentro del .deb, del AppImage, del .dmg y del instalador de Windows.",
@@ -201,6 +206,17 @@ const es = {
     terminalOrden: "curl -fsSL https://ondine.hdglabs.com/install.sh | sh",
     terminalManual: "O a mano, con el paquete de arriba:",
     terminalComandos: "tar xzf ondine-linux-x64.tar.gz\n./ondine --help",
+    mcpTitulo: "Y PARA TU AGENTE",
+    mcpNota:
+      "Dentro de los cuatro paquetes viaja un servidor MCP. Esta es la orden para conectarlo, según de dónde lo hayas instalado:",
+    mcpOrdenes: [
+      { sistema: "Windows", orden: "claude mcp add ondine -- %LOCALAPPDATA%\\Programs\\Ondine\\ondine-mcp.exe" },
+      { sistema: "macOS", orden: "claude mcp add ondine -- /Applications/Ondine.app/Contents/MacOS/ondine-mcp" },
+      { sistema: "Linux (.deb)", orden: "claude mcp add ondine -- /usr/bin/ondine-mcp" },
+    ],
+    mcpAppImage:
+      "Con el AppImage no vale: el servidor viaja dentro del paquete comprimido y desde fuera no se puede ejecutar. Ahí, y en Claude Desktop, mira",
+    mcpEnlace: "docs/mcp.md",
     pieA: "Todas las versiones y sus notas están en ",
     pieEnlace: "la página de versiones",
     pieB: ".",
@@ -448,6 +464,11 @@ const en: typeof es = {
     ],
     ordenRotulo: "One command to connect it",
     orden: "claude mcp add ondine -- /usr/bin/ondine-mcp",
+    rutas: {
+      linux: "/usr/bin/ondine-mcp",
+      mac: "/Applications/Ondine.app/Contents/MacOS/ondine-mcp",
+      windows: "%LOCALAPPDATA%\\Programs\\Ondine\\ondine-mcp.exe",
+    },
     copiar: "Copy",
     copiado: "Copied",
     pie: "It travels inside the .deb, the AppImage, the .dmg and the Windows installer.",
@@ -478,6 +499,17 @@ const en: typeof es = {
     terminalOrden: "curl -fsSL https://ondine.hdglabs.com/install.sh | sh",
     terminalManual: "Or by hand, with the package above:",
     terminalComandos: "tar xzf ondine-linux-x64.tar.gz\n./ondine --help",
+    mcpTitulo: "AND FOR YOUR AGENT",
+    mcpNota:
+      "An MCP server travels inside all four packages. This is the command to connect it, depending on where you installed it from:",
+    mcpOrdenes: [
+      { sistema: "Windows", orden: "claude mcp add ondine -- %LOCALAPPDATA%\\Programs\\Ondine\\ondine-mcp.exe" },
+      { sistema: "macOS", orden: "claude mcp add ondine -- /Applications/Ondine.app/Contents/MacOS/ondine-mcp" },
+      { sistema: "Linux (.deb)", orden: "claude mcp add ondine -- /usr/bin/ondine-mcp" },
+    ],
+    mcpAppImage:
+      "The AppImage is the exception: the server travels inside the compressed package and cannot be run from outside. For that, and for Claude Desktop, see",
+    mcpEnlace: "docs/mcp.md",
     pieA: "Every release and its notes are on ",
     pieEnlace: "the releases page",
     pieB: ".",
