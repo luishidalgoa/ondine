@@ -661,8 +661,11 @@ public sealed class Engine
             rep.Log(aceleracion is null ? t.MotorDecodificaCpu
                                         : string.Format(t.MotorDecodificaGpu, aceleracion));
 
-        var keepLangs = opt.KeepLangs.Count > 0 ? opt.KeepLangs : new List<string> { opt.Lang, "eng" };
-        bool keepAll = keepLangs.Contains("all");
+        // La lista de idiomas que se va a usar de verdad. La regla -y la de por defecto, y el
+        // centinela «all»- vive en Audio.PistasQueSeQuedan: la tenia este bucle escrita en linea
+        // y el estimador tenia OTRA version que decia algo distinto, asi que el pronostico
+        // contaba tres pistas donde el motor guardaba dos.
+        var idiomasElegidos = Audio.PistasQueSeQuedan.ListaEfectiva(opt.KeepLangs, opt.Lang);
         bool subsAll = opt.SubLangs == null || opt.SubLangs.Count == 0 || opt.SubLangs.Contains("all");
 
         int total = files.Count, n = 0;
@@ -709,10 +712,14 @@ public sealed class Engine
 
             var allAudio = pr.Streams.Where(s => s.CodecType == "audio").ToList();
             if (allAudio.Count == 0) { rep.Log(string.Format(t.MotorSaltoSinAudio, n, total, name)); rep.FileSkipped(f, t.MotorMotivoSinAudio); continue; }
-            var pref = allAudio.Where(s => s.Lang == opt.Lang).ToList();
-            var other = allAudio.Where(s => s.Lang != opt.Lang && (keepAll || keepLangs.Contains(s.Lang))).ToList();
-            var audio = pref.Concat(other).ToList();
-            if (audio.Count == 0) audio = allAudio;   // ningún idioma coincide: conservar todo
+            // Quien se queda, en que orden y POR QUE. Antes eran tres expresiones aqui mismo,
+            // y una de ellas conservaba el idioma preferido sin consultar la lista: desmarcar su
+            // chip no lo quitaba, o sea que la interfaz ofrecia un control que el motor ignoraba.
+            var planDePistas = Audio.PistasQueSeQuedan.Para(
+                [.. allAudio.Select(s => (s.Index, (string?)s.Lang))], opt.Lang, opt.KeepLangs);
+            var audio = planDePistas.Where(p => p.SeQueda)
+                                    .Select(p => allAudio.First(s => s.Index == p.Indice))
+                                    .ToList();
 
             var subs = opt.NoSubs ? new List<FfStream>()
                 : pr.Streams.Where(s => s.CodecType == "subtitle" && (subsAll || (opt.SubLangs?.Contains(s.Lang) ?? true))).ToList();
@@ -835,10 +842,19 @@ public sealed class Engine
                 return a;
             }
 
-            string langs = string.Join("+", audio.Select(x => string.IsNullOrEmpty(x.Lang) ? "?" : x.Lang));
-            int dropped = allAudio.Count - audio.Count;
+            string langs = string.Join("+", audio.Select(x => Audio.PistasQueSeQuedan.Rotulo(x.Lang)));
+
+            // CUALES se caen y POR QUE, no cuantas. «(descarto 1)» no responde a nada: el usuario
+            // con ingles, castellano y portugues no podia saber que la victima era el portugues
+            // ni que existia una lista blanca que nadie le habia ensenado.
+            var caidas = planDePistas.Where(p => !p.SeQueda).ToList();
+            string descartadas = caidas.Count == 0 ? "" : string.Format(
+                t.MotorInfoDescartadas,
+                string.Join(", ", caidas.Select(p => Audio.PistasQueSeQuedan.Rotulo(p.Idioma))),
+                string.Join("+", idiomasElegidos));
+
             string infoLine = string.Format(t.MotorInfoAudio, langs)
-                + (dropped > 0 ? string.Format(t.MotorInfoDescartadas, dropped) : "")
+                + descartadas
                 + (keptSubs.Count > 0 ? string.Format(t.MotorInfoSubtitulos, keptSubs.Count) : "")
                 + (opt.MaxHeight > 0 && (video.Height ?? 0) > opt.MaxHeight ? string.Format(t.MotorInfoReescalado, opt.MaxHeight) : "");
 

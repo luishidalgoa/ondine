@@ -277,6 +277,25 @@ public sealed partial class Textos
         "dice. Nunca se cambia en silencio. El desplegable del caudal, al lado, solo cuenta " +
         "cuando se recodifica: con «Sin tocar» no hay nada que fijar y se apaga.");
 
+    public string AyudaComprimirIdiomasTitulo => Idioma.Elegir(
+        "WHICH AUDIO TRACKS ARE KEPT", "QUÉ PISTAS DE AUDIO SE CONSERVAN");
+
+    public string AyudaComprimirIdiomas => Idioma.Elegir(
+        "The chips under «Audio detected» are the languages found in the files you added, and " +
+        "they all start ticked: untick one and that language is dropped —including your preferred " +
+        "one, whose job is to decide which track plays first, not whether it survives. If you " +
+        "tick none of them, Ondine falls back to your preferred language plus English, and the " +
+        "log says which tracks it dropped and against which list. «Keep them all» is the way to " +
+        "save tracks with NO language tag: those get no chip of their own, so they are the ones " +
+        "that quietly go missing.",
+        "Los chips de «Audio detectado» son los idiomas encontrados en los ficheros que has " +
+        "añadido, y nacen todos marcados: desmarca uno y ese idioma se cae —también el " +
+        "preferido, cuyo trabajo es decidir qué pista suena primero, no si sobrevive—. Si no " +
+        "marcas ninguno, Ondine tira de tu idioma preferido más el inglés, y el registro dice " +
+        "qué pistas ha descartado y contra qué lista. «Conservar todas» es la forma de salvar " +
+        "las pistas SIN etiqueta de idioma: esas no tienen chip propio, así que son las que " +
+        "desaparecen sin que se note.");
+
     public string AyudaComprimirHardwareTitulo => Idioma.Elegir(
         "WHO DOES THE WORK: CARD OR PROCESSOR", "QUIÉN HACE EL TRABAJO: TARJETA O PROCESADOR");
 

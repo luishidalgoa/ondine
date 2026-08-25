@@ -117,7 +117,9 @@ OPCIONES DE SALIDA
       --alto <px>            Reescala si supera esa altura (p. ej. 1080, 720)
       --audio <kbps>         Recodifica el audio a esa tasa (0 = copiar el original)
       --idioma <cod>         Idioma de audio preferido (por defecto spa)
-      --idiomas <a,b,c>      Idiomas de audio a conservar (por defecto: el preferido + eng)
+      --idiomas <a,b,c>      Idiomas de audio a conservar (por defecto: el preferido + eng).
+                             Usa «all» para conservarlas TODAS, incluidas las que no traen
+                             etiqueta de idioma
       --sin-subs             No incluir subtítulos
 
 OPCIONES GENERALES

@@ -180,7 +180,23 @@ public sealed partial class Textos
     // lo que la línea enumera de verdad.
     public string MotorInfoAudio => Idioma.Elegir("audio tracks: {0}", "pistas de audio: {0}");
 
-    public string MotorInfoDescartadas => Idioma.Elegir(" (dropping {0})", " (descarto {0})");
+    /// <summary>
+    /// Que pistas de audio se caen y contra que lista.
+    ///
+    /// <para>
+    /// {0} = los idiomas descartados · {1} = los idiomas que se conservan.
+    /// </para>
+    /// <para>
+    /// Antes decia solo CUANTAS: «(descarto 1)». Un usuario con ingles, castellano y portugues no
+    /// podia saber que la victima era el portugues, ni que habia una lista blanca decidiendolo —y
+    /// menos aun que, sin elegir el ningun idioma, esa lista la inventa el codigo con el preferido
+    /// y el ingles. Decir las dos cosas es lo que convierte el aviso en algo que se puede
+    /// arreglar.
+    /// </para>
+    /// </summary>
+    public string MotorInfoDescartadas => Idioma.Elegir(
+        " (dropping {0}: not among the languages kept, {1})",
+        " (descarto {0}: no está entre los idiomas que se conservan, {1})");
 
     // Se corta a «sub» a propósito: es una coletilla de una línea que ya lleva
     // idiomas y resolución detrás. El inglés marca el plural con «/s», igual que

@@ -508,6 +508,8 @@
               <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                 <TextBlock Text="{i:T MainAudioDetectado}" Width="106" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
                 <WrapPanel Name="pnlALang" VerticalAlignment="Center"/>
+                <CheckBox Name="chkTodosIdiomas" Content="{i:T MainConservarTodos}" Margin="10,0,0,0"
+                          VerticalAlignment="Center" ToolTip.Tip="{i:T MainConservarTodosTip}"/>
               </StackPanel>
               <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{i:T MainSubtitulos}" Width="106" FontSize="11" Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>

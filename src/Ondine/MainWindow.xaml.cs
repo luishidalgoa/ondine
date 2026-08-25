@@ -212,6 +212,10 @@ public partial class MainWindow : Window
         cboACodec.SelectionChanged += (_, _) => SincronizarCaudalDeAudio();
         SincronizarCaudalDeAudio();
 
+        chkTodosIdiomas.Checked += (_, _) => { SincronizarIdiomasDeAudio(); UpdateEstimate(); };
+        chkTodosIdiomas.Unchecked += (_, _) => { SincronizarIdiomasDeAudio(); UpdateEstimate(); };
+        SincronizarIdiomasDeAudio();
+
         btnPreview.Click += async (_, _) => await OnPreviewAsync();
         btnMeasure.Click += async (_, _) => await OnMeasureAsync();
         _scrubTimer.Tick += async (_, _) => { _scrubTimer.Stop(); await ShowScrubFrameAsync(); };
@@ -1209,7 +1213,9 @@ public partial class MainWindow : Window
         {
             Output = EffectiveOutput() is { Length: > 0 } o ? o : null,
             Lang = string.IsNullOrWhiteSpace(cboLang.Text) ? "spa" : cboLang.Text.Trim(),
-            KeepLangs = CheckedLangs(pnlALang),
+            KeepLangs = chkTodosIdiomas.IsChecked == true
+                ? [Ondine.Audio.PistasQueSeQuedan.Todas]
+                : CheckedLangs(pnlALang),
             Force = chkForce.IsChecked == true,
             DryRun = chkDry.IsChecked == true,
             NameRule = _settings.Rename,
@@ -1525,6 +1531,23 @@ public partial class MainWindow : Window
     /// aquel desempate; esto impide que la contradicción se pueda ni plantear.
     /// </para>
     /// </summary>
+
+    /// <summary>
+    /// «Conservar todas» manda sobre los chips: marcada, la lista de idiomas es el centinela
+    /// «all» y los chips se apagan porque ya no deciden nada.
+    ///
+    /// <para>
+    /// Existe porque los chips no podían con todo: solo hay chip de los idiomas DETECTADOS, así
+    /// que una pista sin etiqueta de idioma no tiene forma de marcarse y se caía en silencio. El
+    /// centinela ya lo entendía el motor y solo era alcanzable desde la línea de órdenes.
+    /// </para>
+    /// </summary>
+    private void SincronizarIdiomasDeAudio()
+    {
+        var todas = chkTodosIdiomas.IsChecked == true;
+        foreach (var c in pnlALang.Children.OfType<CheckBox>()) c.IsEnabled = !todas;
+    }
+
     private void SincronizarCaudalDeAudio() =>
         cboAud.IsEnabled = cboACodec.SelectedIndex != 0;
 

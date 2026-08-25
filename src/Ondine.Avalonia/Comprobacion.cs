@@ -1395,6 +1395,32 @@ public static class Comprobacion
         await Task.Delay(200);
         Dice(caudal?.IsEnabled == false, "y con «Sin tocar» se apaga: copiando no se aplica ningún caudal");
 
+        // ══ «Conservar todas» manda sobre los chips ══════════════════════════
+        // Se pulsa de verdad y se mira el EFECTO sobre los chips, que es lo que el usuario ve.
+        // Los chips solo existen para los idiomas detectados, asi que una pista sin etiqueta no
+        // tiene forma de marcarse: esta casilla es la unica manera de conservarla, y si el
+        // cableado se cae, se queda encendida sin hacer nada -que es el fallo de siempre aqui-.
+        var todosIdiomas = Cual("chkTodosIdiomas") as CheckBox;
+        var panelIdiomas = Cual("pnlALang") as WrapPanel;
+        Dice(todosIdiomas is not null && panelIdiomas is not null,
+            "la casilla de conservar todos los idiomas esta montada");
+
+        // Un chip de mentira, porque sin ficheros sondeados el panel esta vacio y no habria
+        // nada que apagar: la comprobacion pasaria sin comprobar nada.
+        panelIdiomas?.Children.Add(new CheckBox { Content = "por", IsChecked = true });
+        await Task.Delay(150);
+
+        if (todosIdiomas is not null) todosIdiomas.IsChecked = true;
+        await Task.Delay(200);
+        Dice(panelIdiomas?.Children.OfType<CheckBox>().All(c => !c.IsEnabled) == true,
+            "al marcarla, los chips de idioma se apagan: ya no deciden nada");
+
+        if (todosIdiomas is not null) todosIdiomas.IsChecked = false;
+        await Task.Delay(200);
+        Dice(panelIdiomas?.Children.OfType<CheckBox>().All(c => c.IsEnabled) == true,
+            "y al desmarcarla vuelven: los dos sentidos");
+        panelIdiomas?.Children.Clear();
+
         // ══ La cola ══════════════════════════════════════════════════════════
         Dice(Cual("panelCola")?.IsVisible == false, "el panel de la cola arranca oculto");
 

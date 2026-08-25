@@ -70,16 +70,26 @@ public static class Estimator
         return Math.Clamp((double)measuredKbps / model, 0.15, 4.0);
     }
 
-    /// <summary>Cuántas pistas de audio se conservan según los idiomas elegidos.</summary>
+    /// <summary>
+    /// Cuántas pistas de audio se conservan. SE LE PREGUNTA AL MOTOR, no se vuelve a decidir.
+    ///
+    /// <para>
+    /// Aquí había una segunda versión de la regla, y decía otra cosa: leía «lista de idiomas
+    /// vacía» como «se conservan todas», mientras el motor la sustituye por el idioma preferido
+    /// más el inglés. Con un fichero de tres idiomas, el pronóstico sumaba tres pistas de audio y
+    /// el resultado llevaba dos — y el usuario no tenía forma de saber por qué el tamaño previsto
+    /// no cuadraba.
+    /// </para>
+    /// </summary>
     private static int KeptAudioTracks(VideoRow r, EncodeOptions o)
     {
         var langs = string.IsNullOrWhiteSpace(r.Audio)
-            ? new List<string>()
-            : r.Audio.Split('+').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
-        if (langs.Count == 0) return 1;
-        if (o.KeepLangs.Count == 0 || o.KeepLangs.Contains("all")) return langs.Count;
-        int n = langs.Count(l => o.KeepLangs.Contains(l) || l == o.Lang);
-        return n < 1 ? langs.Count : n;   // si ningún idioma coincide, el motor conserva todas
+            ? new List<string?>()
+            : [.. r.Audio.Split('+').Select(s => s.Trim()).Where(s => s.Length > 0).Cast<string?>()];
+
+        // Sin pistas sondeadas se supone una: es una estimación, y suponer cero daría un
+        // pronóstico sin audio que nunca se cumple.
+        return langs.Count == 0 ? 1 : Audio.PistasQueSeQuedan.Cuantas(langs, o.Lang, o.KeepLangs);
     }
 
     public static Estimate Compute(VideoRow r, EncodeOptions o)
