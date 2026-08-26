@@ -43,6 +43,17 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Elegir el codificador por su nombre, y no solo «con GPU o sin ella».** Un usuario midió su
+  máquina antes de comprimir una biblioteca: en una GTX 1050 Ti, NVENC a calidad alta le dejó el
+  fichero **más grande que el original** (126 %) y en su mejor ajuste utilizable seguía en el 74 %;
+  x265 bajó el mismo episodio al **19 %** con una diferencia de SSIM de 0,002, que no se ve.
+  Ondine prefería NVENC, y para llegar a x265 había que apagar la aceleración entera. Ahora se
+  elige en Preferencias —«Automático», «Por software», o el nombre de uno de los que de verdad
+  funcionan en tu máquina—, y también por llamada: `--codificador` en terminal y `codificador` por
+  MCP. Lo pedido por su nombre manda sobre el interruptor de hardware; lo que no exista o no
+  arranque se cae a la elección automática en vez de dejar la app sin comprimir. Y la Ayuda cuenta
+  lo que costó medir: la tarjeta es para transcodificar en directo, no para adelgazar un archivo.
+
 - **Comprimir desde un agente, con todos los mandos de la pantalla.** El servidor MCP sabía
   analizar, renombrar y mandar a la papelera; comprimir era justo lo que faltaba. `ondine_comprimir`
   ofrece lo mismo que la ventana: contenedor y códec, calidad, esmero, resolución, tamaño objetivo,
