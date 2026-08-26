@@ -59,6 +59,20 @@ internal static class Catalogo
             Escribe: true,
             AplicarRenombrado),
 
+        new("ondine_quitar_pistas",
+            "Quita doblajes y subtítulos que no quieres SIN recodificar el vídeo: se copian los "
+            + "flujos que se quedan y se reempaqueta. Es el ahorro más barato que hay -cero "
+            + "pérdida de calidad, segundos en vez de minutos- y conviene mirarlo antes de "
+            + "recodificar una biblioteca. Llámalo sin «indices» ni «idiomas» para ver qué tiene "
+            + "el fichero. El vídeo no se puede quitar. Sobrescribe el fichero, y el original va "
+            + "a la papelera antes de tocarlo.",
+            Esquema(("fichero", "string", "El vídeo.", true),
+                    ("indices", "array", "Números de las pistas a quitar, los que devuelve esta misma herramienta.", false),
+                    ("idiomas", "array", "Quita todas las pistas de audio y subtítulo de esos idiomas («por», «fra»…).", false),
+                    ("confirmar", "boolean", "Ponlo en true para quitarlas de verdad.", false)),
+            Escribe: true,
+            QuitarPistas.Ejecutar),
+
         new("ondine_a_la_papelera",
             "Manda un fichero a la papelera del sistema. Nunca lo borra de verdad: se puede "
             + "recuperar desde el escritorio. Sin «confirmar» dice lo que haría.",
@@ -98,9 +112,27 @@ internal static class Catalogo
                     ("hardware", "boolean", "Codificar con la GPU si hay. Por defecto sí.", false),
                     ("aceleracion", "string", "Decodificar por hardware: auto (por defecto), ninguna, cuda, qsv, vaapi, d3d11va, videotoolbox.", false),
                     ("margen_disco_mb", "integer", "Margen de disco por debajo del cual se pausa. Por defecto 200.", false),
+                    ("tras_comprimir", "string", "Qué hacer con los originales: «papelera» o «conservar». Por defecto, lo que digan tus Preferencias.", false),
+                    ("en_segundo_plano", "boolean", "Arranca y contesta al momento con un identificador, en vez de esperar a que acabe. Para tandas largas es lo que hay que usar: luego se pregunta con ondine_tanda.", false),
                     ("confirmar", "boolean", "Ponlo en true para comprimir de verdad.", false)),
             Escribe: true,
             Comprimir.Ejecutar),
+
+        new("ondine_tanda",
+            "Por dónde va una tanda que corre en segundo plano: qué fichero lleva, cuánto de ese "
+            + "fichero, cuánto ha ahorrado hasta ahora, y si está en pausa esperando espacio en "
+            + "disco. Cuando termina, devuelve el parte completo. Sin «id», la última.",
+            Esquema(("id", "string", "El identificador que devolvió ondine_comprimir. Vacío = la última.", false)),
+            Escribe: false,
+            a => Tandas.Estado(Texto(a, "id"))),
+
+        new("ondine_parar_tanda",
+            "Para una tanda en marcha. Lo que ya estaba hecho se queda; el fichero a medias se "
+            + "borra, igual que al cerrar la app a mitad. NO pide confirmar a propósito: pedir "
+            + "permiso para un freno de mano es lo contrario de un freno de mano.",
+            Esquema(("id", "string", "El identificador de la tanda. Vacío = la última.", false)),
+            Escribe: false,
+            a => Tandas.Parar(Texto(a, "id"))),
 
         new("ondine_medir",
             "Mide el tamaño REAL de un fichero con los ajustes que le des: codifica tres "
