@@ -124,6 +124,35 @@ Renombra lo que el análisis dio por seguro. Las dudas se quedan como están.
 Lo aplicado se puede **deshacer** desde la aplicación, en Organizar: el renombrado guarda su
 parte igual que cuando lo lanza la ventana.
 
+### ondine_fijar_episodio
+
+Resuelve una duda a mano: «este fichero es el episodio 72». Es lo que hace falta cuando el título
+viene mal escrito, cuando el fichero no trae número, o cuando dos reclaman el mismo episodio y hay
+que decir cuál es cuál.
+
+- `fichero`, `catalogo`, `episodio` *(obligatorios)*
+- `segmento` — si el fichero es solo una historia del episodio: su letra (`a`, `b`).
+- `confirmar`
+
+> **La decisión se guarda donde la guarda la app**, en el mismo fichero y con la misma clave. Así
+> el siguiente análisis —por MCP o desde la ventana— ya no la pregunta, y lo que resuelvas en la
+> app tampoco lo vuelve a preguntar el agente. Queda apuntada con el nombre original, la fecha y
+> `origen: mcp`, que es lo que distingue una decisión del agente de una tuya.
+
+### ondine_dejar_como_esta
+
+Marca ficheros para que ningún análisis vuelva a proponerles nombre: un avance, una carátula en
+vídeo, o algo que ya está bien. Se apunta **en el catálogo**, así que viaja con él a otra máquina.
+
+- `catalogo` *(obligatorio)*, `fichero` o `ficheros`, `confirmar`
+
+### ondine_deshacer_renombrado
+
+Devuelve los ficheros de la última tanda a sus nombres de antes, la haya aplicado el agente o la
+app. Sin `confirmar` dice qué tanda es y qué ficheros volverían.
+
+- `confirmar`
+
 ### ondine_comprimir
 
 Comprime, con **todos los mandos de la pantalla de Comprimir**. Los originales no se tocan: el
@@ -282,11 +311,10 @@ encuentra (ffmpeg, ffprobe). Útil antes de intentar nada.
 
 ## Lo que todavía no hace
 
-- **Las decisiones fila a fila de Organizar**: fijar a mano el episodio de una duda, marcar un
-  fichero como «dejar como está», resolver un conflicto entre dos que reclaman el mismo episodio, o
-  deshacer una tanda ya aplicada. Y el análisis por MCP todavía no lee las decisiones que ya hayas
-  guardado en la app, así que puede volver a preguntar por algo que ya resolviste.
 - **La cola de trabajos**, porque encadenar llamadas ya es la forma de hacer cola de un agente.
+- **La calidad según el contenido**: la animación y la imagen real no aguantan el mismo CRF, y
+  ahora mismo el automático no distingue. Se puede pedir a mano con `calidad`, pero nadie lo mide
+  por ti.
 
 ## Lo que vigila el harness
 

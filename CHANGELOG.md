@@ -34,6 +34,15 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Renombrar desde un agente ya se puede deshacer.** Lo aplicado por MCP no quedaba apuntado en el
+  historial, así que la tanda estaba hecha y no había nada que deshacer —mientras que la misma
+  tanda lanzada desde la ventana sí se podía. No daba ningún error: solo se notaba al querer volver
+  atrás, que es el peor momento para descubrirlo.
+
+- **El análisis por MCP ya respeta lo que decidiste en la app.** No leía ni las decisiones
+  guardadas, ni el modo de prioridad del catálogo, ni los títulos en ficheros de al lado, así que
+  volvía a preguntar por cosas ya resueltas y dudaba donde la ventana no dudaba.
+
 - **Un resultado más grande que el original ya se avisa, y con su signo.** Pasa de verdad: un
   usuario midió NVENC en una GTX 1050 Ti y a calidad alta le dejó el fichero al **126 %** del
   original. La app escribía «-{ahorro}%» dando por hecho que había ahorro, así que aquello salía
@@ -42,6 +51,14 @@ es un acuerdo de buena voluntad: está verificado.
   codificar por software.
 
 ### Añadido
+
+- **Resolver dudas de Organizar por MCP, y deshacer lo hecho.** Hasta ahora el agente sabía
+  analizar y renombrar lo seguro, pero una duda —un título mal escrito, un fichero sin número, dos
+  que reclaman el mismo episodio— pedía abrir la ventana. Ahora `ondine_fijar_episodio` la resuelve
+  («este fichero es el episodio 72»), `ondine_dejar_como_esta` marca lo que no hay que tocar nunca
+  —un avance, una carátula— y `ondine_deshacer_renombrado` devuelve la última tanda a sus nombres
+  de antes. **Las decisiones se guardan donde las guarda la app**: lo que resuelvas en la ventana
+  ya no te lo vuelve a preguntar el agente, y al revés.
 
 - **Partir vídeos por MCP, sin recodificar.** `ondine_partir` separa el fichero de 44 minutos que
   en realidad son dos episodios pegados, o se queda con un trozo, copiando los flujos: el vídeo

@@ -54,9 +54,9 @@ public static class ElMcpNoSeQuedaAtrasTests
     /// borra sin que nada chiste no vigila nada.
     /// </item>
     /// <item>
-    /// Lo que NO se refleja todavía —Recortes entero, y las decisiones fila a fila de
-    /// Organizar— tiene que estar escrito en <c>docs/mcp.md</c>, en su apartado. Así el hueco es
-    /// público en vez de vivir en la cabeza de quien lo dejó.
+    /// Lo que NO se refleja todavía —la cola de trabajos, la calidad según el contenido— tiene
+    /// que estar escrito en <c>docs/mcp.md</c>, en su apartado. Así el hueco es público en vez de
+    /// vivir en la cabeza de quien lo dejó.
     /// </item>
     /// </list>
     /// </summary>
@@ -71,6 +71,7 @@ public static class ElMcpNoSeQuedaAtrasTests
         {
             ("los mandos de Comprimir", nameof(EncodeOptions), "ComprimirPorMcpTests"),
             ("las Preferencias", nameof(Settings), "PreferenciasPorMcpTests"),
+            ("las decisiones de Organizar", nameof(ReindexOverride), "OrganizarPorMcpTests"),
         };
 
         foreach (var (superficie, tipo, suite) in vigilados)
@@ -86,12 +87,14 @@ public static class ElMcpNoSeQuedaAtrasTests
         }
 
         // ── Lo que todavía no se refleja, declarado en la documentación ──────
-        // Recortes salió de esta lista al exponerse con «ondine_partir»: lo que queda es
-        // Organizar fila a fila. Que la lista ENCOJA también hay que hacerlo a mano, y por eso
-        // esta prueba se puso roja al cerrar el hueco — que es justo lo que se le pide.
+        // Recortes salió de esta lista al exponerse con «ondine_partir», y Organizar fila a fila
+        // al exponerse con «ondine_fijar_episodio» y compañía: ese pasó a la lista de arriba, que
+        // es a donde se pasa un hueco cerrado. Que la lista ENCOJA también hay que hacerlo a
+        // mano, y por eso esta prueba se pone roja al cerrar uno — que es justo lo que se le pide.
         var pendientes = new (string Que, string Sena)[]
         {
-            ("las decisiones fila a fila de Organizar", "fila a fila"),
+            ("la cola de trabajos", "La cola de trabajos"),
+            ("la calidad según el contenido", "La calidad según el contenido"),
         };
 
         Program.Assert(doc.Contains("## Lo que todavía no hace"),

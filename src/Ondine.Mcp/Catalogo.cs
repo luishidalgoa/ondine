@@ -59,6 +59,38 @@ internal static class Catalogo
             Escribe: true,
             AplicarRenombrado),
 
+        new("ondine_fijar_episodio",
+            "Resuelve una duda a mano: «este fichero es el episodio 72». Se recuerda, así que el "
+            + "siguiente análisis ya no lo preguntará, y la decisión la ve también la ventana de "
+            + "la app. Es lo que hace falta cuando el título viene mal escrito, o cuando dos "
+            + "ficheros reclaman el mismo número y hay que decir cuál es cuál.",
+            Esquema(("fichero", "string", "El vídeo dudoso.", true),
+                    ("catalogo", "string", "El .json del catálogo contra el que se fija.", true),
+                    ("episodio", "integer", "El número que le corresponde en el catálogo.", true),
+                    ("segmento", "string", "Si el fichero es solo una historia del episodio: su letra («a», «b»).", false),
+                    ("confirmar", "boolean", "Ponlo en true para guardar la decisión.", false)),
+            Escribe: true,
+            Organizar.Fijar),
+
+        new("ondine_dejar_como_esta",
+            "Marca ficheros para que ningún análisis vuelva a proponerles nombre: un avance, una "
+            + "carátula en vídeo, o algo que ya está bien y no quieres que nadie toque. Se apunta "
+            + "en el catálogo, así que viaja con él.",
+            Esquema(("catalogo", "string", "El .json del catálogo.", true),
+                    ("fichero", "string", "Uno. O usa «ficheros».", false),
+                    ("ficheros", "array", "Varios de golpe.", false),
+                    ("confirmar", "boolean", "Ponlo en true para apuntarlos.", false)),
+            Escribe: true,
+            Organizar.DejarComoEsta),
+
+        new("ondine_deshacer_renombrado",
+            "Devuelve los ficheros de la última tanda de renombrado a sus nombres de antes, la "
+            + "haya aplicado el agente o la app. Sin «confirmar» dice qué tanda es y qué "
+            + "ficheros volverían.",
+            Esquema(("confirmar", "boolean", "Ponlo en true para deshacerla.", false)),
+            Escribe: true,
+            Organizar.Deshacer),
+
         new("ondine_partir",
             "Parte un vídeo en trozos, o se queda con un trozo, SIN recodificar: se copian los "
             + "flujos y el vídeo queda idéntico. Es para el fichero de 44 minutos que en realidad "
@@ -315,6 +347,13 @@ internal static class Catalogo
         // igual que cuando la lanza la ventana: el agente no se salta el «deshacer».
         var parte = Mudanza.Aplicar(seguros.Select(p => (p.Origen, p.Destino!)));
 
+        // EL DIARIO. Sin esto, «deshacer» no tiene nada que deshacer: se apoya en él, y el
+        // renombrado por MCP no lo escribía, así que una tanda aplicada desde un agente era
+        // irreversible mientras la de la ventana no lo era. Mismo fichero y mismo formato: se
+        // puede deshacer desde aquí y desde la app.
+        Organizar.Apuntar(SerieDe(Texto(a, "catalogo")), Texto(a, "carpeta") ?? "",
+            parte.Movidos.Select(m => (m.Origen, m.Destino)));
+
         return Resultado.Ok($"Renombrados {parte.Movidos.Count} de {seguros.Count}."
             + (parte.Fallidos.Count > 0
                 ? $"\nFallaron {parte.Fallidos.Count}:\n  " + string.Join("\n  ", parte.Fallidos)
@@ -372,13 +411,23 @@ internal static class Catalogo
         var videos = Rutas.VideosQueLlegan.Expandir([carpeta], Bandera(a, "subcarpetas", true));
         if (videos.Count == 0) { error = $"No hay vídeos en {carpeta}."; return null; }
 
+        // Con el TÍTULO DEL COMPAÑERO, igual que la ventana: un .nfo o un .txt al lado con el
+        // título del episodio identifica lo que un nombre de fichero no puede. Sin esto, el
+        // análisis por MCP daba dudas donde la app no las daba.
         var señales = videos
-            .Select(v => SignalExtractor.Extract(v, LibraryScan.Grupo(carpeta, v)))
+            .Select(v => SignalExtractor.Extract(v, LibraryScan.Grupo(carpeta, v),
+                                                 TituloCompanero.Leer(v)))
             .ToList();
 
         var plantilla = new LibraryTemplate(Texto(a, "plantilla") ?? LibraryTemplate.PatronPorDefecto);
 
-        return ReindexEngine.Resolve(señales, catalogo)
+        // LAS DECISIONES YA TOMADAS, que es lo que faltaba: sin pasarlas, el agente volvía a
+        // preguntar por lo que el usuario ya había resuelto en la app. Y el modo de prioridad,
+        // que es un ajuste por catálogo y también lo decidió una persona.
+        var decisiones = ReindexStore.CargarDecisiones();
+        var modo = ModoDe(rutaCatalogo);
+
+        return ReindexEngine.Resolve(señales, catalogo, decisiones, modo)
             .Select(r =>
             {
                 var origen = r.Archivo.Path;
@@ -423,6 +472,30 @@ internal static class Catalogo
         sb.AppendLine($"\n{seguros} se pueden renombrar sin preguntar; "
                     + $"{plan.Count - seguros} necesitan una decisión.");
         return sb.ToString();
+    }
+
+    /// <summary>El nombre de la serie del catálogo, para que el diario diga de qué era la tanda.</summary>
+    private static string SerieDe(string? rutaCatalogo)
+    {
+        if (rutaCatalogo is null) return "";
+        try { return ReindexCatalog.Load(rutaCatalogo).Serie; } catch { return ""; }
+    }
+
+    /// <summary>
+    /// El modo de prioridad guardado para ese catálogo. Lo elige una persona en la pantalla de
+    /// Organizar y se guarda por catálogo, así que el agente tiene que respetarlo.
+    /// </summary>
+    private static ModoPrioridad ModoDe(string rutaCatalogo)
+    {
+        try
+        {
+            // Dos, no más: es lo que guarda la ventana («numero» o nada). Inventarme aquí un
+            // «fecha» o un «titulo» habría compilado y no habría existido nunca en el fichero.
+            return ReindexStore.CargarModo(rutaCatalogo) == "numero"
+                ? ModoPrioridad.NumeroPorTemporada
+                : ModoPrioridad.Automatico;
+        }
+        catch { return ModoPrioridad.Automatico; }
     }
 
     private static string Entorno()
