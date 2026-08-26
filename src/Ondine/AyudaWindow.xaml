@@ -207,6 +207,8 @@
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirCanales}"/>
               <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaComprimirAudioTitulo}"/>
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirAudio}"/>
+              <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaComprimirCodificadorTitulo}"/>
+              <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirCodificador}"/>
               <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaComprimirPreviaTitulo}"/>
               <TextBlock Style="{StaticResource P}" Text="{i:T AyudaComprimirPrevia}"/>
               <TextBlock Style="{StaticResource H3}" Text="{i:T AyudaComprimirIdiomasTitulo}"/>

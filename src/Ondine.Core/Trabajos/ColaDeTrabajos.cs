@@ -196,6 +196,7 @@ public sealed class ColaDeTrabajos
         Output = o.Output,
         Container = o.Container,
         VideoCodec = o.VideoCodec,
+        Codificador = o.Codificador,
         AudioOnly = o.AudioOnly,
         AudioFormat = o.AudioFormat,
         Lang = o.Lang,

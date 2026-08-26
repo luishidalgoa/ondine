@@ -332,6 +332,7 @@ public partial class VentanaPrincipal : Window
         Engine.MinFreeBytes = _settings.MinFreeMb * 1024L * 1024;
         Engine.AllowHardware = _settings.UseHardware;
         Engine.AceleracionPedida = _settings.AceleracionVideo;
+        Engine.CodificadorPedido = _settings.Codificador;
         Estimator.ComplexityFactor = Math.Clamp(_settings.ComplexityFactor, 0.15, 4.0);
         chkRec.IsChecked = _settings.Recurse;
         UpdateRenameStatus();
@@ -354,7 +355,8 @@ public partial class VentanaPrincipal : Window
         // al abrir Preferencias, y no dentro de la ventana: asi la ventana no depende del disco
         // ni de ffmpeg, que es lo que la deja probarse en el autochequeo.
         var aceleraciones = await _engine.AceleracionesDisponiblesAsync();
-        var dlg = new Preferencias(_settings, names, aceleraciones);
+        var dlg = new Preferencias(_settings, names, aceleraciones,
+                                   await _engine.CodificadoresDisponiblesAsync());
         if (await dlg.ShowDialog<bool>(this) && dlg.Result != null)
         {
             _settings = dlg.Result;

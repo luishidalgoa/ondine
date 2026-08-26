@@ -79,6 +79,7 @@ public static class PreferenciasPorMcpTests
             [nameof(Settings.AfterCompress)] = "tras_comprimir",
             [nameof(Settings.MinFreeMb)] = "margen_disco_mb",
             [nameof(Settings.UseHardware)] = "hardware",
+            [nameof(Settings.Codificador)] = "codificador",
             [nameof(Settings.AceleracionVideo)] = "aceleracion",
             [nameof(Settings.Ia)] = "modelo_activo",        // y modelo_url, y modelo_nombre
             [nameof(Settings.Tmdb)] = "peliculas_activo",

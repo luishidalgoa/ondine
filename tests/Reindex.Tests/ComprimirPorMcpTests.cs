@@ -77,6 +77,7 @@ public static class ComprimirPorMcpTests
             [nameof(EncodeOptions.AudioOnly)] = "formato",       // «mp3» y compañía lo encienden
             [nameof(EncodeOptions.AudioFormat)] = "formato",
             [nameof(EncodeOptions.VideoCodec)] = "codec",
+            [nameof(EncodeOptions.Codificador)] = "codificador",
             [nameof(EncodeOptions.Quality)] = "calidad",
             [nameof(EncodeOptions.Velocidad)] = "esmero",
             [nameof(EncodeOptions.MaxHeight)] = "alto",

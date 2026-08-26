@@ -36,6 +36,7 @@ internal static class Preferencias
         ("tras_comprimir", "Qué hacer con el original: «preguntar», «papelera» o «conservar»"),
         ("margen_disco_mb", "Margen de disco por debajo del cual una tanda se pausa"),
         ("hardware", "Codificar con la GPU si la hay"),
+        ("codificador", "Con qué codificar: «software», un nombre, o vacío para que lo elija la app"),
         ("aceleracion", "Decodificar por hardware: «auto», «ninguna», o el nombre de una"),
         ("modelo_activo", "Usar un modelo de lenguaje para los catálogos"),
         ("modelo_url", "URL del modelo, compatible con OpenAI"),
@@ -65,6 +66,7 @@ internal static class Preferencias
         sb.AppendLine("\n  RENDIMIENTO Y DISCO");
         sb.AppendLine($"    margen_disco_mb: {s.MinFreeMb}");
         sb.AppendLine($"    hardware: {Si(s.UseHardware)}");
+        sb.AppendLine($"    codificador: {(s.Codificador.Length == 0 ? "(lo elige la app)" : s.Codificador)}");
         sb.AppendLine($"    aceleracion: {s.AceleracionVideo}");
 
         sb.AppendLine("\n  MODELO");
@@ -127,6 +129,7 @@ internal static class Preferencias
         }, cambios);
 
         Bandera(a, "hardware", antes.UseHardware, v => despues.UseHardware = v, cambios);
+        Texto(a, "codificador", antes.Codificador, v => despues.Codificador = v.Trim(), cambios);
 
         Texto(a, "aceleracion", antes.AceleracionVideo, v =>
         {

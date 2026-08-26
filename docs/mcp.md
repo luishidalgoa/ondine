@@ -133,7 +133,11 @@ resultado va a otra carpeta.
 - `subcarpetas` — por defecto sí. `limite` — como mucho, ese número de vídeos.
 - `salida` — carpeta de destino. Por defecto, una «comprimido» junto a cada original.
 - `formato` — `mkv` (por defecto), `mp4`, `webm`, o solo audio: `mp3`, `m4a`, `flac`, `opus`.
-- `codec` — `hevc` (por defecto), `h264`, `av1`. `calidad` — CRF de 18 a 35, o 0 para automática.
+- `codec` — `hevc` (por defecto), `h264`, `av1`. Es el **formato** de salida.
+- `codificador` — **con qué** se codifica: `software` para el mejor por software, o un nombre
+  (`libx265`, `libsvtav1`, `hevc_nvenc`…). Vacío = lo elige la app. Los de GPU son rápidos y
+  comprimen bastante menos: para archivar, `software`.
+- `calidad` — CRF de 18 a 35, o 0 para automática (27 en hardware, 23 en software).
 - `esmero` — `muy_rapido`, `rapido`, `equilibrado`, `lento`, `muy_lento`.
 - `alto` — reescala si supera esa altura. `tamano_objetivo_mb` — apunta a ese tamaño y manda
   sobre la calidad.
@@ -180,7 +184,7 @@ aprende midiendo).
 
 - `idioma_app`, `preset_por_defecto`, `idioma_audio`, `subcarpetas`, `buscar_actualizaciones`
 - `tras_comprimir` — `preguntar`, `papelera` o `conservar`
-- `margen_disco_mb`, `hardware`, `aceleracion`
+- `margen_disco_mb`, `hardware`, `codificador`, `aceleracion`
 - `modelo_activo`, `modelo_url`, `modelo_nombre`, `peliculas_activo`
 - `confirmar` — sin él, contesta el **antes y el después** de cada cosa que cambiaría
 

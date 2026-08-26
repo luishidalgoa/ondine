@@ -126,6 +126,24 @@ public sealed partial class Textos
         "Turn it off only if your GPU produces artefacts. On CPU, compression is quite a bit slower.",
         "Desactívalo solo si tu GPU produce artefactos. Por CPU la compresión es bastante más lenta.");
 
+    /// <summary>El rotulo del desplegable del CODIFICADOR.</summary>
+    public string PreferenciasCodificador => Idioma.Elegir("Encoder", "Codificador");
+
+    /// <summary>
+    /// La ayuda de debajo. Dice lo que cuesta descubrir midiendo, que es la unica forma de
+    /// saberlo: la tarjeta es mucho mas rapida y comprime bastante menos.
+    /// </summary>
+    public string PreferenciasCodificadorAyuda => Idioma.Elegir(
+        "The card is much faster and compresses considerably less: it was built for live transcoding, not for shrinking an archive. For batches you are going to keep, pick the software encoder.",
+        "La tarjeta es mucho mas rapida y comprime bastante menos: esta pensada para transcodificar en directo, no para adelgazar un archivo. Para tandas que vas a conservar, elige el de software.");
+
+    /// <summary>La opcion «que lo decida la app», que es la de fabrica.</summary>
+    public string PreferenciasCodificadorAuto => Idioma.Elegir("Automatic", "Automatico");
+
+    /// <summary>Y la de «el mejor por software», sin tener que saberse el nombre.</summary>
+    public string PreferenciasCodificadorSoftware =>
+        Idioma.Elegir("Software (smaller files, slower)", "Por software (mas pequeno, mas lento)");
+
     /// <summary>El rotulo del desplegable de la aceleracion de DECODIFICACION.</summary>
     public string PreferenciasAceleracionVideo =>
         Idioma.Elegir("Hardware decoding", "Decodificacion por hardware");

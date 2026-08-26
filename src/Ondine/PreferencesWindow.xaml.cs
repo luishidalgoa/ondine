@@ -48,6 +48,9 @@ public partial class PreferencesWindow : Window
     /// </summary>
     private readonly List<string> _codigosAcel = new();
 
+    /// <summary>Igual que los de la aceleracion: en el MISMO orden que los textos.</summary>
+    private readonly List<string> _codigosCodificador = new();
+
     private static Textos T => Textos.Instancia;
 
     /// <summary>Ajustes resultantes tras pulsar Guardar (null si se cancela).</summary>
@@ -60,7 +63,8 @@ public partial class PreferencesWindow : Window
     /// abre; y asi esta ventana sigue siendo pura, que es lo que la deja probarse.
     /// </param>
     public PreferencesWindow(Settings current, IEnumerable<string> presetNames,
-                             IEnumerable<string>? aceleraciones = null)
+                             IEnumerable<string>? aceleraciones = null,
+                             IEnumerable<string>? codificadores = null)
     {
         InitializeComponent();
         _previos = current;
@@ -122,6 +126,23 @@ public partial class PreferencesWindow : Window
         _codigosAcel.Add(Ondine.Objetivo.AceleracionDeVideo.Ninguna);
         textosAcel.Add(_codigosAcel.Count == 2 ? T.PreferenciasAceleracionNoHay      // solo auto y ninguna
                                                : T.PreferenciasAceleracionNinguna);
+
+        // El codificador: «Automatico», «Por software», y los de hardware que ARRANCAN aqui.
+        // Se sacan de la lista de aceleraciones? No: son cosas distintas -una decodifica y otro
+        // codifica-, asi que se sondean por su cuenta a traves del motor.
+        _codigosCodificador.Add("");
+        var textosCod = new List<string> { T.PreferenciasCodificadorAuto };
+        _codigosCodificador.Add(Engine.PorSoftware);
+        textosCod.Add(T.PreferenciasCodificadorSoftware);
+        foreach (var c in codificadores ?? [])
+        {
+            _codigosCodificador.Add(c);
+            textosCod.Add(c);      // son nombres de ffmpeg: no se traducen
+        }
+        foreach (var t in textosCod) cboCodificador.Items.Add(t);
+        var posCod = _codigosCodificador.FindIndex(c => string.Equals(c, current.Codificador,
+                                                                     StringComparison.OrdinalIgnoreCase));
+        cboCodificador.SelectedIndex = posCod >= 0 ? posCod : 0;
 
         foreach (var t in textosAcel) cboAcelVideo.Items.Add(t);
         var posAcel = _codigosAcel.FindIndex(c => string.Equals(c, current.AceleracionVideo,
@@ -282,6 +303,9 @@ public partial class PreferencesWindow : Window
                         : AfterCompress.Ask;
         s.MinFreeMb = int.TryParse(txtMinFree.Text.Trim(), out var mb) ? Math.Clamp(mb, 50, 100_000) : 200;
         s.UseHardware = chkHw.IsChecked == true;
+        s.Codificador = cboCodificador.SelectedIndex >= 0
+            ? _codigosCodificador[cboCodificador.SelectedIndex]
+            : "";
         s.AceleracionVideo = cboAcelVideo.SelectedIndex >= 0
             ? _codigosAcel[cboAcelVideo.SelectedIndex]
             : Ondine.Objetivo.AceleracionDeVideo.Auto;
