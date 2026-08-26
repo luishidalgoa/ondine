@@ -158,6 +158,7 @@ public static class Program
         Ondine.Reindex.Tests.AceleracionDeVideoTests.Todas();
         Ondine.Reindex.Tests.LoQueDiceElAudioTests.Todas();
         Ondine.Reindex.Tests.HerramientasMcpTests.Todas();
+        Ondine.Reindex.Tests.ComprimirPorMcpTests.Todas();
         Ondine.Reindex.Tests.ElMcpNoSeQuedaAtrasTests.Todas();
 
         Console.WriteLine($"\n── {_ok} pasan · {_fallos} fallan ──");
