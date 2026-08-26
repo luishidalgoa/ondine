@@ -151,8 +151,17 @@ resultado va a otra carpeta.
 Sin `confirmar` devuelve el pronóstico fichero a fichero, con lo que pesa hoy cada uno y lo que
 se prevé que pese, más el resumen de los ajustes que se van a aplicar.
 
-> **Tarda lo que tarde el vídeo.** Una temporada entera puede ser una hora larga, y la llamada no
-> contesta hasta el final. Para ir por tandas, `limite`.
+- `tras_comprimir` — `papelera` o `conservar`. Por defecto, lo que digan tus Preferencias.
+- `en_segundo_plano` — arranca y contesta al momento con un identificador.
+
+> **Para una temporada, usa `en_segundo_plano`.** Comprimir tarda lo que tarde el vídeo —con un
+> codificador por software, más de una hora— y una llamada normal no contesta hasta el final: casi
+> ningún cliente espera tanto, y mientras no hay forma de saber si avanza ni de pararlo. Con
+> `en_segundo_plano` se pregunta con `ondine_tanda` cuantas veces haga falta y se para con
+> `ondine_parar_tanda`.
+>
+> La tanda vive en **este servidor**: si se cierra el cliente, se va con él y el fichero a medias
+> se borra. No hay tandas que sobrevivan a quien las lanzó.
 
 ### ondine_medir
 
@@ -161,6 +170,35 @@ real. Es el «Medir con una muestra» de la app, y es lo que conviene usar antes
 grande: el pronóstico de `ondine_comprimir` es un modelo, esto es una medida. No escribe nada.
 
 - `fichero` *(obligatorio)*, y los mismos mandos de codificación que `ondine_comprimir`.
+
+### ondine_tanda
+
+Por dónde va una tanda que corre en segundo plano: qué fichero lleva, cuánto de ese fichero,
+cuánto ha ahorrado hasta ahora, y si está **en pausa esperando espacio en disco**. Cuando
+termina, devuelve el parte completo. Sin `id`, la última.
+
+### ondine_parar_tanda
+
+La para. Lo que ya estaba hecho se queda; el fichero a medias se borra, igual que al cerrar la
+app a mitad.
+
+No pide `confirmar` a propósito: pedir permiso para un freno de mano es lo contrario de un freno
+de mano.
+
+### ondine_quitar_pistas
+
+Quita doblajes y subtítulos **sin recodificar el vídeo**: se copian los flujos que se quedan y se
+reempaqueta. Cero pérdida de calidad, segundos en vez de minutos. Antes de recodificar una
+biblioteca, esto es lo primero que conviene mirar.
+
+- `fichero` *(obligatorio)*
+- `indices` — los números que devuelve esta misma herramienta.
+- `idiomas` — quita todas las de audio y subtítulo de esos idiomas.
+- `confirmar`
+
+Llámalo sin `indices` ni `idiomas` y contesta el inventario del fichero. El vídeo no se puede
+quitar. Sobrescribe el fichero, y el original va a la papelera antes de tocarlo: si no se puede
+poner a salvo, no hace nada.
 
 ### ondine_a_la_papelera
 
@@ -203,6 +241,10 @@ encuentra (ffmpeg, ffprobe). Útil antes de intentar nada.
 
 - **Recortes**: partir un vídeo en trozos o cortar un fragmento. El motor lo sabe hacer y no está
   expuesto aquí todavía.
+- **Los presets**: no se pueden listar ni aplicar por su nombre. Se pasan los mandos uno a uno,
+  que es más largo de escribir y hace lo mismo.
+- **Pausar y reanudar** una tanda: se puede parar, y volver a lanzarla desde donde se quedó
+  —Ondine se salta lo que ya está hecho—, pero no dejarla en pausa.
 - **Organizar, a medias**: `ondine_analizar` propone y `ondine_aplicar_renombrado` aplica lo
   seguro, que es el camino de la mayoría. Lo que queda fuera son las decisiones fila a fila: fijar
   a mano el episodio de una duda, marcar un fichero como «dejar como está» o deshacer una tanda

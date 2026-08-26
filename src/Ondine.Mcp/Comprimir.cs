@@ -30,26 +30,8 @@ namespace Ondine.Mcp;
 /// </summary>
 internal static class Comprimir
 {
-    /// <summary>
-    /// Un reportero que se lo guarda todo en memoria.
-    ///
-    /// <para>
-    /// El motor cuenta lo que hace por aquí —qué codificador, quién decodifica, qué pistas
-    /// conserva, qué se saltó y por qué— y esas líneas son lo que hace legible el resultado. Se
-    /// tira el progreso por fotograma: son miles de líneas y ninguna dice nada al terminar.
-    /// </para>
-    /// </summary>
-    private sealed class Cuaderno : IEngineReporter
-    {
-        public List<string> Lineas { get; } = [];
-        public List<(string Ruta, string Motivo)> Saltados { get; } = [];
-
-        public void Log(string linea) => Lineas.Add(linea);
-        public void FileStart(int indice, int total, string nombre, double duracionSeg) { }
-        public void FileProgress(double parte, string linea) { }
-        public void FileDone(FileResult r) { }
-        public void FileSkipped(string ruta, string motivo) => Saltados.Add((ruta, motivo));
-    }
+    // El reportero vive en Tandas: es el mismo para la tanda en segundo plano y para la que
+    // espera, y tenerlo dos veces habría acabado con dos versiones que cuentan cosas distintas.
 
     // ── Las opciones ─────────────────────────────────────────────────────────
 
@@ -199,6 +181,21 @@ internal static class Comprimir
         if (opt is null) return Resultado.Error(error!);
         Ajustes(a);
 
+        // Qué hacer con los originales al terminar. Esto lo aplicaba SOLO la ventana, así que
+        // por MCP el ajuste de Preferencias no hacía nada: comprimías una temporada y los
+        // originales se quedaban, con el disco igual de lleno que antes. Se pide o se hereda.
+        var tras = (Texto(a, "tras_comprimir") ?? "").ToLowerInvariant();
+        var aLaPapelera = tras switch
+        {
+            "papelera" => true,
+            "conservar" => false,
+            "" => SettingsStore.Load().AfterCompress == AfterCompress.RecycleOriginal,
+            _ => (bool?)null,
+        };
+        if (aLaPapelera is null)
+            return Resultado.Error($"«tras_comprimir» no puede ser «{tras}»: «papelera» o «conservar». "
+                                 + "«preguntar» no vale aquí, que no hay a quién preguntar.");
+
         var limite = Entero(a, "limite", 0);
         if (limite > 0 && videos!.Count > limite) videos = [.. videos.Take(limite)];
 
@@ -206,9 +203,23 @@ internal static class Comprimir
 
         // ── Sin permiso: el pronóstico, no una negativa ──────────────────────
         if (!Bandera(a, "confirmar", false))
-            return Resultado.Ensayo(Pronostico(motor, videos!, opt, limite));
+            return Resultado.Ensayo(Pronostico(motor, videos!, opt, limite, aLaPapelera.Value));
 
-        var cuaderno = new Cuaderno();
+        // ── En segundo plano: se arranca y se contesta al momento ────────────
+        if (Bandera(a, "en_segundo_plano", false))
+        {
+            var id = Tandas.Arrancar(motor, videos!, opt,
+                (hechos, _) => { if (aLaPapelera.Value) ALaPapelera(hechos); });
+
+            return Resultado.Ok($"Tanda {id} en marcha, con {videos!.Count} vídeos.\n\n"
+                + ComoQueda(opt) + "\n"
+                + (aLaPapelera.Value ? "  Los originales irán a la papelera al terminar cada uno.\n" : "")
+                + "\nPregunta por ella con ondine_tanda cuando quieras, y párala con "
+                + "ondine_parar_tanda. Ojo: vive en este servidor, así que si se cierra el "
+                + "cliente se va con él.");
+        }
+
+        var cuaderno = new Tandas.Cuaderno();
         List<FileResult> hechos;
         try
         {
@@ -221,7 +232,30 @@ internal static class Comprimir
                                  + string.Join("\n", cuaderno.Lineas.TakeLast(12)));
         }
 
+        if (aLaPapelera.Value) ALaPapelera(hechos);
+
         return Resultado.Ok(Parte(hechos, cuaderno, videos!.Count));
+    }
+
+    /// <summary>
+    /// Los originales de lo que salió bien, a la papelera del sistema.
+    ///
+    /// <para>
+    /// A la papelera y nunca borrados: es la regla de la casa y aquí importa más que en ningún
+    /// otro sitio, porque lo que se está tirando es el original de un vídeo que acaba de
+    /// recodificarse. Si el resultado no gusta, se recupera del escritorio.
+    /// </para>
+    /// <para>
+    /// Y solo los que TERMINARON con un fichero de salida en el disco. Mandar a la papelera el
+    /// original de algo que falló sería cambiar un fallo por una pérdida.
+    /// </para>
+    /// </summary>
+    private static void ALaPapelera(List<FileResult> hechos)
+    {
+        foreach (var r in hechos.Where(x => x.OutBytes is > 0
+                                         && x.SourcePath.Length > 0
+                                         && File.Exists(x.OutputPath)))
+            try { PapeleraDelSistema.Mandar(r.SourcePath); } catch { /* se queda, y no pasa nada */ }
     }
 
     /// <summary>
@@ -234,10 +268,12 @@ internal static class Comprimir
     /// <c>ondine_medir</c>, que sí codifica muestras y tarda.
     /// </para>
     /// </summary>
-    private static string Pronostico(Engine motor, IReadOnlyList<string> videos, EncodeOptions opt, int limite)
+    private static string Pronostico(Engine motor, IReadOnlyList<string> videos, EncodeOptions opt,
+                                     int limite, bool papelera)
     {
         var sb = new StringBuilder($"{videos.Count} vídeos. Esto es lo que haría:\n\n");
         sb.AppendLine(ComoQueda(opt));
+        if (papelera) sb.AppendLine("  Y los originales irían a la papelera del sistema al terminar.");
         sb.AppendLine();
 
         long entra = 0, sale = 0;
@@ -302,7 +338,7 @@ internal static class Comprimir
     }
 
     /// <summary>El parte de la tanda: qué salió, cuánto se ahorró y qué se quedó fuera.</summary>
-    private static string Parte(List<FileResult> hechos, Cuaderno cuaderno, int pedidos)
+    internal static string Parte(List<FileResult> hechos, Tandas.Cuaderno cuaderno, int pedidos)
     {
         var buenos = hechos.Where(r => r.OutBytes is > 0).ToList();
         var malos = hechos.Where(r => r.OutBytes is null or 0).ToList();
@@ -355,7 +391,7 @@ internal static class Comprimir
         Ajustes(a);
 
         var motor = new Engine();
-        var cuaderno = new Cuaderno();
+        var cuaderno = new Tandas.Cuaderno();
         int kbps;
         try
         {
@@ -438,7 +474,7 @@ internal static class Comprimir
     /// Un peso legible. En megas enteros, un capítulo de prueba de 140 kB salía como «0 MB» y el
     /// parte entero se leía como si no hubiera pasado nada.
     /// </summary>
-    private static string Peso(long bytes) => bytes switch
+    internal static string Peso(long bytes) => bytes switch
     {
         >= 1_073_741_824 => $"{bytes / 1073741824.0:0.##} GB",
         >= 10_485_760 => $"{bytes / 1048576} MB",
@@ -455,7 +491,7 @@ internal static class Comprimir
     /// hecho y escribía «--13 %» —dos signos menos— sobre un fichero que había engordado.
     /// </para>
     /// </summary>
-    private static string Variacion(long entra, long sale)
+    internal static string Variacion(long entra, long sale)
     {
         if (entra <= 0) return "";
         var ahorro = 100 - (int)(sale * 100 / entra);

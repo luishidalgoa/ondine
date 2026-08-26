@@ -43,6 +43,23 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Tandas en segundo plano por MCP, con progreso y freno.** Comprimir una temporada tarda más de
+  una hora con un codificador por software, y una llamada MCP no contesta hasta el final: casi
+  ningún cliente espera tanto, y mientras no había forma de saber si avanzaba ni de pararla. Con
+  `en_segundo_plano` la llamada vuelve al momento con un identificador; `ondine_tanda` dice por
+  qué fichero va, cuánto lleva ahorrado y si está en pausa esperando espacio en disco, y
+  `ondine_parar_tanda` la para —lo hecho se queda y el fichero a medias se borra, igual que al
+  cerrar la app a mitad—.
+
+- **Quitar doblajes y subtítulos por MCP, sin recodificar.** `ondine_quitar_pistas` copia los
+  flujos que se quedan y reempaqueta: cero pérdida de calidad y segundos en vez de minutos. Es el
+  ahorro más barato que hay y conviene mirarlo antes de recodificar nada. Llamándolo sin decir qué
+  quitar, contesta el inventario del fichero. El original va a la papelera antes de tocarlo.
+
+- **Qué hacer con los originales, también por MCP.** El ajuste «tras comprimir» lo aplicaba solo
+  la ventana, así que un agente comprimía una temporada y los originales se quedaban, con el disco
+  igual de lleno. Ahora se hereda de tus Preferencias o se pide por llamada.
+
 - **Elegir el codificador por su nombre, y no solo «con GPU o sin ella».** Un usuario midió su
   máquina antes de comprimir una biblioteca: en una GTX 1050 Ti, NVENC a calidad alta le dejó el
   fichero **más grande que el original** (126 %) y en su mejor ajuste utilizable seguía en el 74 %;
