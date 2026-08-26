@@ -49,6 +49,19 @@ public sealed partial class Textos
         "Audio: {0} channels mixed down to stereo, so the track had to be re-encoded.",
         "Audio: {0} canales bajados a estéreo, así que la pista ha tenido que recodificarse.");
 
+    /// <summary>
+    /// El resultado ha salido MAYOR que el original. {0} = el fichero · {1} = cuánto ha crecido.
+    ///
+    /// <para>
+    /// No se borra ni se deshace: lo pediste tú y quizá lo quieres -pasar de H.264 a HEVC a
+    /// calidad muy alta hace esto-. Pero callarlo seria escribir un fichero peor y mas grande
+    /// sin que nadie se entere, que es justo lo contrario de para lo que existe esta app.
+    /// </para>
+    /// </summary>
+    public string MotorVideoCrecio => Idioma.Elegir(
+        "WARNING: «{0}» came out BIGGER than the original ({1}). Lower the quality number, or use a software encoder: NVENC needs a lot of bitrate to keep quality.",
+        "AVISO: «{0}» ha salido MAS GRANDE que el original ({1}). Baja el numero de calidad, o usa un codificador por software: NVENC necesita mucho caudal para mantener la calidad.");
+
     /// <summary>El original se descomprime en la tarjeta. Dice cual, porque no siempre es la misma.</summary>
     public string MotorDecodificaGpu => Idioma.Elegir(
         "Decoding on the GPU ({0})",

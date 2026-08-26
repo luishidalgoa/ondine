@@ -294,10 +294,30 @@ public sealed class Engine
     public static bool IsHardware(string encoder) => !encoder.StartsWith("lib");
 
     /// <summary>
+    /// Lo que se enseña en la columna «Estado» al terminar un fichero: cuánto ha cambiado de
+    /// peso, con su signo.
+    ///
+    /// <para>
+    /// <b>Y contempla que CREZCA.</b> Se escribía «-{pct}%» dando el ahorro por hecho, así que
+    /// un fichero que engordó salía como «--13%», con dos signos menos, y había que pararse a
+    /// descifrarlo. Pasa de verdad: NVENC en una Pascal a calidad alta puede dejar un fichero
+    /// más grande que el original —un usuario lo midió al 126 %—, y también recodificar algo que
+    /// ya venía apretado o subirle el caudal al audio.
+    /// </para>
+    /// </summary>
+    internal static string RotuloDeAhorro(long entra, long sale)
+    {
+        if (entra <= 0) return "";
+        var pct = (int)Math.Round(100 - (sale / (double)entra * 100));
+        return pct >= 0 ? $"-{pct}%" : $"+{-pct}%";
+    }
+
+    /// <summary>
     /// ¿Este vídeo ya está bien comprimido y no merece la pena tocarlo? Misma regla que
     /// aplica CompressAsync al saltárselo; se expone para que la tabla pueda avisar al
     /// analizar, en vez de descubrirlo el usuario cuando ya ha lanzado la tanda.
     /// </summary>
+
     public static bool AlreadyCompressed(string codec, int totalKbps) =>
         (codec is "hevc" or "av1") && totalKbps > 0 && totalKbps < 2500;
 
@@ -991,9 +1011,16 @@ public sealed class Engine
                     long inB = fi.Length, outB = new FileInfo(outPath).Length;
                     int pct = (int)Math.Round(100 - (outB / (double)Math.Max(inB, 1) * 100));
                     rep.Log(string.Format(t.MotorVideoListo, inB / 1048576, outB / 1048576, pct));
+
+                    // Y si ha salido MAYOR, se dice por su nombre. Un fichero peor y más gordo
+                    // escrito en silencio es lo contrario de para lo que existe esta app, y con
+                    // una tanda de doce nadie repasa doce cifras para darse cuenta.
+                    if (outB > inB)
+                        rep.Log(string.Format(t.MotorVideoCrecio, name, RotuloDeAhorro(inB, outB)));
+
                     var r = new FileResult
                     {
-                        Name = name, InBytes = inB, OutBytes = outB, Status = $"-{pct}%",
+                        Name = name, InBytes = inB, OutBytes = outB, Status = RotuloDeAhorro(inB, outB),
                         SourcePath = f, OutputPath = outPath,
                         SubtitleWarning = lostSoFar.Count > 0 ? SubtitleLossMessage(lostSoFar, opt.Container) : null,
                     };

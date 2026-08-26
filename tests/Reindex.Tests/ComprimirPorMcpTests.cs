@@ -30,6 +30,32 @@ public static class ComprimirPorMcpTests
         SinConfirmarNoComprime();
         ElCaudalSoloRecodificaSiSePide();
         LosIdiomasYLosSubtitulos();
+        CuandoElResultadoSaleMasGrande();
+    }
+
+    /// <summary>
+    /// Un fichero puede salir MAYOR que el original, y hay que decirlo con su signo.
+    ///
+    /// <para>
+    /// Lo midió un usuario: NVENC en una Pascal, a calidad alta, dejó el resultado al 126 % del
+    /// original. El motor escribía «-{pct}%» dando el ahorro por hecho, así que aquello salía en
+    /// la tabla como «--26%» — dos signos menos, y a descifrarlo.
+    /// </para>
+    /// </summary>
+    private static void CuandoElResultadoSaleMasGrande()
+    {
+        Program.Assert(Engine.RotuloDeAhorro(100, 60) == "-40%",
+            $"lo normal, que encoge ({Engine.RotuloDeAhorro(100, 60)})");
+        Program.Assert(Engine.RotuloDeAhorro(100, 126) == "+26%",
+            $"y lo que engorda sale con «+», no con dos menos ({Engine.RotuloDeAhorro(100, 126)})");
+        Program.Assert(Engine.RotuloDeAhorro(100, 100) == "-0%",
+            "clavado, cero por ciento");
+        Program.Assert(Engine.RotuloDeAhorro(0, 50) == "",
+            "y sin original no hay porcentaje que inventar");
+
+        // El caso exacto del informe: 67,7 MiB de referencia contra 85,0 MiB de NVENC a CQ 19.
+        Program.Assert(Engine.RotuloDeAhorro(71_000_000, 89_128_960) == "+26%",
+            $"el 126 % medido se lee como +26 % ({Engine.RotuloDeAhorro(71_000_000, 89_128_960)})");
     }
 
     /// <summary>
