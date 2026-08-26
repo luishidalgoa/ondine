@@ -160,6 +160,7 @@ public static class Program
         Ondine.Reindex.Tests.LoQueDiceElAudioTests.Todas();
         Ondine.Reindex.Tests.HerramientasMcpTests.Todas();
         Ondine.Reindex.Tests.ComprimirPorMcpTests.Todas();
+        Ondine.Reindex.Tests.PartirPorMcpTests.Todas();
         Ondine.Reindex.Tests.PreferenciasPorMcpTests.Todas();
         Ondine.Reindex.Tests.ElMcpNoSeQuedaAtrasTests.Todas();
 

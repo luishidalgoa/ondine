@@ -74,7 +74,12 @@ internal static class Tandas
         CancellationTokenSource Corte,
         Cuaderno Cuaderno,
         Task<List<FileResult>> Faena,
-        int Pedidos);
+        int Pedidos,
+        Engine Motor)
+    {
+        /// <summary>Si está pausada. Lo apunta esto porque el proceso suspendido no lo cuenta.</summary>
+        public bool Pausada { get; set; }
+    }
 
     private static readonly Dictionary<string, Tanda> Vivas = new();
     private static string? _ultima;
@@ -94,7 +99,7 @@ internal static class Tandas
             return hechos;
         }, corte.Token);
 
-        lock (Vivas) { Vivas[id] = new Tanda(id, corte, cuaderno, faena, videos.Count); _ultima = id; }
+        lock (Vivas) { Vivas[id] = new Tanda(id, corte, cuaderno, faena, videos.Count, motor); _ultima = id; }
         return id;
     }
 
@@ -109,7 +114,9 @@ internal static class Tandas
 
         if (!t.Faena.IsCompleted)
         {
-            sb.AppendLine($"trabajando, {indice} de {(total > 0 ? total : t.Pedidos)}.");
+            sb.AppendLine(t.Pausada
+                ? $"EN PAUSA, por el fichero {indice} de {(total > 0 ? total : t.Pedidos)}."
+                : $"trabajando, {indice} de {(total > 0 ? total : t.Pedidos)}.");
             if (enCurso.Length > 0)
                 sb.AppendLine($"  ahora: {enCurso}  ({(int)(parte * 100)} % de este fichero)");
             if (disco)
@@ -149,6 +156,33 @@ internal static class Tandas
         t.Corte.Cancel();
         return Resultado.Ok($"Tanda {t.Id}: parando. {Avance(t)}\n\nPregunta por ella en unos "
                           + "segundos para ver cómo quedó.");
+    }
+
+    /// <summary>
+    /// La pausa de verdad: se SUSPENDE el proceso de ffmpeg, no se le pide nada por las buenas.
+    ///
+    /// <para>
+    /// Es lo mismo que hace el botón «Pausar» de la ventana. El fichero a medias se queda a
+    /// medias y el trabajo sigue exactamente donde estaba al reanudar, sin recodificar nada dos
+    /// veces. Mientras está pausada, la CPU vuelve a estar libre — que es para lo que se pausa.
+    /// </para>
+    /// </summary>
+    public static Resultado Pausar(string? id, bool pausar)
+    {
+        var t = Buscar(id, out var error);
+        if (t is null) return Resultado.Error(error!);
+        if (t.Faena.IsCompleted) return Resultado.Error($"La tanda {t.Id} ya ha terminado.");
+
+        if (pausar == t.Pausada)
+            return Resultado.Ok($"La tanda {t.Id} ya estaba {(pausar ? "en pausa" : "en marcha")}.");
+
+        if (pausar) t.Motor.Pause(); else t.Motor.Resume();
+        t.Pausada = pausar;
+
+        return Resultado.Ok(pausar
+            ? $"Tanda {t.Id} en pausa. El fichero a medias se queda como está y la CPU queda "
+            + "libre; sigue con ondine_seguir_tanda."
+            : $"Tanda {t.Id} otra vez en marcha, desde donde se quedó.");
     }
 
     private static Tanda? Buscar(string? id, out string? error)

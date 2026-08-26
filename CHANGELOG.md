@@ -43,6 +43,24 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Añadido
 
+- **Partir vídeos por MCP, sin recodificar.** `ondine_partir` separa el fichero de 44 minutos que
+  en realidad son dos episodios pegados, o se queda con un trozo, copiando los flujos: el vídeo
+  queda idéntico. Los tiempos se escriben en segundos o en reloj («21:47»), y sin `confirmar` la
+  respuesta dice **dónde va a caer cada corte de verdad**: copiando, un corte solo puede caer en un
+  fotograma clave, así que se mueve un poco hacia atrás. Recodificando cae exacto, y se dice lo que
+  cuesta.
+
+- **Los presets, por su nombre.** `ondine_presets` los lista con lo que pone cada uno y
+  `ondine_comprimir` los aplica con `preset`; lo que pases además manda sobre el preset, igual que
+  en la ventana.
+
+- **Diez segundos para mirar, también por MCP.** `ondine_previa` deja el fichero en una ruta para
+  que lo abra una persona antes de lanzar una tanda de una hora. El agente no la mira: la enseña.
+
+- **Pausar y reanudar una tanda.** `ondine_pausar_tanda` suspende el ffmpeg en curso —la CPU queda
+  libre y el fichero a medias se queda a medias— y `ondine_seguir_tanda` continúa donde estaba, sin
+  recodificar nada dos veces. Es el botón «Pausar» de la ventana.
+
 - **Tandas en segundo plano por MCP, con progreso y freno.** Comprimir una temporada tarda más de
   una hora con un codificador por software, y una llamada MCP no contesta hasta el final: casi
   ningún cliente espera tanto, y mientras no había forma de saber si avanzaba ni de pararla. Con
