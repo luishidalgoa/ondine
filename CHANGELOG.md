@@ -32,23 +32,7 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
-### Corregido
-
-- **Renombrar desde un agente ya se puede deshacer.** Lo aplicado por MCP no quedaba apuntado en el
-  historial, así que la tanda estaba hecha y no había nada que deshacer —mientras que la misma
-  tanda lanzada desde la ventana sí se podía. No daba ningún error: solo se notaba al querer volver
-  atrás, que es el peor momento para descubrirlo.
-
-- **El análisis por MCP ya respeta lo que decidiste en la app.** No leía ni las decisiones
-  guardadas, ni el modo de prioridad del catálogo, ni los títulos en ficheros de al lado, así que
-  volvía a preguntar por cosas ya resueltas y dudaba donde la ventana no dudaba.
-
-- **Un resultado más grande que el original ya se avisa, y con su signo.** Pasa de verdad: un
-  usuario midió NVENC en una GTX 1050 Ti y a calidad alta le dejó el fichero al **126 %** del
-  original. La app escribía «-{ahorro}%» dando por hecho que había ahorro, así que aquello salía
-  en la tabla como «--26%» —dos signos menos— y no avisaba de nada. Ahora sale «+26%» y el
-  registro lo dice por su nombre, con la pista de qué hacer: bajar el número de calidad, o
-  codificar por software.
+## [1.16.0] - 2026-08-26
 
 ### Añadido
 
@@ -127,6 +111,24 @@ es un acuerdo de buena voluntad: está verificado.
 
 - **`ondine_donde_guarda` cuenta también el hardware**: qué codificador se usaría y qué
   decodificación por hardware funciona de verdad en esa máquina.
+
+### Corregido
+
+- **Renombrar desde un agente ya se puede deshacer.** Lo aplicado por MCP no quedaba apuntado en el
+  historial, así que la tanda estaba hecha y no había nada que deshacer —mientras que la misma
+  tanda lanzada desde la ventana sí se podía. No daba ningún error: solo se notaba al querer volver
+  atrás, que es el peor momento para descubrirlo.
+
+- **El análisis por MCP ya respeta lo que decidiste en la app.** No leía ni las decisiones
+  guardadas, ni el modo de prioridad del catálogo, ni los títulos en ficheros de al lado, así que
+  volvía a preguntar por cosas ya resueltas y dudaba donde la ventana no dudaba.
+
+- **Un resultado más grande que el original ya se avisa, y con su signo.** Pasa de verdad: un
+  usuario midió NVENC en una GTX 1050 Ti y a calidad alta le dejó el fichero al **126 %** del
+  original. La app escribía «-{ahorro}%» dando por hecho que había ahorro, así que aquello salía
+  en la tabla como «--26%» —dos signos menos— y no avisaba de nada. Ahora sale «+26%» y el
+  registro lo dice por su nombre, con la pista de qué hacer: bajar el número de calidad, o
+  codificar por software.
 
 ## [1.15.0] - 2026-08-26
 
