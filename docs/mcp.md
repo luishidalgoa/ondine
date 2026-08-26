@@ -124,6 +124,40 @@ Renombra lo que el análisis dio por seguro. Las dudas se quedan como están.
 Lo aplicado se puede **deshacer** desde la aplicación, en Organizar: el renombrado guarda su
 parte igual que cuando lo lanza la ventana.
 
+### ondine_comprimir
+
+Comprime, con **todos los mandos de la pantalla de Comprimir**. Los originales no se tocan: el
+resultado va a otra carpeta.
+
+- `carpeta` o `ficheros` — una carpeta entera, o rutas concretas.
+- `subcarpetas` — por defecto sí. `limite` — como mucho, ese número de vídeos.
+- `salida` — carpeta de destino. Por defecto, una «comprimido» junto a cada original.
+- `formato` — `mkv` (por defecto), `mp4`, `webm`, o solo audio: `mp3`, `m4a`, `flac`, `opus`.
+- `codec` — `hevc` (por defecto), `h264`, `av1`. `calidad` — CRF de 18 a 35, o 0 para automática.
+- `esmero` — `muy_rapido`, `rapido`, `equilibrado`, `lento`, `muy_lento`.
+- `alto` — reescala si supera esa altura. `tamano_objetivo_mb` — apunta a ese tamaño y manda
+  sobre la calidad.
+- `audio_codec` — `copiar` (por defecto), `aac`, `ac3`, `eac3`, `opus`, `flac`.
+  `audio_kbps` puesto a solas recodifica a AAC. `audio_estereo` baja lo que traiga más canales.
+- `idioma`, `idiomas`, `subtitulos`, `sin_subtitulos` — qué pistas se conservan. En `idiomas`,
+  `all` conserva todas, incluidas las que no traen etiqueta de idioma.
+- `forzar`, `hardware`, `aceleracion`, `margen_disco_mb` — lo que en la app vive en Preferencias.
+- `confirmar` — `true` para comprimir de verdad.
+
+Sin `confirmar` devuelve el pronóstico fichero a fichero, con lo que pesa hoy cada uno y lo que
+se prevé que pese, más el resumen de los ajustes que se van a aplicar.
+
+> **Tarda lo que tarde el vídeo.** Una temporada entera puede ser una hora larga, y la llamada no
+> contesta hasta el final. Para ir por tandas, `limite`.
+
+### ondine_medir
+
+Codifica tres muestras cortas del fichero con los ajustes que le des y saca de ahí el tamaño
+real. Es el «Medir con una muestra» de la app, y es lo que conviene usar antes de una tanda
+grande: el pronóstico de `ondine_comprimir` es un modelo, esto es una medida. No escribe nada.
+
+- `fichero` *(obligatorio)*, y los mismos mandos de codificación que `ondine_comprimir`.
+
 ### ondine_a_la_papelera
 
 Manda un fichero a la papelera del sistema.
@@ -136,12 +170,26 @@ Manda un fichero a la papelera del sistema.
 Dónde guarda Ondine sus datos —catálogos, decisiones, ajustes— y qué herramientas externas
 encuentra (ffmpeg, ffprobe). Útil antes de intentar nada.
 
+## Lo que todavía no hace
+
+- **Recortes**: partir un vídeo en trozos o cortar un fragmento. El motor lo sabe hacer y no está
+  expuesto aquí todavía.
+- **Organizar, a medias**: `ondine_analizar` propone y `ondine_aplicar_renombrado` aplica lo
+  seguro, que es el camino de la mayoría. Lo que queda fuera son las decisiones fila a fila: fijar
+  a mano el episodio de una duda, marcar un fichero como «dejar como está» o deshacer una tanda
+  aplicada. Eso sigue pidiendo la ventana.
+- **La vista previa** de diez segundos, que no significa nada sin alguien mirándola, y **la cola**,
+  porque encadenar llamadas ya es la forma de hacer cola de un agente.
+
 ## Lo que vigila el harness
 
 Que esto no se quede atrás cuando la app siga cambiando. Las pruebas
 (`tests/Reindex.Tests/HerramientasMcpTests.cs` y `ElMcpNoSeQuedaAtrasTests.cs`) fallan si:
 
 - alguna herramienta cambia de nombre, aparece o desaparece **y este documento no se entera**;
+- un mando de la pantalla de Comprimir no se puede pedir por MCP (se compara el esquema de
+  `ondine_comprimir` contra las propiedades de `EncodeOptions`, y lo que se deja fuera va en una
+  lista de exentos **con su motivo escrito**);
 - una herramienta que escribe deja de declarar `confirmar`;
 - `analizar` toca un fichero;
 - la versión del `.csproj` del servidor se desengancha de la del resto;

@@ -32,6 +32,21 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Comprimir desde un agente, con todos los mandos de la pantalla.** El servidor MCP sabía
+  analizar, renombrar y mandar a la papelera; comprimir era justo lo que faltaba. `ondine_comprimir`
+  ofrece lo mismo que la ventana: contenedor y códec, calidad, esmero, resolución, tamaño objetivo,
+  audio (códec, caudal y canales), idiomas y subtítulos, aceleración por hardware y margen de
+  disco. Sin `confirmar` devuelve el pronóstico fichero a fichero —lo que pesa hoy cada uno y lo
+  que se prevé que pese— y el resumen de los ajustes que aplicaría. Y `ondine_medir` codifica tres
+  muestras cortas para dar la cifra real antes de lanzar una tanda larga, que es el «Medir con una
+  muestra» de la app. Lo que pide un valor que no existe se rechaza diciendo cuáles hay, en vez de
+  caer en el de por defecto y hacer otra cosa sin avisar.
+
+- **`ondine_donde_guarda` cuenta también el hardware**: qué codificador se usaría y qué
+  decodificación por hardware funciona de verdad en esa máquina.
+
 ## [1.15.0] - 2026-08-26
 
 ### Añadido

@@ -67,6 +67,60 @@ internal static class Catalogo
             Escribe: true,
             ALaPapelera),
 
+        new("ondine_comprimir",
+            "Comprime vídeos con TODOS los mandos de la pantalla de Comprimir: contenedor, "
+            + "códec, calidad, esmero, resolución, tamaño objetivo, audio (códec, caudal y "
+            + "canales), idiomas, subtítulos, aceleración por hardware y margen de disco. Los "
+            + "originales no se tocan: el resultado va a otra carpeta. Sin «confirmar» devuelve "
+            + "el pronóstico fichero a fichero, con lo que va a pesar cada uno. OJO: tarda lo "
+            + "que tarde el vídeo -una temporada puede ser una hora- y la llamada no contesta "
+            + "hasta el final; para ir por tandas, usa «limite».",
+            Esquema(("carpeta", "string", "Carpeta con los vídeos. O usa «ficheros».", false),
+                    ("ficheros", "array", "Rutas concretas, si no quieres una carpeta entera.", false),
+                    ("subcarpetas", "boolean", "Si se recorren las subcarpetas. Por defecto sí.", false),
+                    ("limite", "integer", "Como mucho, este número de vídeos. Para ir por tandas.", false),
+                    ("salida", "string", "Carpeta de destino. Por defecto, una «comprimido» junto a cada original.", false),
+                    ("formato", "string", "mkv (por defecto), mp4, webm, o solo audio: mp3, m4a, flac, opus.", false),
+                    ("codec", "string", "hevc (por defecto), h264 o av1.", false),
+                    ("calidad", "integer", "CRF de 18 a 35: menos es mejor imagen y más peso. 0 = la elige la app.", false),
+                    ("esmero", "string", "muy_rapido, rapido, equilibrado (por defecto), lento, muy_lento. Tiempo contra tamaño.", false),
+                    ("alto", "integer", "Reescala si supera esa altura (1080, 720, 480). 0 = sin cambio.", false),
+                    ("tamano_objetivo_mb", "integer", "Apunta a este tamaño por fichero. Manda sobre «calidad».", false),
+                    ("audio_codec", "string", "copiar (por defecto), aac, ac3, eac3, opus, flac.", false),
+                    ("audio_kbps", "integer", "Caudal del audio. Solo cuenta si se recodifica; puesto a solas, recodifica a AAC.", false),
+                    ("audio_estereo", "boolean", "Baja a estéreo lo que traiga más canales.", false),
+                    ("idioma", "string", "Idioma preferido: va primero y suena al abrir. Por defecto spa.", false),
+                    ("idiomas", "array", "Idiomas de audio a conservar. «all» conserva todos, incluidos los sin etiqueta. Vacío = el preferido y eng.", false),
+                    ("subtitulos", "array", "Idiomas de subtítulos a conservar. Vacío = todos.", false),
+                    ("sin_subtitulos", "boolean", "Tirar todos los subtítulos.", false),
+                    ("forzar", "boolean", "Rehacer aunque la salida ya exista o ya esté en un códec eficiente.", false),
+                    ("hardware", "boolean", "Codificar con la GPU si hay. Por defecto sí.", false),
+                    ("aceleracion", "string", "Decodificar por hardware: auto (por defecto), ninguna, cuda, qsv, vaapi, d3d11va, videotoolbox.", false),
+                    ("margen_disco_mb", "integer", "Margen de disco por debajo del cual se pausa. Por defecto 200.", false),
+                    ("confirmar", "boolean", "Ponlo en true para comprimir de verdad.", false)),
+            Escribe: true,
+            Comprimir.Ejecutar),
+
+        new("ondine_medir",
+            "Mide el tamaño REAL de un fichero con los ajustes que le des: codifica tres "
+            + "muestras cortas y saca de ahí la cifra. Es el «Medir con una muestra» de la app, "
+            + "y es lo que hay que usar antes de una tanda grande — el pronóstico de "
+            + "«ondine_comprimir» sin confirmar es un modelo, esto es una medida. No escribe "
+            + "nada: las muestras se tiran.",
+            Esquema(("fichero", "string", "El vídeo a medir.", true),
+                    ("formato", "string", "Como en ondine_comprimir.", false),
+                    ("codec", "string", "Como en ondine_comprimir.", false),
+                    ("calidad", "integer", "Como en ondine_comprimir.", false),
+                    ("esmero", "string", "Como en ondine_comprimir.", false),
+                    ("alto", "integer", "Como en ondine_comprimir.", false),
+                    ("audio_codec", "string", "Como en ondine_comprimir.", false),
+                    ("audio_kbps", "integer", "Como en ondine_comprimir.", false),
+                    ("audio_estereo", "boolean", "Como en ondine_comprimir.", false),
+                    ("hardware", "boolean", "Como en ondine_comprimir.", false),
+                    ("aceleracion", "string", "Como en ondine_comprimir.", false)),
+            Escribe: false,
+            Comprimir.Medir),
+
         new("ondine_donde_guarda",
             "Dice dónde guarda Ondine sus datos —catálogos, decisiones, ajustes— y qué "
             + "herramientas externas encuentra. Útil para saber si el entorno está listo antes "
@@ -246,6 +300,20 @@ internal static class Catalogo
         sb.AppendLine($"  ffmpeg:  {Engine.FfmpegPath}");
         sb.AppendLine($"  ffprobe: {Engine.FfprobePath}");
         sb.AppendLine($"  extensiones que reconoce: {string.Join(" ", Engine.VideoExtensions)}");
+
+        // Y lo que hay para acelerar, que es lo primero que hace falta saber antes de una tanda
+        // larga. Se sondea de verdad -arrancando ffmpeg por candidata- y cuesta un par de
+        // segundos la primera vez.
+        try
+        {
+            var motor = new Engine();
+            sb.AppendLine($"  codificador de vídeo: {motor.SelectEncoderAsync("hevc").GetAwaiter().GetResult()}");
+            var acel = motor.AceleracionesDisponiblesAsync().GetAwaiter().GetResult();
+            sb.AppendLine("  decodificación por hardware: "
+                        + (acel.Count == 0 ? "ninguna en esta máquina" : string.Join(", ", acel)));
+        }
+        catch (Exception ex) { sb.AppendLine($"  (no se ha podido sondear el hardware: {ex.Message})"); }
+
         return sb.ToString();
     }
 

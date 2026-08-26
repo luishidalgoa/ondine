@@ -75,6 +75,13 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>reindex-tests</_Parameter1>
     </AssemblyAttribute>
+    <!-- El servidor MCP toca los mismos ajustes que Preferencias -el margen de disco es
+         `internal static`- porque ofrece los mismos mandos que la ventana. Se le abre la
+         puerta como a las dos interfaces, en vez de publicar el campo: publicarlo seria
+         inventar una API que nadie ha disenado. -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>ondine-mcp</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>
