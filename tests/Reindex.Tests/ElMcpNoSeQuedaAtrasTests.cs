@@ -86,9 +86,11 @@ public static class ElMcpNoSeQuedaAtrasTests
         }
 
         // ── Lo que todavía no se refleja, declarado en la documentación ──────
+        // Recortes salió de esta lista al exponerse con «ondine_partir»: lo que queda es
+        // Organizar fila a fila. Que la lista ENCOJA también hay que hacerlo a mano, y por eso
+        // esta prueba se puso roja al cerrar el hueco — que es justo lo que se le pide.
         var pendientes = new (string Que, string Sena)[]
         {
-            ("Recortes", "Recortes"),
             ("las decisiones fila a fila de Organizar", "fila a fila"),
         };
 

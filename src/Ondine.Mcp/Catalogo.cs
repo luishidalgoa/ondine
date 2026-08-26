@@ -59,6 +59,30 @@ internal static class Catalogo
             Escribe: true,
             AplicarRenombrado),
 
+        new("ondine_partir",
+            "Parte un vídeo en trozos, o se queda con un trozo, SIN recodificar: se copian los "
+            + "flujos y el vídeo queda idéntico. Es para el fichero de 44 minutos que en realidad "
+            + "son dos episodios pegados, o para quitar una intro. Dile «cortes» con los puntos "
+            + "donde partir, o «desde»/«hasta» para un trozo suelto; en segundos o en «mm:ss». "
+            + "Sin «confirmar» dice qué trozos saldrían y —esto importa— DÓNDE VA A CAER cada "
+            + "corte de verdad: copiando, un corte solo puede caer en un fotograma clave, así que "
+            + "se mueve un poco hacia atrás. Con «sin_recodificar»: false cae exacto, pero cuesta "
+            + "como comprimir.",
+            Esquema(("fichero", "string", "El vídeo a partir.", true),
+                    ("cortes", "array", "Puntos donde partir: «21:47» o 1307. Uno por corte.", false),
+                    ("desde", "string", "Para quedarte con un trozo: dónde empieza.", false),
+                    ("hasta", "string", "Y dónde acaba. Por defecto, el final del vídeo.", false),
+                    ("salida", "string", "Carpeta de destino. Por defecto, una «recortes» junto al original.", false),
+                    ("sin_recodificar", "boolean", "Copiar los flujos (por defecto) o recodificar para que el corte caiga exacto.", false),
+                    ("formato", "string", "Solo al recodificar: como en ondine_comprimir.", false),
+                    ("codec", "string", "Solo al recodificar.", false),
+                    ("codificador", "string", "Solo al recodificar.", false),
+                    ("calidad", "integer", "Solo al recodificar.", false),
+                    ("esmero", "string", "Solo al recodificar.", false),
+                    ("confirmar", "boolean", "Ponlo en true para partirlo de verdad.", false)),
+            Escribe: true,
+            Partir.Ejecutar),
+
         new("ondine_quitar_pistas",
             "Quita doblajes y subtítulos que no quieres SIN recodificar el vídeo: se copian los "
             + "flujos que se quedan y se reempaqueta. Es el ahorro más barato que hay -cero "
@@ -96,6 +120,7 @@ internal static class Catalogo
                     ("salida", "string", "Carpeta de destino. Por defecto, una «comprimido» junto a cada original.", false),
                     ("formato", "string", "mkv (por defecto), mp4, webm, o solo audio: mp3, m4a, flac, opus.", false),
                     ("codec", "string", "hevc (por defecto), h264 o av1. Es el FORMATO de salida.", false),
+                    ("preset", "string", "Parte de un preset por su nombre, como el desplegable de la app. Lo que pases además manda sobre él. Mira los que hay con ondine_presets.", false),
                     ("codificador", "string", "CON QUÉ codificar: «software» para el mejor por software, o un nombre (libx265, libsvtav1, hevc_nvenc…). Vacío = lo elige la app. Ojo: los codificadores de GPU son rápidos pero comprimen bastante menos; para archivar, «software».", false),
                     ("calidad", "integer", "CRF de 18 a 35: menos es mejor imagen y más peso. 0 = la elige la app.", false),
                     ("esmero", "string", "muy_rapido, rapido, equilibrado (por defecto), lento, muy_lento. Tiempo contra tamaño.", false),
@@ -133,6 +158,47 @@ internal static class Catalogo
             Esquema(("id", "string", "El identificador de la tanda. Vacío = la última.", false)),
             Escribe: false,
             a => Tandas.Parar(Texto(a, "id"))),
+
+        new("ondine_presets",
+            "Los presets de la app, con lo que pone cada uno: los de fábrica y los que hayas "
+            + "guardado. Se aplican con «preset» en ondine_comprimir.",
+            Esquema(),
+            Escribe: false,
+            Comprimir.Presets),
+
+        new("ondine_previa",
+            "Codifica DIEZ SEGUNDOS con los ajustes elegidos y deja el fichero en una ruta, para "
+            + "que lo mire una persona antes de lanzar una tanda de una hora. No la mira el "
+            + "agente: la ENSEÑA. Ojo: la previa codifica siempre lo más rápido posible, así que "
+            + "no respeta el esmero y no dice nada del tiempo ni del tamaño finales — para eso "
+            + "está ondine_medir.",
+            Esquema(("fichero", "string", "El vídeo.", true),
+                    ("desde", "string", "Desde qué momento: «12:30» o 750. Por defecto, el principio.", false),
+                    ("salida", "string", "Dónde dejarla. Por defecto, un temporal del sistema.", false),
+                    ("preset", "string", "Como en ondine_comprimir.", false),
+                    ("formato", "string", "Como en ondine_comprimir.", false),
+                    ("codec", "string", "Como en ondine_comprimir.", false),
+                    ("codificador", "string", "Como en ondine_comprimir.", false),
+                    ("calidad", "integer", "Como en ondine_comprimir.", false),
+                    ("alto", "integer", "Como en ondine_comprimir.", false),
+                    ("audio_codec", "string", "Como en ondine_comprimir.", false),
+                    ("audio_kbps", "integer", "Como en ondine_comprimir.", false)),
+            Escribe: false,
+            Comprimir.Previa),
+
+        new("ondine_pausar_tanda",
+            "Pausa una tanda: SUSPENDE el ffmpeg en curso, así que la CPU queda libre y el "
+            + "fichero a medias se queda a medias. Al seguir, continúa donde estaba sin "
+            + "recodificar nada dos veces. Es el botón «Pausar» de la ventana.",
+            Esquema(("id", "string", "La tanda. Vacío = la última.", false)),
+            Escribe: false,
+            a => Tandas.Pausar(Texto(a, "id"), true)),
+
+        new("ondine_seguir_tanda",
+            "Reanuda una tanda pausada, desde donde se quedó.",
+            Esquema(("id", "string", "La tanda. Vacío = la última.", false)),
+            Escribe: false,
+            a => Tandas.Pausar(Texto(a, "id"), false)),
 
         new("ondine_medir",
             "Mide el tamaño REAL de un fichero con los ajustes que le des: codifica tres "

@@ -185,6 +185,49 @@ app a mitad.
 No pide `confirmar` a propósito: pedir permiso para un freno de mano es lo contrario de un freno
 de mano.
 
+### ondine_partir
+
+Parte un vídeo en trozos, o se queda con uno, **sin recodificar**: se copian los flujos y el vídeo
+queda idéntico. Es para el fichero de 44 minutos que en realidad son dos episodios pegados, o para
+quitar una intro.
+
+- `fichero` *(obligatorio)*
+- `cortes` — los puntos donde partir: `"21:47"` o `1307`. En segundos o en reloj.
+- `desde` / `hasta` — para quedarte con un trozo.
+- `salida`, `sin_recodificar` (por defecto sí), `confirmar`
+- Recodificando (`sin_recodificar: false`) acepta además `formato`, `codec`, `codificador`,
+  `calidad` y `esmero`.
+
+> **Los cortes se mueven, y el ensayo dice cuánto.** Copiando, un corte solo puede caer en un
+> fotograma clave: si pides 21:47 y el anterior está en 21:45,3, va ahí. Nunca después —
+> adelantarlo comería el final del trozo anterior. Sin `confirmar`, la respuesta dice para cada
+> corte dónde va a caer de verdad. Recodificando cae exacto, pero cuesta como comprimir.
+
+### ondine_presets
+
+Los presets de la app con lo que pone cada uno, los de fábrica y los tuyos. Se aplican con
+`preset` en `ondine_comprimir`, y lo que pases además manda sobre el preset.
+
+### ondine_previa
+
+Diez segundos codificados con los ajustes elegidos, a un fichero, **para que los mire una
+persona** antes de lanzar una tanda de una hora. El agente no la mira: la enseña.
+
+- `fichero` *(obligatorio)*, `desde`, `salida`, y los mandos de codificación.
+
+> La previa codifica siempre lo más rápido posible, así que **no respeta el esmero** y no dice
+> nada del tiempo ni del tamaño finales. Enseña cómo va a quedar la imagen, y nunca mejor que el
+> resultado real. Para el tamaño, `ondine_medir`.
+
+### ondine_pausar_tanda
+
+Pausa una tanda: **suspende el ffmpeg en curso**, así que la CPU queda libre y el fichero a medias
+se queda a medias. Es el botón «Pausar» de la ventana.
+
+### ondine_seguir_tanda
+
+La reanuda desde donde se quedó, sin recodificar nada dos veces.
+
 ### ondine_quitar_pistas
 
 Quita doblajes y subtítulos **sin recodificar el vídeo**: se copian los flujos que se quedan y se
@@ -239,18 +282,11 @@ encuentra (ffmpeg, ffprobe). Útil antes de intentar nada.
 
 ## Lo que todavía no hace
 
-- **Recortes**: partir un vídeo en trozos o cortar un fragmento. El motor lo sabe hacer y no está
-  expuesto aquí todavía.
-- **Los presets**: no se pueden listar ni aplicar por su nombre. Se pasan los mandos uno a uno,
-  que es más largo de escribir y hace lo mismo.
-- **Pausar y reanudar** una tanda: se puede parar, y volver a lanzarla desde donde se quedó
-  —Ondine se salta lo que ya está hecho—, pero no dejarla en pausa.
-- **Organizar, a medias**: `ondine_analizar` propone y `ondine_aplicar_renombrado` aplica lo
-  seguro, que es el camino de la mayoría. Lo que queda fuera son las decisiones fila a fila: fijar
-  a mano el episodio de una duda, marcar un fichero como «dejar como está» o deshacer una tanda
-  aplicada. Eso sigue pidiendo la ventana.
-- **La vista previa** de diez segundos, que no significa nada sin alguien mirándola, y **la cola**,
-  porque encadenar llamadas ya es la forma de hacer cola de un agente.
+- **Las decisiones fila a fila de Organizar**: fijar a mano el episodio de una duda, marcar un
+  fichero como «dejar como está», resolver un conflicto entre dos que reclaman el mismo episodio, o
+  deshacer una tanda ya aplicada. Y el análisis por MCP todavía no lee las decisiones que ya hayas
+  guardado en la app, así que puede volver a preguntar por algo que ya resolviste.
+- **La cola de trabajos**, porque encadenar llamadas ya es la forma de hacer cola de un agente.
 
 ## Lo que vigila el harness
 

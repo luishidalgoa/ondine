@@ -58,6 +58,48 @@ internal static class Comprimir
     };
 
     /// <summary>
+    /// Los presets, con lo que pone cada uno. Son los mismos que el desplegable de la ventana:
+    /// los de fábrica más los que haya guardado el usuario.
+    /// </summary>
+    public static Resultado Presets(JsonObject _)
+    {
+        var todos = PresetStore.Factory().Concat(PresetStore.LoadUser()).ToList();
+        var sb = new StringBuilder($"{todos.Count} presets:\n");
+
+        foreach (var p in todos)
+        {
+            var opt = DeUnPreset(p);
+            sb.AppendLine($"\n  «{p.Name}»{(p.Factory ? "  (de fábrica)" : "")}");
+            sb.Append(ComoQueda(opt));
+            sb.AppendLine();
+        }
+
+        sb.Append("\nSe aplican con «preset»: «\"preset\": \"Ligero para móvil (720p)\"». Lo que "
+                + "pongas además manda sobre lo que diga el preset.");
+        return Resultado.Ok(sb.ToString());
+    }
+
+    /// <summary>Las opciones que pone un preset, que son índices de desplegable.</summary>
+    private static EncodeOptions DeUnPreset(Preset p)
+    {
+        var opt = new EncodeOptions
+        {
+            VideoCodec = p.Codec switch { 1 => "h264", 2 => "av1", _ => "hevc" },
+            Quality = p.Quality switch { 1 => 22, 2 => 24, 3 => 27, 4 => 30, _ => 0 },
+            MaxHeight = p.Res switch { 1 => 1080, 2 => 720, 3 => 480, _ => 0 },
+            AudioBitrate = p.Audio switch { 1 => 192, 2 => 160, 3 => 128, 4 => 96, _ => 0 },
+            AudioCodec = p.ACodec switch
+            {
+                1 => AudioElegido.Aac, 2 => AudioElegido.Ac3, 3 => AudioElegido.Eac3,
+                4 => AudioElegido.Opus, 5 => AudioElegido.Flac, _ => AudioElegido.Copiar,
+            },
+            Lang = string.IsNullOrWhiteSpace(p.Lang) ? "spa" : p.Lang,
+        };
+        Ondine.OpcionesSalida.PonerFormato(opt, p.Fmt);
+        return opt;
+    }
+
+    /// <summary>
     /// Traduce los argumentos a las opciones del motor, y <b>rechaza lo que no entiende</b> en
     /// vez de caer en un valor por defecto.
     ///
@@ -70,9 +112,28 @@ internal static class Comprimir
     internal static EncodeOptions? Opciones(JsonObject a, out string? error)
     {
         error = null;
-        var opt = new EncodeOptions();
 
-        var formato = (Texto(a, "formato") ?? "mkv").ToLowerInvariant();
+        // ── El preset primero, si lo hay: es el punto de partida ─────────────
+        // Y lo que se pase además manda sobre él, que es lo que hace la ventana: aplicas un
+        // preset y luego tocas lo que quieras sin que se te deshaga.
+        var preset = Texto(a, "preset");
+        EncodeOptions opt;
+
+        if (preset is not null)
+        {
+            var todos = PresetStore.Factory().Concat(PresetStore.LoadUser()).ToList();
+            var suyo = todos.FirstOrDefault(p => string.Equals(p.Name, preset, StringComparison.OrdinalIgnoreCase));
+            if (suyo is null)
+            {
+                error = $"No hay ningún preset «{preset}». Los que hay: "
+                      + string.Join(", ", todos.Select(p => $"«{p.Name}»")) + ".";
+                return null;
+            }
+            opt = DeUnPreset(suyo);
+        }
+        else opt = new EncodeOptions();
+
+        var formato = (Texto(a, "formato") ?? (opt.AudioOnly ? opt.AudioFormat : opt.Container)).ToLowerInvariant();
         if (!Formatos.Contains(formato))
         {
             error = $"«formato» no puede ser «{formato}». Los que hay: {string.Join(", ", Formatos)}.";
@@ -81,7 +142,7 @@ internal static class Comprimir
         if (formato is "mkv" or "mp4" or "webm") opt.Container = formato;
         else { opt.AudioOnly = true; opt.AudioFormat = formato; }
 
-        var codec = (Texto(a, "codec") ?? "hevc").ToLowerInvariant();
+        var codec = (Texto(a, "codec") ?? opt.VideoCodec).ToLowerInvariant();
         if (!Codecs.Contains(codec))
         {
             error = $"«codec» no puede ser «{codec}». Los que hay: {string.Join(", ", Codecs)}.";
@@ -101,6 +162,7 @@ internal static class Comprimir
         }
 
         var audioCodec = Texto(a, "audio_codec");
+        var audioDelPreset = opt.AudioCodec;
         if (audioCodec is not null)
         {
             if (!CodecsDeAudio.TryGetValue(audioCodec, out var c))
@@ -118,20 +180,21 @@ internal static class Comprimir
         // usarlo, y el registro dice cuál se ha usado de verdad.
         opt.Codificador = Texto(a, "codificador") ?? "";
 
-        opt.Quality = Entero(a, "calidad", 0);
+        opt.Quality = Entero(a, "calidad", opt.Quality);
         if (opt.Quality != 0 && (opt.Quality < 18 || opt.Quality > 35))
         {
             error = "«calidad» va de 18 a 35, o 0 para que la elija la app. Menos es mejor imagen y más peso.";
             return null;
         }
 
-        opt.MaxHeight = Entero(a, "alto", 0);
-        opt.AudioBitrate = Entero(a, "audio_kbps", 0);
+        opt.MaxHeight = Entero(a, "alto", opt.MaxHeight);
+        opt.AudioBitrate = Entero(a, "audio_kbps", opt.AudioBitrate);
         opt.TamanoObjetivoBytes = (long)Entero(a, "tamano_objetivo_mb", 0) * 1024 * 1024;
 
         // El caudal de audio SIN códec elegido significa recodificar a AAC, igual que en
         // Recortes y en la línea de órdenes: aquí tampoco hay dos desplegables que desempatar.
-        if (opt.AudioBitrate > 0 && audioCodec is null) opt.AudioCodec = AudioElegido.Aac;
+        if (opt.AudioBitrate > 0 && audioCodec is null && audioDelPreset == AudioElegido.Copiar)
+            opt.AudioCodec = AudioElegido.Aac;
 
         if (Bandera(a, "audio_estereo", false)) opt.AudioMezcla = Mezcla.Estereo;
 
@@ -141,7 +204,7 @@ internal static class Comprimir
         // configuró la app una vez espera que se le haga caso por los dos caminos.
         var guardadas = SettingsStore.Load();
 
-        opt.Lang = Texto(a, "idioma") ?? guardadas.DefaultLang;
+        opt.Lang = Texto(a, "idioma") ?? (preset is not null ? opt.Lang : guardadas.DefaultLang);
         opt.KeepLangs = Lista(a, "idiomas") ?? [];
         opt.SubLangs = Lista(a, "subtitulos");
         opt.NoSubs = Bandera(a, "sin_subtitulos", false);
@@ -371,6 +434,62 @@ internal static class Comprimir
 
         sb.Append("\nLos originales siguen donde estaban: Ondine nunca los toca.");
         return sb.ToString();
+    }
+
+    // ── Previa ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Diez segundos codificados con los ajustes elegidos, a un fichero, para que los mire una
+    /// persona.
+    ///
+    /// <para>
+    /// Dije que esto no tenía sentido por MCP porque no hay nadie mirando, y estaba mirando mal:
+    /// el agente no la mira, pero PUEDE ENSEÑARLA. «Te dejo diez segundos en esta ruta, ábrelos
+    /// antes de que lance la temporada» es exactamente lo que hace falta antes de una hora de
+    /// máquina.
+    /// </para>
+    /// <para>
+    /// Y hereda el aviso de la app: la previa codifica siempre lo más rápido posible, así que NO
+    /// respeta el esmero y no dice nada del tiempo ni del tamaño finales. Enseña cómo va a quedar
+    /// la imagen, y nunca mejor que el resultado real.
+    /// </para>
+    /// </summary>
+    public static Resultado Previa(JsonObject a)
+    {
+        var ruta = Texto(a, "fichero");
+        if (ruta is null) return Resultado.Error("Falta «fichero».");
+        if (!File.Exists(ruta)) return Resultado.Error($"No existe: {ruta}");
+
+        var opt = Opciones(a, out var error);
+        if (opt is null) return Resultado.Error(error!);
+        Ajustes(a);
+
+        var desde = (int)(Partir.Momento(a, "desde") ?? 0);
+        var destino = Texto(a, "salida")
+            ?? Path.Combine(Path.GetTempPath(), $"ondine-previa-{Guid.NewGuid():N}"[..24]
+                            + Engine.OutputExtension(opt));
+
+        var motor = new Engine();
+        string? salio;
+        try
+        {
+            salio = motor.PreviewAsync(ruta, opt, desde, destino, new Tandas.Cuaderno(),
+                                       CancellationToken.None).GetAwaiter().GetResult();
+        }
+        catch (Exception ex) { return Resultado.Error("No se ha podido hacer la previa: " + ex.Message); }
+
+        if (salio is null) return Resultado.Error("La previa no ha salido: ffmpeg no ha dejado fichero.");
+
+        long peso = 0;
+        try { peso = new FileInfo(salio).Length; } catch { }
+
+        return Resultado.Ok($"Diez segundos desde {Partir.Reloj(desde)} en:\n  {salio}"
+            + $"  ({Peso(peso)})\n\n"
+            + ComoQueda(opt)
+            + "\n\nEnséñasela a quien te lo pidió antes de lanzar la tanda. Ojo: la previa "
+            + "codifica siempre lo más rápido posible, así que NO respeta el esmero y no dice "
+            + "nada del tiempo ni del tamaño finales — para eso, ondine_medir. Y se borra sola "
+            + "cuando el sistema limpie los temporales.");
     }
 
     // ── Medir ────────────────────────────────────────────────────────────────
