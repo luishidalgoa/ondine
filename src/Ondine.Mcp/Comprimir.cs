@@ -147,7 +147,13 @@ internal static class Comprimir
 
         if (Bandera(a, "audio_estereo", false)) opt.AudioMezcla = Mezcla.Estereo;
 
-        opt.Lang = Texto(a, "idioma") ?? "spa";
+        // LO GUARDADO MANDA cuando no se pide otra cosa. Antes esto tenía sus propios valores
+        // por defecto -«spa», hardware sí, aceleración automática- y por tanto un agente hacía
+        // algo distinto de lo que hace la ventana con las mismas Preferencias delante. Quien
+        // configuró la app una vez espera que se le haga caso por los dos caminos.
+        var guardadas = SettingsStore.Load();
+
+        opt.Lang = Texto(a, "idioma") ?? guardadas.DefaultLang;
         opt.KeepLangs = Lista(a, "idiomas") ?? [];
         opt.SubLangs = Lista(a, "subtitulos");
         opt.NoSubs = Bandera(a, "sin_subtitulos", false);
@@ -165,11 +171,13 @@ internal static class Comprimir
     /// </summary>
     private static string? Ajustes(JsonObject a)
     {
-        Engine.AllowHardware = Bandera(a, "hardware", true);
-        Engine.AceleracionPedida = Texto(a, "aceleracion") ?? AceleracionDeVideo.Auto;
+        // Igual que arriba: lo guardado en Preferencias es el punto de partida, y el argumento
+        // de la llamada lo pisa solo si viene.
+        var guardadas = SettingsStore.Load();
 
-        var margen = Entero(a, "margen_disco_mb", 0);
-        if (margen > 0) Engine.MinFreeBytes = margen * 1024L * 1024;
+        Engine.AllowHardware = Bandera(a, "hardware", guardadas.UseHardware);
+        Engine.AceleracionPedida = Texto(a, "aceleracion") ?? guardadas.AceleracionVideo;
+        Engine.MinFreeBytes = Entero(a, "margen_disco_mb", guardadas.MinFreeMb) * 1024L * 1024;
 
         return null;
     }
@@ -386,7 +394,8 @@ internal static class Comprimir
         if (carpeta is null) { error = "Hace falta «carpeta» o «ficheros»."; return null; }
         if (!Directory.Exists(carpeta)) { error = $"No existe la carpeta: {carpeta}"; return null; }
 
-        var videos = Rutas.VideosQueLlegan.Expandir([carpeta], Bandera(a, "subcarpetas", true));
+        var videos = Rutas.VideosQueLlegan.Expandir(
+            [carpeta], Bandera(a, "subcarpetas", SettingsStore.Load().Recurse));
         if (videos.Count == 0) { error = $"No hay vídeos en {carpeta}."; return null; }
         return videos;
     }

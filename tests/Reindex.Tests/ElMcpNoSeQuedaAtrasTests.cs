@@ -29,7 +29,78 @@ public static class ElMcpNoSeQuedaAtrasTests
         LaDocumentacionDiceLasQueHay();
         LosPaquetesDeEscritorioLoLlevan();
         NingunaEscribeSinPermiso();
+        CadaEspejoTieneQuienLoVigile();
     }
+
+    /// <summary>
+    /// Cada superficie de la app que el MCP refleja tiene quien la vigile, <b>y las que no se
+    /// reflejan todavía están declaradas</b>.
+    ///
+    /// <para>
+    /// Esto salió de una pregunta del usuario: «en el mantenimiento, también hay que hacerlo de
+    /// las cosas de Preferencias o las pestañas de Organizar». Tiene razón, y el problema no es
+    /// escribir la comprobación de hoy: es que dentro de tres meses nadie recuerde que existía.
+    /// Por eso el inventario vive AQUÍ, en el fichero del mantenimiento, y no repartido entre las
+    /// pruebas de cada cosa.
+    /// </para>
+    /// <para>
+    /// Dos formas de vigilar, según lo que haya:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>
+    /// Lo que YA se refleja se compara por reflexión contra el tipo del motor —los mandos de
+    /// Comprimir contra <c>EncodeOptions</c>, las Preferencias contra <c>Settings</c>—, y aquí se
+    /// comprueba que esa prueba sigue existiendo y sigue registrada. Una comprobación que alguien
+    /// borra sin que nada chiste no vigila nada.
+    /// </item>
+    /// <item>
+    /// Lo que NO se refleja todavía —Recortes entero, y las decisiones fila a fila de
+    /// Organizar— tiene que estar escrito en <c>docs/mcp.md</c>, en su apartado. Así el hueco es
+    /// público en vez de vivir en la cabeza de quien lo dejó.
+    /// </item>
+    /// </list>
+    /// </summary>
+    private static void CadaEspejoTieneQuienLoVigile()
+    {
+        var raiz = LocalizarRaiz();
+        var registro = Leer(Path.Combine(raiz, "tests", "Reindex.Tests", "Program.cs"));
+        var doc = Leer(Path.Combine(raiz, "docs", "mcp.md"));
+
+        // ── Lo que se refleja, con la prueba que lo compara contra el motor ──
+        var vigilados = new (string Superficie, string Tipo, string Suite)[]
+        {
+            ("los mandos de Comprimir", nameof(EncodeOptions), "ComprimirPorMcpTests"),
+            ("las Preferencias", nameof(Settings), "PreferenciasPorMcpTests"),
+        };
+
+        foreach (var (superficie, tipo, suite) in vigilados)
+        {
+            var fichero = Path.Combine(raiz, "tests", "Reindex.Tests", suite + ".cs");
+            var texto = Leer(fichero);
+
+            Program.Assert(texto.Length > 0, $"{superficie}: existe {suite}");
+            Program.Assert(texto.Contains($"typeof({tipo}).GetProperties()"),
+                $"y compara por reflexión contra «{tipo}», que es lo que caza un mando nuevo");
+            Program.Assert(registro.Contains(suite + ".Todas()"),
+                $"y está registrada en Program.cs, o no correría");
+        }
+
+        // ── Lo que todavía no se refleja, declarado en la documentación ──────
+        var pendientes = new (string Que, string Sena)[]
+        {
+            ("Recortes", "Recortes"),
+            ("las decisiones fila a fila de Organizar", "fila a fila"),
+        };
+
+        Program.Assert(doc.Contains("## Lo que todavía no hace"),
+            "docs/mcp.md tiene su apartado de lo que falta");
+
+        foreach (var (que, sena) in pendientes)
+            Program.Assert(doc.Contains(sena),
+                $"y dice que falta {que}: un hueco escrito se arregla, uno recordado no");
+    }
+
+    private static string Leer(string ruta) => File.Exists(ruta) ? File.ReadAllText(ruta) : "";
 
     /// <summary>
     /// La misma versión que el resto, y comprobado <b>aquí</b> y no solo en el tag.

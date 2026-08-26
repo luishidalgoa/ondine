@@ -32,6 +32,15 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Un resultado más grande que el original ya se avisa, y con su signo.** Pasa de verdad: un
+  usuario midió NVENC en una GTX 1050 Ti y a calidad alta le dejó el fichero al **126 %** del
+  original. La app escribía «-{ahorro}%» dando por hecho que había ahorro, así que aquello salía
+  en la tabla como «--26%» —dos signos menos— y no avisaba de nada. Ahora sale «+26%» y el
+  registro lo dice por su nombre, con la pista de qué hacer: bajar el número de calidad, o
+  codificar por software.
+
 ### Añadido
 
 - **Comprimir desde un agente, con todos los mandos de la pantalla.** El servidor MCP sabía
@@ -43,6 +52,15 @@ es un acuerdo de buena voluntad: está verificado.
   muestras cortas para dar la cifra real antes de lanzar una tanda larga, que es el «Medir con una
   muestra» de la app. Lo que pide un valor que no existe se rechaza diciendo cuáles hay, en vez de
   caer en el de por defecto y hacer otra cosa sin avisar.
+
+- **Las Preferencias, desde el agente.** `ondine_preferencias` las lee y
+  `ondine_ajustar_preferencias` cambia lo que le pases, y solo eso: el resto se queda como estaba,
+  incluido lo que la herramienta no ofrece. Sin `confirmar` contesta el **antes y el después** de
+  cada cosa que tocaría, que en un cambio de configuración es lo único que deja darlo por bueno.
+  Las **claves** del modelo y de TMDb no entran ni salen de ahí a propósito: solo se dice si hay
+  una puesta. Y de paso, `ondine_comprimir` hereda lo que tengas guardado —hardware, aceleración,
+  idioma de audio, margen de disco— en vez de tener sus propios valores por defecto, así que un
+  agente hace lo mismo que la ventana con las mismas Preferencias delante.
 
 - **`ondine_donde_guarda` cuenta también el hardware**: qué codificador se usaría y qué
   decodificación por hardware funciona de verdad en esa máquina.

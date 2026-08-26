@@ -165,6 +165,31 @@ Manda un fichero a la papelera del sistema.
 - `ruta` *(obligatorio)*
 - `confirmar` — `true` para mandarlo de verdad.
 
+### ondine_preferencias
+
+Lee las Preferencias: idioma, preset por defecto, idioma de audio, qué hacer con el original tras
+comprimir, margen de disco, aceleración por hardware, y los ajustes del modelo y de TMDb.
+
+De las **claves** solo dice si hay una puesta. Su valor no sale de la máquina.
+
+### ondine_ajustar_preferencias
+
+Cambia lo que le pases y **solo** lo que le pases: el resto se queda como estaba, incluido lo que
+esta herramienta no ofrece (el historial de renombrado, el factor de complejidad que la app
+aprende midiendo).
+
+- `idioma_app`, `preset_por_defecto`, `idioma_audio`, `subcarpetas`, `buscar_actualizaciones`
+- `tras_comprimir` — `preguntar`, `papelera` o `conservar`
+- `margen_disco_mb`, `hardware`, `aceleracion`
+- `modelo_activo`, `modelo_url`, `modelo_nombre`, `peliculas_activo`
+- `confirmar` — sin él, contesta el **antes y el después** de cada cosa que cambiaría
+
+> **Las claves del modelo y de TMDb no se pueden poner desde aquí, a propósito.** Habría que
+> escribirlas en el chat para llegar hasta el servidor. Eso se hace en la ventana de Preferencias.
+
+Y los mandos de compresión heredan lo que haya guardado: si no pasas `hardware`, `aceleracion`,
+`idioma` o `margen_disco_mb`, `ondine_comprimir` usa los de Preferencias, igual que la ventana.
+
 ### ondine_donde_guarda
 
 Dónde guarda Ondine sus datos —catálogos, decisiones, ajustes— y qué herramientas externas

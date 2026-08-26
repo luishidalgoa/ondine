@@ -121,6 +121,38 @@ internal static class Catalogo
             Escribe: false,
             Comprimir.Medir),
 
+        new("ondine_preferencias",
+            "Lee las Preferencias de Ondine: idioma, preset por defecto, idioma de audio, qué "
+            + "hacer con el original tras comprimir, margen de disco, aceleración por hardware "
+            + "y los ajustes del modelo y de TMDb. De las claves solo dice si HAY una puesta: su "
+            + "valor no sale de la máquina.",
+            Esquema(),
+            Escribe: false,
+            Preferencias.Leer),
+
+        new("ondine_ajustar_preferencias",
+            "Cambia las Preferencias. Solo se toca lo que le pases: el resto se queda como "
+            + "estaba, incluido lo que esta herramienta no ofrece. Las CLAVES del modelo y de "
+            + "TMDb no se pueden poner desde aquí a propósito —habría que escribirlas en el "
+            + "chat—: eso se hace en la ventana de Preferencias. Sin «confirmar» contesta el "
+            + "antes y el después de cada cosa que cambiaría.",
+            Esquema(("idioma_app", "string", "«es», «en», o vacío para el del sistema.", false),
+                    ("preset_por_defecto", "string", "Preset que se aplica al abrir. Vacío = ninguno.", false),
+                    ("idioma_audio", "string", "Idioma de audio preferido, en tres letras: spa, eng…", false),
+                    ("subcarpetas", "boolean", "Analizar subcarpetas al añadir una carpeta.", false),
+                    ("buscar_actualizaciones", "boolean", "Buscar versiones nuevas al arrancar.", false),
+                    ("tras_comprimir", "string", "Qué hacer con el original: preguntar, papelera o conservar.", false),
+                    ("margen_disco_mb", "integer", "Margen de disco (50 a 100000) por debajo del cual una tanda se pausa.", false),
+                    ("hardware", "boolean", "Codificar con la GPU si la hay.", false),
+                    ("aceleracion", "string", "Decodificar por hardware: auto, ninguna, o una que funcione en esta máquina.", false),
+                    ("modelo_activo", "boolean", "Usar un modelo de lenguaje para los catálogos.", false),
+                    ("modelo_url", "string", "URL del modelo, compatible con OpenAI.", false),
+                    ("modelo_nombre", "string", "Nombre del modelo a pedir.", false),
+                    ("peliculas_activo", "boolean", "Identificar películas con TMDb.", false),
+                    ("confirmar", "boolean", "Ponlo en true para guardarlo de verdad.", false)),
+            Escribe: true,
+            Preferencias.Ajustar),
+
         new("ondine_donde_guarda",
             "Dice dónde guarda Ondine sus datos —catálogos, decisiones, ajustes— y qué "
             + "herramientas externas encuentra. Útil para saber si el entorno está listo antes "
