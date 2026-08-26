@@ -93,6 +93,9 @@
             <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,6,0,0"
                        Text="{i:T PreferenciasAceleracionAyuda}"/>
 
+              <TextBlock Text="{i:T PreferenciasCodificador}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,16,0,4"/>
+              <TextBlock Text="{i:T PreferenciasCodificadorAyuda}" TextWrapping="Wrap" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,0,0,4"/>
+              <ComboBox x:Name="cboCodificador" Width="260" HorizontalAlignment="Left" Margin="0,0,0,4"/>
               <TextBlock Text="{i:T PreferenciasAceleracionVideo}" FontSize="11" Foreground="{StaticResource Neutral500}" Margin="0,16,0,4"/>
               <TextBlock Text="{i:T PreferenciasAceleracionVideoAyuda}" TextWrapping="Wrap" FontSize="10.5" Foreground="{StaticResource Neutral600}" Margin="0,0,0,4"/>
               <ComboBox x:Name="cboAcelVideo" Width="260" HorizontalAlignment="Left" Margin="0,0,0,4"/>

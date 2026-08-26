@@ -124,6 +124,18 @@ public sealed class Settings
     /// </summary>
     public string AceleracionVideo { get; set; } = Ondine.Objetivo.AceleracionDeVideo.Auto;
 
+    /// <summary>
+    /// Con qué codificar: vacío = lo elige la app, «software» = el mejor por software, o el
+    /// nombre de uno («hevc_nvenc», «libx265»).
+    ///
+    /// <para>
+    /// Es una CADENA y no un enum por lo mismo que la aceleración: los nombres los pone ffmpeg y
+    /// cambian entre builds. Lo que no funcione en esta máquina se resuelve como «automático» al
+    /// usarlo, en vez de dejar la app sin comprimir.
+    /// </para>
+    /// </summary>
+    public string Codificador { get; set; } = "";
+
     public Settings Clone()
     {
         var c = (Settings)MemberwiseClone();

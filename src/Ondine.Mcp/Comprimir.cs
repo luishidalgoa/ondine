@@ -130,6 +130,12 @@ internal static class Comprimir
             opt.AudioCodec = c;
         }
 
+        // El codificador por su NOMBRE, que es otra cosa que el códec: el códec es qué formato
+        // sale y esto es con qué se hace. No se valida contra una lista escrita porque los
+        // nombres los pone ffmpeg; lo que no exista o no arranque se resuelve como automático al
+        // usarlo, y el registro dice cuál se ha usado de verdad.
+        opt.Codificador = Texto(a, "codificador") ?? "";
+
         opt.Quality = Entero(a, "calidad", 0);
         if (opt.Quality != 0 && (opt.Quality < 18 || opt.Quality > 35))
         {

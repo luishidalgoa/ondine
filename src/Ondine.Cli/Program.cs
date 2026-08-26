@@ -113,6 +113,10 @@ OPCIONES DE SALIDA
   -o, --salida <carpeta>     Carpeta de destino (por defecto: «comprimido» junto al origen)
       --formato <mkv|mp4|webm|mp3|m4a|flac|opus>   Contenedor o solo audio (por defecto mkv)
       --codec <hevc|h264|av1>                      Códec de vídeo (por defecto hevc)
+      --codificador <cual>   Con qué codificar: «software» para el mejor por software, o un
+                             nombre (libx265, libsvtav1, hevc_nvenc). Por defecto lo elige la
+                             app. Los de GPU son rápidos y comprimen bastante menos: para
+                             archivar, «software»
   -q, --calidad <18-35>      Calidad CRF: menos = mejor imagen y más peso (por defecto automática)
       --alto <px>            Reescala si supera esa altura (p. ej. 1080, 720)
       --audio <kbps>         Recodifica el audio a esa tasa (0 = copiar el original)
@@ -265,6 +269,7 @@ static (List<string> paths, Opts o) Parse(string[] args)
                 else opt.Container = f;
                 break;
             case "--codec": opt.VideoCodec = Next(ref i).ToLowerInvariant(); break;
+            case "--codificador": opt.Codificador = Next(ref i).Trim(); break;
             case "-q" or "--calidad": opt.Quality = NextInt(ref i); break;
             case "--alto": opt.MaxHeight = NextInt(ref i); break;
             // Por la puerta del nucleo, no a pelo: «--audio 128» promete recodificar (lo dice

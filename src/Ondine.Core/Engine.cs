@@ -153,7 +153,7 @@ public sealed class Engine
     /// desde los dos sitios que escriben esa preferencia.
     /// </para>
     /// </summary>
-    private readonly Dictionary<(string Codec, bool ConHardware), string> _cachedEncoder = new();
+    private readonly Dictionary<(string Codec, bool ConHardware, string Pedido), string> _cachedEncoder = new();
 
     /// <summary>
     /// Lo que dio la sonda de aceleraciones, para no repetirla. De instancia y no estática: el
@@ -161,6 +161,9 @@ public sealed class Engine
     /// tiene que poder preguntarlo por su cuenta.
     /// </summary>
     private IReadOnlyList<string>? _aceleracionesProbadas;
+
+    /// <summary>Lo que dio la sonda de codificadores, para no repetirla.</summary>
+    private IReadOnlyList<string>? _codificadoresProbados;
 
     // ---------- localización de ffmpeg/ffprobe ----------
     private static string ResolveTool(string exe)
@@ -260,7 +263,18 @@ public sealed class Engine
         _ => (new[] { "hevc_qsv", "hevc_nvenc", "hevc_amf" }, new[] { "libx265" }),
     };
 
-    public Task<string> SelectEncoderAsync(string codec = "hevc") => SelectEncoderAsync(codec, null);
+    /// <summary>El centinela que significa «el mejor por software, sin tener que saber su nombre».</summary>
+    public const string PorSoftware = "software";
+
+    public Task<string> SelectEncoderAsync(string codec = "hevc") =>
+        SelectEncoderAsync(codec, CodificadorPedido, null);
+
+    /// <param name="pedido">
+    /// El codificador por su nombre («libx265», «hevc_nvenc»), o <see cref="PorSoftware"/>, o
+    /// null/vacío para que decida la app.
+    /// </param>
+    public Task<string> SelectEncoderAsync(string codec, string? pedido) =>
+        SelectEncoderAsync(codec, pedido, null);
 
     /// <param name="ejecutar">
     /// Cómo se arranca ffmpeg. Lo inyectan las pruebas con uno de mentira: elegir codificador
@@ -268,27 +282,62 @@ public sealed class Engine
     /// En producción llega null y se usa el de siempre.
     /// </param>
     internal async Task<string> SelectEncoderAsync(
-        string codec, Func<string, string[], Task<(int, string, string)>>? ejecutar)
+        string codec, string? pedido, Func<string, string[], Task<(int, string, string)>>? ejecutar)
     {
         var correr = ejecutar ?? RunAsync;
+        var quiere = (pedido ?? "").Trim();
 
-        var clave = (codec, AllowHardware);
+        var clave = (codec, AllowHardware, quiere.ToLowerInvariant());
         if (_cachedEncoder.TryGetValue(clave, out var cached)) return cached;
         var (hw, sw) = Candidates(codec);
         var (_, encList, _) = await correr(Ffmpeg, new[] { "-hide_banner", "-encoders" });
+
+        // ── LO PEDIDO POR SU NOMBRE MANDA ────────────────────────────────────
+        // Sobre la lista de preferencia y sobre AllowHardware: quien escribe «libx265» sabe lo
+        // que quiere, y una preferencia general no pisa una elección concreta. Nace de una
+        // medida: en una GTX 1050 Ti, NVENC a calidad alta dejaba el fichero al 126 % del
+        // original y x265 en CRF 20 al 19 %, con 0,002 de diferencia en SSIM. Con la selección
+        // vieja -«el primero de hardware que arranque»- para llegar a x265 había que apagar la
+        // aceleración entera.
+        if (quiere.Length > 0 && !quiere.Equals(PorSoftware, StringComparison.OrdinalIgnoreCase))
+        {
+            var suyo = hw.Concat(sw).FirstOrDefault(c => c.Equals(quiere, StringComparison.OrdinalIgnoreCase));
+
+            // Y lo que no está en esta build, o no arranca en esta máquina, NO se usa a la
+            // callada: se cae a la elección automática. Un ajuste copiado de otra máquina no
+            // puede dejar la app sin comprimir.
+            if (suyo is not null && encList.Contains(suyo) && await Arranca(correr, suyo))
+                return _cachedEncoder[clave] = suyo;
+        }
+        else if (quiere.Equals(PorSoftware, StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var s in sw) if (encList.Contains(s)) return _cachedEncoder[clave] = s;
+            return _cachedEncoder[clave] = sw[0];
+        }
+
         foreach (var cand in AllowHardware ? hw : Array.Empty<string>())
         {
             if (!encList.Contains(cand)) continue;
-            var (code, _, _) = await correr(Ffmpeg, new[]
-            {
-                "-hide_banner", "-loglevel", "error", "-f", "lavfi",
-                "-i", "testsrc=size=640x480:duration=0.1", "-c:v", cand, "-f", "null", "-"
-            });
-            if (code == 0) return _cachedEncoder[clave] = cand;
+            if (await Arranca(correr, cand)) return _cachedEncoder[clave] = cand;
         }
         // primer codificador software que realmente exista en esta build de FFmpeg
         foreach (var s in sw) if (encList.Contains(s)) return _cachedEncoder[clave] = s;
         return _cachedEncoder[clave] = sw[0];
+    }
+
+    /// <summary>
+    /// Si un codificador arranca de verdad en esta máquina: una codificación de 0,1 s contra una
+    /// fuente sintética. Estar en la lista de <c>ffmpeg -encoders</c> solo dice que la build lo
+    /// trae compilado, no que haya tarjeta ni driver detrás.
+    /// </summary>
+    private async Task<bool> Arranca(Func<string, string[], Task<(int, string, string)>> correr, string codificador)
+    {
+        var (code, _, _) = await correr(Ffmpeg, new[]
+        {
+            "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+            "-i", "testsrc=size=640x480:duration=0.1", "-c:v", codificador, "-f", "null", "-"
+        });
+        return code == 0;
     }
 
     public static bool IsHardware(string encoder) => !encoder.StartsWith("lib");
@@ -704,13 +753,39 @@ public sealed class Engine
         finally { try { if (File.Exists(sonda)) File.Delete(sonda); } catch { } }
     }
 
+    /// <summary>
+    /// Los codificadores que arrancan de verdad en esta máquina, para poder OFRECERLOS.
+    ///
+    /// <para>
+    /// Se prueban uno a uno, como las aceleraciones y por lo mismo: que un nombre salga en
+    /// «ffmpeg -encoders» solo dice que la build lo trae compilado. Se devuelven los de hardware
+    /// de los tres códecs; los de software no hacen falta en la lista porque para eso está
+    /// «software», que ya elige el del códec elegido.
+    /// </para>
+    /// </summary>
+    public async Task<IReadOnlyList<string>> CodificadoresDisponiblesAsync()
+    {
+        if (_codificadoresProbados is not null) return _codificadoresProbados;
+
+        var (_, encList, _) = await RunAsync(Ffmpeg, new[] { "-hide_banner", "-encoders" });
+        var funcionan = new List<string>();
+
+        foreach (var codec in new[] { "hevc", "h264", "av1" })
+            foreach (var cand in Candidates(codec).hw)
+                if (encList.Contains(cand) && await Arranca(RunAsync, cand))
+                    funcionan.Add(cand);
+
+        return _codificadoresProbados = funcionan;
+    }
+
     // ---------- compresión ----------
     public async Task<List<FileResult>> CompressAsync(
         IReadOnlyList<string> files, EncodeOptions opt, IEngineReporter rep, CancellationToken ct)
     {
         var results = new List<FileResult>();
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;   // WebM: VP9 (más compatible entre builds de FFmpeg)
-        var encoder = await SelectEncoderAsync(vcodec);
+        var pedido = opt.Codificador is { Length: > 0 } p ? p : CodificadorPedido;
+        var encoder = await SelectEncoderAsync(vcodec, pedido);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
         var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps, opt.Velocidad);
         var t = Textos.Instancia;
@@ -1206,6 +1281,18 @@ public sealed class Engine
     /// </para>
     /// </summary>
     public static string AceleracionPedida { get; set; } = Objetivo.AceleracionDeVideo.Auto;
+
+    /// <summary>
+    /// Qué codificador se quiere, por su nombre: «libx265», «hevc_nvenc»…, o «software» para el
+    /// mejor de software del códec elegido. Vacío = que decida la app.
+    ///
+    /// <para>
+    /// Lo pone Preferencias, y una llamada concreta lo puede pisar. Existe porque «con GPU o sin
+    /// ella» no era suficiente: en una Pascal, NVENC comprime peor que x265 para archivar, y
+    /// llegar a x265 obligaba a apagar el hardware para todo.
+    /// </para>
+    /// </summary>
+    public static string CodificadorPedido { get; set; } = "";
 
     public static bool AllowHardware = true;
 

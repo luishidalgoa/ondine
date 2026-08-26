@@ -45,6 +45,19 @@ public sealed class EncodeOptions
     public Objetivo.Velocidad Velocidad { get; set; } = Objetivo.Velocidad.Equilibrado;
 
     /// <summary>
+    /// El codificador por su nombre («libx265», «hevc_nvenc»…), «software» para el mejor de
+    /// software, o vacío para que lo elija la app con el ajuste de Preferencias.
+    ///
+    /// <para>
+    /// Aparte de la calidad y del códec: el códec es QUÉ formato sale (HEVC, AV1) y esto es CON
+    /// QUÉ se hace. Existe porque no es lo mismo: en una GTX 1050 Ti, NVENC a calidad alta deja
+    /// un fichero MÁS GRANDE que el original y x265 lo baja al 19 % con la misma calidad
+    /// aparente. Hasta ahora, para elegir eso había que apagar la aceleración entera.
+    /// </para>
+    /// </summary>
+    public string Codificador { get; set; } = "";
+
+    /// <summary>
     /// Que hacer con el audio. Por defecto <see cref="Audio.AudioElegido.Copiar"/>, que es
     /// lo que la app venia haciendo cuando no se pedia un bitrate.
     /// </summary>

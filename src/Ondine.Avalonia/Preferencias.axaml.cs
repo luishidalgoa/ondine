@@ -61,6 +61,9 @@ public partial class Preferencias : Window
     /// </summary>
     private readonly List<string> _codigosAcel = [];
 
+    /// <summary>Igual que los de la aceleracion: en el MISMO orden que los textos.</summary>
+    private readonly List<string> _codigosCodificador = [];
+
     private static Textos T => Textos.Instancia;
 
     private readonly AjustesDeModelo _ia = null!;
@@ -78,7 +81,8 @@ public partial class Preferencias : Window
     /// abre; y asi esta ventana sigue siendo pura, que es lo que la deja probarse.
     /// </param>
     public Preferencias(Settings current, IEnumerable<string> presetNames,
-                        IEnumerable<string>? aceleraciones = null) : this()
+                        IEnumerable<string>? aceleraciones = null,
+                        IEnumerable<string>? codificadores = null) : this()
     {
         _previos = current;
 
@@ -149,6 +153,22 @@ public partial class Preferencias : Window
         _codigosAcel.Add(Ondine.Objetivo.AceleracionDeVideo.Ninguna);
         textosAcel.Add(_codigosAcel.Count == 2 ? T.PreferenciasAceleracionNoHay      // solo auto y ninguna
                                                : T.PreferenciasAceleracionNinguna);
+
+        // El codificador, con lo que de verdad arranca en esta maquina.
+        _codigosCodificador.Add("");
+        var textosCod = new List<string> { T.PreferenciasCodificadorAuto };
+        _codigosCodificador.Add(Engine.PorSoftware);
+        textosCod.Add(T.PreferenciasCodificadorSoftware);
+        foreach (var c in codificadores ?? [])
+        {
+            _codigosCodificador.Add(c);
+            textosCod.Add(c);
+        }
+        var cboCod = Cbo("cboCodificador");
+        cboCod.ItemsSource = textosCod;
+        var posCod = _codigosCodificador.FindIndex(c => string.Equals(c, current.Codificador,
+                                                                     StringComparison.OrdinalIgnoreCase));
+        cboCod.SelectedIndex = posCod >= 0 ? posCod : 0;
 
         var cboAcelVideo = Cbo("cboAcelVideo");
         cboAcelVideo.ItemsSource = textosAcel;     // ItemsSource, no Items: con el puesto, tocar Items revienta
@@ -303,6 +323,11 @@ public partial class Preferencias : Window
         s.MinFreeMb = int.TryParse((Txt("txtMinFree").Text ?? "").Trim(), out var mb)
             ? Math.Clamp(mb, 50, 100_000) : 200;
         s.UseHardware = Chk("chkHw").IsChecked == true;
+        var cboCodificador = Cbo("cboCodificador");
+        s.Codificador = cboCodificador.SelectedIndex >= 0
+            ? _codigosCodificador[cboCodificador.SelectedIndex]
+            : "";
+
         var cboAcel = Cbo("cboAcelVideo");
         s.AceleracionVideo = cboAcel.SelectedIndex >= 0
             ? _codigosAcel[cboAcel.SelectedIndex]

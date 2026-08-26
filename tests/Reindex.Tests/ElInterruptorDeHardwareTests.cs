@@ -39,6 +39,8 @@ public static class ElInterruptorDeHardwareTests
     /// Un ffmpeg de mentira: dice qué codificadores tiene y aprueba las pruebas de codificación.
     /// Cuenta las veces que lo llaman, que es como se ve si la caché sigue funcionando.
     /// </summary>
+    // El «null» del medio en cada llamada es la petición por nombre, que aquí no se usa: estas
+    // pruebas son del INTERRUPTOR, y de elegir por nombre se encarga ElCodificadorElegidoTests.
     private sealed class FfmpegDeMentira
     {
         public int Llamadas { get; private set; }
@@ -66,13 +68,13 @@ public static class ElInterruptorDeHardwareTests
             var motor = new Engine();
 
             Engine.AllowHardware = true;
-            var conGpu = motor.SelectEncoderAsync("hevc", ffmpeg.Ejecutar).GetAwaiter().GetResult();
+            var conGpu = motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar).GetAwaiter().GetResult();
             Program.Assert(conGpu == "hevc_nvenc", $"con la aceleración puesta se elige la GPU ({conGpu})");
 
             // El mismo motor, sin reiniciar nada: es exactamente lo que pasa al guardar
             // Preferencias con la ventana abierta.
             Engine.AllowHardware = false;
-            var sinGpu = motor.SelectEncoderAsync("hevc", ffmpeg.Ejecutar).GetAwaiter().GetResult();
+            var sinGpu = motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar).GetAwaiter().GetResult();
 
             Program.Assert(sinGpu == "libx265",
                 $"y al apagarla, el MISMO motor deja de usarla sin reiniciar la app ({sinGpu})");
@@ -94,11 +96,11 @@ public static class ElInterruptorDeHardwareTests
             var motor = new Engine();
 
             Engine.AllowHardware = false;
-            Program.Assert(motor.SelectEncoderAsync("hevc", ffmpeg.Ejecutar).GetAwaiter().GetResult() == "libx265",
+            Program.Assert(motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar).GetAwaiter().GetResult() == "libx265",
                 "apagada, software");
 
             Engine.AllowHardware = true;
-            var vuelta = motor.SelectEncoderAsync("hevc", ffmpeg.Ejecutar).GetAwaiter().GetResult();
+            var vuelta = motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar).GetAwaiter().GetResult();
             Program.Assert(vuelta == "hevc_nvenc", $"y al volver a encenderla, la GPU otra vez ({vuelta})");
         }
         finally { Engine.AllowHardware = antes; }
@@ -118,10 +120,10 @@ public static class ElInterruptorDeHardwareTests
             var motor = new Engine();
             Engine.AllowHardware = true;
 
-            motor.SelectEncoderAsync("hevc", ffmpeg.Ejecutar).GetAwaiter().GetResult();
+            motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar).GetAwaiter().GetResult();
             var trasLaPrimera = ffmpeg.Llamadas;
 
-            for (int i = 0; i < 5; i++) motor.SelectEncoderAsync("hevc", ffmpeg.Ejecutar).GetAwaiter().GetResult();
+            for (int i = 0; i < 5; i++) motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar).GetAwaiter().GetResult();
 
             Program.Assert(ffmpeg.Llamadas == trasLaPrimera,
                 $"cinco veces más no arrancan ffmpeg ni una vez ({ffmpeg.Llamadas} frente a {trasLaPrimera})");

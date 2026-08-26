@@ -277,6 +277,27 @@ public sealed partial class Textos
         "dice. Nunca se cambia en silencio. El desplegable del caudal, al lado, solo cuenta " +
         "cuando se recodifica: con «Sin tocar» no hay nada que fijar y se apaga.");
 
+    public string AyudaComprimirCodificadorTitulo => Idioma.Elegir(
+        "GPU OR CPU: WHICH ENCODER", "GPU O CPU: CON QUÉ SE CODIFICA");
+
+    public string AyudaComprimirCodificador => Idioma.Elegir(
+        "The codec is WHAT comes out (HEVC, H.264, AV1); the encoder is WHAT DOES IT. Your " +
+        "graphics card is much faster and compresses considerably less: it was built for live " +
+        "transcoding, not for shrinking an archive. On a GeForce 1050 Ti, one user measured a " +
+        "real episode: the card at high quality produced a file BIGGER than the original " +
+        "(126 %), and at its most usable setting it still sat at 74 %. The CPU encoder, x265, " +
+        "brought the same episode down to 19 % with an SSIM difference of 0.002 — invisible. It " +
+        "took six times longer. So: for a batch you are going to keep, choose the software " +
+        "encoder and let it run; for something you want back in ten minutes, the card.",
+        "El códec es QUÉ sale (HEVC, H.264, AV1); el codificador es QUIÉN LO HACE. Tu tarjeta " +
+        "gráfica es mucho más rápida y comprime bastante menos: está pensada para transcodificar " +
+        "en directo, no para adelgazar un archivo. En una GeForce 1050 Ti, un usuario lo midió " +
+        "sobre un episodio real: la tarjeta a calidad alta dejó un fichero MÁS GRANDE que el " +
+        "original (126 %), y en su ajuste más aprovechable seguía en el 74 %. El codificador por " +
+        "software, x265, bajó ese mismo episodio al 19 % con una diferencia de SSIM de 0,002, " +
+        "que no se ve. Tardó seis veces más. O sea: para una tanda que vas a conservar, elige el " +
+        "de software y déjalo correr; para algo que quieres de vuelta en diez minutos, la tarjeta.");
+
     public string AyudaComprimirPreviaTitulo => Idioma.Elegir(
         "THE 10-SECOND PREVIEW", "LA PREVIA DE 10 SEGUNDOS");
 
