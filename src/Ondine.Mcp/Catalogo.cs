@@ -67,6 +67,7 @@ internal static class Catalogo
             Esquema(("fichero", "string", "El vídeo dudoso.", true),
                     ("catalogo", "string", "El .json del catálogo contra el que se fija.", true),
                     ("episodio", "integer", "El número que le corresponde en el catálogo.", true),
+                    ("temporada", "integer", "La temporada, necesaria si el catálogo usa clave por_temporada.", false),
                     ("segmento", "string", "Si el fichero es solo una historia del episodio: su letra («a», «b»).", false),
                     ("confirmar", "boolean", "Ponlo en true para guardar la decisión.", false)),
             Escribe: true,

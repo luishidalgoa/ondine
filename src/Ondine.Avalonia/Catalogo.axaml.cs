@@ -154,7 +154,7 @@ public partial class Catalogo : Window
     /// Qué hay de cada episodio en la carpeta analizada. Vacío si se abrió sin carpeta
     /// detrás: entonces el explorador no dice nada sobre tenencia.
     /// </summary>
-    private readonly Dictionary<int, CoberturaCatalogo.Tenencia> _tenencia = [];
+    private readonly Dictionary<EpisodeKey, CoberturaCatalogo.Tenencia> _tenencia = [];
 
         /// <summary>
     /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
@@ -382,7 +382,7 @@ public partial class Catalogo : Window
         // «playa» y quedarse solo con las que faltan.
         if (soloFaltan)
             encontrados = encontrados
-                .Where(e => !_tenencia.TryGetValue(e.Num, out var t)
+                .Where(e => !_tenencia.TryGetValue(_cat.ClaveDe(e), out var t)
                             || t.Que != CoberturaCatalogo.Tengo.Entero)
                 .ToList();
 
@@ -390,7 +390,7 @@ public partial class Catalogo : Window
         {
             Ep = e,
             Que = _tenencia.Count == 0 ? null
-                : _tenencia.TryGetValue(e.Num, out var t) ? t
+                : _tenencia.TryGetValue(_cat.ClaveDe(e), out var t) ? t
                 : new CoberturaCatalogo.Tenencia(CoberturaCatalogo.Tengo.Nada, []),
         }).ToList();
 

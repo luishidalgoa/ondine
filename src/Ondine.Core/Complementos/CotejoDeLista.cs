@@ -77,12 +77,13 @@ public static class CotejoDeLista
         ReindexCatalog catalogo,
         IReadOnlyList<ReindexResolution> loQueHay)
     {
-        var cubierto = new Dictionary<int, HashSet<int>>();
+        var cubierto = new Dictionary<EpisodeKey, HashSet<int>>();
         foreach (var r in loQueHay)
-        foreach (var (num, historias) in CoberturaCatalogo.LoQueCubre(r, catalogo))
+        foreach (var (num, temporada, historias) in CoberturaCatalogo.LoQueCubre(r, catalogo))
         {
-            if (!cubierto.TryGetValue(num, out var set))
-                cubierto[num] = set = new HashSet<int>();
+            var clave = new EpisodeKey(temporada, num);
+            if (!cubierto.TryGetValue(clave, out var set))
+                cubierto[clave] = set = new HashSet<int>();
 
             // La MISMA cuenta que usa el informe de «qué falta» y el distintivo del
             // explorador. Tenerla repetida aquí era tener tres criterios para lo
@@ -155,7 +156,7 @@ public static class CotejoDeLista
             // repetido no cuenta dos veces.
             var piezas = trae.Distinct().ToList();
             var quedan = piezas
-                .Where(p => !(cubierto.TryGetValue(p.Ep.Num, out var s) && s.Contains(p.Historia)))
+                .Where(p => !(cubierto.TryGetValue(catalogo.ClaveDe(p.Ep), out var s) && s.Contains(p.Historia)))
                 .ToList();
 
             var nombres = quedan

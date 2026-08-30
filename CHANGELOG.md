@@ -32,6 +32,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-08-30
+
+### Corregido
+
+- **Los catálogos ya pueden reiniciar la numeración en cada temporada.** Con
+  `"clave": "por_temporada"`, episodios como S01E01 y S02E01 conservan su número local sin
+  pisarse al importar, identificar ni calcular qué capítulos faltan.
+
 ## [1.17.0] - 2026-08-30
 
 ### Añadido

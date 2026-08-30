@@ -277,7 +277,7 @@ public static class ReindexEngine
         // ── P0: el usuario ya decidió esto ──
         if (overrides.TryGetValue(f.Fingerprint, out var ov))
         {
-            var epOv = cat.PorNum(ov.Num);
+            var epOv = cat.PorNum(ov.Num, ov.Temporada ?? f.Temporada);
             if (epOv != null)
             {
                 // La decisión puede incluir «es solo la historia b»: el segmento viaja con
@@ -348,7 +348,7 @@ public static class ReindexEngine
             return r;
         }
 
-        var epPorIndice = f.Indice.HasValue ? cat.PorNum(f.Indice.Value) : null;
+        var epPorIndice = f.Indice.HasValue ? cat.PorNum(f.Indice.Value, f.Temporada) : null;
 
         // ── P1: número existe en la serie Y la fecha coincide exacta ──
         if (epPorIndice != null && f.Fecha.HasValue && epPorIndice.FechaParsed == f.Fecha)
@@ -508,7 +508,7 @@ public static class ReindexEngine
         // un remake ambos comparten título, y con un empate el número sigue siendo la mejor
         // prueba que hay. Sin esta condición, todo remake bien numerado saldría como duda.
         double scoreAsignado = indice.ScoreDe(titulos, ep);
-        if (otroEp != null && otroEp.Num != ep.Num
+        if (otroEp != null && !ReferenceEquals(otroEp, ep)
             && otroScore >= TitleMatch.UmbralTitulo && otroScore > scoreAsignado)
         {
             r.Confianza = ReindexConfianza.Revisar;
@@ -558,7 +558,10 @@ public static class ReindexEngine
         }
         else if (f.IndiceEspecial.HasValue)
         {
-            r.Episodio = cat.Especiales.FirstOrDefault(e => e.Num == f.IndiceEspecial.Value);
+            r.Episodio = cat.NumReiniciaPorTemporada
+                ? cat.Especiales.FirstOrDefault(e => e.Num == f.IndiceEspecial.Value &&
+                                                     (!f.Temporada.HasValue || e.Temporada == f.Temporada))
+                : cat.Especiales.FirstOrDefault(e => e.Num == f.IndiceEspecial.Value);
             r.Hint = ReindexHint.IndiceFechaAprox;
             r.Motivo = string.Format(Textos.Instancia.ReindexMotivoEspecialNumero, f.IndiceEspecial);
         }
@@ -581,7 +584,7 @@ public static class ReindexEngine
         // Solo es choque si AMBOS son fuertes y discrepan: uno flojo no contradice a nadie.
         if (porNombre.ep == null || porMeta.ep == null) return null;
         if (porNombre.score < TitleMatch.UmbralTitulo || porMeta.score < TitleMatch.UmbralTitulo) return null;
-        if (porNombre.ep.Num == porMeta.ep.Num) return null;
+        if (cat.ClaveDe(porNombre.ep) == cat.ClaveDe(porMeta.ep)) return null;
 
         return new[]
         {
@@ -648,7 +651,8 @@ public static class ReindexEngine
 
                 // No la cubre: ¿de quién es, entonces?
                 var (otro, score) = indice.MejorPorTitulo(new[] { bolsa }, cat.Episodios);
-                if (otro == null || otro.Num == r.Episodio.Num || score < TitleMatch.UmbralSegmento) continue;
+                if (otro == null || cat.ClaveDe(otro) == cat.ClaveDe(r.Episodio) ||
+                    score < TitleMatch.UmbralSegmento) continue;
 
                 r.Confianza = ReindexConfianza.Revisar;
                 r.TraeDosEpisodios = true;
@@ -974,7 +978,7 @@ public static class ReindexEngine
             .Where(r => r.Episodio != null && r.Estado is ReindexEstado.Limpio or ReindexEstado.Corregido)
             // Los sub-segmentos («[438a]», «[438b]») comparten número a propósito: no chocan
             // entre sí, solo con otro fichero que reclame el mismo trozo.
-            .GroupBy(r => (r.Episodio!.Num, r.Archivo.SubSegmento ?? ""));
+            .GroupBy(r => (r.Episodio!.Temporada, r.Episodio.Num, r.Archivo.SubSegmento ?? ""));
 
         foreach (var grupo in porDestino)
         {

@@ -5,6 +5,12 @@ using Ondine.Localizacion;
 
 namespace Ondine.Reindex;
 
+/// <summary>Identidad estable de un episodio. En catálogos por temporada, el número se repite.</summary>
+public readonly record struct EpisodeKey(int? Temporada, int Num)
+{
+    public static implicit operator EpisodeKey(int num) => new(null, num);
+}
+
 /// <summary>Un episodio del catálogo de referencia.</summary>
 public sealed class CatalogEpisode
 {
@@ -270,7 +276,8 @@ public sealed class ReindexCatalog
     [JsonIgnore] public IdiomasCatalogo IdiomasEfectivos => Idiomas ?? new IdiomasCatalogo();
 
     // ---- índices calculados ----
-    [JsonIgnore] private Dictionary<int, CatalogEpisode> _porNum = new();
+    [JsonIgnore] private Dictionary<int, List<CatalogEpisode>> _porNum = new();
+    [JsonIgnore] private Dictionary<EpisodeKey, CatalogEpisode> _porTemporadaYNum = new();
     [JsonIgnore] public IReadOnlyList<CatalogEpisode> Regulares { get; private set; } = Array.Empty<CatalogEpisode>();
     [JsonIgnore] public IReadOnlyList<CatalogEpisode> Especiales { get; private set; } = Array.Empty<CatalogEpisode>();
 
@@ -280,8 +287,22 @@ public sealed class ReindexCatalog
     /// <summary>Avisos de esta serie que la UI DEBE enseñar antes de identificar nada.</summary>
     [JsonIgnore] public IReadOnlyList<string> Advertencias { get; private set; } = Array.Empty<string>();
 
-    public CatalogEpisode? PorNum(int num) => _porNum.TryGetValue(num, out var e) ? e : null;
-    public bool ExisteNum(int num) => _porNum.ContainsKey(num);
+    [JsonIgnore] public bool NumReiniciaPorTemporada =>
+        Clave.Equals("por_temporada", StringComparison.OrdinalIgnoreCase);
+
+    public EpisodeKey ClaveDe(CatalogEpisode episodio) =>
+        new(NumReiniciaPorTemporada ? episodio.Temporada : null, episodio.Num);
+
+    public CatalogEpisode? PorNum(int num, int? temporada = null)
+    {
+        if (NumReiniciaPorTemporada && temporada.HasValue)
+            return _porTemporadaYNum.TryGetValue(new EpisodeKey(temporada, num), out var e) ? e : null;
+        return _porNum.TryGetValue(num, out var candidatos) && candidatos.Count == 1
+            ? candidatos[0]
+            : null;
+    }
+
+    public bool ExisteNum(int num, int? temporada = null) => PorNum(num, temporada) != null;
 
     public static ReindexCatalog Load(string path) => Parse(File.ReadAllText(path, System.Text.Encoding.UTF8));
 
@@ -378,7 +399,7 @@ public sealed class ReindexCatalog
     private void Validar()
     {
         var fallos = new List<string>();
-        var numerosVistos = new Dictionary<int, int>();   // num → posición donde salió primero
+        var numerosVistos = new Dictionary<EpisodeKey, int>();
 
         for (int i = 0; i < Episodios.Count; i++)
         {
@@ -389,13 +410,14 @@ public sealed class ReindexCatalog
             {
                 fallos.Add(string.Format(Textos.Instancia.ReindexCatalogoNumInvalido, donde, e.Num));
             }
-            else if (numerosVistos.TryGetValue(e.Num, out var primera))
+            var clave = new EpisodeKey(NumReiniciaPorTemporada ? e.Temporada : null, e.Num);
+            if (e.Num >= 0 && numerosVistos.TryGetValue(clave, out var primera))
             {
                 // El índice se construye con «por número», así que un repetido borraría al
                 // anterior sin decir nada y perderías un episodio entero.
                 fallos.Add(string.Format(Textos.Instancia.ReindexCatalogoNumRepetido, donde, e.Num, primera));
             }
-            else numerosVistos[e.Num] = i + 1;
+            else if (e.Num >= 0) numerosVistos[clave] = i + 1;
 
             // El formato que se PARSEA es siempre yyyy-MM-dd; lo que se traduce es
             // cómo se le explica al usuario (AAAA-MM-DD / YYYY-MM-DD).
@@ -428,8 +450,9 @@ public sealed class ReindexCatalog
         foreach (var e in Episodios) e.Precompute(IdiomasEfectivos);
 
         // NUNCA iterar 1..Total: la numeración salta valores (56/138/173 en Doraemon 2005)
-        _porNum = new Dictionary<int, CatalogEpisode>();
-        foreach (var e in Episodios) _porNum[e.Num] = e;
+        _porNum = Episodios.GroupBy(e => e.Num).ToDictionary(g => g.Key, g => g.ToList());
+        _porTemporadaYNum = new Dictionary<EpisodeKey, CatalogEpisode>();
+        foreach (var e in Episodios) _porTemporadaYNum[ClaveDe(e)] = e;
 
         Regulares = Episodios.Where(e => !e.Especial).ToList();
         Especiales = Episodios.Where(e => e.Especial).ToList();
@@ -486,11 +509,18 @@ public sealed class ReindexCatalog
     /// <summary>Números que faltan dentro del rango: no son huecos reales, son saltos oficiales.</summary>
     public List<int> HuecosDeNumeracion(int maximoAMostrar = int.MaxValue)
     {
-        var regulares = Regulares.Select(e => e.Num).Where(n => n > 0).OrderBy(n => n).ToList();
-        if (regulares.Count < 2) return new List<int>();
         var faltan = new List<int>();
-        for (int n = regulares[0]; n <= regulares[^1] && faltan.Count < maximoAMostrar; n++)
-            if (!_porNum.ContainsKey(n)) faltan.Add(n);
+        IEnumerable<IEnumerable<CatalogEpisode>> grupos = NumReiniciaPorTemporada
+            ? Regulares.GroupBy(e => e.Temporada)
+            : new[] { Regulares.AsEnumerable() };
+        foreach (var grupo in grupos)
+        {
+            var numeros = grupo.Select(e => e.Num).Where(n => n > 0).OrderBy(n => n).ToList();
+            if (numeros.Count < 2) continue;
+            var existentes = numeros.ToHashSet();
+            for (int n = numeros[0]; n <= numeros[^1] && faltan.Count < maximoAMostrar; n++)
+                if (!existentes.Contains(n)) faltan.Add(n);
+        }
         return faltan;
     }
 
