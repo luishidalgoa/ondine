@@ -224,6 +224,23 @@ public sealed partial class Textos
         "Its program is not there: \"{0}\"",
         "Su programa no está: «{0}»");
 
+    /// <summary>
+    /// Un complemento escrito solo para Windows, visto desde Linux o macOS. Se dice con su nombre
+    /// y diciendo QUÉ le falta: «no funciona aquí» deja a su autor sin nada que hacer, y lo que
+    /// hay que hacer son tres líneas de script al lado.
+    /// </summary>
+    public string ComplementoSoloParaWindows => Idioma.Elegir(
+        "\"{0}\" only runs on Windows, and there is no .sh or .py next to it with the same name",
+        "«{0}» solo se ejecuta en Windows, y no hay ningún .sh ni .py con su mismo nombre al lado");
+
+    /// <summary>
+    /// El script está, y lo que falta es con qué ejecutarlo. Se separa del anterior porque lo que
+    /// hay que hacer es otra cosa: aquí no se toca el complemento, se instala Python.
+    /// </summary>
+    public string ComplementoSinInterprete => Idioma.Elegir(
+        "Python is needed to run \"{0}\", and it is not on the PATH",
+        "Hace falta Python para ejecutar «{0}», y no está en el PATH");
+
     // ═══ El puente al modelo de lenguaje ═════════════════════════════════════
 
     public string IaComplementoSinPermiso => Idioma.Elegir(

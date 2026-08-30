@@ -34,7 +34,10 @@ public static class IndiceTests
     {
         Program.Seccion("El índice de complementos");
 
-        var paquete = Zip(("plugin.json", ManifiestoBueno), ("demo.cmd", "@echo off"));
+        // Con su hermano de Unix: desde que el arranque se resuelve por sistema, un paquete que
+            // solo trae el .cmd no se puede instalar fuera de Windows, porque allí no hay nada que
+            // ejecutar. Esta prueba habla de un paquete CORRECTO, y uno correcto hoy trae los dos.
+            var paquete = Zip(("plugin.json", ManifiestoBueno), ("demo.cmd", "@echo off"), ("demo.sh", "#!/bin/sh\n"));
         var huella = Indice.Huella(paquete);
 
         Indice.Entrada E(Action<Indice.Entrada> ajustar)
@@ -78,7 +81,7 @@ public static class IndiceTests
             Program.Assert(File.Exists(Path.Combine(baseDir, "demo", "plugin.json")),
                 "y queda en la carpeta que dice su identificador");
 
-            var cambiado = Zip(("plugin.json", ManifiestoBueno), ("demo.cmd", "@echo OTRA COSA"));
+            var cambiado = Zip(("plugin.json", ManifiestoBueno), ("demo.cmd", "@echo OTRA COSA"), ("demo.sh", "#!/bin/sh\n"));
             Program.Assert(!Instalador.Instalar(E(_ => { }), cambiado, baseDir).Ok,
                 "un paquete que no es el que prometía el índice no se instala");
 

@@ -114,6 +114,13 @@ public static class Instalador
 
             var c = Complemento.Leer(manifiesto);
             if (c is null) return Fallar(temporal, Textos.Instancia.ComplementoManifiestoIlegible);
+
+            // Los permisos, ANTES de validar. Un .zip no guarda el bit de ejecución de Unix -y
+            // menos uno hecho en Windows-, así que los scripts salen de aquí sin poder
+            // ejecutarse: en su sitio, con el contenido bueno, y el sistema contestando
+            // «permission denied» al pulsar. Es un fallo que no se parece nada a su causa.
+            DarPermisos(temporal, c);
+
             if (c.Reparo() is { } reparo) return Fallar(temporal, reparo);
 
             if (Directory.Exists(destino)) Directory.Delete(destino, recursive: true);
@@ -124,6 +131,47 @@ public static class Instalador
         {
             return Fallar(temporal, ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Deja ejecutables los ficheros del complemento que lo necesitan: su propio programa y
+    /// cualquier <c>.sh</c> que traiga. En Windows no hace nada.
+    ///
+    /// <para>
+    /// <b>No se le da el bit a todo lo extraído.</b> Un paquete trae también datos —un .json, un
+    /// icono, un README—, y volverlos ejecutables «por si acaso» reparte permiso donde no hace
+    /// falta. Los <c>.sh</c> entran enteros porque un script de shell no sirve para otra cosa; los
+    /// <c>.py</c> no, porque se abren con el intérprete y ahí el permiso no pinta nada.
+    /// </para>
+    /// </summary>
+    private static void DarPermisos(string carpeta, Complemento c)
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        try
+        {
+            foreach (var f in AQuienDarPermiso(carpeta, c)) Permisos.AsegurarEjecutable(f);
+        }
+        catch { /* lo que no se pueda tocar se dirá al arrancar, con su mensaje */ }
+    }
+
+    /// <summary>
+    /// A QUÉ ficheros hay que darles permiso de ejecución. Es la parte que tiene criterio dentro,
+    /// así que se deja aparte de la llamada al sistema para poder comprobarla en cualquier sitio:
+    /// el reparto en sí solo existe en Unix, y si la decisión viviera ahí dentro solo se
+    /// comprobaría corriendo en Linux.
+    /// </summary>
+    public static IEnumerable<string> AQuienDarPermiso(string carpeta, Complemento c)
+    {
+        foreach (var sh in Directory.EnumerateFiles(carpeta, "*.sh", SearchOption.AllDirectories))
+            yield return sh;
+
+        // Y el suyo, se llame como se llame: un binario compilado sin extensión no lo caza
+        // ninguna búsqueda por extensión. Solo si se ejecuta ÉL — si va por intérprete, el
+        // programa está fuera de esta carpeta y ahí no se le tocan los permisos a nadie.
+        var arranque = c.ComoArrancar();
+        if (arranque.Reparo is null && arranque.Antes.Count == 0)
+            yield return arranque.Programa;
     }
 
     private static Resultado Fallar(string temporal, string motivo)

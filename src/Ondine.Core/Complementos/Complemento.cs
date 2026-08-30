@@ -49,6 +49,20 @@ public sealed class Complemento
     /// </summary>
     [JsonPropertyName("ejecutable")] public string Ejecutable { get; set; } = "";
 
+    /// <summary>
+    /// Opcional: el programa a ejecutar en Linux, cuando no vale el general.
+    ///
+    /// <para>
+    /// No hace falta para el caso normal —un envoltorio <c>.cmd</c> con su script al lado se
+    /// resuelve solo—, sino para el complemento que trae un programa <b>distinto de verdad</b>:
+    /// un binario compilado por plataforma, o un arranque que no se parece al de Windows.
+    /// </para>
+    /// </summary>
+    [JsonPropertyName("ejecutable_linux")] public string EjecutableLinux { get; set; } = "";
+
+    /// <summary>Lo mismo para macOS. Sin declararlo, macOS sigue el camino general.</summary>
+    [JsonPropertyName("ejecutable_macos")] public string EjecutableMacos { get; set; } = "";
+
     /// <summary>Argumentos fijos que van SIEMPRE delante del subcomando.</summary>
     [JsonPropertyName("argumentos")] public List<string> Argumentos { get; set; } = new();
 
@@ -173,23 +187,20 @@ public sealed class Complemento
             !EsNativa)
             return string.Format(Textos.Instancia.ComplementoIntegracionDesconocida, Integracion);
 
-        // Una ruta que se sale de su carpeta no es un complemento mal escrito: es
-        // un manifiesto pidiendo ejecutar cualquier cosa del disco. Se comprueba
-        // sobre la ruta ya resuelta, porque «..\..\windows\system32\x.exe» solo
-        // se ve por lo que es después de combinarla.
-        var destino = Path.GetFullPath(Path.Combine(Carpeta, Ejecutable));
-        var suya = Path.GetFullPath(Carpeta) + Path.DirectorySeparatorChar;
-        if (!destino.StartsWith(suya, StringComparison.OrdinalIgnoreCase))
-            return Textos.Instancia.ComplementoEjecutableFuera;
-
-        if (!File.Exists(destino))
-            return string.Format(Textos.Instancia.ComplementoEjecutableNoEsta, Ejecutable);
-
-        return null;
+        // Lo que quedaba —que la ruta no se salga de su carpeta, que el programa esté, y que en
+        // este sistema se pueda ejecutar algo— lo dice la resolución, que es quien sabe cuál de
+        // los tres campos manda aquí. Un complemento solo para Windows visto desde Linux queda
+        // descartado CON SU MOTIVO, en vez de aparecer entero y morirse al pulsarlo.
+        return ComoArrancar().Reparo;
     }
 
-    /// <summary>La ruta del programa, ya resuelta. Solo vale si <see cref="Reparo"/> dio null.</summary>
-    public string RutaEjecutable => Path.GetFullPath(Path.Combine(Carpeta, Ejecutable));
+    /// <summary>
+    /// Qué se ejecuta de este complemento en ESTE sistema: el programa, y lo que va delante de
+    /// sus argumentos. Trae el motivo dentro si no se puede arrancar.
+    /// </summary>
+    public Arranque ComoArrancar() => Arranque.Resolver(
+        Ejecutable, EjecutableLinux, EjecutableMacos, Carpeta,
+        Arranque.Actual, File.Exists, Arranque.EnLaRuta);
 
     public bool Puede(string capacidad) =>
         Capacidades.Contains(capacidad, StringComparer.OrdinalIgnoreCase);
