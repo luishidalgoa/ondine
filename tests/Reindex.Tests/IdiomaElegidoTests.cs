@@ -258,6 +258,12 @@ public static class ComplementoTests
         var programa = Path.Combine(suya, "traer.cmd");
         File.WriteAllText(programa, "@echo off");
 
+        // Y el hermano de Unix. Un complemento que solo trae el .cmd YA NO ES VÁLIDO fuera de
+        // Windows: no hay nada que ejecutar, y eso es un reparo con todas las letras. Estas
+        // pruebas hablan de manifiestos correctos, así que el complemento de mentira trae lo que
+        // trae uno de verdad desde que se resuelve por sistema.
+        File.WriteAllText(Path.Combine(suya, "traer.sh"), "#!/bin/sh\n");
+
         try
         {
             string Manifiesto(string json)
@@ -518,7 +524,11 @@ public static class DescubridorTests
                 var d = Path.Combine(raiz, carpeta);
                 Directory.CreateDirectory(d);
                 File.WriteAllText(Path.Combine(d, "plugin.json"), json);
-                if (conPrograma) File.WriteAllText(Path.Combine(d, "traer.cmd"), "@echo off");
+                if (conPrograma)
+                {
+                    File.WriteAllText(Path.Combine(d, "traer.cmd"), "@echo off");
+                    File.WriteAllText(Path.Combine(d, "traer.sh"), "#!/bin/sh\n");
+                }
             }
 
             Complemento("zeta", """{"nombre":"Zeta","ejecutable":"traer.cmd","capacidades":["importar"],"contrato":1}""");
