@@ -43,6 +43,7 @@ public static class ComplementoMultiplataformaTests
         InstalarDejaLosScriptsEjecutables();
         UnComplementoDeVerdadArranca();
         UnComplementoDePythonArranca();
+        ElDeYouTubeQueTraeOndineArrancaEnLosTres();
     }
 
     // ── El caso del .cmd ─────────────────────────────────────────────────────
@@ -878,6 +879,66 @@ public static class ComplementoMultiplataformaTests
             }
         }
         return ms.ToArray();
+    }
+
+    /// <summary>
+    /// El complemento de YouTube que trae Ondine, resuelto para los tres sistemas <b>con sus
+    /// ficheros de verdad</b>.
+    ///
+    /// <para>
+    /// <b>Esta prueba tiene un informe detrás.</b> En Linux, la ventana enseñaba: «No se ha podido
+    /// arrancar "YouTube": An error occurred trying to start process
+    /// <c>~/.config/Ondine/complementos/youtube/youtube.cmd</c>. Permission denied». El
+    /// complemento estaba instalado, entero y en su sitio; lo que no se podía era ejecutar un
+    /// <c>.cmd</c> fuera de Windows.
+    /// </para>
+    /// <para>
+    /// Lo que hace falta para que siga arreglado no es solo la resolución: es que el paquete
+    /// <b>siga trayendo el <c>.py</c> al lado</b>. Quitarlo de ahí —o renombrarlo— devolvería el
+    /// mismo «permission denied» sin tocar una línea del motor, y nadie lo notaría hasta que
+    /// alguien lo instalara en Linux. Por eso se comprueba contra los ficheros del repositorio y
+    /// no contra un montaje de mentira.
+    /// </para>
+    /// </summary>
+    private static void ElDeYouTubeQueTraeOndineArrancaEnLosTres()
+    {
+        var carpeta = Path.Combine(Raiz(), "ejemplos", "complemento-youtube");
+        var manifiesto = Path.Combine(carpeta, "plugin.json");
+
+        if (!File.Exists(manifiesto))
+        {
+            Program.Assert(false, $"el complemento de ejemplo está en el repositorio ({carpeta})");
+            return;
+        }
+
+        var c = Complemento.Leer(manifiesto);
+        if (c is null) { Program.Assert(false, "su manifiesto se lee"); return; }
+
+        // Con un Python de mentira: aquí se comprueba la resolución, no qué hay instalado en la
+        // máquina que corre las pruebas.
+        foreach (var so in new[] { So.Windows, So.Linux, So.Mac })
+        {
+            var a = Arranque.Resolver(c.Ejecutable, c.EjecutableLinux, c.EjecutableMacos,
+                                      carpeta, so, File.Exists, ConPython);
+
+            Program.Assert(a.Reparo is null,
+                $"el de YouTube arranca en {so} ({a.Reparo})");
+
+            if (so == So.Windows)
+                Program.Assert(a.Programa.EndsWith("youtube.cmd") && a.PorLotes,
+                    $"en Windows, por su .cmd ({Dice(a)})");
+            else
+                Program.Assert(a.Antes.Count == 1 && a.Antes[0].EndsWith("youtube.py"),
+                    $"y fuera de Windows, con el intérprete y su .py — que es lo que fallaba ({Dice(a)})");
+        }
+    }
+
+    /// <summary>La raíz del repositorio, subiendo hasta encontrar «src».</summary>
+    private static string Raiz()
+    {
+        var d = new DirectoryInfo(AppContext.BaseDirectory);
+        while (d is not null && !Directory.Exists(Path.Combine(d.FullName, "src"))) d = d.Parent;
+        return d?.FullName ?? "";
     }
 
     // ── Ayudas ───────────────────────────────────────────────────────────────
