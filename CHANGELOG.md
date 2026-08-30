@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-08-30
+
 ### Añadido
 
 - **`ejecutable_linux` y `ejecutable_macos` en el manifiesto de un complemento.** Opcionales: para
