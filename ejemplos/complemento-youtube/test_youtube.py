@@ -89,6 +89,7 @@ class DescargarLosElegidos(unittest.TestCase):
                 "@@ONDINE_PROGRESS@@ 42.5%\n",
                 "@@ONDINE_FILE@@" + fichero + "\n")
             with patch("youtube.shutil.which", return_value="yt-dlp"), \
+                 patch("youtube.buscar_ytdlp", return_value="yt-dlp"), \
                  patch("youtube.subprocess.Popen", return_value=respuesta) as ejecutar, \
                  patch("youtube.decir") as decir:
                 traer(["abcdefghijk", "--destino", destino])
@@ -108,7 +109,9 @@ class DescargarLosElegidos(unittest.TestCase):
             bien = self.proceso("@@ONDINE_FILE@@" + fichero + "\n")
             bloqueado = self.proceso("ERROR: Video unavailable\n", codigo=1)
             with patch("youtube.shutil.which", return_value="yt-dlp"), \
-                 patch("youtube.subprocess.Popen", side_effect=[bien, bloqueado]), \
+                 patch("youtube.buscar_ytdlp", return_value="yt-dlp"), \
+                 patch("youtube.buscar_ytdlp", return_value="yt-dlp"), \
+                 patch("youtube.subprocess.Popen", side_effect=[bien, bloqueado, bloqueado]), \
                  patch("youtube.decir") as decir:
                 traer(["abcdefghijk", "lmnopqrstuv", "--destino", destino])
 
@@ -124,6 +127,7 @@ class DescargarLosElegidos(unittest.TestCase):
             prohibido = self.proceso("video data: HTTP Error 403: Forbidden\n", codigo=1)
             bien = self.proceso("@@ONDINE_FILE@@" + fichero + "\n")
             with patch("youtube.shutil.which", return_value="yt-dlp"), \
+                 patch("youtube.buscar_ytdlp", return_value="yt-dlp"), \
                  patch("youtube.subprocess.Popen", side_effect=[prohibido, bien]) as ejecutar, \
                  patch("youtube.decir"):
                 traer(["abcdefghijk", "--destino", destino])
