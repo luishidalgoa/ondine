@@ -9,11 +9,12 @@ de YouTube de Ondine sin depender del historial de una conversación.
 - Manifiesto: `ejemplos/complemento-youtube/plugin.json`.
 - Implementación: `ejemplos/complemento-youtube/youtube.py`.
 - Lanzador para Windows: `ejemplos/complemento-youtube/youtube.cmd`.
+- Lanzador para Linux y macOS: `ejemplos/complemento-youtube/youtube.sh`.
 - Pruebas: `ejemplos/complemento-youtube/test_youtube.py`.
 - Índice de la tienda: `complementos/indice.json`.
 - Release permanente de GitHub: etiqueta `complementos`.
 
-El ZIP publicado lleva esos cuatro archivos del complemento en la raíz. Cada
+El ZIP publicado lleva esos cinco archivos del complemento en la raíz. Cada
 versión usa un nombre nuevo (`youtube-X.Y.Z.zip`): un asset publicado nunca se
 reemplaza porque la CDN de GitHub puede seguir sirviendo los bytes antiguos.
 

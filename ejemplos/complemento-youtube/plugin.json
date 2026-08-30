@@ -1,9 +1,11 @@
 {
   "nombre": "YouTube",
   "descripcion": "Lee una lista de reproducción pública, la coteja con tu catálogo y descarga los vídeos accesibles que elijas, hasta 480p.",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "autor": "Ondine",
   "ejecutable": "youtube.cmd",
+  "ejecutable_linux": "youtube.sh",
+  "ejecutable_macos": "youtube.sh",
   "capacidades": [
     "importar",
     "descargar"

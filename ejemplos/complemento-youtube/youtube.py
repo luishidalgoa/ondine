@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Complemento de YouTube para Ondine: listar y traer videos accesibles.
 
 Lee los metadatos publicos de una lista -titulo, miniatura, duracion- y los
@@ -278,11 +279,23 @@ def preguntar(texto):
     return r.get("texto")
 
 
+def buscar_ytdlp():
+    """Busca yt-dlp, priorizando rutas de usuario locales si existen."""
+    candidatos_directos = [
+        os.path.expanduser("~/.local/bin/yt-dlp"),
+        "/usr/local/bin/yt-dlp",
+    ]
+    for c in candidatos_directos:
+        if os.path.isfile(c) and os.access(c, os.X_OK):
+            return c
+    return shutil.which("yt-dlp") or shutil.which("yt-dlp.exe")
+
+
 def listar(fuente):
     if not fuente:
         error("Pega el enlace de una lista de reproduccion en la casilla de fuente.")
 
-    exe = shutil.which("yt-dlp") or shutil.which("yt-dlp.exe")
+    exe = buscar_ytdlp()
     if not exe:
         error("Hace falta yt-dlp y no esta en el PATH. Instalalo y vuelve a probar.")
 
@@ -518,7 +531,7 @@ def traer(argumentos):
     if reparo:
         error(reparo)
 
-    exe = shutil.which("yt-dlp") or shutil.which("yt-dlp.exe")
+    exe = buscar_ytdlp()
     if not exe:
         error("Hace falta yt-dlp y no esta en el PATH. Instalalo y vuelve a probar.")
 
@@ -543,11 +556,10 @@ def traer(argumentos):
         url = "https://www.youtube.com/watch?v=" + ident
         rutas, ultimas = _descargar_un_video(base + [url], i, total)
 
-        # El cliente que yt-dlp elige por defecto puede ser `android_vr`. En
-        # algunos videos publicos sus enlaces dejan de responder tras unos pocos
-        # megas con 403, aunque Android normal ofrece el mismo formato completo.
-        # Se usa solo como segundo intento para conservar el camino habitual.
-        if not rutas and any("403" in linea for linea in ultimas):
+        # Si la descarga falla por cualquier motivo (403, formatos web no
+        # disponibles o bloqueo de cliente), se reintenta con el cliente de
+        # Android, que ofrece el formato completo público y no se bloquea.
+        if not rutas:
             decir(tipo="progreso", avance=(i - 1) / total,
                   texto=f"Probando otra fuente publica para el video {i} de {total}")
             alternativa = base + ["--extractor-args",

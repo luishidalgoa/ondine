@@ -5,11 +5,11 @@
       "id": "youtube",
       "nombre": "YouTube",
       "descripcion": "Lee una lista de reproducción pública, la coteja con tu catálogo y descarga los vídeos accesibles que elijas, hasta 480p.",
-      "version": "1.1.4",
+      "version": "1.1.5",
       "autor": "Ondine",
-      "paquete": "https://github.com/luishidalgoa/ondine/releases/download/complementos/youtube-1.1.4.zip",
-      "sha256": "28729d326b4b7844380b286ae296e9f0d4d42fef8c0a2b1cb322ba558be079b3",
-      "bytes": 13184,
+      "paquete": "https://github.com/luishidalgoa/ondine/releases/download/complementos/youtube-1.1.5.zip",
+      "sha256": "0aa5ac9d6556a8389ec29fbe616b1698f78e882f9a91a0d25940a72eb02cf125",
+      "bytes": 13621,
       "capacidades": [
         "importar",
         "descargar"
