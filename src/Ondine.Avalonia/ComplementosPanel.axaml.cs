@@ -568,9 +568,9 @@ public partial class ComplementosPanel : UserControl
     private void PintarProgreso(Mensaje m)
     {
         if (!string.IsNullOrWhiteSpace(m.Texto)) Txt("lblEstado").Text = m.Texto;
-        if (m.Avance is not { } avance) return;
+        if (m.AvanceSano is not { } avance) return;
         Barra().IsVisible = true;
-        Barra().Value = Math.Clamp(avance, 0, 1);
+        Barra().Value = avance;
     }
 
     private void OcultarProgreso()
@@ -630,7 +630,7 @@ public partial class ComplementosPanel : UserControl
                 {
                     PintarProgreso(m);
                     if (!string.IsNullOrWhiteSpace(m.Texto))
-                        Estado(m.Avance is { } a and > 0 and < 1
+                        Estado(m.AvanceSano is { } a and > 0 and < 1
                             ? $"{m.Texto}   {a:P0}"
                             : m.Texto!, "");
                     continue;
@@ -894,13 +894,17 @@ public partial class ComplementosPanel : UserControl
             await foreach (var m in Invocador.CorrerAsync(
                 c, Invocador.ComandoTraer,
                 marcados.Concat(new[] { "--destino", destino }), _corte.Token,
-                Puente(c)))
+                Puente(c), destino))
             {
                 switch (m.Tipo)
                 {
                     // El avance se dice con palabras y no solo con un porcentaje:
                     // «bajando 3 de 7» sitúa, y un número suelto no.
                     case Mensaje.TipoProgreso: PintarProgreso(m); break;
+                    // Los ficheros vienen ya filtrados por el invocador: solo los que estén
+                    // de verdad dentro de la carpeta elegida. Lo que un complemento diga haber
+                    // dejado en otra parte del disco no entra aquí -y de aquí se va derecho al
+                    // flujo que renombra y mueve-.
                     case Mensaje.TipoHecho: traidos.AddRange(m.Ficheros); break;
                     case Mensaje.TipoError: error = m.MensajeError; break;
                 }

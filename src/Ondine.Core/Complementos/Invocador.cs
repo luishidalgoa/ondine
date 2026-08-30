@@ -17,6 +17,16 @@ namespace Ondine.Complementos;
 /// </summary>
 public static class Invocador
 {
+    /// <summary>
+    /// Lo más larga que puede ser una línea del complemento. El contrato es «una línea, un
+    /// mensaje», y 64 kB de JSON es muchísimo para un mensaje: el título más largo del mundo cabe
+    /// mil veces.
+    /// </summary>
+    public const int TechoDeLinea = 64 * 1024;
+
+    /// <summary>Cuánto se guarda del error estándar. Solo se enseñan 300 caracteres.</summary>
+    public const int TechoDelRuido = 8 * 1024;
+
     /// <summary>Listar lo que hay en una fuente, sin descargar nada.</summary>
     public const string ComandoListar = "listar";
 
@@ -52,12 +62,85 @@ public static class Invocador
     public static string ParaLote(string a) => "\"" + (a ?? "").Replace("\"", "\"\"") + "\"";
 
     /// <summary>
+    /// Las líneas de un lector, <b>sin que ninguna pueda crecer sin fin</b>.
+    ///
+    /// <para>
+    /// <c>ReadLineAsync</c> lee hasta el salto de línea, y si no llega ninguno sigue guardando en
+    /// memoria. Un complemento que escriba sin parar y sin saltar de línea se lleva por delante la
+    /// aplicación sin hacer nada ilegal — ni siquiera hace falta que sea a mala idea.
+    /// </para>
+    /// <para>
+    /// La línea que se pasa <b>se descarta y se sigue leyendo</b>. Cortar ahí convertiría una
+    /// línea gorda en el final de la descarga, y lo que viene detrás suele ser justo lo que
+    /// interesa: el «hecho» con lo que se trajo.
+    /// </para>
+    /// </summary>
+    public static async IAsyncEnumerable<string> LineasConTecho(
+        TextReader lector, int techo,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken corte = default)
+    {
+        var trozo = new char[8192];
+        var linea = new System.Text.StringBuilder();
+        var pasada = false;   // esta línea ya se pasó del techo: se tira lo que queda de ella
+
+        int leidos;
+        while ((leidos = await lector.ReadAsync(trozo.AsMemory(), corte).ConfigureAwait(false)) > 0)
+        {
+            for (var i = 0; i < leidos; i++)
+            {
+                var c = trozo[i];
+                if (c == '\n')
+                {
+                    if (!pasada) yield return Limpia(linea);
+                    linea.Clear();
+                    pasada = false;
+                    continue;
+                }
+
+                if (pasada) continue;
+                if (linea.Length >= techo) { pasada = true; linea.Clear(); continue; }
+                linea.Append(c);
+            }
+        }
+
+        // Lo último, aunque no traiga salto de línea: un complemento que termina sin saltar sigue
+        // habiendo dicho algo.
+        if (!pasada && linea.Length > 0) yield return Limpia(linea);
+    }
+
+    /// <summary>Sin el retorno de carro de Windows, que si no se queda pegado al mensaje.</summary>
+    private static string Limpia(System.Text.StringBuilder sb) =>
+        sb.ToString().TrimEnd('\r');
+
+    /// <summary>
+    /// Vacía un lector guardando solo el principio. Vaciar hay que vaciarlo entero: si nadie lee,
+    /// el complemento se bloquea escribiendo y parece colgado.
+    /// </summary>
+    private static async Task<string> VaciarConTecho(TextReader lector, int techo)
+    {
+        var trozo = new char[8192];
+        var guardado = new System.Text.StringBuilder();
+
+        int leidos;
+        while ((leidos = await lector.ReadAsync(trozo.AsMemory()).ConfigureAwait(false)) > 0)
+        {
+            var caben = techo - guardado.Length;
+            if (caben > 0) guardado.Append(trozo, 0, Math.Min(caben, leidos));
+        }
+        return guardado.ToString();
+    }
+
+    /// <summary>
     /// Corre el complemento y devuelve sus mensajes uno a uno.
     /// </summary>
     /// <param name="quien">El complemento, ya validado.</param>
     /// <param name="comando">«listar» o «traer».</param>
     /// <param name="argumentos">Lo que le toque al comando.</param>
     /// <param name="corte">Para poder parar: una descarga larga tiene que poder cancelarse.</param>
+    /// <param name="destino">
+    /// La carpeta que eligió el usuario. Lo que el complemento diga haber dejado FUERA de ella no
+    /// se le cree. Sin ella no se le cree ninguno.
+    /// </param>
     /// <param name="modelo">
     /// El puente al modelo de lenguaje, si este complemento lo declara. Con
     /// <c>null</c>, una pregunta suya se contesta con un no y sigue todo igual:
@@ -68,7 +151,8 @@ public static class Invocador
         string comando,
         IEnumerable<string> argumentos,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken corte = default,
-        PuenteDelModelo? modelo = null)
+        PuenteDelModelo? modelo = null,
+        string? destino = null)
     {
         // QUÉ se ejecuta lo decide la resolución, que sabe de sistemas: en Windows el .cmd
         // declarado, en Unix el .sh de al lado, o el intérprete con el .py delante. Aquí solo se
@@ -159,12 +243,19 @@ public static class Invocador
         // El error estándar se vacía en paralelo y NO se interpreta. Si no se lee,
         // un complemento hablador llena la tubería y se queda bloqueado escribiendo
         // -parece colgado y en realidad está esperando a que alguien lea-.
-        var ruido = Task.Run(() => proceso.StandardError.ReadToEndAsync(), CancellationToken.None);
+        // El error estándar se vacía en paralelo, CON TECHO. Antes se guardaba entero: un
+        // complemento hablador —o uno que escupe su traza en bucle— llenaba la memoria de la
+        // aplicación con un texto del que luego solo se enseñan 300 caracteres. Se queda con el
+        // principio y sigue vaciando la tubería, que es lo que no se puede dejar de hacer: si
+        // nadie lee, el complemento se bloquea escribiendo y parece colgado.
+        var ruido = Task.Run(() => VaciarConTecho(proceso.StandardError, TechoDelRuido),
+                             CancellationToken.None);
 
         var seExplico = false;
         try
         {
-            while (await proceso.StandardOutput.ReadLineAsync(corte).ConfigureAwait(false) is { } linea)
+            await foreach (var linea in LineasConTecho(proceso.StandardOutput, TechoDeLinea, corte)
+                               .WithCancellation(corte).ConfigureAwait(false))
             {
                 var m = Mensaje.Interpretar(linea);
                 if (m is null) continue;
@@ -194,6 +285,12 @@ public static class Invocador
                 }
 
                 if (m.Tipo == Mensaje.TipoError) seExplico = true;
+
+                // LO QUE DICE HABER TRAÍDO, filtrado aquí y no en cada pantalla: hay dos, y
+                // arreglar una y dejar la otra es la forma habitual de que esto vuelva.
+                if (m.Tipo == Mensaje.TipoHecho)
+                    m.Ficheros = Mensaje.SoloDentroDe(destino, m.Ficheros);
+
                 yield return m;
             }
         }

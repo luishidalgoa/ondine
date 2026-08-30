@@ -99,4 +99,75 @@ public sealed class Mensaje
 
     public TimeSpan? ComoDuracion =>
         Duracion is > 0 ? TimeSpan.FromSeconds(Duracion.Value) : null;
+
+    /// <summary>
+    /// El avance, dejado en un número que se puede pintar: entre 0 y 1, o nada.
+    ///
+    /// <para>
+    /// El recorte a 0..1 ya estaba donde se pinta. Lo que faltaba: <b><c>Math.Clamp</c> no arregla
+    /// un NaN</b>. Las comparaciones con NaN son todas falsas, así que el recorte lo deja pasar tal
+    /// cual y llega a la barra de progreso. Y para mandarlo no hace falta mala idea — basta con
+    /// que el complemento divida entre cero calculando su porcentaje, que es lo que pasa cuando la
+    /// fuente no dice cuántos elementos trae.
+    /// </para>
+    /// <para>
+    /// Vive aquí y no en cada pantalla porque hay dos, y arreglar una y dejar la otra es la forma
+    /// habitual de que esto vuelva.
+    /// </para>
+    /// </summary>
+    public double? AvanceSano => Avance is not { } a
+        ? null
+        : double.IsNaN(a) ? 0 : Math.Clamp(a, 0, 1);
+
+    /// <summary>
+    /// De los ficheros que un complemento dice haber traído, <b>los que están de verdad dentro de
+    /// la carpeta que eligió el usuario</b>.
+    ///
+    /// <para>
+    /// <b>Esto no es una comprobación de formato: es la frontera.</b> Lo que el complemento
+    /// escribe por su salida no es un dato de la aplicación, es la afirmación de un tercero — y
+    /// estas rutas no se enseñan y ya, entran en el flujo de Organizar, que <b>renombra y mueve</b>.
+    /// Un complemento que contestara con la ruta de un documento tuyo lo colaba en la lista de lo
+    /// recién descargado y a partir de ahí se le trataba como a un capítulo más. No hacía falta
+    /// ningún fallo del sistema: bastaba con escribir esa línea.
+    /// </para>
+    /// <para>
+    /// <b>Sin carpeta de destino no se le cree ninguno.</b> Un complemento al que nadie le dijo
+    /// dónde dejar las cosas no tiene ficheros que declarar.
+    /// </para>
+    /// <para>
+    /// Se descartan en silencio a propósito. Avisar con un error abortaría la importación de los
+    /// que sí están bien —así trata la pantalla un error—, y quien manda rutas de fuera es un
+    /// complemento roto o con mala idea, no un usuario que pueda corregir nada.
+    /// </para>
+    /// </summary>
+    public static List<string> SoloDentroDe(string? destino, IEnumerable<string>? ficheros)
+    {
+        var buenos = new List<string>();
+        if (string.IsNullOrWhiteSpace(destino) || ficheros is null) return buenos;
+
+        string dentro;
+        try { dentro = Path.GetFullPath(destino) + Path.DirectorySeparatorChar; }
+        catch { return buenos; }
+
+        foreach (var f in ficheros)
+        {
+            if (string.IsNullOrWhiteSpace(f)) continue;
+            try
+            {
+                // Lo relativo se resuelve CONTRA EL DESTINO, no contra la carpeta desde la que
+                // arrancó la aplicación. Un complemento al que se le dijo «déjalo en X» y
+                // contesta «uno.mkv» está diciendo «X/uno.mkv», que es lo que quiere decir
+                // cualquiera. Resolverlo contra otra cosa descartaba ficheros buenos.
+                //
+                // Y luego resuelta, que es donde se ve lo que es: «../otro.mkv» solo se delata
+                // después de combinarla. Con el separador al final, o «serie-de-otro» pasaría por
+                // estar dentro de «serie».
+                var suya = Path.GetFullPath(Path.Combine(destino, f));
+                if (suya.StartsWith(dentro, StringComparison.OrdinalIgnoreCase)) buenos.Add(suya);
+            }
+            catch { /* lo que no es una ruta no es un fichero traído */ }
+        }
+        return buenos;
+    }
 }
