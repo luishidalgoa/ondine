@@ -40,6 +40,7 @@ internal static class Organizar
         var fichero = Texto(a, "fichero");
         var catalogo = Texto(a, "catalogo");
         var num = Entero(a, "episodio", 0);
+        var temporada = Entero(a, "temporada", 0);
 
         if (fichero is null) return Resultado.Error("Falta «fichero».");
         if (!File.Exists(fichero)) return Resultado.Error($"No existe: {fichero}");
@@ -51,7 +52,7 @@ internal static class Organizar
         try { cat = ReindexCatalog.Load(catalogo); }
         catch (Exception ex) { return Resultado.Error("El catálogo no se puede leer: " + ex.Message); }
 
-        var ep = cat.PorNum(num);
+        var ep = cat.PorNum(num, temporada > 0 ? temporada : null);
         if (ep is null)
         {
             // Los números que hay DE VERDAD, no «del 1 al Total»: «total» es un campo declarado

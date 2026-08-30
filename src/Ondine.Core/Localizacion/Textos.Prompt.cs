@@ -135,11 +135,12 @@ public sealed partial class Textos
         "   entera y hace que casi nada encaje.");
 
     public string EncargoDecisionNumeroContinuo => Idioma.Elegir(
-        "   If the source page only numbers within each season, number continuously yourself\n" +
-        "   from 1, following the broadcast order. ALWAYS write down in `clave` which one you\n" +
-        "   used.",
-        "   Si el anexo solo numera por temporada, numera tú en continuo desde 1 siguiendo\n" +
-        "   el orden de emisión. Escribe SIEMPRE en `clave` cuál has usado.");
+        "   If the source page restarts at 1 in each season, keep those numbers and set\n" +
+        "   `clave` to `por_temporada`. In that mode `(temporada, num)` identifies the episode.\n" +
+        "   ALWAYS write down in `clave` which numbering you used.",
+        "   Si el anexo reinicia en 1 cada temporada, conserva esos números y pon\n" +
+        "   `clave` como `por_temporada`. En ese modo `(temporada, num)` identifica el episodio.\n" +
+        "   Escribe SIEMPRE en `clave` qué numeración has usado.");
 
     public string EncargoDecisionTitulos => Idioma.Elegir(
         "2. **Which columns are titles, and in which language.** \"Title in Spain\" → `es`;\n" +
@@ -301,11 +302,10 @@ public sealed partial class Textos
         "## Reglas que el programa comprueba (si fallan, rechaza el archivo)");
 
     public string EncargoReglaNum => Idioma.Elegir(
-        "- `num` is required, a whole number ≥ 0 and **unique across the whole catalogue**. If\n" +
-        "  the source repeats a number, do not duplicate it: decide which one goes in and note\n" +
-        "  the clash in `notas`.",
-        "- `num` es obligatorio, entero ≥ 0 y **único en todo el catálogo**. Si la fuente\n" +
-        "  repite un número, no lo dupliques: decide cuál va y anota el conflicto en `notas`.");
+        "- `num` is required and a whole number ≥ 0. It must be **unique across the whole catalogue**,\n" +
+        "  except with `clave: por_temporada`, where each `(temporada, num)` pair must be unique.",
+        "- `num` es obligatorio y entero ≥ 0. Debe ser **único en todo el catálogo**, salvo con\n" +
+        "  `clave: por_temporada`, donde debe ser única cada pareja `(temporada, num)`.");
 
     public string EncargoReglaHuecos => Idioma.Elegir(
         "- **Do not fill in the gaps in the numbering.** Plenty of series officially skip\n" +
@@ -351,8 +351,8 @@ public sealed partial class Textos
         "## Antes de responder, comprueba tú mismo");
 
     public string EncargoRepasoNum => Idioma.Elegir(
-        "1. Is any `num` repeated? (this is the most frequent slip)",
-        "1. ¿Hay algún `num` repetido? (es el fallo más frecuente)");
+        "1. Is any episode key repeated (`num`, or `(temporada, num)` with `por_temporada`)?",
+        "1. ¿Se repite alguna clave de episodio (`num`, o `(temporada, num)` con `por_temporada`)?");
 
     public string EncargoRepasoFechas => Idioma.Elegir(
         "2. Are all the dates in YYYY-MM-DD, and do they really exist?",

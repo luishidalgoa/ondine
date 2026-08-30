@@ -378,6 +378,32 @@ public static class Program
             """), "rechaza dos episodios con el mismo número");
         Assert(repetido?.Message.Contains("position 1") == true, "y dice con cuál choca");
 
+        // Algunas series reinician E01 en cada temporada. En ese modo la identidad no es
+        // el número solo, sino SxxEyy; ambos episodios deben convivir y resolverse sin pisarse.
+        var porTemporada = ReindexCatalog.Parse("""
+            { "esquema": "reindex/1.0", "serie": "P", "clave": "por_temporada", "episodios": [
+              { "num": 1, "temporada": 1, "titulos": { "es": ["Primero"] } },
+              { "num": 1, "temporada": 2, "titulos": { "es": ["Segundo"] } } ] }
+            """);
+        Eq("Primero", porTemporada.PorNum(1, 1)!.TituloPrincipal,
+            "resuelve S01E01 por temporada");
+        Eq("Segundo", porTemporada.PorNum(1, 2)!.TituloPrincipal,
+            "resuelve S02E01 sin pisar S01E01");
+        Assert(porTemporada.PorNum(1) is null,
+            "sin temporada no elige a ciegas entre dos E01");
+        var resPorTemporada = ReindexEngine.Resolve(new[]
+        {
+            SignalExtractor.Extract(Path.Combine("Serie", "Season 02", "S02E01 Segundo.mkv"), "Serie")
+        }, porTemporada)[0];
+        Eq(2, resPorTemporada.Episodio?.Temporada,
+            "el motor identifica S02E01 como el episodio de la segunda temporada");
+        Eq("Segundo", resPorTemporada.Episodio?.TituloPrincipal,
+            "y no como el E01 de la primera");
+        Lanza<ReindexCatalogException>(() => ReindexCatalog.Parse("""
+            { "esquema": "reindex/1.0", "serie": "P", "clave": "por_temporada", "episodios": [
+              { "num": 1, "temporada": 2 }, { "num": 1, "temporada": 2 } ] }
+            """), "rechaza dos S02E01 iguales");
+
         Lanza<ReindexCatalogException>(() => ReindexCatalog.Parse("""
             { "esquema": "reindex/1.0", "serie": "P", "episodios": [
               { "num": -3, "titulos": { "es": ["Uno"] } } ] }

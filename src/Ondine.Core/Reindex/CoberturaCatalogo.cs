@@ -62,16 +62,17 @@ public static class CoberturaCatalogo
     /// puedan volver a responder cosas distintas.
     /// </para>
     /// </summary>
-    public static IEnumerable<(int Num, HashSet<int> Historias)> LoQueCubre(
+    public static IEnumerable<(int Num, int? Temporada, HashSet<int> Historias)> LoQueCubre(
         ReindexResolution r, ReindexCatalog catalogo)
     {
         if (r.Episodio is not { } ep) yield break;
 
-        yield return (ep.Num, HistoriasQueCubre(r, ep));
+        yield return (ep.Num, catalogo.ClaveDe(ep).Temporada, HistoriasQueCubre(r, ep));
 
         foreach (var mas in r.Archivo.TambienEpisodios)
         {
-            var otro = catalogo.Episodios.FirstOrDefault(e => e.Num == mas.Num);
+            var otro = catalogo.Episodios.FirstOrDefault(e => e.Num == mas.Num &&
+                (!catalogo.NumReiniciaPorTemporada || e.Temporada == ep.Temporada));
             if (otro is null) continue;
 
             // Con letra, esa historia; sin letra, el episodio entero — que es lo
@@ -83,7 +84,8 @@ public static class CoberturaCatalogo
                 int i = char.ToLowerInvariant(c) - 'a';
                 if (i >= 0 && i < cuantas) suyas.Add(i);
             }
-            yield return (otro.Num, suyas.Count > 0 ? suyas : new HashSet<int>(Enumerable.Range(0, cuantas)));
+            yield return (otro.Num, catalogo.ClaveDe(otro).Temporada,
+                suyas.Count > 0 ? suyas : new HashSet<int>(Enumerable.Range(0, cuantas)));
         }
     }
 
@@ -184,38 +186,40 @@ public static class CoberturaCatalogo
     /// «no lo encuentro» y «no lo tienes» no son lo mismo.
     /// </para>
     /// </summary>
-    public static Dictionary<int, Tenencia> PorEpisodio(
+    public static Dictionary<EpisodeKey, Tenencia> PorEpisodio(
         ReindexCatalog catalogo, IReadOnlyList<ReindexResolution> resoluciones)
     {
         // Qué segmentos cubre cada episodio, y con qué ficheros. Mismo criterio que
         // en Calcular: sin letra, el fichero es el episodio entero.
-        var cubierto = new Dictionary<int, HashSet<int>>();
-        var ficheros = new Dictionary<int, List<string>>();
+        var cubierto = new Dictionary<EpisodeKey, HashSet<int>>();
+        var ficheros = new Dictionary<EpisodeKey, List<string>>();
 
         foreach (var r in resoluciones)
         {
-            foreach (var (num, historias) in LoQueCubre(r, catalogo))
+            foreach (var (num, temporada, historias) in LoQueCubre(r, catalogo))
             {
-                if (!cubierto.TryGetValue(num, out var set))
+                var clave = new EpisodeKey(temporada, num);
+                if (!cubierto.TryGetValue(clave, out var set))
                 {
-                    cubierto[num] = set = new HashSet<int>();
-                    ficheros[num] = new List<string>();
+                    cubierto[clave] = set = new HashSet<int>();
+                    ficheros[clave] = new List<string>();
                 }
 
                 set.UnionWith(historias);
 
-                if (!string.IsNullOrEmpty(r.Archivo.Path)) ficheros[num].Add(r.Archivo.Path);
+                if (!string.IsNullOrEmpty(r.Archivo.Path)) ficheros[clave].Add(r.Archivo.Path);
             }
         }
 
-        var mapa = new Dictionary<int, Tenencia>();
+        var mapa = new Dictionary<EpisodeKey, Tenencia>();
         foreach (var ep in catalogo.Regulares.Concat(catalogo.Especiales))
         {
+            var clave = catalogo.ClaveDe(ep);
             int cuantos = Math.Max(1, ep.TitulosSalida.Count);
-            int tiene = cubierto.TryGetValue(ep.Num, out var set) ? set.Count : 0;
-            mapa[ep.Num] = new Tenencia(
+            int tiene = cubierto.TryGetValue(clave, out var set) ? set.Count : 0;
+            mapa[clave] = new Tenencia(
                 tiene == 0 ? Tengo.Nada : tiene >= cuantos ? Tengo.Entero : Tengo.AMedias,
-                ficheros.TryGetValue(ep.Num, out var f) ? f : Array.Empty<string>());
+                ficheros.TryGetValue(clave, out var f) ? f : Array.Empty<string>());
         }
         return mapa;
     }
@@ -254,12 +258,13 @@ public static class CoberturaCatalogo
                                    int? temporada = null)
     {
         // Qué segmentos cubre cada episodio. Sin letra, el fichero es el episodio entero.
-        var cubierto = new Dictionary<int, HashSet<int>>();
+        var cubierto = new Dictionary<EpisodeKey, HashSet<int>>();
         foreach (var r in resoluciones)
         {
             if (r.Episodio is not { } ep) continue;         // sin identificar no tapa ningún hueco
-            if (!cubierto.TryGetValue(ep.Num, out var set))
-                cubierto[ep.Num] = set = new HashSet<int>();
+            var clave = catalogo.ClaveDe(ep);
+            if (!cubierto.TryGetValue(clave, out var set))
+                cubierto[clave] = set = new HashSet<int>();
 
             set.UnionWith(HistoriasQueCubre(r, ep));
         }
@@ -283,7 +288,7 @@ public static class CoberturaCatalogo
 
             int cuantos = Math.Max(1, ep.TitulosSalida.Count);
             total += cuantos;
-            var tiene = cubierto.TryGetValue(ep.Num, out var set) ? set : new HashSet<int>();
+            var tiene = cubierto.TryGetValue(catalogo.ClaveDe(ep), out var set) ? set : new HashSet<int>();
             presentes += tiene.Count;
             if (tiene.Count >= cuantos) continue;
 
@@ -304,7 +309,7 @@ public static class CoberturaCatalogo
         // Los especiales van aparte: casi nadie los tiene completos y, mezclados, hacen que la
         // biblioteca parezca mucho peor de lo que está.
         int especiales = catalogo.Especiales.Count(e =>
-            !cubierto.TryGetValue(e.Num, out var s) || s.Count == 0);
+            !cubierto.TryGetValue(catalogo.ClaveDe(e), out var s) || s.Count == 0);
 
         return new Informe(huecos, total, presentes, especiales);
     }

@@ -33,7 +33,7 @@ completes, menos dudas tendrás que resolver a mano.
 | `esquema` | **sí** | Siempre `"reindex/1.0"`. Es lo que permite que la app rechace un archivo que no es un catálogo, en vez de intentar leerlo y fallar de mala manera. |
 | `serie` | **sí** | Nombre de la serie tal cual quieres que aparezca en el nombre de los ficheros. Ojo: esto acaba escrito en el disco, así que escríbelo como lo quieres ver. |
 | `episodios` | **sí** | La lista. No puede estar vacía. |
-| `clave` | no | Qué significa `num` en esta serie: `"oficial"`, `"segmento"`, `"continuo"`… Es documentación para ti; la app no decide nada con ello. |
+| `clave` | no | Qué significa `num`: `"oficial"`, `"segmento"`, `"continuo"`… Usa `"por_temporada"` si `num` vuelve a 1 en cada temporada; en ese caso la app identifica cada episodio mediante la pareja `(temporada, num)`. |
 | `notas` | no | Texto libre. Un buen sitio para apuntar rarezas de la serie. |
 | `total` | no | Cuántos episodios esperas. **La app no lo usa para recorrer nada**, solo es informativo. |
 | `idiomas` | no | Qué idioma se escribe y con cuáles se compara (ver abajo). Ausente = se escribe `es` y se compara contra todos. |
@@ -73,7 +73,7 @@ Puedes escribirlos a mano o dejar que lo haga la app: en Organizar, botón derec
 
 | Campo | Obligatorio | Qué es |
 |---|:---:|---|
-| `num` | **sí** | El número **de destino**: el que acabará en el nombre del fichero. Entero ≥ 0 y **único** en todo el catálogo. |
+| `num` | **sí** | El número **de destino**: el que acabará en el nombre del fichero. Entero ≥ 0. Es único globalmente salvo con `clave: "por_temporada"`, donde puede repetirse en temporadas distintas. |
 | `titulos` | recomendado | Títulos por idioma: `{ "es": [...], "lat": [...], "jp": [...] }`. **Siempre listas**, aunque solo haya un título. |
 | `temporada` | recomendado | Año o número de temporada. Se usa en el nombre final (`S2005E1`). |
 | `fecha` | recomendado | Fecha de emisión en `AAAA-MM-DD`. Es la señal **más fiable** que existe. |
@@ -100,6 +100,11 @@ por emisión sale entera desplazada y casi nada encaja; con el de transmisión, 
 «Limpio» sin tocar un fichero.
 
 Escribe siempre en `clave` cuál has usado (`"transmision"`, `"oficial"`, `"segmento"`…).
+
+Si los ficheros y la fuente reinician la numeración en cada temporada (`S01E01`, `S02E01`),
+conserva esa numeración y escribe `"clave": "por_temporada"`. En ese modo `temporada` es
+obligatoria para distinguir episodios con el mismo `num`; `S01E01` y `S02E01` son dos claves
+distintas y el nombre final conserva el número local de cada temporada.
 
 **Los especiales solo van aparte si tu numeración los deja aparte.** Numerando por
 transmisión, un especial es una emisión más: le toca su número y lleva `"especial": false`.
@@ -168,8 +173,9 @@ Si algo de esto falla, el archivo **no se importa** y se te dice exactamente qu�
 2. `serie` no está vacío.
 3. `episodios` existe y tiene al menos uno.
 4. Cada episodio tiene `num`, entero y ≥ 0.
-5. **`num` no se repite.** Dos episodios con el mismo número son un error: uno pisaría al
-   otro y perderías un episodio sin enterarte.
+5. **La clave del episodio no se repite.** Normalmente es `num`. Con
+   `clave: "por_temporada"` es la pareja `(temporada, num)`, por lo que el mismo número puede
+   aparecer en temporadas distintas, pero no dos veces dentro de la misma temporada.
 6. `fecha`, si está, es una fecha real en formato `AAAA-MM-DD`. Un `2005-13-45` se rechaza.
 7. `temporada`, si está, es un entero ≥ 0.
 
