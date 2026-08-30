@@ -20,6 +20,27 @@ public static class Instalador
     public sealed record Resultado(bool Ok, string? Motivo);
 
     /// <summary>
+    /// Hasta dónde se le permite crecer a un paquete al descomprimirse.
+    ///
+    /// <para>
+    /// <b>Bajarlo topado no basta.</b> La descarga está limitada a 80 MB, pero un zip se
+    /// descomprime: 80 MB de ceros bien empaquetados son gigabytes en el disco de quien lo
+    /// instala. Y no hace falta mala idea para llegar aquí — también lo dispara quien empaquetó
+    /// sin querer una carpeta que no tocaba.
+    /// </para>
+    /// <para>
+    /// El cupo se pasa como parámetro, con estos valores por defecto, para poder comprobarlo con
+    /// topes pequeños en vez de escribir 250 MB en cada tanda de pruebas.
+    /// </para>
+    /// </summary>
+    /// <param name="MaxFicheros">Cuántos ficheros como mucho. Un complemento no trae miles.</param>
+    /// <param name="MaxBytes">Cuánto puede ocupar ya descomprimido, en total.</param>
+    public sealed record Cupo(int MaxFicheros = 5_000, long MaxBytes = 250L * 1024 * 1024)
+    {
+        public static readonly Cupo Normal = new();
+    }
+
+    /// <summary>
     /// Quita un complemento instalado: borra <c>{carpetaBase}/{id}</c> entera.
     ///
     /// <para>
@@ -62,9 +83,11 @@ public static class Instalador
     /// <summary>
     /// Instala en <c>{carpetaBase}/{entrada.Id}</c>.
     /// </summary>
-    public static Resultado Instalar(Indice.Entrada entrada, byte[] paquete, string carpetaBase)
+    public static Resultado Instalar(
+        Indice.Entrada entrada, byte[] paquete, string carpetaBase, Cupo? cupo = null)
     {
         if (entrada.Reparo() is { } malo) return new(false, malo);
+        cupo ??= Cupo.Normal;
 
         // Lo primero, antes de tocar el disco: ¿es el paquete que el índice
         // prometía? Bajar un ejecutable y correrlo sin comprobarlo es lo que
@@ -87,10 +110,25 @@ public static class Instalador
             using (var zip = new ZipArchive(ms, ZipArchiveMode.Read))
             {
                 var raiz = Path.GetFullPath(temporal) + Path.DirectorySeparatorChar;
+                var puestos = 0;
+                var escritos = 0L;
 
                 foreach (var e in zip.Entries)
                 {
                     if (string.IsNullOrEmpty(e.Name)) continue;   // una carpeta
+
+                    // NINGUNA entrada puede declararse enlace. Hoy el extractor de .NET la
+                    // escribiría como un fichero normal con la ruta dentro —está medido—, así que
+                    // esto no tapa un agujero abierto: quita la dependencia de que eso siga siendo
+                    // verdad. Un complemento no necesita traer enlaces, y uno que lo intenta está
+                    // pidiendo escribir donde no le toca.
+                    if (SeDiceEnlace(e))
+                        return Fallar(temporal, string.Format(
+                            Textos.Instancia.InstaladorEntradaEnlace, e.FullName));
+
+                    if (++puestos > cupo.MaxFicheros)
+                        return Fallar(temporal, string.Format(
+                            Textos.Instancia.InstaladorDemasiadosFicheros, cupo.MaxFicheros));
 
                     // La entrada de un zip puede decir «..\..\algo». Combinarla sin
                     // mirar escribe fuera de la carpeta de destino: es la forma
@@ -102,7 +140,16 @@ public static class Instalador
                             Textos.Instancia.InstaladorSaleDeLaCarpeta, e.FullName));
 
                     Directory.CreateDirectory(Path.GetDirectoryName(salida)!);
-                    e.ExtractToFile(salida, overwrite: true);
+
+                    // Se copia a mano contando lo que SE ESCRIBE, y no se suma «e.Length». Esa
+                    // cifra la escribe quien hizo el zip: un paquete puede declarar treinta bytes
+                    // y traer un gigabyte. Lo único que no se puede falsear es lo que cae al disco.
+                    if (!Copiar(e, salida, cupo.MaxBytes - escritos, out var estos))
+                        return Fallar(temporal, string.Format(
+                            Textos.Instancia.InstaladorDemasiadoAlDescomprimir,
+                            cupo.MaxBytes / (1024 * 1024)));
+
+                    escritos += estos;
                 }
             }
 
@@ -172,6 +219,46 @@ public static class Instalador
         var arranque = c.ComoArrancar();
         if (arranque.Reparo is null && arranque.Antes.Count == 0)
             yield return arranque.Programa;
+    }
+
+    /// <summary>
+    /// ¿Esta entrada del zip se declara enlace? Se mira el modo de Unix que va en los 16 bits
+    /// altos —<c>S_IFLNK</c>— y el atributo de Windows, porque un zip puede venir de cualquiera
+    /// de los dos.
+    /// </summary>
+    private static bool SeDiceEnlace(ZipArchiveEntry e)
+    {
+        const int TipoUnix = 0xF000;    // la máscara del tipo de fichero
+        const int EsEnlace = 0xA000;    // S_IFLNK
+
+        var modoUnix = (e.ExternalAttributes >> 16) & TipoUnix;
+        if (modoUnix == EsEnlace) return true;
+
+        return ((FileAttributes)(e.ExternalAttributes & 0xFFFF)).HasFlag(FileAttributes.ReparsePoint);
+    }
+
+    /// <summary>
+    /// Vuelca una entrada a disco sin pasarse del cupo que queda. Devuelve <c>false</c> —y no deja
+    /// el fichero a medias— si se pasa.
+    /// </summary>
+    private static bool Copiar(ZipArchiveEntry e, string salida, long queda, out long escritos)
+    {
+        escritos = 0;
+        if (queda <= 0) return false;
+
+        var trozo = new byte[81920];
+        using (var dentro = e.Open())
+        using (var fuera = new FileStream(salida, FileMode.Create, FileAccess.Write))
+        {
+            int leidos;
+            while ((leidos = dentro.Read(trozo, 0, trozo.Length)) > 0)
+            {
+                escritos += leidos;
+                if (escritos > queda) { fuera.Dispose(); return false; }
+                fuera.Write(trozo, 0, leidos);
+            }
+        }
+        return true;
     }
 
     /// <summary>
