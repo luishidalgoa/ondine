@@ -54,6 +54,15 @@ es un acuerdo de buena voluntad: está verificado.
   macOS esa barra no separa carpetas, así que se buscaba un fichero con un nombre imposible y el
   complemento quedaba descartado por «solo funciona en Windows». Ahora las barras se traducen.
 
+- **Un complemento hablador ya no se lleva la aplicación por delante.** Lo que escribe se leía sin
+  ningún límite: uno que soltara mucho texto sin saltar de línea, o que llenara su salida de
+  errores, hacía crecer la memoria hasta que la aplicación se caía. Ahora hay tope, y una línea
+  demasiado larga se descarta sin cortar lo que venga detrás.
+
+- **La barra de progreso de un complemento ya no se queda en blanco.** Si el complemento calculaba
+  su porcentaje dividiendo entre cero —lo que pasa cuando la fuente no dice cuántos elementos
+  trae—, mandaba un valor que no es un número y la barra no sabía qué pintar.
+
 - **En macOS ya se encuentra el Python de Homebrew.** Una aplicación de macOS abierta desde el
   Finder no hereda tu `PATH`, así que un Python instalado con Homebrew —que es como se instala
   allí— no aparecía y el complemento se quedaba sin intérprete en una máquina que tiene Python de
@@ -65,6 +74,12 @@ es un acuerdo de buena voluntad: está verificado.
   apariciones y se coge la primera que conteste de verdad.
 
 ### Seguridad
+
+- **Un complemento ya no puede colar en la lista de descargas un fichero que no ha traído.** Al
+  terminar, un complemento dice qué ficheros ha dejado, y esa lista entra en el flujo que renombra
+  y mueve. No se comprobaba que estuvieran dentro de la carpeta que elegiste: bastaba con que un
+  complemento nombrara un documento tuyo para que se le tratara como a un capítulo recién bajado.
+  Ahora solo se le cree lo que está de verdad donde se le dijo que lo dejara.
 
 - **Un paquete de complemento ya no puede llenarte el disco al instalarlo.** La descarga estaba
   topada a 80 MB, pero eso es el zip: descomprimido no tenía límite, y un paquete preparado —o

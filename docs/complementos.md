@@ -155,6 +155,20 @@ un complemento que trajera dentro un enlace a algo del sistema conseguiría que 
 permiso de ejecución a lo apuntado. Ni se les da permiso ni se entra por las carpetas enlazadas al
 buscar los `.sh`.
 
+### Hasta dónde se le cree a lo que dice
+
+Lo que un complemento escribe por su salida no es un dato de la aplicación: es la afirmación de un
+tercero. Dos de ellas se comprueban antes de hacer nada con ellas.
+
+- **Los ficheros de `hecho` tienen que estar dentro de la carpeta `--destino`.** Es lo único que se
+  incorpora; lo que diga haber dejado en otra parte del disco se descarta sin más. Y no es una
+  formalidad: esas rutas entran en el flujo de Organizar, que **renombra y mueve**, así que un
+  complemento que contestara con la ruta de un documento tuyo lo colaba en la lista de lo recién
+  descargado. Una ruta relativa se entiende **dentro del destino**, que es lo que quiere decir
+  cualquiera al escribirla. Sin `--destino`, no se le cree ninguna.
+- **El `avance` de `progreso` tiene que ser un número.** Se recorta a 0..1, y un `NaN` —que sale
+  solo de dividir entre cero al calcular un porcentaje, sin mala idea ninguna— se toma como cero.
+
 ### Lo que se rechaza al instalar
 
 Además de lo del manifiesto, un **paquete** no entra si:
@@ -207,7 +221,8 @@ lado y buscarlas por ruta relativa— y le pasa un subcomando:
 ```
 
 El complemento contesta por la **salida estándar**: **una línea, un mensaje,
-JSON**.
+JSON**. Una línea no puede pasar de **64 kB** — si se pasa, esa línea se descarta y se sigue
+leyendo las de después.
 
 ```json
 {"tipo":"elemento","id":"abc","titulo":"El gorro de la suerte","miniatura":"https://...","duracion":662}
