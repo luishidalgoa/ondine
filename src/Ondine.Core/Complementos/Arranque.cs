@@ -39,7 +39,7 @@ public sealed record Arranque(
     string? Reparo)
 {
     /// <summary>
-    /// Los intérpretes que se prueban, en orden, para un <c>.py</c>.
+    /// Los intérpretes que se prueban, en orden, para un <c>.py</c> <b>en ese sistema</b>.
     ///
     /// <para>
     /// En Windows se prueba <c>python</c> antes que <c>python3</c> porque una instalación normal
@@ -47,8 +47,15 @@ public sealed record Arranque(
     /// <c>python3</c> que aparece suele ser el alias de la Tienda. Fuera de Windows es al revés,
     /// donde <c>python</c> a secas puede seguir siendo el 2.
     /// </para>
+    /// <para>
+    /// <b>Recibe el sistema, no lo pregunta.</b> Preguntándolo —que es como estaba— resolver «para
+    /// Linux» desde Windows usaba el orden de Windows, y entonces la función deja de ser pura
+    /// justo en lo que dice su propio comentario que garantiza. Es el mismo fallo que ya apareció
+    /// una vez en el cálculo del fichero hermano; la segunda vez ya no es casualidad, es que esta
+    /// clase invita a preguntarle al sistema y hay que resistirse.
+    /// </para>
     /// </summary>
-    private static string[] Pythons => OperatingSystem.IsWindows()
+    public static string[] Pythons(So so) => so == So.Windows
         ? ["python", "python3"]
         : ["python3", "python"];
 
@@ -102,8 +109,7 @@ public sealed record Arranque(
                 .Split(';', StringSplitOptions.RemoveEmptyEntries)
             : [""];
 
-        foreach (var carpeta in (Environment.GetEnvironmentVariable("PATH") ?? "")
-                     .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        foreach (var carpeta in CarpetasDondeBuscar(Actual, Environment.GetEnvironmentVariable("PATH")))
         {
             foreach (var ext in extensiones)
             {
@@ -118,6 +124,45 @@ public sealed record Arranque(
                 if (candidato is not null) yield return candidato;
             }
         }
+    }
+
+    /// <summary>
+    /// Las carpetas donde buscar un programa: las del <c>PATH</c> y, en macOS, las de Homebrew.
+    ///
+    /// <para>
+    /// <b>Una aplicación de macOS lanzada desde el Finder no hereda tu PATH.</b> Recibe uno mínimo
+    /// —<c>/usr/bin</c>, <c>/bin</c> y poco más—, así que un Python instalado con Homebrew, que es
+    /// como se instala allí, <b>no aparece</b>: el complemento se quedaba sin intérprete en una
+    /// máquina que tiene Python de sobra, y desde el Terminal funcionaba. De esos fallos que hacen
+    /// perder una tarde, porque probándolo como se prueba —desde la consola— no se reproduce.
+    /// </para>
+    /// <para>
+    /// Van DETRÁS de las del PATH: si alguien puso un Python concreto en su PATH, es el que quiere.
+    /// Y es una función del sistema que se le pasa, no del que corre, para poder comprobarla desde
+    /// cualquier máquina.
+    /// </para>
+    /// </summary>
+    public static IEnumerable<string> CarpetasDondeBuscar(So so, string? path)
+    {
+        var vistas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // El separador sale del sistema QUE SE PASA, no de «Path.PathSeparator», que es el del
+        // sistema donde corre el proceso. Es la tercera vez que esta clase se lleva el mismo
+        // fallo —antes fue partir la ruta y el orden de los intérpretes—, y esta lo descubrió una
+        // prueba que parecía comprobar macOS y no comprobaba nada: corriendo en Windows, «:» no
+        // separaba, así que el PATH entero llegaba como una sola carpeta.
+        var separador = so == So.Windows ? ';' : ':';
+
+        foreach (var c in (path ?? "").Split(separador, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var limpia = c.Trim('"');
+            if (limpia.Length > 0 && vistas.Add(limpia)) yield return limpia;
+        }
+
+        if (so != So.Mac) yield break;
+
+        foreach (var c in new[] { "/opt/homebrew/bin", "/usr/local/bin" })
+            if (vistas.Add(c)) yield return c;
     }
 
     /// <summary>
@@ -267,7 +312,7 @@ public sealed record Arranque(
         // sitios, en vez de una excepción que solo se descubre al portar el complemento.
         if (elegido.EndsWith(".py", StringComparison.OrdinalIgnoreCase))
         {
-            var interprete = Pythons.Select(buscarEnRuta).FirstOrDefault(x => !string.IsNullOrEmpty(x));
+            var interprete = Pythons(so).Select(buscarEnRuta).FirstOrDefault(x => !string.IsNullOrEmpty(x));
             if (string.IsNullOrEmpty(interprete))
                 return Imposible(string.Format(Textos.Instancia.ComplementoSinInterprete, elegido));
 

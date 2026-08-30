@@ -125,9 +125,16 @@ se encontraría.
 **Un `.py` se ejecuta con el intérprete**, en los tres sistemas. No es lo mismo que un
 `.sh`: en Unix haría falta que trajera almohadilla-bang y en Windows depende de una
 asociación de ficheros que aquí no se usa. Se buscan **todas** las apariciones de
-`python`/`python3` en el `PATH` y se coge **la primera que conteste** a `--version`; si no contesta
+`python`/`python3` en el `PATH` —y en macOS, además, en `/opt/homebrew/bin` y `/usr/local/bin`— y
+se coge **la primera que conteste** a `--version`; si no contesta
 ninguna, el complemento queda descartado diciendo justo eso —el arreglo es instalar Python, no
 tocar el complemento—.
+
+> **Por qué en macOS se miran dos carpetas más.** Una aplicación de macOS lanzada desde el Finder
+> **no hereda tu `PATH`**: recibe uno mínimo, así que un Python instalado con Homebrew —que es como
+> se instala allí— no aparece. El complemento se quedaba sin intérprete en una máquina que tiene
+> Python de sobra, y desde el Terminal funcionaba: de esos fallos que no se reproducen probándolos
+> como se prueban.
 
 > **Por qué se le pregunta en vez de mirarlo.** En Windows, la carpeta `WindowsApps` suele ir por
 > delante en el `PATH` y trae alias de la Tienda para `python.exe` y `python3.exe`. Pesan **cero
@@ -147,6 +154,22 @@ extraído: un `.json` de datos no se ejecuta.
 un complemento que trajera dentro un enlace a algo del sistema conseguiría que Ondine le pusiera
 permiso de ejecución a lo apuntado. Ni se les da permiso ni se entra por las carpetas enlazadas al
 buscar los `.sh`.
+
+### Lo que se rechaza al instalar
+
+Además de lo del manifiesto, un **paquete** no entra si:
+
+- **Crece demasiado al descomprimirse**: como mucho 250 MB en total y 5.000 ficheros. Bajarlo
+  topado no basta —la descarga se limita a 80 MB, pero un zip se descomprime, y 80 MB de ceros bien
+  empaquetados son gigabytes en tu disco—. El cupo se cuenta sobre **lo que se escribe**, no sobre
+  el tamaño que declara el zip: esa cifra la pone quien lo hizo, y puede decir treinta bytes y
+  traer un gigabyte.
+- **Trae un enlace dentro.** Un complemento solo puede traer ficheros de verdad. Hoy el extractor
+  escribiría ese enlace como un fichero normal con la ruta dentro —está medido—, así que esto no
+  tapa un agujero abierto: quita la dependencia de que eso siga siendo verdad mañana.
+
+Rechazar no deja nada a medias: se extrae a un lado y solo se mueve al final, así que lo que ya
+tenías instalado sigue funcionando.
 
 ### Lo que se rechaza, y por qué
 

@@ -31,6 +31,10 @@ public static class ComplementoMultiplataformaTests
         ElHermanoSeCalculaIgualEnTodasPartes();
         ElInterpreteHayQuePreguntarselo();
         UnEnlaceNoSeToca();
+        ElInterpreteSeEligeSegunElSistemaQueSeLePasa();
+        EnMacSeMiraDondeInstalaHomebrew();
+        UnPaqueteNoPuedeCrecerSinFin();
+        UnaEntradaQueSeDiceEnlaceNoEntra();
         LosCamposPorSistema();
         LoQueNoSePuedeArrancar();
         NoSeSaleDeSuCarpeta();
@@ -254,6 +258,193 @@ public static class ComplementoMultiplataformaTests
         }
         finally { try { Directory.Delete(carpeta, recursive: true); } catch { } }
     }
+
+    /// <summary>
+    /// El orden de los intérpretes sale <b>del sistema que se le pasa</b>, no del que corre.
+    ///
+    /// <para>
+    /// Es la segunda vez que aparece este fallo en la misma clase: la primera fue el cálculo del
+    /// fichero hermano, que preguntaba al anfitrión cómo se parte una ruta. Aquí era el orden en
+    /// que se prueban <c>python</c> y <c>python3</c>. La clase invita a preguntarle al sistema y
+    /// hay que resistirse — así que ahora está comprobado en vez de comentado.
+    /// </para>
+    /// </summary>
+    private static void ElInterpreteSeEligeSegunElSistemaQueSeLePasa()
+    {
+        Program.Assert(Arranque.Pythons(So.Windows)[0] == "python",
+            $"en Windows se prueba «python» primero ({Arranque.Pythons(So.Windows)[0]})");
+        Program.Assert(Arranque.Pythons(So.Linux)[0] == "python3",
+            $"y en Linux «python3» ({Arranque.Pythons(So.Linux)[0]})");
+        Program.Assert(Arranque.Pythons(So.Mac)[0] == "python3",
+            $"y en macOS también ({Arranque.Pythons(So.Mac)[0]})");
+
+        // Y llega hasta la resolución: se anota a quién se le preguntó y en qué orden. Sin esto,
+        // el orden podría estar bien en la tabla de arriba y mal donde se usa.
+        var pedidos = new List<string>();
+        string? Apunta(string quien) { pedidos.Add(quien); return "/x/" + quien; }
+
+        Arranque.Resolver("x.py", null, null, "/plug", So.Windows, Hay("/plug/x.py"), Apunta);
+        Program.Assert(pedidos.Count > 0 && pedidos[0] == "python",
+            $"resolviendo PARA Windows se pregunta primero por «python» ({string.Join(", ", pedidos)})");
+
+        pedidos.Clear();
+        Arranque.Resolver("x.py", null, null, "/plug", So.Linux, Hay("/plug/x.py"), Apunta);
+        Program.Assert(pedidos.Count > 0 && pedidos[0] == "python3",
+            $"y para Linux, por «python3» — corriendo en la máquina que sea ({string.Join(", ", pedidos)})");
+    }
+
+    /// <summary>
+    /// En macOS se mira además donde instala Homebrew.
+    ///
+    /// <para>
+    /// <b>Una aplicación de macOS lanzada desde el Finder no hereda tu PATH.</b> Recibe uno mínimo,
+    /// así que un Python de Homebrew —que es como se instala allí— no aparece: el complemento se
+    /// queda sin intérprete en una máquina que tiene Python de sobra. Y desde el Terminal funciona,
+    /// que es lo que hace perder la tarde: probándolo como se prueba, no se reproduce.
+    /// </para>
+    /// </summary>
+    private static void EnMacSeMiraDondeInstalaHomebrew()
+    {
+        var minimo = "/usr/bin:/bin:/usr/sbin:/sbin";   // el PATH que recibe una .app del Finder
+
+        var enMac = Arranque.CarpetasDondeBuscar(So.Mac, minimo).ToList();
+        Program.Assert(enMac.Contains("/opt/homebrew/bin"),
+            $"en macOS se mira donde instala Homebrew en los Apple Silicon ({string.Join(":", enMac)})");
+        Program.Assert(enMac.Contains("/usr/local/bin"),
+            $"y donde instalaba en los Intel ({string.Join(":", enMac)})");
+
+        Program.Assert(enMac.IndexOf("/usr/bin") < enMac.IndexOf("/opt/homebrew/bin"),
+            "y detrás de las del PATH: quien puso un Python concreto en su PATH quiere ese");
+
+        var enLinux = Arranque.CarpetasDondeBuscar(So.Linux, minimo).ToList();
+        Program.Assert(!enLinux.Contains("/opt/homebrew/bin"),
+            $"en Linux no se inventan carpetas ({string.Join(":", enLinux)})");
+
+        // Sin repetir: un PATH con la misma carpeta dos veces no hace mirar dos veces, y si el
+        // usuario ya tiene Homebrew en su PATH, no se añade otra vez al final.
+        var repetido = Arranque.CarpetasDondeBuscar(So.Mac, "/opt/homebrew/bin:/usr/bin:/usr/bin").ToList();
+        Program.Assert(repetido.Count(c => c == "/opt/homebrew/bin") == 1 &&
+                       repetido.Count(c => c == "/usr/bin") == 1,
+            $"y ninguna carpeta se mira dos veces ({string.Join(":", repetido)})");
+        Program.Assert(repetido[0] == "/opt/homebrew/bin",
+            $"respetando el sitio que le dio el usuario ({string.Join(":", repetido)})");
+    }
+
+    /// <summary>
+    /// Un paquete no puede crecer sin fin al descomprimirse.
+    ///
+    /// <para>
+    /// <b>Bajarlo topado no basta.</b> La descarga está limitada a 80 MB, pero un zip se
+    /// descomprime: 80 MB de ceros bien empaquetados son gigabytes en el disco de quien instala. Y
+    /// no hace falta mala idea — también lo dispara quien empaquetó sin querer una carpeta que no
+    /// tocaba.
+    /// </para>
+    /// <para>
+    /// El cupo se comprueba <b>con lo que se escribe</b>, no con el tamaño que declara el zip: esa
+    /// cifra la pone quien lo hizo, y puede decir treinta bytes y traer un gigabyte.
+    /// </para>
+    /// </summary>
+    private static void UnPaqueteNoPuedeCrecerSinFin()
+    {
+        var basePlug = Path.Combine(Path.GetTempPath(), "ondine-cupo-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(basePlug);
+        try
+        {
+            // Un paquete honrado con el cupo de verdad: entra.
+            var bueno = Zip(("plugin.json", Manifiesto("eco.cmd")),
+                            ("eco.cmd", "@echo off"), ("eco.sh", "#!/bin/sh\n"));
+            Program.Assert(Instalador.Instalar(Entrada(bueno), bueno, basePlug).Ok,
+                "un paquete normal se instala, que el cupo no está para estorbar");
+
+            // Y ahora, con topes pequeños para no escribir 250 MB en cada tanda de pruebas.
+            var gordo = Zip(("plugin.json", Manifiesto("eco.cmd")),
+                            ("eco.cmd", "@echo off"), ("eco.sh", "#!/bin/sh\n"),
+                            ("relleno.bin", new string('0', 40_000)));
+
+            var r = Instalador.Instalar(Entrada(gordo), gordo, basePlug, new Instalador.Cupo(MaxBytes: 4_096));
+            Program.Assert(!r.Ok, "pasarse del cupo de bytes no se instala");
+            Program.Assert(r.Motivo is not null && r.Motivo.Contains("MB"),
+                $"y se dice cuánto se permitía ({r.Motivo})");
+
+            var muchos = Zip(("plugin.json", Manifiesto("eco.cmd")), ("eco.cmd", "@echo off"),
+                             ("eco.sh", "#!/bin/sh\n"), ("a.txt", "a"), ("b.txt", "b"));
+            var r2 = Instalador.Instalar(Entrada(muchos), muchos, basePlug, new Instalador.Cupo(MaxFicheros: 3));
+            Program.Assert(!r2.Ok && r2.Motivo is not null && r2.Motivo.Contains("3"),
+                $"y pasarse del número de ficheros tampoco ({r2.Motivo})");
+
+            // Lo importante: al rechazarlo NO se queda nada a medias, ni se lleva por delante lo
+            // que ya estaba instalado.
+            Program.Assert(Directory.Exists(Path.Combine(basePlug, "eco")),
+                "el complemento que ya estaba sigue ahí");
+            Program.Assert(!Directory.Exists(Path.Combine(basePlug, "eco.instalando")),
+                "y no queda ninguna instalación a medias");
+        }
+        finally { try { Directory.Delete(basePlug, recursive: true); } catch { } }
+    }
+
+    /// <summary>
+    /// Una entrada del zip que se declara enlace no entra.
+    ///
+    /// <para>
+    /// <b>Está medido lo que hace hoy .NET</b>: una entrada marcada como enlace se extrae como un
+    /// fichero normal con la ruta dentro, no como un enlace. O sea que el ataque clásico —una
+    /// carpeta enlazada y luego un fichero «dentro» de ella— no funciona con este extractor. Esta
+    /// comprobación no tapa un agujero abierto: <b>quita la dependencia de que eso siga siendo
+    /// verdad</b> en la próxima versión de .NET, que es una promesa que nadie nos ha hecho.
+    /// </para>
+    /// <para>
+    /// Y la otra mitad de la prueba es esa medición, escrita como comprobación: si algún día .NET
+    /// empieza a crear enlaces al extraer, esto se pone rojo y nos enteramos.
+    /// </para>
+    /// </summary>
+    private static void UnaEntradaQueSeDiceEnlaceNoEntra()
+    {
+        var basePlug = Path.Combine(Path.GetTempPath(), "ondine-enl-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(basePlug);
+        try
+        {
+            var paquete = ZipConEnlace();
+            var r = Instalador.Instalar(Entrada(paquete), paquete, basePlug);
+
+            Program.Assert(!r.Ok, "un paquete con un enlace dentro no se instala");
+            // Se comprueba que NOMBRA la entrada, no la palabra: el texto se traduce y esta
+            // suite corre en inglés.
+            Program.Assert(r.Motivo is not null && r.Motivo.Contains("eco.sh"),
+                $"y se dice cuál es la entrada culpable ({r.Motivo})");
+            Program.Assert(!Directory.Exists(Path.Combine(basePlug, "eco")),
+                "sin dejar nada puesto");
+        }
+        finally { try { Directory.Delete(basePlug, recursive: true); } catch { } }
+    }
+
+    /// <summary>Un paquete con una entrada marcada como enlace simbólico de Unix.</summary>
+    private static byte[] ZipConEnlace()
+    {
+        using var ms = new MemoryStream();
+        using (var zip = new System.IO.Compression.ZipArchive(
+                   ms, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var (nombre, texto) in new[] { ("plugin.json", Manifiesto("eco.cmd")),
+                                                    ("eco.cmd", "@echo off") })
+            {
+                using var w = new StreamWriter(zip.CreateEntry(nombre).Open());
+                w.Write(texto);
+            }
+
+            var enlace = zip.CreateEntry("eco.sh");
+            enlace.ExternalAttributes = unchecked((int)(0xA1FFu << 16));   // S_IFLNK | 0777
+            using var e = new StreamWriter(enlace.Open());
+            e.Write("/etc/passwd");
+        }
+        return ms.ToArray();
+    }
+
+    /// <summary>La entrada del índice que corresponde a un paquete, con su huella.</summary>
+    private static Indice.Entrada Entrada(byte[] paquete) => new()
+    {
+        Id = "eco", Nombre = "Eco", Version = "1.0.0",
+        Paquete = "https://ejemplo/eco.zip", Sha256 = Indice.Huella(paquete),
+    };
 
     /// <summary>Lo que contesta un ejecutable a <c>--version</c>.</summary>
     private static string Preguntar(string ruta)

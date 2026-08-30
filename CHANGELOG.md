@@ -54,12 +54,25 @@ es un acuerdo de buena voluntad: está verificado.
   macOS esa barra no separa carpetas, así que se buscaba un fichero con un nombre imposible y el
   complemento quedaba descartado por «solo funciona en Windows». Ahora las barras se traducen.
 
+- **En macOS ya se encuentra el Python de Homebrew.** Una aplicación de macOS abierta desde el
+  Finder no hereda tu `PATH`, así que un Python instalado con Homebrew —que es como se instala
+  allí— no aparecía y el complemento se quedaba sin intérprete en una máquina que tiene Python de
+  sobra. Desde el Terminal funcionaba, que es lo que lo hacía difícil de ver.
+
 - **Python se elige comprobando que conteste, no solo que esté.** En Windows suele haber por
   delante en el `PATH` un alias de la Tienda que, sin Python detrás, abre la Tienda en vez de
   ejecutar nada: el complemento parecía en orden y no arrancaba. Ahora se prueban todas las
   apariciones y se coge la primera que conteste de verdad.
 
 ### Seguridad
+
+- **Un paquete de complemento ya no puede llenarte el disco al instalarlo.** La descarga estaba
+  topada a 80 MB, pero eso es el zip: descomprimido no tenía límite, y un paquete preparado —o
+  simplemente mal hecho— podía escribir gigabytes. Ahora hay un cupo de 250 MB y 5.000 ficheros, y
+  se cuenta lo que de verdad se escribe y no lo que el paquete dice que ocupa.
+
+- **Un paquete que trae un enlace dentro ya no se instala.** Un complemento solo puede traer
+  ficheros de verdad.
 
 - **Un enlace dentro de un complemento ya no consigue que Ondine le cambie los permisos a otra
   cosa.** Al dar permiso de ejecución a los scripts, un enlace simbólico se sigue hasta su destino:

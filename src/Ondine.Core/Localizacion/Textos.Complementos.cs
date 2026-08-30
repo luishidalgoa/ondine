@@ -87,6 +87,28 @@ public sealed partial class Textos
         "The package tries to write outside its own folder (\"{0}\"). Nothing has been installed",
         "El paquete intenta escribir fuera de su carpeta («{0}»). No se ha instalado nada");
 
+    /// <summary>
+    /// Un paquete que al descomprimirse ocupa más de lo que se le permite. No hace falta que sea
+    /// un ataque: también lo dispara un complemento que empaquetó sin querer una carpeta enorme.
+    /// El mensaje dice el tope, que es lo accionable.
+    /// </summary>
+    public string InstaladorDemasiadoAlDescomprimir => Idioma.Elegir(
+        "This package expands to more than {0} MB. It has not been installed",
+        "Este paquete ocupa más de {0} MB al descomprimirse. No se ha instalado");
+
+    /// <summary>Demasiados ficheros dentro. Un complemento no trae miles.</summary>
+    public string InstaladorDemasiadosFicheros => Idioma.Elegir(
+        "This package contains more than {0} files. It has not been installed",
+        "Este paquete trae más de {0} ficheros. No se ha instalado");
+
+    /// <summary>
+    /// Una entrada del zip que se declara enlace. Un complemento no necesita traer enlaces, y uno
+    /// que lo intenta está pidiendo escribir donde no le toca.
+    /// </summary>
+    public string InstaladorEntradaEnlace => Idioma.Elegir(
+        "This package contains a link (\"{0}\"). Plugins may only bring real files",
+        "Este paquete trae un enlace («{0}»). Un complemento solo puede traer ficheros de verdad");
+
     public string InstaladorSinManifiesto => Idioma.Elegir(
         "The package brings no plugin.json",
         "El paquete no trae ningún plugin.json");
