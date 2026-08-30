@@ -32,6 +32,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-08-30
+
+### Corregido
+
+- **Organizar ya entiende números compactos como `[Cap.101]`, `[Cap.102]` o `[Cap.205]`.**
+  Dentro de la carpeta de temporada correspondiente se leen como S01E01, S01E02 y S02E05,
+  en vez de tratar todos los nombres como el mismo título débil y marcarlos como duplicados.
+
 ## [1.18.0] - 2026-08-30
 
 ### Corregido

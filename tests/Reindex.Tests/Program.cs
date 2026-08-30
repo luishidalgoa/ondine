@@ -331,6 +331,14 @@ public static class Program
             Eq(esperada, f.Temporada, $"temporada de la carpeta «{carpeta}»");
         }
 
+        f = SignalExtractor.Extract(Path.Combine("Isabel", "Temporada 1",
+            "Isabel - Temporada 1 [HDTV][Cap.102][Español Castellano][www.newpct.com].avi"));
+        Eq(1, f.Temporada, "«Cap.102» toma la temporada de la carpeta");
+        Eq(2, f.Indice, "«Cap.102» significa el episodio 02 de la temporada 1");
+
+        f = SignalExtractor.Extract("Serie [Cap.101].avi", "Descargas");
+        Eq(101, f.Indice, "sin una temporada que lo confirme, Cap.101 sigue siendo el episodio global 101");
+
         f = SignalExtractor.Extract(F(".mkv"), "x");
         Assert(!f.TieneSeñales, "un nombre sin nada no tiene señales");
 
@@ -383,6 +391,7 @@ public static class Program
         var porTemporada = ReindexCatalog.Parse("""
             { "esquema": "reindex/1.0", "serie": "P", "clave": "por_temporada", "episodios": [
               { "num": 1, "temporada": 1, "titulos": { "es": ["Primero"] } },
+              { "num": 2, "temporada": 1, "titulos": { "es": ["Segundo de la primera"] } },
               { "num": 1, "temporada": 2, "titulos": { "es": ["Segundo"] } } ] }
             """);
         Eq("Primero", porTemporada.PorNum(1, 1)!.TituloPrincipal,
@@ -399,6 +408,13 @@ public static class Program
             "el motor identifica S02E01 como el episodio de la segunda temporada");
         Eq("Segundo", resPorTemporada.Episodio?.TituloPrincipal,
             "y no como el E01 de la primera");
+        var capCompacto = ReindexEngine.Resolve(new[]
+        {
+            SignalExtractor.Extract(Path.Combine("Isabel", "Temporada 1",
+                "Isabel - Temporada 1 [HDTV][Cap.102][Español Castellano][www.newpct.com].avi"))
+        }, porTemporada)[0];
+        Eq(2, capCompacto.Episodio?.Num,
+            "Cap.102 empareja con S01E02, no vuelve a proponer S01E01");
         Lanza<ReindexCatalogException>(() => ReindexCatalog.Parse("""
             { "esquema": "reindex/1.0", "serie": "P", "clave": "por_temporada", "episodios": [
               { "num": 1, "temporada": 2 }, { "num": 1, "temporada": 2 } ] }

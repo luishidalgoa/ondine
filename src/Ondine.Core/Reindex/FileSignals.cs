@@ -148,6 +148,13 @@ public static partial class SignalExtractor
     [GeneratedRegex(@"(?<![a-z0-9])(\d{1,2})x(\d{2,3})([a-z]{0,3})(?![a-z0-9])", RegexOptions.IgnoreCase)]
     private static partial Regex RxTemporadaEpisodioX();
 
+    // «[Cap.101]» = temporada 1, episodio 01; «[Cap.205]» = temporada 2, episodio 05.
+    // Es una convención real de nombres de descarga. Solo se descompone cuando el prefijo
+    // coincide con la temporada de la carpeta: fuera de ese contexto, 101 puede ser de verdad
+    // el episodio global 101 y partirlo inventaría información.
+    [GeneratedRegex(@"\[\s*Cap(?:(?:itulo|\u00edtulo))?\.?\s*(\d{3,4})\s*\]", RegexOptions.IgnoreCase)]
+    private static partial Regex RxCapituloCompacto();
+
     // Morralla de descarga: la fuente/release al final del nombre («…AMZN WEB-DL x265 1080p…»).
     // No es parte del título y hundía el parecido contra el catálogo. Se corta desde el PRIMER
     // marcador INEQUÍVOCO —nunca una palabra real de un título—. A propósito NO se incluyen
@@ -211,6 +218,7 @@ public static partial class SignalExtractor
             var dir = System.IO.Path.GetDirectoryName(rutaCompleta);
             carpeta = string.IsNullOrEmpty(dir) ? "" : new System.IO.DirectoryInfo(dir).Name;
         }
+        var temporadaCarpeta = TemporadaDeCarpeta(carpeta);
 
         DateOnly? fecha = null;
         int? indice = null, indiceEspecial = null;
@@ -296,6 +304,22 @@ public static partial class SignalExtractor
             if (mX.Groups[3].Value.Length > 0) subSegmento = mX.Groups[3].Value.ToLowerInvariant();
             resto = TrasElMarcador(resto, mX.Index, mX.Length);
         }
+        else if (RxCapituloCompacto().Match(resto) is { Success: true } mCap)
+        {
+            var escrito = mCap.Groups[1].Value;
+            var prefijo = temporadaCarpeta?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (prefijo is not null && escrito.StartsWith(prefijo, StringComparison.Ordinal)
+                && escrito.Length == prefijo.Length + 2
+                && int.TryParse(escrito[prefijo.Length..], out var episodioLocal))
+            {
+                indice = episodioLocal;
+            }
+            else
+            {
+                indice = int.Parse(escrito, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            resto = resto.Remove(mCap.Index, mCap.Length);
+        }
         else
         {
             var mCor = RxIndiceCorchetes().Match(resto);
@@ -333,7 +357,7 @@ public static partial class SignalExtractor
         //    usa la que trae el propio nombre en «S2012E455». Sin esto, un fichero perfecto
         //    perdía su temporada fuera de su carpeta y se confundía con un REMAKE del mismo
         //    título en otro año (caso «El aro de la gratitud»: 574 de 2020 tomado por el 88 de 2007).
-        int? temporada = TemporadaDeCarpeta(carpeta) ?? temporadaNombre;
+        int? temporada = temporadaCarpeta ?? temporadaNombre;
 
         // 5. lo que queda es el título; los trozos si venía multi-segmento
         var titulo = LimpiarTitulo(resto);
