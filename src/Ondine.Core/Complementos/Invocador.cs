@@ -33,10 +33,6 @@ public static class Invocador
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
     };
 
-    private static bool EsPorLotes(string ruta) =>
-        ruta.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
-        ruta.EndsWith(".bat", StringComparison.OrdinalIgnoreCase);
-
     /// <summary>
     /// Un argumento tal y como hay que dárselo a un fichero por lotes.
     ///
@@ -74,7 +70,31 @@ public static class Invocador
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken corte = default,
         PuenteDelModelo? modelo = null)
     {
-        var psi = new ProcessStartInfo(quien.RutaEjecutable)
+        // QUÉ se ejecuta lo decide la resolución, que sabe de sistemas: en Windows el .cmd
+        // declarado, en Unix el .sh de al lado, o el intérprete con el .py delante. Aquí solo se
+        // arranca lo que diga.
+        var arranque = quien.ComoArrancar();
+        if (arranque.Reparo is not null)
+        {
+            yield return new Mensaje
+            {
+                Tipo = Mensaje.TipoError,
+                MensajeError = string.Format(Textos.Instancia.ComplementoNoArranca,
+                    quien.Nombre, arranque.Reparo),
+            };
+            yield break;
+        }
+
+        // Y el permiso de ejecución, JUSTO ANTES de lanzarlo. Un .sh salido de un .zip hecho en
+        // Windows llega sin él: está donde tiene que estar, con el contenido correcto, y el
+        // sistema contesta «permission denied». Se pone aquí además de al instalar porque un
+        // complemento también se copia a mano, y ahí no pasa por el instalador.
+        //
+        // Solo cuando se ejecuta ÉL. Si va por intérprete, el programa es el intérprete —fuera de
+        // la carpeta del complemento— y ahí no se tocan permisos de nada.
+        if (arranque.Antes.Count == 0) Permisos.AsegurarEjecutable(arranque.Programa);
+
+        var psi = new ProcessStartInfo(arranque.Programa)
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -102,7 +122,9 @@ public static class Invocador
             StandardInputEncoding = new System.Text.UTF8Encoding(false),
         };
 
-        var todos = quien.Argumentos.Append(comando).Concat(argumentos);
+        // «Antes» va primero de todo: es el script que el intérprete tiene que abrir, y detrás
+        // van los argumentos fijos del complemento y su subcomando.
+        var todos = arranque.Antes.Concat(quien.Argumentos).Append(comando).Concat(argumentos);
 
         // Un fichero por lotes NO recibe los argumentos como un programa normal:
         // van por cmd.exe, y ahí «&» separa órdenes. La URL de una lista de
@@ -111,7 +133,7 @@ public static class Invocador
         //
         // Y ahí está lo serio: si un «&» cuela una orden, la cuela igual una
         // fuente escrita a mala idea. Entrecomillar no es para que se vea bien.
-        if (EsPorLotes(quien.RutaEjecutable))
+        if (arranque.PorLotes)
             psi.Arguments = string.Join(' ', todos.Select(ParaLote));
         else
             foreach (var a in todos) psi.ArgumentList.Add(a);

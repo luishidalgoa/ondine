@@ -32,6 +32,23 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Los complementos ya funcionan en Linux y en macOS.** Un complemento se escribe casi siempre en
+  Windows y declara un `.cmd`, que fuera de Windows no es un programa: el sistema contestaba
+  «permission denied» y el complemento aparecía instalado, en su sitio, sin arrancar nunca. Ahora
+  Ondine mira qué hay al lado —un `.sh` con el mismo nombre, o un `.py`, que se ejecuta con el
+  intérprete— y arranca eso, sin que el manifiesto tenga que decir nada. Y le pone el permiso de
+  ejecución a los scripts, que un `.zip` no lo guarda: el script salía de la instalación sin poder
+  lanzarse. Si aun así no hay nada que ejecutar aquí, el complemento se descarta **diciendo qué le
+  falta** en vez de morirse al pulsarlo.
+
+### Añadido
+
+- **`ejecutable_linux` y `ejecutable_macos` en el manifiesto de un complemento.** Opcionales: para
+  el caso normal no hacen falta. Son para el complemento que trae un programa distinto de verdad
+  —un binario compilado por plataforma—, no para el envoltorio de tres líneas de siempre.
+
 ## [1.16.0] - 2026-08-26
 
 ### Añadido

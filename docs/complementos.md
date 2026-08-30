@@ -58,6 +58,8 @@ puede escribir en lo que sea. Lo que se paga: hay que hablar por texto.
 | Campo | Qué es |
 |---|---|
 | `ejecutable` | **Relativo a su carpeta.** Una ruta absoluta deja de funcionar en cuanto la carpeta se copia a otro equipo, que es lo que se hace para compartirla. |
+| `ejecutable_linux` | Opcional. El programa en Linux, cuando el general no vale. Para el caso normal **no hace falta** — ver «El mismo complemento en los tres sistemas». |
+| `ejecutable_macos` | Opcional. Lo mismo para macOS. Sin declararlo, macOS sigue el camino general. |
 | `argumentos` | Opcional. Van siempre delante del subcomando. |
 | `capacidades` | Qué sabe hacer. Hoy: `importar` (leer una fuente y cotejarla con el catálogo) y `descargar` (traer ficheros al disco). Se **declara** en vez de deducirse llamándolo: abrir el menú no puede lanzar un proceso por cada complemento instalado. |
 
@@ -91,6 +93,41 @@ El defecto es `propia` a propósito: un complemento que reordena la pantalla de
 quien lo instala tiene que ser una decisión consciente, no lo que pasa por no
 escribir un campo.
 
+### El mismo complemento en los tres sistemas
+
+Un complemento se escribe casi siempre en Windows y declara `"ejecutable": "algo.cmd"`.
+En Linux y en macOS eso **no es un programa**: el sistema contesta «permission denied»
+—o «exec format error», que se entiende aún menos— y el complemento aparece instalado,
+en su sitio, sin arrancar.
+
+Así que Ondine resuelve qué ejecutar **según dónde corre**, y en el caso normal el
+manifiesto no tiene que decir nada:
+
+1. Si el sistema tiene su campo (`ejecutable_linux`, `ejecutable_macos`), manda ese.
+2. Si no, manda `ejecutable`.
+3. Y si en Unix eso es un `.cmd` o un `.bat`, se busca **al lado y con el mismo nombre**
+   un `.sh` —que gana— o un `.py`.
+
+> **Por qué esto y no un campo obligatorio por sistema.** El patrón normal es un
+> envoltorio `.cmd` de tres líneas que llama a un script donde está todo el trabajo —el
+> ejemplo de YouTube que trae Ondine es exactamente eso—. Obligar a repetir el mismo
+> arranque tres veces para el caso de siempre convierte una regla en papeleo. Los campos
+> por sistema son para el complemento que trae un programa **distinto de verdad**: un
+> binario compilado por plataforma.
+
+**Un `.py` se ejecuta con el intérprete**, en los tres sistemas. No es lo mismo que un
+`.sh`: en Unix haría falta que trajera almohadilla-bang y en Windows depende de una
+asociación de ficheros que aquí no se usa. Se busca `python3` y luego `python` en el
+`PATH`; si no está ninguno, el complemento queda descartado diciendo justo eso —el
+arreglo es instalar Python, no tocar el complemento—.
+
+**El bit de ejecución se pone solo.** Un `.zip` no guarda permisos de Unix —y menos uno
+hecho en Windows—, así que el `.sh` sale de la instalación sin poder lanzarse: en su
+sitio, con el contenido bueno, y «permission denied» al pulsar. Ondine se lo pone al
+instalar y otra vez justo antes de arrancarlo, que es lo que cubre al complemento
+copiado a mano. Se lo pone **a los `.sh` y a su propio programa**, no a todo lo
+extraído: un `.json` de datos no se ejecuta.
+
 ### Lo que se rechaza, y por qué
 
 Un manifiesto no entra si:
@@ -98,7 +135,12 @@ Un manifiesto no entra si:
 - **Su ejecutable apunta fuera de su carpeta.** No es un complemento mal escrito:
   es uno pidiendo ejecutar cualquier cosa del disco. Se comprueba sobre la ruta
   ya resuelta, porque `../../Windows/System32/cmd.exe` solo se ve por lo que es
-  después de combinarla.
+  después de combinarla. **Vale para los tres campos y se comprueba en los tres
+  sistemas**: un `ejecutable_linux` que se sale colaría en Windows —donde ese campo ni
+  se mira— y el mismo paquete quedaría aceptado en una máquina y rechazado en otra.
+- **No hay nada que ejecutar en este sistema.** Un `.cmd` sin `.sh` ni `.py` al lado,
+  visto desde Linux, se descarta **diciendo qué falta**: «no funciona aquí» dejaría a su
+  autor sin nada que hacer, y lo que hay que hacer son tres líneas de script.
 - Declara un **modo que no existe**. No se ignora en silencio: el complemento no
   saldría en ninguna parte y su autor lo daría por instalado. Callarlo convierte
   una errata en un fantasma.

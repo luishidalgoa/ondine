@@ -162,6 +162,7 @@ public static class Program
         Ondine.Reindex.Tests.ComprimirPorMcpTests.Todas();
         Ondine.Reindex.Tests.PartirPorMcpTests.Todas();
         Ondine.Reindex.Tests.OrganizarPorMcpTests.Todas();
+        Ondine.Reindex.Tests.ComplementoMultiplataformaTests.Todas();
         Ondine.Reindex.Tests.PreferenciasPorMcpTests.Todas();
         Ondine.Reindex.Tests.ElMcpNoSeQuedaAtrasTests.Todas();
 
