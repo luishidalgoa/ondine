@@ -32,7 +32,7 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
-## [1.19.0] - 2026-08-30
+## [1.18.1] - 2026-08-30
 
 ### Corregido
 
