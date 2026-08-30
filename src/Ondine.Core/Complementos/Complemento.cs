@@ -200,7 +200,7 @@ public sealed class Complemento
     /// </summary>
     public Arranque ComoArrancar() => Arranque.Resolver(
         Ejecutable, EjecutableLinux, EjecutableMacos, Carpeta,
-        Arranque.Actual, File.Exists, Arranque.EnLaRuta);
+        Arranque.Actual, File.Exists, Arranque.Interprete);
 
     public bool Puede(string capacidad) =>
         Capacidades.Contains(capacidad, StringComparer.OrdinalIgnoreCase);

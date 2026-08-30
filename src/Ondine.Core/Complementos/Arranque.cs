@@ -38,8 +38,39 @@ public sealed record Arranque(
     bool PorLotes,
     string? Reparo)
 {
-    /// <summary>Los intérpretes que se prueban, en orden, para un <c>.py</c>.</summary>
-    private static readonly string[] Pythons = ["python3", "python"];
+    /// <summary>
+    /// Los intérpretes que se prueban, en orden, para un <c>.py</c>.
+    ///
+    /// <para>
+    /// En Windows se prueba <c>python</c> antes que <c>python3</c> porque una instalación normal
+    /// —la de python.org— deja <c>python.exe</c> en el PATH y no <c>python3.exe</c>: el
+    /// <c>python3</c> que aparece suele ser el alias de la Tienda. Fuera de Windows es al revés,
+    /// donde <c>python</c> a secas puede seguir siendo el 2.
+    /// </para>
+    /// </summary>
+    private static string[] Pythons => OperatingSystem.IsWindows()
+        ? ["python", "python3"]
+        : ["python3", "python"];
+
+    /// <summary>
+    /// La ruta relativa de un manifiesto, con las barras puestas de forma que signifiquen lo
+    /// mismo en todas partes.
+    ///
+    /// <para>
+    /// <b>Un manifiesto se escribe en Windows</b>, y ahí las dos barras separan carpetas. En Unix
+    /// la invertida <b>no separa nada</b>: es un carácter más del nombre. Así que
+    /// <c>"sub\\app.cmd"</c> visto desde Linux no es un fichero dentro de <c>sub</c>, es un
+    /// fichero llamado literalmente <c>«sub\app.cmd»</c> — y el hermano que se buscaba al lado
+    /// era otro invento igual, en la raíz, que no existía. El complemento quedaba descartado por
+    /// «solo funciona en Windows» cuando lo que pasaba era que nadie había traducido la barra.
+    /// </para>
+    /// <para>
+    /// El precio: un fichero de Unix que llevara una barra invertida <b>en el nombre</b> —legal,
+    /// aunque nadie lo hace— dejaría de encontrarse. Frente a que no funcione ningún manifiesto
+    /// escrito en Windows con subcarpetas, el cambio está claro.
+    /// </para>
+    /// </summary>
+    public static string Normalizar(string? relativa) => (relativa ?? "").Replace('\\', '/');
 
     /// <summary>El sistema donde corre ahora mismo la aplicación.</summary>
     public static So Actual =>
@@ -54,10 +85,17 @@ public sealed record Arranque(
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string?> Sabidos = new();
 
     /// <summary>
-    /// Dónde está un programa del PATH, o <c>null</c> si no está. En Windows prueba también las
-    /// extensiones de <c>PATHEXT</c>, que es como lo resuelve el sistema.
+    /// <b>Todas</b> las apariciones de un programa en el PATH, en el orden del PATH. En Windows
+    /// prueba también las extensiones de <c>PATHEXT</c>, que es como lo resuelve el sistema.
+    ///
+    /// <para>
+    /// Todas y no la primera, y esto importa: en Windows el PATH de un usuario suele traer
+    /// <c>WindowsApps</c> por delante de la instalación de verdad, y ahí vive un alias de la
+    /// Tienda que puede no ejecutar nada. Quedándose con la primera, se elige ese y no se llega
+    /// nunca al Python que sí está instalado unas carpetas más allá.
+    /// </para>
     /// </summary>
-    public static string? EnLaRuta(string programa) => Sabidos.GetOrAdd(programa, static quien =>
+    public static IEnumerable<string> TodosEnLaRuta(string programa)
     {
         var extensiones = OperatingSystem.IsWindows()
             ? (Environment.GetEnvironmentVariable("PATHEXT") ?? ".EXE;.CMD;.BAT")
@@ -69,16 +107,74 @@ public sealed record Arranque(
         {
             foreach (var ext in extensiones)
             {
+                string? candidato = null;
                 try
                 {
-                    var candidato = Path.Combine(carpeta.Trim('"'), quien + ext);
-                    if (File.Exists(candidato)) return candidato;
+                    var c = Path.Combine(carpeta.Trim('"'), programa + ext);
+                    if (File.Exists(c)) candidato = c;
                 }
                 catch { /* una carpeta del PATH con caracteres imposibles no para la búsqueda */ }
+
+                if (candidato is not null) yield return candidato;
             }
         }
+    }
+
+    /// <summary>
+    /// Dónde está un intérprete de Python que <b>de verdad conteste</b>, o <c>null</c>.
+    ///
+    /// <para>
+    /// <b>No vale con encontrarlo.</b> En Windows, <c>WindowsApps</c> trae alias de la Tienda para
+    /// <c>python.exe</c> y <c>python3.exe</c> que pesan cero bytes: si hay Python detrás, arrancan
+    /// Python; si no lo hay, abren la Tienda y el complemento no se ejecuta nunca. Y no se pueden
+    /// distinguir mirándolos — se midió: en la máquina donde se escribió esto, el alias pesa 0 y
+    /// es un punto de reanálisis, <b>y contesta «Python 3.14.3»</b>. Así que descartarlos por el
+    /// tamaño habría roto una instalación que funciona.
+    /// </para>
+    /// <para>
+    /// Lo único que separa a uno bueno de uno malo es <b>preguntárselo</b>: se le pide la versión
+    /// y se mira si contesta. Cuesta un proceso, una vez, y se recuerda.
+    /// </para>
+    /// </summary>
+    public static string? Interprete(string programa) => Sabidos.GetOrAdd(programa, static quien =>
+        ElQueContesta(TodosEnLaRuta(quien), Contesta));
+
+    /// <summary>
+    /// El primero de la lista que conteste. La decisión, aparte de ejecutar nada, para poder
+    /// comprobarla sin depender de qué haya instalado en la máquina que corre las pruebas.
+    /// </summary>
+    public static string? ElQueContesta(IEnumerable<string> candidatos, Func<string, bool> contesta)
+    {
+        foreach (var c in candidatos)
+            if (contesta(c))
+                return c;
         return null;
-    });
+    }
+
+    /// <summary>¿Este ejecutable contesta a <c>--version</c> diciendo que es Python?</summary>
+    private static bool Contesta(string ruta)
+    {
+        try
+        {
+            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ruta)
+            {
+                ArgumentList = { "--version" },
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+            if (p is null) return false;
+
+            // Con tope: el alias de la Tienda sin nada detrás abre una ventana y se queda ahí, y
+            // esto se llama mientras se pinta una lista.
+            var dijo = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
+            if (!p.WaitForExit(5000)) { try { p.Kill(entireProcessTree: true); } catch { } return false; }
+
+            return p.ExitCode == 0 && dijo.Contains("Python", StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    }
 
     public static bool EsPorLotes(string ruta) =>
         ruta.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
@@ -110,6 +206,13 @@ public sealed record Arranque(
         // ejecutando en cualquier sistema, no solo el que toca: un «ejecutable_linux» que apunta a
         // «../../../bin/sh» colaría en Windows —donde ese campo ni se mira— y el mismo paquete
         // quedaría aceptado en una máquina y rechazado en otra.
+        // Las barras, lo primero de todo: lo que venga después trabaja sobre rutas que significan
+        // lo mismo aquí y allí. Hacerlo más tarde deja a la comprobación de contención mirando una
+        // ruta y a la búsqueda del hermano mirando otra.
+        ejecutable = Normalizar(ejecutable);
+        paraLinux = Normalizar(paraLinux);
+        paraMac = Normalizar(paraMac);
+
         var suya = Path.GetFullPath(carpeta) + Path.DirectorySeparatorChar;
         foreach (var declarado in new[] { ejecutable, paraLinux, paraMac })
         {
@@ -179,11 +282,27 @@ public sealed record Arranque(
     private static string Primero(string? suyo, string general) =>
         string.IsNullOrWhiteSpace(suyo) ? general : suyo;
 
-    /// <summary>El mismo nombre con otra extensión, respetando la carpeta relativa que traiga.</summary>
-    private static string Cambiar(string relativa, string extension)
+    /// <summary>
+    /// El mismo nombre con otra extensión, respetando la carpeta relativa que traiga.
+    ///
+    /// <para>
+    /// Se parte a mano por la barra en vez de usar <c>Path.GetDirectoryName</c> a propósito: esos
+    /// métodos aplican las reglas del sistema <b>donde corre el proceso</b>, no las del sistema
+    /// para el que se está resolviendo. Con ellos, resolver «para Linux» desde Windows daba un
+    /// resultado y desde Linux otro — y entonces la función deja de ser pura y las pruebas dejan
+    /// de valer para las dos, que era justo lo que se quería.
+    /// </para>
+    /// </summary>
+    public static string Cambiar(string relativa, string extension)
     {
-        var carpeta = Path.GetDirectoryName(relativa) ?? "";
-        var nombre = Path.GetFileNameWithoutExtension(relativa) + extension;
-        return carpeta.Length == 0 ? nombre : Path.Combine(carpeta, nombre);
+        var limpia = Normalizar(relativa);
+        var barra = limpia.LastIndexOf('/');
+        var carpeta = barra < 0 ? "" : limpia[..(barra + 1)];
+        var hoja = barra < 0 ? limpia : limpia[(barra + 1)..];
+
+        var punto = hoja.LastIndexOf('.');
+        var sinExtension = punto <= 0 ? hoja : hoja[..punto];
+
+        return carpeta + sinExtension + extension;
     }
 }
