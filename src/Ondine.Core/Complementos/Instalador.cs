@@ -163,7 +163,7 @@ public static class Instalador
     /// </summary>
     public static IEnumerable<string> AQuienDarPermiso(string carpeta, Complemento c)
     {
-        foreach (var sh in Directory.EnumerateFiles(carpeta, "*.sh", SearchOption.AllDirectories))
+        foreach (var sh in Guiones(carpeta))
             yield return sh;
 
         // Y el suyo, se llame como se llame: un binario compilado sin extensión no lo caza
@@ -172,6 +172,41 @@ public static class Instalador
         var arranque = c.ComoArrancar();
         if (arranque.Reparo is null && arranque.Antes.Count == 0)
             yield return arranque.Programa;
+    }
+
+    /// <summary>
+    /// Los <c>.sh</c> de la carpeta, <b>sin entrar por enlaces</b>.
+    ///
+    /// <para>
+    /// <c>Directory.EnumerateFiles</c> con <c>AllDirectories</c> entra por las carpetas
+    /// enlazadas. Un complemento que trajera dentro un enlace a otro sitio del disco haría que
+    /// esta lista devolviera ficheros de fuera de su carpeta — y a esos se les iba a dar permiso
+    /// de ejecución. Que hoy el extractor no cree enlaces al descomprimir no cierra el hueco: un
+    /// complemento también se copia a mano, y la carpeta es de quien la tenga.
+    /// </para>
+    /// <para>
+    /// Se recorre a mano por eso: para poder <b>no</b> entrar.
+    /// </para>
+    /// </summary>
+    private static IEnumerable<string> Guiones(string carpeta)
+    {
+        IEnumerable<string> hijos;
+        try { hijos = Directory.EnumerateFileSystemEntries(carpeta); }
+        catch { yield break; }
+
+        foreach (var hijo in hijos)
+        {
+            if (Permisos.EsEnlace(hijo)) continue;
+
+            if (Directory.Exists(hijo))
+            {
+                foreach (var dentro in Guiones(hijo)) yield return dentro;
+            }
+            else if (hijo.EndsWith(".sh", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return hijo;
+            }
+        }
     }
 
     private static Resultado Fallar(string temporal, string motivo)

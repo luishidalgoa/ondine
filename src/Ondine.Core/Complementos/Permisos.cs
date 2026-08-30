@@ -33,11 +33,36 @@ public static class Permisos
         {
             if (!File.Exists(ruta)) return;
 
+            // UN ENLACE NO SE TOCA. «chmod» sigue el enlace y cambia los permisos del OTRO
+            // fichero: un complemento que trajera dentro un enlace a algo del sistema conseguiría
+            // que Ondine le pusiera permiso de ejecución a lo apuntado, con los permisos de quien
+            // corre la aplicación. Nadie lo vería, y no haría falta ni engañar a nadie: basta con
+            // que el enlace esté en la carpeta.
+            if (EsEnlace(ruta)) return;
+
             var modo = File.GetUnixFileMode(ruta);
             var quiere = ConEjecucion(modo);
             if (quiere != modo) File.SetUnixFileMode(ruta, quiere);
         }
         catch { /* un permiso que no se puede tocar se verá al arrancar, con su mensaje */ }
+    }
+
+    /// <summary>
+    /// ¿Esto es un enlace —simbólico o de los de Windows— en vez de un fichero de verdad?
+    ///
+    /// <para>
+    /// Se mira por los atributos y no resolviendo el destino, porque lo que importa aquí no es a
+    /// dónde apunta: es que apunte a alguna parte. Un enlace que apunta dentro de la misma
+    /// carpeta tampoco hay que tocarlo — el fichero de verdad ya se toca por su nombre.
+    /// </para>
+    /// <para>
+    /// Si no se puede ni mirar, se dice que sí. Ante la duda, no tocar.
+    /// </para>
+    /// </summary>
+    public static bool EsEnlace(string ruta)
+    {
+        try { return new FileInfo(ruta).Attributes.HasFlag(FileAttributes.ReparsePoint); }
+        catch { return true; }
     }
 
     /// <summary>

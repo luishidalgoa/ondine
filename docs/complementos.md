@@ -115,11 +115,26 @@ manifiesto no tiene que decir nada:
 > por sistema son para el complemento que trae un programa **distinto de verdad**: un
 > binario compilado por plataforma.
 
+**Las barras del manifiesto dan igual.** Un `"ejecutable": "sub\\app.cmd"` escrito en Windows
+vale en Linux y en macOS: la barra invertida se traduce antes de nada. Sin eso, en Unix esa barra
+**no separa carpetas** —es un carácter más del nombre— y el complemento quedaba descartado por
+«solo funciona en Windows» cuando lo único que pasaba era que nadie había traducido la barra. El
+precio: un fichero de Unix con una barra invertida *en el nombre* —legal, aunque nadie lo hace— no
+se encontraría.
+
 **Un `.py` se ejecuta con el intérprete**, en los tres sistemas. No es lo mismo que un
 `.sh`: en Unix haría falta que trajera almohadilla-bang y en Windows depende de una
-asociación de ficheros que aquí no se usa. Se busca `python3` y luego `python` en el
-`PATH`; si no está ninguno, el complemento queda descartado diciendo justo eso —el
-arreglo es instalar Python, no tocar el complemento—.
+asociación de ficheros que aquí no se usa. Se buscan **todas** las apariciones de
+`python`/`python3` en el `PATH` y se coge **la primera que conteste** a `--version`; si no contesta
+ninguna, el complemento queda descartado diciendo justo eso —el arreglo es instalar Python, no
+tocar el complemento—.
+
+> **Por qué se le pregunta en vez de mirarlo.** En Windows, la carpeta `WindowsApps` suele ir por
+> delante en el `PATH` y trae alias de la Tienda para `python.exe` y `python3.exe`. Pesan **cero
+> bytes**: si hay Python detrás, arrancan Python; si no, abren la Tienda y el complemento no se
+> ejecuta nunca. No se distinguen mirándolos —se midió: un alias de cero bytes contestó «Python
+> 3.14.3»—, así que descartarlos por el tamaño rompería instalaciones que funcionan. Lo único que
+> separa a uno bueno de uno malo es preguntárselo.
 
 **El bit de ejecución se pone solo.** Un `.zip` no guarda permisos de Unix —y menos uno
 hecho en Windows—, así que el `.sh` sale de la instalación sin poder lanzarse: en su
@@ -127,6 +142,11 @@ sitio, con el contenido bueno, y «permission denied» al pulsar. Ondine se lo p
 instalar y otra vez justo antes de arrancarlo, que es lo que cubre al complemento
 copiado a mano. Se lo pone **a los `.sh` y a su propio programa**, no a todo lo
 extraído: un `.json` de datos no se ejecuta.
+
+**Y nunca a un enlace.** `chmod` sigue el enlace y cambia los permisos del *otro* fichero, así que
+un complemento que trajera dentro un enlace a algo del sistema conseguiría que Ondine le pusiera
+permiso de ejecución a lo apuntado. Ni se les da permiso ni se entra por las carpetas enlazadas al
+buscar los `.sh`.
 
 ### Lo que se rechaza, y por qué
 

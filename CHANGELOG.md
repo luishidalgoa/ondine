@@ -32,6 +32,12 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **`ejecutable_linux` y `ejecutable_macos` en el manifiesto de un complemento.** Opcionales: para
+  el caso normal no hacen falta. Son para el complemento que trae un programa distinto de verdad
+  —un binario compilado por plataforma—, no para el envoltorio de tres líneas de siempre.
+
 ### Corregido
 
 - **Los complementos ya funcionan en Linux y en macOS.** Un complemento se escribe casi siempre en
@@ -43,11 +49,22 @@ es un acuerdo de buena voluntad: está verificado.
   lanzarse. Si aun así no hay nada que ejecutar aquí, el complemento se descarta **diciendo qué le
   falta** en vez de morirse al pulsarlo.
 
-### Añadido
+- **Un complemento con su programa en una subcarpeta ya funciona fuera de Windows.** Si el
+  manifiesto lo escribía con la barra de Windows —`sub\app.cmd`, que es lo normal—, en Linux y en
+  macOS esa barra no separa carpetas, así que se buscaba un fichero con un nombre imposible y el
+  complemento quedaba descartado por «solo funciona en Windows». Ahora las barras se traducen.
 
-- **`ejecutable_linux` y `ejecutable_macos` en el manifiesto de un complemento.** Opcionales: para
-  el caso normal no hacen falta. Son para el complemento que trae un programa distinto de verdad
-  —un binario compilado por plataforma—, no para el envoltorio de tres líneas de siempre.
+- **Python se elige comprobando que conteste, no solo que esté.** En Windows suele haber por
+  delante en el `PATH` un alias de la Tienda que, sin Python detrás, abre la Tienda en vez de
+  ejecutar nada: el complemento parecía en orden y no arrancaba. Ahora se prueban todas las
+  apariciones y se coge la primera que conteste de verdad.
+
+### Seguridad
+
+- **Un enlace dentro de un complemento ya no consigue que Ondine le cambie los permisos a otra
+  cosa.** Al dar permiso de ejecución a los scripts, un enlace simbólico se sigue hasta su destino:
+  bastaba con dejar uno en la carpeta para que la aplicación le pusiera permiso de ejecución a lo
+  apuntado. Ni se tocan los enlaces ni se entra por las carpetas enlazadas.
 
 ## [1.16.0] - 2026-08-26
 

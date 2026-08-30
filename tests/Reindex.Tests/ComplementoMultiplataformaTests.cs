@@ -27,6 +27,10 @@ public static class ComplementoMultiplataformaTests
         Program.Seccion("Complementos en Linux y macOS");
 
         ElCmdNoSeEjecutaEnUnix();
+        LasBarrasDeWindowsEnUnix();
+        ElHermanoSeCalculaIgualEnTodasPartes();
+        ElInterpreteHayQuePreguntarselo();
+        UnEnlaceNoSeToca();
         LosCamposPorSistema();
         LoQueNoSePuedeArrancar();
         NoSeSaleDeSuCarpeta();
@@ -76,6 +80,197 @@ public static class ComplementoMultiplataformaTests
         var mac = Arranque.Resolver("youtube.cmd", null, null, "/plug", So.Mac, hay, ConPython);
         Program.Assert(mac.Reparo is null && mac.Programa == "/usr/bin/python3",
             $"y en macOS lo mismo ({Dice(mac)})");
+    }
+
+    /// <summary>
+    /// Un manifiesto escrito en Windows pone <c>"sub\\app.cmd"</c>, con barra invertida. En Unix esa
+    /// barra <b>no separa carpetas</b>: es un carácter más del nombre.
+    ///
+    /// <para>
+    /// Y eso no daba un error claro. <c>Path.GetDirectoryName("sub\\app.cmd")</c> en Linux devuelve
+    /// cadena vacía y el nombre sin extensión sale como <c>«sub\\app»</c>, así que el hermano que se
+    /// buscaba era un fichero llamado literalmente <c>«sub\\app.sh»</c> en la raíz — que no existe. El
+    /// complemento quedaba descartado por «solo funciona en Windows» cuando lo que pasaba era que
+    /// nadie había traducido la barra.
+    /// </para>
+    /// </summary>
+    private static void LasBarrasDeWindowsEnUnix()
+    {
+        var hay = Hay("/plug/sub/app.cmd", "/plug/sub/app.sh", "/plug/sub/app.py");
+
+        var lin = Arranque.Resolver("sub\\app.cmd", null, null, "/plug", So.Linux, hay, ConPython);
+        Program.Assert(lin.Reparo is null, $"la barra invertida no impide arrancar en Linux ({lin.Reparo})");
+        Program.Assert(Fin(lin.Programa) == "sub/app.sh",
+            $"y el hermano se busca EN SU CARPETA, no en la raíz ({Fin(lin.Programa)})");
+
+        // Con barra normal tiene que dar exactamente lo mismo: son el mismo manifiesto escrito por
+        // dos personas distintas.
+        var conBarra = Arranque.Resolver("sub/app.cmd", null, null, "/plug", So.Linux, hay, ConPython);
+        Program.Assert(Fin(conBarra.Programa) == "sub/app.sh",
+            $"escrito con barra normal, igual ({Fin(conBarra.Programa)})");
+
+        // Y en Windows, donde las dos barras valen, el .cmd de su carpeta.
+        var win = Arranque.Resolver("sub\\app.cmd", null, null, "/plug", So.Windows, hay, ConPython);
+        Program.Assert(Fin(win.Programa) == "sub/app.cmd",
+            $"en Windows se ejecuta el .cmd de su carpeta ({Fin(win.Programa)})");
+
+        // Lo mismo para los campos por sistema: se escriben en el mismo manifiesto y con el mismo
+        // teclado, así que llegan con la misma barra.
+        var porCampo = Arranque.Resolver("x.cmd", "sub\\app.sh", null, "/plug", So.Linux, hay, ConPython);
+        Program.Assert(Fin(porCampo.Programa) == "sub/app.sh",
+            $"«ejecutable_linux» con barra invertida también ({Fin(porCampo.Programa)})");
+    }
+
+    /// <summary>
+    /// El cálculo del hermano, mirado de cerca y <b>sin las reglas del anfitrión</b>.
+    ///
+    /// <para>
+    /// La prueba de arriba —la del manifiesto con barra invertida— solo se pone roja corriendo en
+    /// Linux, porque en Windows la barra invertida sí separa carpetas y el fallo no existe. Esta
+    /// tiene dientes en los dos sitios: mira la función que decide, que ya no le pregunta al
+    /// sistema cómo se parte una ruta.
+    /// </para>
+    /// </summary>
+    private static void ElHermanoSeCalculaIgualEnTodasPartes()
+    {
+        Program.Assert(Arranque.Cambiar("app.cmd", ".sh") == "app.sh",
+            $"en la raíz, el mismo nombre con otra extensión ({Arranque.Cambiar("app.cmd", ".sh")})");
+
+        Program.Assert(Arranque.Cambiar("sub/app.cmd", ".py") == "sub/app.py",
+            $"en una subcarpeta, se queda en su subcarpeta ({Arranque.Cambiar("sub/app.cmd", ".py")})");
+
+        Program.Assert(Arranque.Cambiar("sub" + @"\" + "app.cmd", ".sh") == "sub/app.sh",
+            $"y escrito con la barra de Windows, lo mismo ({Arranque.Cambiar("sub" + @"\" + "app.cmd", ".sh")})");
+
+        Program.Assert(Arranque.Cambiar("a/b/c/hondo.bat", ".sh") == "a/b/c/hondo.sh",
+            $"por hondo que esté ({Arranque.Cambiar("a/b/c/hondo.bat", ".sh")})");
+
+        // Un nombre que empieza por punto no tiene extensión que cambiar: «.cmd» a secas es el
+        // nombre entero. Partirlo dejaría un hermano llamado «.sh», que es otro fichero.
+        Program.Assert(Arranque.Cambiar(".cmd", ".sh") == ".cmd.sh",
+            $"un nombre que es todo extensión no se parte ({Arranque.Cambiar(".cmd", ".sh")})");
+
+        Program.Assert(Arranque.Normalizar("sub" + @"\" + "app.cmd") == "sub/app.cmd",
+            "y la normalización de barras hace lo que dice");
+    }
+
+    /// <summary>
+    /// Al intérprete <b>hay que preguntarle</b>: encontrarlo no basta.
+    ///
+    /// <para>
+    /// <b>Esto se midió, y descartó el arreglo que parecía obvio.</b> En Windows, la carpeta
+    /// <c>WindowsApps</c> del PATH trae alias de la Tienda para <c>python.exe</c> y
+    /// <c>python3.exe</c>. Pesan <b>cero bytes</b> y son puntos de reanálisis, así que la idea de
+    /// descartarlos por el tamaño se cae sola: en la máquina donde se escribió esto, ese alias de
+    /// cero bytes contesta «Python 3.14.3». Descartarlo habría roto una instalación que funciona.
+    /// </para>
+    /// <para>
+    /// Y al revés: en una máquina sin Python, ese mismo alias existe, se encuentra igual, y al
+    /// ejecutarlo abre la Tienda. Lo único que separa a uno del otro es preguntárselo.
+    /// </para>
+    /// </summary>
+    private static void ElInterpreteHayQuePreguntarselo()
+    {
+        // La decisión, con candidatos de mentira: el primero que conteste, no el primero que esté.
+        string[] candidatos = ["/apps/python3", "/usr/bin/python3", "/otro/python3"];
+
+        var elegido = Arranque.ElQueContesta(candidatos, r => r == "/usr/bin/python3");
+        Program.Assert(elegido == "/usr/bin/python3",
+            $"se pasa de largo el que no contesta y se sigue buscando ({elegido})");
+
+        Program.Assert(Arranque.ElQueContesta(candidatos, _ => false) is null,
+            "y si no contesta ninguno, no hay intérprete: no vale con que exista el fichero");
+
+        Program.Assert(Arranque.ElQueContesta(candidatos, _ => true) == "/apps/python3",
+            "contestando todos, manda el orden del PATH");
+
+        // Y el de verdad, en esta máquina: sea cual sea el que salga, tiene que contestar. Si aquí
+        // no hay Python, no hay nada que comprobar y se dice.
+        var suyo = Arranque.Interprete("python3") ?? Arranque.Interprete("python");
+        if (suyo is null)
+        {
+            Program.Assert(true, "sin Python en esta máquina: no se puede comprobar el de verdad");
+            return;
+        }
+
+        var dijo = Preguntar(suyo);
+        Program.Assert(dijo.Contains("Python", StringComparison.OrdinalIgnoreCase),
+            $"el intérprete elegido contesta de verdad: «{dijo.Trim()}» ({suyo})");
+    }
+
+    /// <summary>
+    /// A un enlace no se le tocan los permisos, porque <c>chmod</c> sigue el enlace y los cambia
+    /// en el otro fichero.
+    ///
+    /// <para>
+    /// Un complemento que trajera dentro un enlace a algo del sistema conseguiría que Ondine le
+    /// pusiera permiso de ejecución a lo apuntado, con los permisos de quien corre la aplicación.
+    /// No hace falta engañar a nadie: basta con que el enlace esté en la carpeta.
+    /// </para>
+    /// <para>
+    /// En Windows hacer un enlace pide permisos que esta prueba no tiene por qué tener; si no se
+    /// puede crear, se dice y no se prueba, en vez de dar por buena una comprobación que no se ha
+    /// hecho.
+    /// </para>
+    /// </summary>
+    private static void UnEnlaceNoSeToca()
+    {
+        var carpeta = Path.Combine(Path.GetTempPath(), "ondine-enlace-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(carpeta);
+        try
+        {
+            var victima = Path.Combine(carpeta, "victima.txt");
+            File.WriteAllText(victima, "algo del sistema");
+
+            var enlace = Path.Combine(carpeta, "trampa.sh");
+            try { File.CreateSymbolicLink(enlace, victima); }
+            catch
+            {
+                Program.Assert(true, "no se pueden crear enlaces aquí: la trampa no se puede montar");
+                return;
+            }
+
+            Program.Assert(Permisos.EsEnlace(enlace), "el enlace se reconoce como enlace");
+            Program.Assert(!Permisos.EsEnlace(victima), "y el fichero de verdad, como fichero");
+
+            // Y no entra en el reparto del instalador aunque acabe en .sh.
+            File.WriteAllText(Path.Combine(carpeta, "plugin.json"), Manifiesto("eco.cmd"));
+            File.WriteAllText(Path.Combine(carpeta, "eco.cmd"), "@echo off");
+            File.WriteAllText(Path.Combine(carpeta, "eco.sh"), "#!/bin/sh\n");
+
+            var c = Complemento.Leer(Path.Combine(carpeta, "plugin.json"))!;
+            var elegidos = Instalador.AQuienDarPermiso(carpeta, c).Select(Path.GetFileName).ToList();
+            Program.Assert(!elegidos.Contains("trampa.sh"),
+                $"un enlace con nombre de guion no entra en el reparto ({string.Join(", ", elegidos)})");
+            Program.Assert(elegidos.Contains("eco.sh"),
+                $"y el guion de verdad sí ({string.Join(", ", elegidos)})");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return;
+
+            var antes = File.GetUnixFileMode(victima);
+            Permisos.AsegurarEjecutable(enlace);
+            Program.Assert(File.GetUnixFileMode(victima) == antes,
+                $"y tocando el enlace no cambian los permisos de lo apuntado ({File.GetUnixFileMode(victima)})");
+        }
+        finally { try { Directory.Delete(carpeta, recursive: true); } catch { } }
+    }
+
+    /// <summary>Lo que contesta un ejecutable a <c>--version</c>.</summary>
+    private static string Preguntar(string ruta)
+    {
+        try
+        {
+            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ruta)
+            {
+                ArgumentList = { "--version" },
+                RedirectStandardOutput = true, RedirectStandardError = true,
+                UseShellExecute = false, CreateNoWindow = true,
+            })!;
+            var dijo = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
+            p.WaitForExit(5000);
+            return dijo;
+        }
+        catch (Exception ex) { return "no contestó: " + ex.Message; }
     }
 
     // ── Los campos por sistema ───────────────────────────────────────────────
@@ -426,7 +621,7 @@ public static class ComplementoMultiplataformaTests
     /// </summary>
     private static void UnComplementoDePythonArranca()
     {
-        if (Arranque.EnLaRuta("python3") is null && Arranque.EnLaRuta("python") is null)
+        if (Arranque.Interprete("python3") is null && Arranque.Interprete("python") is null)
         {
             Program.Assert(true, "sin Python en esta máquina: el camino del intérprete no se prueba aquí");
             return;
@@ -500,17 +695,33 @@ public static class ComplementoMultiplataformaTests
     /// Un disco de mentira: existen estos ficheros y ninguno más.
     ///
     /// <para>
-    /// Se compara por NOMBRE y no por ruta entera a propósito. La resolución devuelve rutas del
-    /// sistema donde corre la prueba —«C:\plug\x.cmd» en Windows—, así que compararlas enteras
-    /// haría que estas comprobaciones solo valiesen en Unix, que es justo lo que se quería
-    /// evitar. Todos los ficheros de estas pruebas viven en la misma carpeta.
+    /// Se compara la ruta RELATIVA a la carpeta del complemento, con las barras normalizadas: la
+    /// resolución devuelve rutas del sistema donde corre la prueba —«C:\\plug\\x.cmd» en Windows— y
+    /// compararlas enteras haría que estas comprobaciones solo valiesen en Unix.
+    /// </para>
+    /// <para>
+    /// <b>Antes se comparaba solo el nombre del fichero</b>, y eso daba falsa seguridad: un
+    /// complemento cuyo programa vive en una subcarpeta se resolvía «bien» en la prueba pasara lo
+    /// que pasara con la carpeta, porque la carpeta ni se miraba. La revisión adversarial lo
+    /// señaló y tenía razón: era justo el caso que escondía el fallo de los separadores.
     /// </para>
     /// </summary>
     private static Func<string, bool> Hay(params string[] rutas)
     {
-        var juego = rutas.Select(Path.GetFileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        return r => juego.Contains(Path.GetFileName(r.Replace('\\', '/')));
+        var juego = rutas.Select(Relativa).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return r => juego.Contains(Relativa(r));
     }
+
+    /// <summary>Lo que cuelga de «plug/», con barras de Unix. Es lo que se compara.</summary>
+    private static string Relativa(string ruta)
+    {
+        var limpia = ruta.Replace('\\', '/');
+        var i = limpia.LastIndexOf("plug/", StringComparison.OrdinalIgnoreCase);
+        return i < 0 ? limpia.TrimStart('/') : limpia[(i + 5)..];
+    }
+
+    /// <summary>La cola de una ruta resuelta, para poder compararla en cualquier sistema.</summary>
+    private static string Fin(string ruta) => Relativa(ruta);
 
     /// <summary>Lo que resolvió, o por qué no pudo: para que el mensaje del fallo lo diga.</summary>
     private static string Dice(Arranque a) =>
