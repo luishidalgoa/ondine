@@ -5,8 +5,8 @@ namespace Ondine;
 ///
 /// <para>
 /// En Windows va dentro de la aplicación —el paquete de VideoLAN la trae— y en Linux la trae
-/// el sistema en una ruta donde el cargador la encuentra sola. En los dos casos no hay nada
-/// que decidir.
+/// el sistema, aunque con nombre con versión (<c>libvlc.so.5</c>) que hay que pedir a mano:
+/// ver <see cref="NombresEnLinux"/>. Dónde está no hay que decidirlo.
 /// </para>
 /// <para>
 /// <b>macOS es el caso raro.</b> Un Mac no trae libvlc, y la que se puede tener —la de
@@ -51,6 +51,30 @@ public static class RutaDeLibVlc
         // en vez de decir aquí mismo que falta VLC y cómo se instala.
         return candidatas.FirstOrDefault(existe);
     }
+
+    /// <summary>
+    /// Con qué nombres pedirle al cargador una biblioteca de VLC en Linux, por orden.
+    ///
+    /// <para>
+    /// <b>«El cargador la encuentra sola» era falso, y es lo que dejaba el reproductor muerto
+    /// en Linux con VLC instalado.</b> LibVLCSharp pide <c>libvlc</c> a secas y .NET la busca
+    /// como <c>libvlc.so</c>. Ese nombre sin versión es un enlace que solo crea el paquete de
+    /// desarrollo (<c>libvlc-dev</c>); el paquete <c>vlc</c> trae únicamente
+    /// <c>libvlc.so.5</c> y <c>libvlccore.so.9</c>. Resultado: <c>apt install vlc</c> -lo que
+    /// el propio aviso recomienda- no bastaba, y el fallo salía como «falta VLC» con VLC
+    /// delante.
+    /// </para>
+    /// <para>
+    /// Se prueban primero los nombres con versión, que son los que existen en cualquier
+    /// instalación, y al final el de siempre por si alguien tiene el enlace.
+    /// </para>
+    /// </summary>
+    public static string[] NombresEnLinux(string biblioteca) => biblioteca switch
+    {
+        "libvlc"     => ["libvlc.so.5", "libvlc.so"],
+        "libvlccore" => ["libvlccore.so.9", "libvlccore.so"],
+        _            => [],
+    };
 
     /// <summary>La misma, preguntándole al disco. Es la que usa la app.</summary>
     public static string? EnEsteMac() =>

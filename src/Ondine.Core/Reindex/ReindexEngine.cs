@@ -1,3 +1,4 @@
+using System.Text;
 using Ondine.Localizacion;
 
 namespace Ondine.Reindex;
@@ -219,10 +220,11 @@ public static class ReindexEngine
         IReadOnlyList<FileSignals> archivos,
         ReindexCatalog catalogo,
         IReadOnlyDictionary<string, ReindexOverride>? overrides = null,
-        ModoPrioridad modo = ModoPrioridad.Automatico)
+        ModoPrioridad modo = ModoPrioridad.Automatico,
+        MemoriaDeParecidos? memoria = null)
     {
         overrides ??= new Dictionary<string, ReindexOverride>();
-        var indice = new IndiceTitulos(catalogo);
+        var indice = new IndiceTitulos(catalogo, memoria);
 
         // Cada fichero se resuelve contra un índice de solo lectura, sin mirar a los demás:
         // se puede repartir entre núcleos tal cual. Las reglas de LOTE (deduplicación) van
@@ -1156,27 +1158,75 @@ public static class ReindexEngine
 internal sealed class IndiceTitulos
 {
     private readonly Dictionary<CatalogEpisode, TitleBag[]> _bolsas = new();
+    private readonly IReadOnlyList<CatalogEpisode> _episodios;
+    private readonly MemoriaDeParecidos? _memoria;
 
-    public IndiceTitulos(ReindexCatalog cat)
+    /// <param name="memoria">
+    /// Lo ya calculado en otras vueltas. Solo se usa si es de ESTE catálogo y de este
+    /// algoritmo (la huella coincide): una memoria ajena se ignora entera.
+    /// </param>
+    public IndiceTitulos(ReindexCatalog cat, MemoriaDeParecidos? memoria = null)
     {
+        _episodios = cat.Episodios;
+        foreach (var e in cat.Episodios)
+            _bolsas[e] = BolsasDe(e);
+
+        if (memoria != null && memoria.Episodios == cat.Episodios.Count &&
+            memoria.Huella == HuellaDe(cat))
+            _memoria = memoria;
+    }
+
+    private static TitleBag[] BolsasDe(CatalogEpisode e)
+    {
+        var bolsas = e.TitulosNorm.Select(t => new TitleBag(t)).ToList();
+        // Un fichero puede nombrar las DOS historias JUNTAS, sin separador («Historia A
+        // Historia B»), como las descargas AMZN. Contra un catálogo con las historias
+        // PARTIDAS en títulos sueltos, ese título junto no casaba con ninguno y el parecido
+        // caía a «Revisar» (no aplicable en bloque). Se indexa TAMBIÉN la concatenación de
+        // las historias (idioma de salida, en su orden) para que el título junto case fuerte
+        // sin perder el caso de una sola historia —esa sigue casando su título suelto—.
+        if (e.TitulosSalida.Count > 1)
+        {
+            var unido = TitleMatch.Norm(string.Concat(e.TitulosSalida));
+            if (unido.Length > 0 && !e.TitulosNorm.Contains(unido))
+                bolsas.Add(new TitleBag(unido));
+        }
+        return bolsas.ToArray();
+    }
+
+    /// <summary>
+    /// Resume TODO lo que determina el parecido de un nombre con este catálogo: los títulos
+    /// de cada episodio, en su orden, y cómo se comparan. Si cambia cualquiera de las dos
+    /// cosas la huella cambia y la <see cref="MemoriaDeParecidos"/> vieja deja de valer.
+    ///
+    /// <para>
+    /// El algoritmo entra por lo que DA, no por un número de versión que alguien tendría que
+    /// acordarse de subir: se mide con unos pares fijos, y si tocar <c>Sim</c> cambia una
+    /// sola respuesta, la huella es otra. Lo mismo con el umbral que decide si un trozo casa.
+    /// </para>
+    /// </summary>
+    internal static string HuellaDe(ReindexCatalog cat)
+    {
+        var sb = new StringBuilder();
+        sb.Append("parecidos/1|").Append(TitleMatch.UmbralSegmento.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+        foreach (var (a, b) in SentinelasDelAlgoritmo)
+            sb.Append('|').Append(TitleMatch.Sim(a, b).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
         foreach (var e in cat.Episodios)
         {
-            var bolsas = e.TitulosNorm.Select(t => new TitleBag(t)).ToList();
-            // Un fichero puede nombrar las DOS historias JUNTAS, sin separador («Historia A
-            // Historia B»), como las descargas AMZN. Contra un catálogo con las historias
-            // PARTIDAS en títulos sueltos, ese título junto no casaba con ninguno y el parecido
-            // caía a «Revisar» (no aplicable en bloque). Se indexa TAMBIÉN la concatenación de
-            // las historias (idioma de salida, en su orden) para que el título junto case fuerte
-            // sin perder el caso de una sola historia —esa sigue casando su título suelto—.
-            if (e.TitulosSalida.Count > 1)
-            {
-                var unido = TitleMatch.Norm(string.Concat(e.TitulosSalida));
-                if (unido.Length > 0 && !e.TitulosNorm.Contains(unido))
-                    bolsas.Add(new TitleBag(unido));
-            }
-            _bolsas[e] = bolsas.ToArray();
+            sb.Append('\n');
+            foreach (var b in BolsasDe(e)) sb.Append(b.Text).Append('\u0001');
         }
+        return Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString())));
     }
+
+    private static readonly (string, string)[] SentinelasDelAlgoritmo =
+    [
+        ("private", "pirate"),
+        ("la caja de las fichas predictoras", "las fichas predictoras de la caja"),
+        ("doraemon vuelve a casa", "doraemon nunca volvio a casa"),
+        ("aaaa bbbb aaaa", "bbbb aaaa bbbb aaaa"),
+    ];
 
     /// <summary>
     /// Lo que se sabe de un episodio frente a un fichero. El parecido manda, pero cuando
@@ -1230,11 +1280,53 @@ internal sealed class IndiceTitulos
     internal List<(CatalogEpisode ep, Puntuacion p)> Puntuados(IReadOnlyList<TitleBag> titulos,
         IReadOnlyList<CatalogEpisode> candidatos, int? temporadaArchivo)
     {
+        // El barrido del catálogo ENTERO es lo caro y lo que se recuerda. Un subconjunto
+        // (los especiales, por ejemplo) son pocos episodios y se calcula en el momento.
+        if (_memoria != null && ReferenceEquals(candidatos, _episodios))
+            return PuntuadosRecordados(titulos, temporadaArchivo);
+
         var lista = new List<(CatalogEpisode ep, Puntuacion p)>();
         foreach (var ep in candidatos)
         {
             var p = Puntuar(titulos, ep, temporadaArchivo);
             if (p.Sim > 0) lista.Add((ep, p));
+        }
+        return lista;
+    }
+
+    /// <summary>
+    /// El mismo barrido, pero sacando de la memoria lo que ya se calculó. Lo que se guarda es
+    /// solo lo que NO depende del fichero concreto más que por sus títulos: el parecido y los
+    /// trozos que casan. Que la temporada coincida se mira aquí, cada vez, porque es de la
+    /// vuelta de hoy y no del texto.
+    /// </summary>
+    private List<(CatalogEpisode ep, Puntuacion p)> PuntuadosRecordados(
+        IReadOnlyList<TitleBag> titulos, int? temporadaArchivo)
+    {
+        var clave = MemoriaDeParecidos.ClaveDe(titulos);
+        if (!_memoria!.TryGet(clave, out var parecido, out var casados))
+        {
+            parecido = new double[_episodios.Count];
+            casados = new byte[_episodios.Count];
+            for (int i = 0; i < _episodios.Count; i++)
+            {
+                // Sin títulos que comparar el episodio no puntúa: cero, y el barrido de abajo lo salta.
+                if (!_bolsas.TryGetValue(_episodios[i], out var bolsas) || bolsas.Length == 0) continue;
+
+                var (sim, trozos) = PuntuarCrudo(titulos, bolsas);
+                parecido[i] = sim;
+                casados[i] = (byte)Math.Min(trozos, byte.MaxValue);
+            }
+            _memoria.Add(clave, parecido, casados);
+        }
+
+        var lista = new List<(CatalogEpisode ep, Puntuacion p)>();
+        for (int i = 0; i < _episodios.Count; i++)
+        {
+            if (parecido[i] <= 0) continue;
+            var ep = _episodios[i];
+            lista.Add((ep, new Puntuacion(parecido[i], casados[i],
+                temporadaArchivo.HasValue && ep.Temporada == temporadaArchivo)));
         }
         return lista;
     }
@@ -1262,6 +1354,17 @@ internal sealed class IndiceTitulos
     {
         if (!_bolsas.TryGetValue(ep, out var bolsas) || bolsas.Length == 0) return Puntuacion.Cero;
 
+        var (mejor, casados) = PuntuarCrudo(titulos, bolsas);
+        bool mismaTemp = temporadaArchivo.HasValue && ep.Temporada == temporadaArchivo;
+        return new Puntuacion(mejor, casados, mismaTemp);
+    }
+
+    /// <summary>
+    /// La parte de <see cref="Puntuar"/> que depende solo de los títulos: el mejor parecido y
+    /// cuántos trozos del nombre casan. Es lo que recuerda la <see cref="MemoriaDeParecidos"/>.
+    /// </summary>
+    private static (double mejor, int casados) PuntuarCrudo(IReadOnlyList<TitleBag> titulos, TitleBag[] bolsas)
+    {
         double mejor = 0;
         int casados = 0;
         foreach (var t in titulos)
@@ -1278,9 +1381,7 @@ internal sealed class IndiceTitulos
             // solo explica uno, aunque los dos den 1,00 en su mejor trozo.
             if (mejorDeEste >= TitleMatch.UmbralSegmento) casados++;
         }
-
-        bool mismaTemp = temporadaArchivo.HasValue && ep.Temporada == temporadaArchivo;
-        return new Puntuacion(mejor, casados, mismaTemp);
+        return (mejor, casados);
     }
 
     /// <summary>Score de UN episodio concreto contra los títulos dados.</summary>

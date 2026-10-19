@@ -122,6 +122,16 @@ public static partial class TitleMatch
     /// Similitud 0..1 entre dos cadenas YA normalizadas, equivalente a
     /// <c>difflib.SequenceMatcher(None, a, b).ratio()</c> de Python (Ratcliff-Obershelp):
     /// 2·M/T, con M = suma de los bloques coincidentes hallados recursivamente.
+    ///
+    /// <para>
+    /// <b>Sin reservar memoria.</b> La primera versión armaba el «b2j» de difflib -un
+    /// diccionario de listas- en cada llamada y, dentro, un diccionario nuevo por cada
+    /// carácter de «a». Una simulación llama a esto millones de veces (cada fichero contra
+    /// cada episodio del catálogo): sobre los 1.413 ficheros de una serie larga eran ~30 s,
+    /// casi todos en el recolector de basura. Ahora el mismo cálculo corre sobre dos filas
+    /// de enteros en la pila. El resultado es EL MISMO, bit a bit —misma búsqueda, mismo
+    /// desempate—: lo vigila <c>TitleMatchTests</c> contra la implementación de referencia.
+    /// </para>
     /// </summary>
     public static double Sim(string a, string b)
     {
@@ -130,17 +140,12 @@ public static partial class TitleMatch
         if (a.Length == 0 || b.Length == 0) return 0.0;
         if (string.Equals(a, b, StringComparison.Ordinal)) return 1.0;
 
-        // Índice carácter → posiciones en b (el «b2j» de difflib).
-        // Nota: difflib desactiva heurísticas de «basura» por debajo de 200 elementos;
-        // los títulos son mucho más cortos, así que no aplica ninguna.
-        var b2j = new Dictionary<char, List<int>>();
-        for (int j = 0; j < b.Length; j++)
-        {
-            if (!b2j.TryGetValue(b[j], out var lista)) b2j[b[j]] = lista = new List<int>();
-            lista.Add(j);
-        }
+        // Dos filas de la tabla de bloques (la anterior y la actual). Un título cabe de
+        // sobra en la pila; si alguien pasa un texto largo se pide a la memoria normal.
+        int hueco = 2 * (b.Length + 1);
+        Span<int> filas = hueco <= 512 ? stackalloc int[hueco] : new int[hueco];
 
-        int coincidentes = SumaBloques(a, b, b2j, 0, a.Length, 0, b.Length);
+        int coincidentes = SumaBloques(a, b, filas, 0, a.Length, 0, b.Length);
         return 2.0 * coincidentes / total;
     }
 
@@ -151,43 +156,53 @@ public static partial class TitleMatch
     /// Suma recursiva de los tamaños de los bloques coincidentes: se busca el bloque común
     /// más largo y se repite a izquierda y derecha, igual que get_matching_blocks.
     /// </summary>
-    private static int SumaBloques(string a, string b, Dictionary<char, List<int>> b2j,
+    private static int SumaBloques(string a, string b, Span<int> filas,
                                    int alo, int ahi, int blo, int bhi)
     {
         if (alo >= ahi || blo >= bhi) return 0;
-        var (i, j, size) = BloqueMasLargo(a, b2j, alo, ahi, blo, bhi);
+        var (i, j, size) = BloqueMasLargo(a, b, filas, alo, ahi, blo, bhi);
         if (size == 0) return 0;
         return size
-             + SumaBloques(a, b, b2j, alo, i, blo, j)
-             + SumaBloques(a, b, b2j, i + size, ahi, j + size, bhi);
+             + SumaBloques(a, b, filas, alo, i, blo, j)
+             + SumaBloques(a, b, filas, i + size, ahi, j + size, bhi);
     }
 
     /// <summary>
     /// El bloque coincidente más largo del rango. Ante empate gana el que empiece antes en
     /// «a», y luego el que empiece antes en «b» — el mismo desempate que difflib, del que
     /// dependen los valores exactos con los que se calibraron los umbrales.
+    ///
+    /// <para>
+    /// <c>anterior[x]</c> es la longitud del bloque que termina en a[i-1] y b[blo+x-1]; la
+    /// posición 0 es «antes del rango» y vale siempre 0. Es el «j2len» de difflib, pero en
+    /// una fila en vez de un diccionario: recorriendo «i» hacia delante y «j» hacia delante
+    /// y quedándose con el primero que estrictamente mejora, se visitan los pares en el
+    /// mismo orden que él y el desempate sale igual.
+    /// </para>
     /// </summary>
-    private static (int i, int j, int size) BloqueMasLargo(string a, Dictionary<char, List<int>> b2j,
+    private static (int i, int j, int size) BloqueMasLargo(string a, string b, Span<int> filas,
                                                           int alo, int ahi, int blo, int bhi)
     {
+        int ancho = bhi - blo + 1;
+        var anterior = filas.Slice(0, ancho);
+        var actual = filas.Slice(filas.Length / 2, ancho);
+        anterior.Clear();
+        actual.Clear();
+
         int besti = alo, bestj = blo, bestsize = 0;
-        // j2len[j] = longitud del bloque que termina en a[i-1], b[j-1]
-        var j2len = new Dictionary<int, int>();
         for (int i = alo; i < ahi; i++)
         {
-            var nuevo = new Dictionary<int, int>();
-            if (b2j.TryGetValue(a[i], out var posiciones))
+            char ca = a[i];
+            for (int j = blo; j < bhi; j++)
             {
-                foreach (var j in posiciones)
-                {
-                    if (j < blo) continue;
-                    if (j >= bhi) break;
-                    int k = (j2len.TryGetValue(j - 1, out var prev) ? prev : 0) + 1;
-                    nuevo[j] = k;
-                    if (k > bestsize) { besti = i - k + 1; bestj = j - k + 1; bestsize = k; }
-                }
+                int x = j - blo + 1;
+                if (b[j] != ca) { actual[x] = 0; continue; }
+
+                int k = anterior[x - 1] + 1;
+                actual[x] = k;
+                if (k > bestsize) { besti = i - k + 1; bestj = j - k + 1; bestsize = k; }
             }
-            j2len = nuevo;
+            var cambio = anterior; anterior = actual; actual = cambio;
         }
         return (besti, bestj, bestsize);
     }

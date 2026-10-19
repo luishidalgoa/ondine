@@ -133,6 +133,56 @@ public static class ReindexStore
     public static string DirLotes => Path.Combine(Raiz, "lotes");
     public static string RutaDecisiones => Path.Combine(Raiz, "decisiones.json");
 
+    /// <summary>Dónde se guarda lo ya calculado de parecidos, un fichero por catálogo.</summary>
+    public static string DirParecidos => Path.Combine(Raiz, "parecidos");
+
+    /// <summary>
+    /// La memoria de parecidos de este catálogo: la de disco si hay una que valga, y si no una
+    /// vacía. Nunca falla ni devuelve algo a medias —un fichero ilegible, cortado o de otro
+    /// catálogo se ignora y se recalcula—, porque esto solo ahorra tiempo: sin él todo sigue
+    /// funcionando igual.
+    /// </summary>
+    public static MemoriaDeParecidos CargarParecidos(ReindexCatalog catalogo)
+    {
+        var memoria = MemoriaDeParecidos.Para(catalogo);
+        try
+        {
+            var ruta = RutaDeParecidos(memoria.Huella);
+            if (File.Exists(ruta)) memoria.Absorber(File.ReadAllBytes(ruta));
+        }
+        catch { /* sin memoria: se calcula de cero */ }
+        return memoria;
+    }
+
+    /// <summary>
+    /// Deja la memoria en disco. Va SOLO si se aprendió algo nuevo: reescribir decenas de
+    /// megas porque sí es el tipo de cosa que hace lenta una app. Se escribe a un temporal y
+    /// se renombra, así un corte a medias no deja un fichero roto. Y se limpia: se conservan
+    /// los últimos catálogos y se tiran el resto, que si vuelven se recalculan una vez.
+    /// </summary>
+    public static void GuardarParecidos(MemoriaDeParecidos memoria)
+    {
+        try
+        {
+            if (!memoria.HayNovedades) return;
+
+            Directory.CreateDirectory(DirParecidos);
+            var ruta = RutaDeParecidos(memoria.Huella);
+            var temporal = ruta + ".tmp";
+            File.WriteAllBytes(temporal, memoria.Serializar());
+            File.Move(temporal, ruta, overwrite: true);
+
+            const int Conservar = 6;
+            var viejos = new DirectoryInfo(DirParecidos).GetFiles("*.bin")
+                .OrderByDescending(f => f.LastWriteTimeUtc).Skip(Conservar);
+            foreach (var f in viejos) { try { f.Delete(); } catch { } }
+        }
+        catch { /* no se pudo guardar: la próxima vez se vuelve a calcular, nada más */ }
+    }
+
+    private static string RutaDeParecidos(string huella) =>
+        Path.Combine(DirParecidos, huella[..24] + ".bin");
+
     /// <summary>De qué fichero salió cada copia LEGADA. Clave = nombre del fichero copiado.</summary>
     public static string RutaProcedencia => Path.Combine(Raiz, "procedencia.json");
 

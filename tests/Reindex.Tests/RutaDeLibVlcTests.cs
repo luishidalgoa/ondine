@@ -25,6 +25,30 @@ public static class RutaDeLibVlcTests
         LaDeHomebrewTambien();
         SinNadaInstaladoNoSeInventaUnaRuta();
         ElAvisoHablaDelSistemaEnQueEstas();
+
+        Program.Seccion("Cómo se llama libvlc en Linux");
+        EnLinuxSeProbanLosNombresConVersion();
+    }
+
+    /// <summary>
+    /// El paquete <c>vlc</c> trae <c>libvlc.so.5</c> y no <c>libvlc.so</c>, que es el que .NET
+    /// busca y solo crea <c>libvlc-dev</c>. Si el nombre con versión no va primero, el
+    /// reproductor muere en un Linux con VLC instalado y dice que falta.
+    /// </summary>
+    private static void EnLinuxSeProbanLosNombresConVersion()
+    {
+        var vlc = RutaDeLibVlc.NombresEnLinux("libvlc");
+        Program.Assert(vlc.Length > 0 && vlc[0] == "libvlc.so.5",
+            $"libvlc se pide primero con su versión ({string.Join(", ", vlc)})");
+        Program.Assert(vlc.Contains("libvlc.so"),
+            "y queda el nombre sin versión por si alguien tiene el enlace");
+
+        var nucleo = RutaDeLibVlc.NombresEnLinux("libvlccore");
+        Program.Assert(nucleo.Length > 0 && nucleo[0] == "libvlccore.so.9",
+            $"y libvlccore igual ({string.Join(", ", nucleo)})");
+
+        Program.Assert(RutaDeLibVlc.NombresEnLinux("libotra").Length == 0,
+            "de una biblioteca que no es de VLC no se opina");
     }
 
     /// <summary>
