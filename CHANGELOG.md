@@ -32,6 +32,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Organizar carga una serie repartida en varias carpetas, y deja elegir qué temporadas
+  analizar.** Si un catálogo tiene dos o más carpetas vinculadas (por ejemplo, una serie
+  repartida en dos discos), aparece la casilla «Todas las carpetas vinculadas»: al marcarla,
+  se cargan juntas y la misma temporada de los dos discos sale como una sola. Al aplicar,
+  cada fichero se queda en su propia carpeta: nunca se copia ni se mueve entre discos. Debajo
+  hay una ficha por temporada, con cuántos ficheros trae; desmarca las que no quieras analizar
+  ahora y solo se leen las marcadas, lo que ahorra mucho tiempo en series largas.
+
 ### Cambiado
 
 - **Analizar es mucho más rápido en series largas, y el segundo análisis casi instantáneo.**

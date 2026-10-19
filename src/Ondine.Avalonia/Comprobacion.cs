@@ -1650,6 +1650,7 @@ public static class Comprobacion
         CadaFilaDePeliculasSePinta();
         await CambiarDePaginaCambiaLaPagina(dueno);
         await LaTablaDeOrganizarTieneVista(dueno);
+        await LaMulticargaYLasTemporadas(dueno);
     }
 
     /// <summary>
@@ -1782,5 +1783,90 @@ public static class Comprobacion
             $"y recibe una VISTA, no la colección a pelo ({tabla?.ItemsSource?.GetType().Name})");
 
         v.Close();
+    }
+
+    /// <summary>
+    /// Una serie en dos carpetas se carga junta, y las temporadas se pueden apartar.
+    ///
+    /// <para>
+    /// Con carpetas y catálogo de verdad en un almacén temporal, y no con la lógica suelta: lo
+    /// que falla en estas cosas es el cableado —la casilla que no sale, las fichas que no se
+    /// pintan, «Analizar» que sigue encendido con todo desmarcado—, y eso solo se ve con la
+    /// pantalla puesta.
+    /// </para>
+    /// </summary>
+    private static async Task LaMulticargaYLasTemporadas(Window dueno)
+    {
+        var temporal = Path.Combine(Path.GetTempPath(), "ondine-auto-multi-" + Guid.NewGuid().ToString("N")[..8]);
+        var antes = Ondine.Reindex.ReindexStore.RaizOverride;
+        Ondine.Reindex.ReindexStore.RaizOverride = Path.Combine(temporal, "datos");
+        try
+        {
+            string Hacer(string disco, string temporada, string fichero)
+            {
+                var d = Path.Combine(temporal, disco, "Serie", temporada);
+                Directory.CreateDirectory(d);
+                File.WriteAllText(Path.Combine(d, fichero), "x");
+                return Path.Combine(temporal, disco, "Serie");
+            }
+            var a = Hacer("A", "Season 1979", "e1.mp4"); Hacer("A", "Season 1980", "e2.mp4");
+            var b = Hacer("B", "Season 1979", "e3.mp4"); Hacer("B", "Season 1981", "e4.mp4");
+
+            var json = Path.Combine(temporal, "serie.json");
+            File.WriteAllText(json, """
+            { "esquema": "reindex/1.0", "serie": "Serie",
+              "episodios": [ { "num": 1, "temporada": 1979, "titulos": { "es": ["Uno"] } } ] }
+            """);
+            var cat = Ondine.Reindex.ReindexStore.ImportarCatalogo(json);
+            Ondine.Reindex.ReindexStore.GuardarCarpetaDeCatalogo(cat.Ruta, a);
+            Ondine.Reindex.ReindexStore.GuardarCarpetaDeCatalogo(cat.Ruta, b);
+
+            var vista = new OrganizarView();
+            var v = new Window { Width = 1200, Height = 780, Content = vista };
+            v.Show(dueno);
+            await Task.Delay(700);
+
+            T? Cual<T>(string n) where T : Control => vista.GetVisualDescendants().OfType<T>()
+                                                            .FirstOrDefault(c => c.Name == n);
+
+            vista.ApuntarA(a);
+            await Task.Delay(400);
+
+            var todas = Cual<CheckBox>("chkVinculadas");
+            var panel = Cual<StackPanel>("panelTemporadas");
+            var chips = Cual<WrapPanel>("chipsTemporadas");
+            var analizar = Cual<Button>("btnSimularGrande");
+
+            Dice(todas?.IsVisible == true, "con dos carpetas vinculadas sale la casilla de cargarlas juntas");
+            Dice(panel?.IsVisible == true && chips?.Children.Count == 2,
+                $"y con solo la carpeta de arriba hay dos temporadas que elegir ({chips?.Children.Count})");
+
+            todas!.IsChecked = true;
+            await Task.Delay(400);
+            Dice(chips?.Children.Count == 3,
+                $"al marcarla se suman las dos carpetas: tres temporadas distintas, la 1979 una sola vez ({chips?.Children.Count})");
+            Dice(analizar?.IsEnabled == true, "y se puede analizar");
+
+            // Desmarcarlo todo apaga «Analizar»: sin temporadas no hay nada que leer.
+            Cual<Button>("btnTemporadasNinguna")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            await Task.Delay(200);
+            Dice(analizar?.IsEnabled == false, "con todas las temporadas desmarcadas no se puede analizar");
+
+            // Y marcar una lo vuelve a encender.
+            (chips!.Children.OfType<ToggleButton>().First()).IsChecked = true;
+            await Task.Delay(200);
+            Dice(analizar?.IsEnabled == true, "marcando una temporada vuelve a poderse");
+
+            Cual<Button>("btnTemporadasTodas")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            await Task.Delay(200);
+            Dice(chips.Children.OfType<ToggleButton>().All(c => c.IsChecked == true), "«Todas» las deja marcadas");
+
+            v.Close();
+        }
+        finally
+        {
+            Ondine.Reindex.ReindexStore.RaizOverride = antes;
+            try { Directory.Delete(temporal, true); } catch { }
+        }
     }
 }

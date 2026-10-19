@@ -109,6 +109,35 @@ public static class PlanDeReordenado
         return plan;
     }
 
+    /// <summary>
+    /// El mismo plan para una serie repartida en varias carpetas. Cada fichero se ordena
+    /// respecto a SU carpeta —la que lo contiene—, así que uno que vive en el disco A sigue
+    /// en el disco A, dentro de su propia «Season N»: nunca cruza de disco, que sería copiar
+    /// gigas en vez de renombrar.
+    ///
+    /// <para>
+    /// Un paso por resolución y en el mismo orden que ellas. Con una sola carpeta da lo mismo
+    /// que <see cref="Montar(IEnumerable{ReindexResolution}, string, bool, Func{string, bool}?, Func{string, bool}?)"/>.
+    /// </para>
+    /// </summary>
+    public static List<Paso> Montar(
+        IReadOnlyList<ReindexResolution> resoluciones,
+        IReadOnlyList<string> raices,
+        bool enCastellano,
+        Func<string, bool>? existe = null,
+        Func<string, bool>? hayOrigen = null)
+    {
+        if (raices.Count <= 1)
+            return Montar(resoluciones, raices.Count == 1 ? raices[0] : "", enCastellano, existe, hayOrigen);
+
+        var porOrigen = new Dictionary<string, Paso>(StringComparer.OrdinalIgnoreCase);
+        foreach (var grupo in resoluciones.GroupBy(r => LibraryScan.RaizDe(raices, r.Archivo.Path)))
+            foreach (var paso in Montar(grupo, grupo.Key, enCastellano, existe, hayOrigen))
+                porOrigen[paso.Origen] = paso;
+
+        return resoluciones.Select(r => porOrigen[r.Archivo.Path]).ToList();
+    }
+
     /// <summary>Cuántos se moverían de verdad.</summary>
     public static int Cuantos(IEnumerable<Paso> plan) => plan.Count(p => p.Motivo == Porque.Va);
 }

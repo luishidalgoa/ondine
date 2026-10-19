@@ -101,7 +101,8 @@ public sealed class ReordenVista
 public partial class Reordenar : Window
 {
     private readonly IReadOnlyList<ReindexResolution> _resoluciones = [];
-    private readonly string _raiz = "";
+    // Una serie repartida en varias carpetas tiene varias raíces; con una sola es la de siempre.
+    private readonly IReadOnlyList<string> _raices = [];
     private readonly Settings _ajustes = null!;
     private List<PlanDeReordenado.Paso> _plan = [];
     private Mudanza.Parte? _hecho;
@@ -120,10 +121,13 @@ public partial class Reordenar : Window
         ArrastrarLaVentana.Enganchar(this);
     }
 
-    public Reordenar(IReadOnlyList<ReindexResolution> resoluciones, string raiz, Settings ajustes) : this()
+    public Reordenar(IReadOnlyList<ReindexResolution> resoluciones, string raiz, Settings ajustes)
+        : this(resoluciones, [raiz], ajustes) { }
+
+    public Reordenar(IReadOnlyList<ReindexResolution> resoluciones, IReadOnlyList<string> raices, Settings ajustes) : this()
     {
         _resoluciones = resoluciones;
-        _raiz = raiz;
+        _raices = raices;
         _ajustes = ajustes;
 
         Btn("btnCerrar").Click += (_, _) => Close();
@@ -172,7 +176,7 @@ public partial class Reordenar : Window
 
     private void Recalcular()
     {
-        _plan = PlanDeReordenado.Montar(_resoluciones, _raiz, EnCastellano);
+        _plan = PlanDeReordenado.Montar(_resoluciones, _raices, EnCastellano);
         Pintar();
     }
 
@@ -193,7 +197,7 @@ public partial class Reordenar : Window
             ? _plan.Where(p => p.Motivo == PlanDeReordenado.Porque.Va)
             : _plan;
         this.FindControl<ListBox>("lista")!.ItemsSource =
-            visibles.Select(p => new ReordenVista { Paso = p, Raiz = _raiz }).ToList();
+            visibles.Select(p => new ReordenVista { Paso = p, Raiz = LibraryScan.RaizDe(_raices, p.Origen) }).ToList();
 
         var mover = Btn("btnMover");
         mover.IsEnabled = van > 0 && _hecho == null;

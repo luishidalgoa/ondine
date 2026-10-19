@@ -316,6 +316,23 @@ public sealed partial class Textos
         "Folders linked to this catalogue: pick one, link the current one or remove the link",
         "Carpetas vinculadas a este catálogo: elegir una, vincular la actual o quitarla");
 
+    public string OrganizarTodasVinculadas => Idioma.Elegir(
+        "All linked folders",
+        "Todas las carpetas vinculadas");
+
+    public string OrganizarTodasVinculadasAyuda => Idioma.Elegir(
+        "Load the series from every folder linked to this catalogue at once, for a series spread over several drives. Each file stays where it is: nothing is copied or moved between folders.",
+        "Carga la serie de todas las carpetas vinculadas a este catálogo a la vez, para una serie repartida en varios discos. Cada fichero se queda donde está: no se copia ni se mueve nada entre carpetas.");
+
+    public string OrganizarTemporadas => Idioma.Elegir("Seasons to analyse", "Temporadas a analizar");
+
+    public string OrganizarTemporadasAyuda => Idioma.Elegir(
+        "Untick the seasons you do not want to analyse now. Only the ticked ones are read and identified, which is much quicker on a long series.",
+        "Desmarca las temporadas que no quieras analizar ahora. Solo se leen e identifican las marcadas, lo que es mucho más rápido en una serie larga.");
+
+    public string OrganizarTemporadasTodas => Idioma.Elegir("All", "Todas");
+    public string OrganizarTemporadasNinguna => Idioma.Elegir("None", "Ninguna");
+
     public string OrganizarElegirCarpeta => Idioma.Elegir(
         "Choose a folder to start",
         "Elige una carpeta para empezar");
@@ -332,6 +349,16 @@ public sealed partial class Textos
     public string OrganizarFicherosEnCarpetas => Idioma.Elegir(
         "{0} files in {1} folders under {2}",
         "{0} ficheros en {1} carpetas de {2}");
+
+    // {0} = ficheros, {1} = en cuántas carpetas de temporada, {2} = en cuántas ubicaciones.
+    public string OrganizarFicherosEnUbicaciones => Idioma.Elegir(
+        "{0} files in {1} folders across {2} locations",
+        "{0} ficheros en {1} carpetas de {2} ubicaciones");
+
+    // {0} = los que se analizarán, {1} = los que hay.
+    public string OrganizarFicherosElegidos => Idioma.Elegir(
+        "{0} of {1} files selected",
+        "{0} de {1} ficheros elegidos");
 
     // Entre los dos va el rótulo del botón de analizar, destacado.
     public string OrganizarPromesa1 => Idioma.Elegir(

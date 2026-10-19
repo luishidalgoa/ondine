@@ -111,6 +111,15 @@ public partial class OrganizarView : UserControl
     private ColaRevision _revision = new();
     private LoteJournal? _ultimoLote;
     private string[] _ficheros = Array.Empty<string>();
+
+    // Lo que hay en disco ANTES de apartar temporadas, las carpetas de las que sale y las
+    // temporadas que se han desmarcado. _ficheros es siempre lo que se va a analizar.
+    private string[] _ficherosTodos = Array.Empty<string>();
+    private List<string> _raices = new();
+    private readonly HashSet<string> _temporadasApartadas = new(StringComparer.OrdinalIgnoreCase);
+    private string _claveDeCarga = "";
+    private bool _pintandoTemporadas;
+    private bool _sincronizandoVinculadas;
     private bool _cargando;
 
     /// <summary>El desplegable del tipo se esta colocando solo: no es una elección.</summary>
@@ -201,6 +210,15 @@ public partial class OrganizarView : UserControl
         {
             chip.IsCheckedChanged += (_, _) => FiltrarPeliculas();
         }
+
+        chkVinculadas.IsCheckedChanged += (_, _) =>
+        {
+            if (_sincronizandoVinculadas || _catalogoElegido == null) return;
+            ReindexStore.GuardarTodasVinculadas(_catalogoElegido.Ruta, chkVinculadas.IsChecked == true);
+            RevisarCarpeta();   // cambian las carpetas de las que se lee: se vuelve a contar
+        };
+        btnTemporadasTodas.Click += (_, _) => PonerTemporadas(todas: true);
+        btnTemporadasNinguna.Click += (_, _) => PonerTemporadas(todas: false);
 
         cboTipo.SelectionChanged += async (_, _) =>
         {
@@ -705,11 +723,10 @@ public partial class OrganizarView : UserControl
         var resoluciones = await Task.Run(() =>
             ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
 
-        var raiz = CarpetaActual();
         foreach (var r in resoluciones)
         {
             var fila = new OrganizarRow(r, catalogo, _plantilla,
-                LibraryScan.Etiqueta(LibraryScan.Grupo(raiz, r.Archivo.Path)));
+                LibraryScan.Etiqueta(LibraryScan.Grupo(LibraryScan.RaizDe(_raices, r.Archivo.Path), r.Archivo.Path)));
             if (_revision.Tiene(fila.RutaActual)) fila.Apartada = true;
             _filas.Add(fila);
         }
@@ -824,19 +841,88 @@ public partial class OrganizarView : UserControl
         var carpeta = txtCarpeta.Text?.Trim() ?? "";
         CargarTipoDeCarpeta(carpeta);
         _ficheros = Array.Empty<string>();
+        _ficherosTodos = Array.Empty<string>();
 
-        try { _ficheros = LibraryScan.Escanear(carpeta, Engine.VideoExtensions); }
+        bool esSerie = TipoActual() != TipoDeBiblioteca.Pelicula;
+        SincronizarVinculadas();
+        _raices = RaicesActuales();
+
+        // Otra carpeta u otro catálogo es otra biblioteca: lo que se hubiera desmarcado de la
+        // anterior no tiene por qué valer aquí, y dejarlo apartaría temporadas sin que se vea.
+        var clave = string.Join("|", _raices) + "#" + _catalogoElegido?.Ruta;
+        if (clave != _claveDeCarga) { _temporadasApartadas.Clear(); _claveDeCarga = clave; }
+
+        try { _ficherosTodos = LibraryScan.Escanear(_raices, Engine.VideoExtensions); }
         catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSeLeyoCarpeta, ex.Message)); }
 
-        if (TipoActual() == TipoDeBiblioteca.Pelicula) vistaPeliculas.Poner(carpeta, _ficheros);
+        // Apartar temporadas solo tiene sentido en una serie: una carpeta de películas no
+        // tiene temporadas, y esconder ficheros ahí sería esconder películas.
+        if (!esSerie) _temporadasApartadas.Clear();
+        _ficheros = LibraryScan.SinTemporadas(_raices, _ficherosTodos, _temporadasApartadas);
 
-        int carpetas = _ficheros.Select(f => LibraryScan.Grupo(carpeta, f)).Distinct().Count();
+        if (!esSerie) vistaPeliculas.Poner(carpeta, _ficheros);
 
-        lblFicheros.Text = _ficheros.Length switch
+        PintarTemporadas(esSerie);
+        PonerRotuloDeFicheros(carpeta);
+
+        // Volver a elegir carpeta invalida lo que hubiera en la tabla
+        MostrarInicio();
+        ActualizarEstado();
+        ActualizarVinculo();
+    }
+
+    /// <summary>
+    /// De qué carpetas se lee ahora. Con «todas las vinculadas» marcada: las vinculadas a este
+    /// catálogo que existan, más la que se ve en el campo. Si no, solo la del campo, tal cual
+    /// se escribió.
+    /// </summary>
+    private List<string> RaicesActuales()
+    {
+        var actual = txtCarpeta.Text?.Trim() ?? "";
+        if (TipoActual() == TipoDeBiblioteca.Pelicula || _catalogoElegido == null
+            || !ReindexStore.CargarTodasVinculadas(_catalogoElegido.Ruta))
+            return [actual];
+
+        var vinculadas = ReindexStore.CargarCarpetasDeCatalogo(_catalogoElegido.Ruta).Where(Directory.Exists);
+        if (vinculadas.Count() < 2) return [actual];
+
+        // La que se ve va primero: es la «principal» para todo lo que necesite una sola.
+        return LibraryScan.NormalizarRaices(new[] { actual }.Concat(vinculadas));
+    }
+
+    /// <summary>
+    /// La casilla refleja lo guardado para este catálogo y solo se ve cuando hay algo que
+    /// sumar: dos o más carpetas vinculadas, en una serie.
+    /// </summary>
+    private void SincronizarVinculadas()
+    {
+        int vinculadas = _catalogoElegido == null
+            ? 0 : ReindexStore.CargarCarpetasDeCatalogo(_catalogoElegido.Ruta).Count;
+
+        _sincronizandoVinculadas = true;
+        try
         {
+            chkVinculadas.IsVisible = vinculadas >= 2 && TipoActual() != TipoDeBiblioteca.Pelicula;
+            chkVinculadas.IsChecked = _catalogoElegido != null
+                && ReindexStore.CargarTodasVinculadas(_catalogoElegido.Ruta);
+        }
+        finally { _sincronizandoVinculadas = false; }
+    }
+
+    /// <summary>El rótulo de «cuántos ficheros hay», con lo que se va a analizar si se ha apartado algo.</summary>
+    private void PonerRotuloDeFicheros(string carpeta)
+    {
+        int carpetas = _ficheros.Select(f => LibraryScan.Grupo(LibraryScan.RaizDe(_raices, f), f)).Distinct().Count();
+
+        var texto = _ficheros.Length switch
+        {
+            0 when _ficherosTodos.Length > 0 => Textos.Instancia.OrganizarSinVideos,
             0 when !Directory.Exists(carpeta) => Textos.Instancia.OrganizarElegirCarpeta,
             0 => Textos.Instancia.OrganizarSinVideos,
             1 => string.Format(Textos.Instancia.OrganizarUnFichero, carpeta),
+            // Varias ubicaciones: decir cuántas confirma que se han sumado todas.
+            _ when _raices.Count > 1 => string.Format(Textos.Instancia.OrganizarFicherosEnUbicaciones,
+                                                      _ficheros.Length, carpetas, _raices.Count),
             // Decir en cuántas carpetas están confirma que el recorrido ha bajado: si sale «1»
             // sobre una serie con temporadas, se sabe al momento que se apuntó demasiado adentro.
             _ when carpetas > 1 => string.Format(Textos.Instancia.OrganizarFicherosEnCarpetas,
@@ -844,10 +930,72 @@ public partial class OrganizarView : UserControl
             _ => string.Format(Textos.Instancia.OrganizarFicherosEn, _ficheros.Length, carpeta),
         };
 
-        // Volver a elegir carpeta invalida lo que hubiera en la tabla
-        MostrarInicio();
+        if (_ficheros.Length != _ficherosTodos.Length)
+            texto += "\n" + string.Format(Textos.Instancia.OrganizarFicherosElegidos,
+                                          _ficheros.Length, _ficherosTodos.Length);
+        lblFicheros.Text = texto;
+    }
+
+    /// <summary>Una ficha por temporada, con cuántos ficheros trae. Marcada = se analiza.</summary>
+    private void PintarTemporadas(bool esSerie)
+    {
+        var temporadas = esSerie ? LibraryScan.Temporadas(_raices, _ficherosTodos) : [];
+
+        _pintandoTemporadas = true;
+        try
+        {
+            chipsTemporadas.Children.Clear();
+            panelTemporadas.IsVisible = temporadas.Count >= 2;
+            if (temporadas.Count < 2) return;
+
+            var tema = TemaDe("FiltroChip");
+            foreach (var (grupo, cuenta) in temporadas)
+            {
+                var chip = new ToggleButton
+                {
+                    Content = $"{LibraryScan.Etiqueta(grupo)} ({cuenta})",
+                    IsChecked = !_temporadasApartadas.Contains(grupo),
+                    Margin = new Avalonia.Thickness(0, 0, 6, 6),
+                    Tag = grupo,
+                };
+                if (tema != null) chip.Theme = tema;
+                chip.IsCheckedChanged += (_, _) =>
+                {
+                    if (_pintandoTemporadas) return;
+                    if (chip.IsChecked == true) _temporadasApartadas.Remove(grupo);
+                    else _temporadasApartadas.Add(grupo);
+                    AplicarTemporadas();
+                };
+                chipsTemporadas.Children.Add(chip);
+            }
+        }
+        finally { _pintandoTemporadas = false; }
+    }
+
+    /// <summary>Marca o desmarca todas las temporadas de una vez.</summary>
+    private void PonerTemporadas(bool todas)
+    {
+        _temporadasApartadas.Clear();
+        if (!todas)
+            foreach (var (grupo, _) in LibraryScan.Temporadas(_raices, _ficherosTodos))
+                _temporadasApartadas.Add(grupo);
+
+        _pintandoTemporadas = true;
+        try
+        {
+            foreach (var chip in chipsTemporadas.Children.OfType<ToggleButton>())
+                chip.IsChecked = todas;
+        }
+        finally { _pintandoTemporadas = false; }
+        AplicarTemporadas();
+    }
+
+    /// <summary>Recalcula qué se va a analizar tras marcar o desmarcar una temporada.</summary>
+    private void AplicarTemporadas()
+    {
+        _ficheros = LibraryScan.SinTemporadas(_raices, _ficherosTodos, _temporadasApartadas);
+        PonerRotuloDeFicheros(CarpetaActual());
         ActualizarEstado();
-        ActualizarVinculo();
     }
 
     private void CambiarPlantilla()
@@ -1028,7 +1176,14 @@ public partial class OrganizarView : UserControl
         var carpetaActual = txtCarpeta.Text?.Trim() ?? "";
         // En un hilo aparte: enumerar cientos de ficheros sobre OneDrive es un viaje de red
         // por carpeta, y hecho en el hilo de interfaz congelaba el clic de «Analizar».
-        try { _ficheros = await Task.Run(() => LibraryScan.Escanear(carpetaActual, Engine.VideoExtensions)); }
+        _raices = RaicesActuales();
+        var raicesDeAhora = _raices;
+        try
+        {
+            _ficherosTodos = await Task.Run(() => LibraryScan.Escanear(raicesDeAhora, Engine.VideoExtensions));
+            // Solo las temporadas que están marcadas: el resto ni se abre, que es donde se gana el tiempo.
+            _ficheros = LibraryScan.SinTemporadas(raicesDeAhora, _ficherosTodos, _temporadasApartadas);
+        }
         catch { /* la carpeta puede haber desaparecido; el guard de abajo lo dice */ }
 
         // Una carpeta de películas no se identifica con la cascada de episodios:
@@ -1222,7 +1377,6 @@ public partial class OrganizarView : UserControl
                 await Task.Delay(220);
             }
 
-            var raiz = txtCarpeta.Text?.Trim() ?? "";
             _filas.Clear();
             // Un análisis nuevo empieza en el orden natural por temporada: se retira cualquier
             // orden por cabecera que hubiera quedado de antes.
@@ -1230,7 +1384,7 @@ public partial class OrganizarView : UserControl
             foreach (var r in resoluciones)
             {
                 var fila = new OrganizarRow(r, catalogo, _plantilla,
-                    LibraryScan.Etiqueta(LibraryScan.Grupo(raiz, r.Archivo.Path)));
+                    LibraryScan.Etiqueta(LibraryScan.Grupo(LibraryScan.RaizDe(raicesDeAhora, r.Archivo.Path), r.Archivo.Path)));
                 // Lo que apartaste la última vez sigue apartado: es toda la razón de ser de
                 // la cola — no volver a buscarlo entre cientos al reabrir la app.
                 if (_revision.Tiene(fila.RutaActual)) fila.Apartada = true;
@@ -2355,7 +2509,7 @@ public partial class OrganizarView : UserControl
             Fecha = ahora.ToString("yyyy-MM-dd"),
             Hora = ahora.ToString("HH:mm"),
             Serie = _catalogoCargado?.Serie ?? "",
-            Carpeta = txtCarpeta.Text?.Trim() ?? "",
+            Carpeta = _raices.Count > 1 ? string.Join(" | ", _raices) : txtCarpeta.Text?.Trim() ?? "",
         };
 
         // Se resuelven los destinos ANTES de mover nada, para detectar colisiones sin
@@ -2480,7 +2634,8 @@ public partial class OrganizarView : UserControl
             return;
         }
 
-        var v = new Reordenar(_filas.Select(f => f.Res).ToList(), carpeta, SettingsStore.Load())
+        var v = new Reordenar(_filas.Select(f => f.Res).ToList(),
+                              _raices.Count > 0 ? _raices : [carpeta], SettingsStore.Load())
         { };
         await v.ShowDialog(Ventana!);
 
@@ -2535,7 +2690,11 @@ public partial class OrganizarView : UserControl
             ActualizarContadores();
 
             // La lista de disco vuelve a los nombres de antes; se refresca sin tocar la vista
-            try { _ficheros = LibraryScan.Escanear(txtCarpeta.Text?.Trim() ?? "", Engine.VideoExtensions); }
+            try
+            {
+                _ficherosTodos = LibraryScan.Escanear(_raices, Engine.VideoExtensions);
+                _ficheros = LibraryScan.SinTemporadas(_raices, _ficherosTodos, _temporadasApartadas);
+            }
             catch { /* si la carpeta no se puede releer, la próxima simulación lo dirá */ }
         }
         else RevisarCarpeta();   // desde la pantalla de inicio, solo refrescar el recuento

@@ -459,8 +459,15 @@
               </Grid>
               <!-- Estado del vínculo, a la vista: sin esto no hay forma de saber si la carpeta
                    quedará asociada al catálogo para la próxima vez. -->
-              <TextBlock Name="lblVinculo" FontSize="11.5" Margin="0,0,0,12"
+              <TextBlock Name="lblVinculo" FontSize="11.5" Margin="0,0,0,8"
                          Foreground="{StaticResource Neutral500}" TextWrapping="Wrap"/>
+
+              <!-- Una serie repartida en varias carpetas (varios discos): cargarlas juntas. Solo
+                   sale cuando el catálogo tiene dos o más vinculadas; con una no hay nada que
+                   sumar. -->
+              <CheckBox Name="chkVinculadas" IsVisible="False" FontSize="12" Margin="0,0,0,10"
+                        Content="{i:T OrganizarTodasVinculadas}"
+                        ToolTip.Tip="{i:T OrganizarTodasVinculadasAyuda}"/>
 
               <TextBlock Name="lblFicheros" Text="{i:T OrganizarElegirCarpeta}" FontSize="13.5"
                          Foreground="{StaticResource Text}" HorizontalAlignment="Center" TextAlignment="Center"
@@ -468,6 +475,21 @@
 
               <!-- Reposo: promesa + botón. Se retiran mientras corren las etapas. -->
               <StackPanel Name="panelReposo">
+                <!-- Qué temporadas analizar. Solo sale con dos o más: con una no hay qué elegir.
+                     Las marcadas son las que se leen e identifican; el resto ni se abre. -->
+                <StackPanel Name="panelTemporadas" IsVisible="False" Margin="0,12,0,0">
+                  <Grid>
+                    <TextBlock Text="{i:T OrganizarTemporadas}" Theme="{StaticResource OrgLabel}"
+                               ToolTip.Tip="{i:T OrganizarTemporadasAyuda}" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+                      <Button Name="btnTemporadasTodas" Theme="{StaticResource BtnGhost}" FontSize="11.5"
+                              Content="{i:T OrganizarTemporadasTodas}"/>
+                      <Button Name="btnTemporadasNinguna" Theme="{StaticResource BtnGhost}" FontSize="11.5"
+                              Content="{i:T OrganizarTemporadasNinguna}"/>
+                    </StackPanel>
+                  </Grid>
+                  <WrapPanel Name="chipsTemporadas" Margin="0,6,0,0"/>
+                </StackPanel>
                 <!-- La promesa explícita: nada se toca sin aprobación. Es lo que permite
                      pulsar «Simular» sin miedo. -->
                 <TextBlock Margin="0,10,0,0" FontSize="12" Foreground="{StaticResource Neutral500}"

@@ -135,6 +135,7 @@ public static class Program
         Ondine.Reindex.Tests.RutaDeLibVlcTests.Todas();
         Ondine.Reindex.Tests.SimilitudDeTitulosTests.Todas();
         Ondine.Reindex.Tests.MemoriaDeParecidosTests.Todas();
+        Ondine.Reindex.Tests.MulticargaTests.Todas();
         Ondine.Reindex.Tests.FfmpegEnMacTests.Todas();
         Ondine.Reindex.Tests.RecursosQueNoExistenTests.Todas();
         Ondine.Reindex.Tests.PaqueteDeEscritorioTests.Todas();
