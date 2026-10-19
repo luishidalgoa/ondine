@@ -32,6 +32,26 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Cambiado
+
+- **Analizar es mucho más rápido en series largas, y el segundo análisis casi instantáneo.**
+  En una serie de unos 1.800 episodios con 1.400 ficheros, identificar todo pasó de unos 37
+  segundos a unos 4 la primera vez. Además, Ondine recuerda en disco el parecido de cada
+  nombre de fichero con el catálogo: si no ha cambiado ni el nombre ni el catálogo, no lo
+  recalcula, y la segunda vez tarda una fracción de segundo. Los resultados son exactamente
+  los mismos. No hay riesgo de datos viejos: editar el catálogo o renombrar un fichero hace
+  que se calcule de nuevo solo lo afectado. Ocupa unas decenas de megas en tu carpeta de
+  datos y se limpia sola.
+
+### Corregido
+
+- **En Linux, el reproductor integrado volvía a decir que faltaba VLC teniéndolo instalado.**
+  El sistema trae la biblioteca con un nombre que Ondine no probaba. Ahora basta con tener
+  VLC instalado.
+- **En Linux, las opciones del menú contextual de Organizar (como «Abrir ubicación del
+  archivo») no hacían nada la primera vez.** Solo funcionaban con la fila ya seleccionada
+  y desplegada; ahora actúan sobre la fila en la que hiciste clic derecho.
+
 ## [1.18.1] - 2026-08-30
 
 ### Corregido

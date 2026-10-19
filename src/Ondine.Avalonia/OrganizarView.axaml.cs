@@ -272,6 +272,7 @@ public partial class OrganizarView : UserControl
             var r = Ascender<DataGridRow>(e.Source as Visual)?.DataContext as OrganizarRow
                     ?? tabla.SelectedItem as OrganizarRow;
             if (r == null) { e.Handled = true; return; }
+            _filaDelMenu = r;
             tabla.SelectedItem = r;
             miReproducir.IsEnabled = File.Exists(r.RutaActual);
             miRecortar.IsEnabled = miReproducir.IsEnabled;
@@ -297,24 +298,37 @@ public partial class OrganizarView : UserControl
                 ? string.Format(Textos.Instancia.OrganizarQuitarHistoriasN, r.Tambien.Count)
                 : Textos.Instancia.OrganizarQuitarHistorias;
         };
-        miElegirEpisodio.Click += (_, _) => OnElegirAMano(tabla, new RoutedEventArgs());
-        miDejarComoEsta.Click += (_, _) => OnDejarComoEsta(tabla, new RoutedEventArgs());
-        miAnadirHistoria.Click += async (_, _) => await AnadirHistoriaDeOtroEpisodio();
+        // Cada orden del menú actúa sobre la fila que se pulsó AL ABRIRLO, no sobre «la que
+        // esté seleccionada ahora». En Linux la selección se puede perder entre abrir el menú
+        // y pulsar una opción -el clic derecho sobre una fila ya elegida la desmarcaba, y
+        // sobre una sin elegir la selección llegaba tarde-, y entonces la orden se encontraba
+        // sin fila y no hacía NADA, sin un aviso: solo funcionaba con la fila ya desplegada.
+        // Se vuelve a seleccionar por si la orden llama a algo que la lee de la tabla.
+        OrganizarRow? FilaDelMenu()
+        {
+            var f = _filaDelMenu ?? tabla.SelectedItem as OrganizarRow;
+            if (f != null && !ReferenceEquals(tabla.SelectedItem, f)) tabla.SelectedItem = f;
+            return f;
+        }
+
+        miElegirEpisodio.Click += (_, _) => { FilaDelMenu(); OnElegirAMano(tabla, new RoutedEventArgs()); };
+        miDejarComoEsta.Click += (_, _) => { FilaDelMenu(); OnDejarComoEsta(tabla, new RoutedEventArgs()); };
+        miAnadirHistoria.Click += async (_, _) => { FilaDelMenu(); await AnadirHistoriaDeOtroEpisodio(); };
         miQuitarHistorias.Click += async (_, _) =>
         {
-            if (tabla.SelectedItem is not OrganizarRow f) return;
+            if (FilaDelMenu() is not { } f) return;
             f.QuitarHistorias();
             ActualizarContadores();
             Escribir(string.Format(Textos.Instancia.OrganizarLogEpisodioNormal, f.Original));
         };
-        miReproducir.Click += async (_, _) => await ReproducirFila(tabla.SelectedItem as OrganizarRow);
-        miRecortar.Click += async (_, _) =>
+        miReproducir.Click += async (_, _) => await ReproducirFila(FilaDelMenu());
+        miRecortar.Click += (_, _) =>
         {
-            if (tabla.SelectedItem is OrganizarRow f && File.Exists(f.RutaActual))
+            if (FilaDelMenu() is { } f && File.Exists(f.RutaActual))
                 AbrirEnRecortes?.Invoke(f.RutaActual, false);
         };
-        miUbicacion.Click += (_, _) => AbrirUbicacion(tabla.SelectedItem as OrganizarRow);
-        miRevisar.Click += (_, _) => AlternarApartada(tabla.SelectedItem as OrganizarRow);
+        miUbicacion.Click += (_, _) => AbrirUbicacion(FilaDelMenu());
+        miRevisar.Click += (_, _) => AlternarApartada(FilaDelMenu());
         btnCola.IsCheckedChanged += (_, _) => PintarCola();
         btnVaciarCola.Click += async (_, _) => await VaciarCola();
 
@@ -1102,8 +1116,14 @@ public partial class OrganizarView : UserControl
                 _pasos.Detalle(1, string.Format(Textos.Instancia.OrganizarPasoCotejando,
                     señales.Count, catalogo.Serie));
             }
+            // Lo que ya se calculó en otros análisis de este catálogo. Comparar cada fichero
+            // con cada episodio es lo único caro de «Analizar»; si el nombre y el catálogo
+            // son los mismos, el parecido también, así que no se rehace. Un catálogo editado o
+            // un fichero renombrado cambian la clave y se calculan de nuevo: no hay forma de
+            // quedarse con un dato viejo (ver MemoriaDeParecidos).
+            var memoria = await Task.Run(() => ReindexStore.CargarParecidos(catalogo));
             var resoluciones = await ConTiempoDeVerse(
-                Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo)), animar);
+                Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo, memoria)), animar);
 
             // ── Etapa 2b: metadatos SOLO de los dudosos ──
             // El contenedor suele llevar el título grabado («title» del MKV) aunque el
@@ -1181,10 +1201,14 @@ public partial class OrganizarView : UserControl
                             señales[i] = SignalExtractor.Extract(
                                 señales[i].Path, señales[i].Carpeta, titulo,
                                 duracion: señales[i].Duracion);
-                    resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
+                    resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo, memoria));
                     Escribir(string.Format(Textos.Instancia.OrganizarLogTitulosMetadatos, metadatos.Count));
                 }
             }
+
+            // Guardar lo aprendido no hace esperar a nadie: va en segundo plano y, si falla,
+            // el único efecto es que la próxima vez se calcula otra vez.
+            _ = Task.Run(() => ReindexStore.GuardarParecidos(memoria));
 
             if (animar) _pasos.Hecha(1, string.Format(Textos.Instancia.OrganizarPasoContra, catalogo.Serie));
 
@@ -1412,6 +1436,11 @@ public partial class OrganizarView : UserControl
     /// </summary>
     private async void OnTablaClic(object sender, PointerPressedEventArgs e)
     {
+        // Solo el botón izquierdo. El derecho abre el menú contextual, y aquí lo trataba como
+        // un clic cualquiera: sobre una fila ya seleccionada la DESMARCABA (más abajo) y se
+        // comía la pulsación, así que el menú se abría sobre una tabla sin selección.
+        if (!e.GetCurrentPoint(tabla).Properties.IsLeftButtonPressed) return;
+
         // Doble clic = ver el video en el reproductor del sistema: ante la duda de que
         // capitulo es, mirarlo gana a cualquier metadato. Va antes que el cierre de fila
         // para que el segundo clic no la recoja.
@@ -1452,6 +1481,9 @@ public partial class OrganizarView : UserControl
         tabla.SelectedItem = null;
         e.Handled = true;
     }
+
+    /// <summary>La fila sobre la que se abrió el menú contextual: la que sus órdenes usan.</summary>
+    private OrganizarRow? _filaDelMenu;
 
     /// <summary>Valor que se está «pintando» al arrastrar sobre las casillas. Null = no hay arrastre.</summary>
     private bool? _pintando;
