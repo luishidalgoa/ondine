@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.19.2] - 2026-10-19
+
 ### Corregido
 
 - **En Linux, el reproductor integrado ya tiene controles.** Se veía el vídeo pero no había
