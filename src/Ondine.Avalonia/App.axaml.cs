@@ -51,6 +51,17 @@ public partial class App : Application
                 var ventana = new VentanaPrincipal();
                 escritorio.MainWindow = ventana;
 
+                // Cerrarse es lo único del actualizador que depende de la interfaz.
+                Updater.Cerrar = () => escritorio.Shutdown();
+
+                // Otra Ondine que se abre (por «Abrir con», por el lanzador...) no abre ventana:
+                // nos llama a esta, que sale al frente y recibe sus ficheros.
+                Instancia.Escuchar(ficheros => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    ventana.TraerAlFrente();
+                    if (ficheros.Count > 0) ventana.AddFilesFromShell(ficheros);
+                }));
+
                 // LOS FICHEROS CON LOS QUE SE ABRE LA APLICACIÓN, que esto no leía.
                 //
                 // Y el paquete de Linux los PROMETE: su .desktop declara los tipos de vídeo

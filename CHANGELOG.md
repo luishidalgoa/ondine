@@ -32,6 +32,16 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **En Linux, Ondine ya no se abre varias veces.** Pulsar el icono, usar «Abrir con» sobre un
+  vídeo o abrirla de nuevo con una ya abierta trae la ventana existente al frente (y le añade
+  los vídeos), igual que en Windows.
+- **En Linux, Ondine se reinicia sola después de actualizar.** Con el paquete `.deb`, al
+  pulsar «Instalar» y terminar, la app se cierra y se vuelve a abrir con la versión nueva. Con
+  el AppImage, se sustituye a sí mismo y se reabre sin que tengas que hacer nada. Si había una
+  compresión en marcha, te pregunta antes de cerrar.
+
 ## [1.19.0] - 2026-10-19
 
 ### Añadido

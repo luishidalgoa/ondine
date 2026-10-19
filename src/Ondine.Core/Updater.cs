@@ -44,6 +44,60 @@ public static class Updater
         }
     }
 
+    /// <summary>
+    /// La versión de Ondine que hay INSTALADA en una carpeta, leída de su <c>Ondine.Core.dll</c>
+    /// —o <c>null</c> si no se puede—. Es distinta de <see cref="Current"/>: esa es la del
+    /// proceso que corre, que tras instalar un <c>.deb</c> sigue siendo la vieja. Comparar las
+    /// dos es la forma de saber, sin preguntarle nada al instalador, que ya terminó.
+    /// </summary>
+    public static Version? VersionInstalada(string carpeta)
+    {
+        try
+        {
+            var dll = Path.Combine(carpeta, "Ondine.Core.dll");
+            if (!File.Exists(dll)) return null;
+            var v = AssemblyName.GetAssemblyName(dll).Version;
+            return v is null ? null : new Version(v.Major, v.Minor, Math.Max(v.Build, 0));
+        }
+        catch { return null; }   // a medio copiar: la próxima vuelta lo lee entero
+    }
+
+    /// <summary>
+    /// Sustituye el AppImage en uso por el recién descargado. Devuelve si lo hizo; si no
+    /// puede (carpeta de solo lectura, el fichero no es un AppImage), no toca nada y quien lo
+    /// llama deja la descarga a la vista como siempre.
+    ///
+    /// <para>
+    /// Se copia primero junto al antiguo y se renombra encima: el cambio es de golpe, y el
+    /// AppImage que está corriendo sigue con su fichero abierto hasta que acabe.
+    /// </para>
+    /// </summary>
+    public static bool ReemplazarAppImage(string descargado, string enUso)
+    {
+        try
+        {
+            if (!File.Exists(descargado) || string.IsNullOrEmpty(enUso) || !File.Exists(enUso)) return false;
+
+            // Lo que se baja de Internet y va a ocupar el sitio de lo que funciona se mira
+            // antes: tamaño razonable y cabecera ELF (los AppImage lo son).
+            var info = new FileInfo(descargado);
+            if (info.Length < 1_000_000) return false;
+            var cabecera = new byte[4];
+            using (var f = File.OpenRead(descargado)) { if (f.Read(cabecera, 0, 4) < 4) return false; }
+            if (cabecera[0] != 0x7F || cabecera[1] != (byte)'E' || cabecera[2] != (byte)'L' || cabecera[3] != (byte)'F')
+                return false;
+
+            var nuevo = enUso + ".nuevo";
+            File.Copy(descargado, nuevo, overwrite: true);
+            if (!OperatingSystem.IsWindows())
+                File.SetUnixFileMode(nuevo, File.GetUnixFileMode(nuevo)
+                    | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
+            File.Move(nuevo, enUso, overwrite: true);
+            return true;
+        }
+        catch { return false; }
+    }
+
     public static string Repo
     {
         get

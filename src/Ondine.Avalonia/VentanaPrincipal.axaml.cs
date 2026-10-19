@@ -81,6 +81,12 @@ public partial class VentanaPrincipal : Window
         // borrando en vez de mandando a la papelera.
         PapeleraDelSistema.EnWindows = RecycleBin.Send;
         Closed += (_, _) => Reindex.PapeleraApp.VaciarAlCerrar();
+
+        // Tras actualizar en Linux la app se vuelve a abrir. Se prepara aquí, al cerrarse de
+        // verdad (si hay trabajo en marcha y dicen que no, no se llega): un ayudante espera a
+        // que este proceso acabe -con la instancia única, abrirla antes la haría irse- y
+        // entonces la abre.
+        Closed += (_, _) => { if (_reiniciarAlSalir) Reinicio.AbrirCuandoSalga(); };
         var relojPapelera = new DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
         relojPapelera.Tick += (_, _) => Reindex.PapeleraApp.FinalizarViejos();
         relojPapelera.Start();
@@ -2463,6 +2469,57 @@ public partial class VentanaPrincipal : Window
         _ => Textos.Instancia.MainDescargaHechaDmg,
     };
 
+    /// <summary>La app se cierra para volver a abrirse con la versión nueva.</summary>
+    private bool _reiniciarAlSalir;
+    private DispatcherTimer? _vigilante;
+
+    /// <summary>
+    /// Saca la ventana al frente, para cuando otra Ondine le pasa un vídeo o simplemente se
+    /// vuelve a pulsar el icono. Poner «siempre encima» un instante es el truco que hace falta
+    /// en X11: pedir solo <c>Activate</c> deja la ventana parpadeando en la barra sin subir.
+    /// </summary>
+    public void TraerAlFrente()
+    {
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Show();
+        Activate();
+        Topmost = true;
+        Topmost = false;
+    }
+
+    /// <summary>
+    /// Espera a que el instalador del <c>.deb</c> acabe y entonces reinicia Ondine.
+    ///
+    /// <para>
+    /// No hay nadie que avise de que el instalador terminó: se mira. Lo que cambia al instalar
+    /// es lo que hay EN DISCO —el proceso que corre sigue siendo el viejo—, así que se lee la
+    /// versión de la carpeta de la aplicación y se compara con la que se esperaba. Se exigen dos
+    /// lecturas seguidas para no reiniciar con el paquete a medio copiar. Se deja de mirar a la
+    /// media hora: si no se instaló, no se va a hacer solo.
+    /// </para>
+    /// </summary>
+    private void VigilarInstalacion(Version esperada)
+    {
+        _vigilante?.Stop();
+        int vueltas = 0, seguidas = 0;
+        var reloj = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _vigilante = reloj;
+        reloj.Tick += (_, _) =>
+        {
+            if (++vueltas > 900) { reloj.Stop(); return; }
+
+            var instalada = Updater.VersionInstalada(AppContext.BaseDirectory);
+            seguidas = instalada is not null && instalada >= esperada ? seguidas + 1 : 0;
+            if (seguidas < 2) return;
+
+            reloj.Stop();
+            lblProg.Text = Textos.Instancia.MainReiniciandoTrasActualizar;
+            _reiniciarAlSalir = true;
+            Close();   // con una compresión en marcha pregunta antes, como siempre
+        };
+        reloj.Start();
+    }
+
     private async void OnUpdateNow(object sender, RoutedEventArgs e)
     {
         if (_pendingUpdate == null) return;
@@ -2512,12 +2569,27 @@ public partial class VentanaPrincipal : Window
             if (Updater.ComoSeInstala(_pendingUpdate.Paquete) == Updater.Entrega.MarcarEjecutableYEnsenar)
             {
                 DarPermisoDeEjecucion(paquete);
+
+                // El AppImage se sustituye él mismo y la app se reabre: no hay nada que hacer
+                // a mano. Si no se puede (carpeta de solo lectura...) se deja como siempre.
+                if (Updater.ReemplazarAppImage(paquete, Environment.GetEnvironmentVariable("APPIMAGE") ?? ""))
+                {
+                    lblProg.Text = Textos.Instancia.MainReiniciandoTrasActualizar;
+                    _reiniciarAlSalir = true;
+                    Close();
+                    return;
+                }
                 EnElGestorDeArchivos.Ensenar(paquete);
             }
             else if (!EnElGestorDeArchivos.AbrirConSuPrograma(paquete))
             {
                 // Sin programa asignado -pasa en escritorios pelados- al menos se enseña.
                 EnElGestorDeArchivos.Ensenar(paquete);
+            }
+            else if (_pendingUpdate.Paquete == Updater.Paquete.DebDeLinux)
+            {
+                lblProg.Text = Textos.Instancia.MainEsperandoInstalacion;
+                VigilarInstalacion(_pendingUpdate.Version);
             }
 
             await Dialogo.Aviso(this, Textos.Instancia.MainActualizarTitulo,
@@ -2573,7 +2645,13 @@ public partial class VentanaPrincipal : Window
     private async Task PreguntarYCerrar()
     {
         if (!await Dialogo.Confirmar(this, Textos.Instancia.MainMenuSalir,
-                                     Textos.Instancia.MainSalirEnCurso)) return;
+                                     Textos.Instancia.MainSalirEnCurso))
+        {
+            // Si el cierre venía de una actualización y dicen que no, la app se queda: que un
+            // cierre manual de mucho después no la reinicie por sorpresa.
+            _reiniciarAlSalir = false;
+            return;
+        }
 
         _cts?.Cancel();
         _cerrandoConfirmado = true;
