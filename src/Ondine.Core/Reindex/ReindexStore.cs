@@ -403,6 +403,23 @@ public static class ReindexStore
         return mapa.TryGetValue($"fuente:{complementoId}:{catalogoRuta}", out var f) ? f : "";
     }
 
+    /// <summary>
+    /// Si este catálogo se carga de TODAS sus carpetas vinculadas a la vez. Va por catálogo:
+    /// una serie repartida en dos discos lo quiere así, y otra con una sola carpeta no.
+    /// </summary>
+    public static bool CargarTodasVinculadas(string catalogoRuta) =>
+        !string.IsNullOrWhiteSpace(catalogoRuta)
+        && LeerMapa(RutaPreferencias).TryGetValue("todas-vinculadas:" + catalogoRuta, out var v) && v == "1";
+
+    public static void GuardarTodasVinculadas(string catalogoRuta, bool todas)
+    {
+        if (string.IsNullOrWhiteSpace(catalogoRuta)) return;
+        var mapa = LeerMapa(RutaPreferencias);
+        var clave = "todas-vinculadas:" + catalogoRuta;
+        if (todas) mapa[clave] = "1"; else mapa.Remove(clave);
+        EscribirMapa(RutaPreferencias, mapa);
+    }
+
     // Carpetas ya analizadas con un catálogo: para no re-emparejar carpeta y catálogo cada vez.
     // La más reciente, la primera. Se guardan como líneas dentro del valor del mapa (el JSON
     // escapa los saltos de línea, y una ruta no lleva '\n').

@@ -69,6 +69,115 @@ public static class LibraryScan
             .ToArray();
     }
 
+    // ───────────────────────── varias carpetas a la vez ─────────────────────────
+
+    /// <summary>
+    /// Deja la lista de carpetas lista para recorrer: rutas completas, sin vacías ni
+    /// repetidas y SIN las que cuelgan de otra de la lista.
+    ///
+    /// <para>
+    /// Lo último importa: si «Doraemon» y «Doraemon/Season 1979» entran las dos, los
+    /// ficheros de la segunda salen dos veces y, peor, unos cuelgan de «Season 1979» y otros
+    /// de la raíz según se mire. Con la de arriba basta, que ya incluye a la de abajo.
+    /// </para>
+    /// </summary>
+    public static List<string> NormalizarRaices(IEnumerable<string?> raices)
+    {
+        var completas = raices
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Select(r => Path.GetFullPath(r!.Trim()).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+            .Select(r => r.Length == 0 ? Path.DirectorySeparatorChar.ToString() : r)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return completas
+            .Where(r => !completas.Any(otra =>
+                !string.Equals(otra, r, StringComparison.OrdinalIgnoreCase) && CuelgaDe(r, otra)))
+            .ToList();
+    }
+
+    private static bool CuelgaDe(string ruta, string raiz)
+    {
+        var base_ = raiz.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return ruta.Length > base_.Length
+            && ruta.StartsWith(base_, StringComparison.OrdinalIgnoreCase)
+            && (ruta[base_.Length] == Path.DirectorySeparatorChar || ruta[base_.Length] == Path.AltDirectorySeparatorChar);
+    }
+
+    /// <summary>
+    /// Como <see cref="Escanear(string, IReadOnlyCollection{string})"/>, pero sobre varias
+    /// carpetas a la vez, para una serie repartida entre discos. Cada fichero se agrupa y se
+    /// ordena respecto a SU carpeta de origen, y los grupos del mismo nombre se funden: la
+    /// «Season 1979» del disco A y la del disco B salen juntas.
+    ///
+    /// <para>
+    /// Con una sola carpeta da exactamente lo mismo que la versión de una carpeta.
+    /// </para>
+    /// </summary>
+    public static string[] Escanear(IReadOnlyList<string> raices, IReadOnlyCollection<string> extensiones)
+    {
+        var utiles = NormalizarRaices(raices).Where(Directory.Exists).ToList();
+        if (utiles.Count == 0) return Array.Empty<string>();
+
+        var opciones = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.System,
+        };
+
+        var vistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var todos = new List<(string Ruta, string Grupo)>();
+        foreach (var raiz in utiles)
+            foreach (var f in Directory.EnumerateFiles(raiz, "*", opciones))
+            {
+                if (!extensiones.Contains(Path.GetExtension(f).ToLowerInvariant())) continue;
+                if (vistos.Add(f)) todos.Add((f, Grupo(raiz, f)));
+            }
+
+        return todos
+            .OrderBy(x => Orden(x.Grupo))
+            .ThenBy(x => x.Grupo, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(x => Path.GetFileName(x.Ruta), StringComparer.CurrentCultureIgnoreCase)
+            .Select(x => x.Ruta)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// De qué carpeta de la lista cuelga un fichero: la más profunda que lo contiene. Si no
+    /// cuelga de ninguna (un fichero añadido por un complemento, por ejemplo) devuelve la
+    /// primera, que es el comportamiento de siempre con una sola carpeta.
+    /// </summary>
+    public static string RaizDe(IReadOnlyList<string> raices, string ruta)
+    {
+        string? mejor = null;
+        foreach (var r in raices)
+            if (CuelgaDe(Path.GetFullPath(ruta), Path.GetFullPath(r)) &&
+                (mejor == null || r.Length > mejor.Length))
+                mejor = r;
+        return mejor ?? (raices.Count > 0 ? raices[0] : "");
+    }
+
+    /// <summary>
+    /// Las temporadas (grupos) que hay entre estos ficheros, con cuántos ficheros trae cada
+    /// una, en el orden en que se enseñan. Para que se pueda elegir cuáles analizar.
+    /// </summary>
+    public static List<(string Grupo, int Cuenta)> Temporadas(
+        IReadOnlyList<string> raices, IEnumerable<string> ficheros) =>
+        ficheros
+            .GroupBy(f => Grupo(RaizDe(raices, f), f), StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Grupo: g.Key, Cuenta: g.Count()))
+            .OrderBy(x => Orden(x.Grupo))
+            .ThenBy(x => x.Grupo, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+    /// <summary>Los ficheros que NO pertenecen a ninguna de las temporadas apartadas.</summary>
+    public static string[] SinTemporadas(
+        IReadOnlyList<string> raices, IEnumerable<string> ficheros, IReadOnlySet<string> apartadas) =>
+        apartadas.Count == 0
+            ? ficheros.ToArray()
+            : ficheros.Where(f => !apartadas.Contains(Grupo(RaizDe(raices, f), f))).ToArray();
+
     /// <summary>
     /// A qué carpeta de temporada pertenece un fichero: el PRIMER tramo bajo la raíz. Se
     /// queda con el primero y no con el padre inmediato para que un «Season 2005/Extras»
