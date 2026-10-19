@@ -1,3 +1,4 @@
+using Avalonia;
 using System.Threading;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
@@ -6,6 +7,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 
 namespace Ondine.Ava;
 
@@ -36,7 +38,9 @@ public partial class CirculosCargando : UserControl
     /// <summary>Lo que va cada círculo por detrás del anterior. Sin esto, los cuatro laten al unísono.</summary>
     private static readonly TimeSpan Escalon = TimeSpan.FromSeconds(0.3);
 
-    private readonly CancellationTokenSource _corte = new();
+    // Las animaciones solo corren MIENTRAS SE VE. Un testigo nuevo por cada vez que se enseña.
+    private CancellationTokenSource? _corte;
+    private readonly List<(Animation Animacion, Control Objetivo)> _latidos = new();
 
     public CirculosCargando()
     {
@@ -45,7 +49,45 @@ public partial class CirculosCargando : UserControl
         var fila = this.FindControl<StackPanel>("fila")!;
         for (int i = 0; i < Cuantos; i++) fila.Children.Add(Unidad(i));
 
-        DetachedFromVisualTree += (_, _) => _corte.Cancel();
+        // Mientras se vea, late; cuando no, no. Se mira también al entrar en el árbol, por si
+        // nace ya visible y el cambio llegó antes de enterarnos.
+        AttachedToVisualTree += (_, _) => { if (IsVisible) Arrancar(); };
+        DetachedFromVisualTree += (_, _) => Parar();
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs cambio)
+    {
+        base.OnPropertyChanged(cambio);
+        if (cambio.Property != IsVisibleProperty || !this.IsAttachedToVisualTree()) return;
+
+        if (IsVisible) Arrancar(); else Parar();
+    }
+
+    /// <summary>
+    /// Arranca y para el latido según se vea o no.
+    ///
+    /// <para>
+    /// <b>Esto es lo que faltaba, y costaba un núcleo entero.</b> Las animaciones eran
+    /// infinitas y solo se cortaban al SALIR DEL ÁRBOL. Pero estos círculos casi nunca salen: se
+    /// quedan en la ventana con <c>IsVisible = false</c>, esperando a la próxima vez. Un control
+    /// oculto no se pinta, pero su animación sigue viva, reevaluando escala y opacidad a cada
+    /// fotograma. Con el reproductor abierto, o la pantalla de Organizar, la app gastaba
+    /// ~90 % de un núcleo sin hacer nada —medido, y con el vídeo en pausa—. Ahora el reloj
+    /// existe solo mientras los círculos se ven.
+    /// </para>
+    /// </summary>
+    private void Arrancar()
+    {
+        if (_corte is { IsCancellationRequested: false }) return;
+        _corte = new CancellationTokenSource();
+        foreach (var (animacion, objetivo) in _latidos)
+            _ = animacion.RunAsync(objetivo, _corte.Token);
+    }
+
+    private void Parar()
+    {
+        _corte?.Cancel();
+        _corte = null;
     }
 
     /// <summary>Lo que se está esperando, dicho debajo de los círculos.</summary>
@@ -75,8 +117,8 @@ public partial class CirculosCargando : UserControl
         // El latido se define UNA vez y el retraso es un parámetro. La alternativa era
         // cuatro bloques casi idénticos en el XAML, y entonces cambiar el ritmo obligaría a
         // tocarlo en ocho sitios.
-        _ = Latido(0.85, 0.15, 1, 1.35, retraso).RunAsync(aro, _corte.Token);
-        _ = Latido(1, 1, 1, 0.1, retraso).RunAsync(punto, _corte.Token);
+        _latidos.Add((Latido(0.85, 0.15, 1, 1.35, retraso), aro));
+        _latidos.Add((Latido(1, 1, 1, 0.1, retraso), punto));
 
         return new Panel { Width = 22, Height = 22, Children = { aro, punto } };
     }

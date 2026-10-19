@@ -18,6 +18,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    <!-- VideoEnSoftware copia fotogramas de memoria nativa a un bitmap, fila a fila. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>Ondine.Avalonia</AssemblyName>
     <RootNamespace>Ondine.Ava</RootNamespace>
 
