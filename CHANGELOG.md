@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.19.1] - 2026-10-19
+
 ### Corregido
 
 - **En Linux, Ondine ya no se abre varias veces.** Pulsar el icono, usar «Abrir con» sobre un
