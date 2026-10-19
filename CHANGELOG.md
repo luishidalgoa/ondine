@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-10-19
+
 ### Añadido
 
 - **Organizar carga una serie repartida en varias carpetas, y deja elegir qué temporadas
