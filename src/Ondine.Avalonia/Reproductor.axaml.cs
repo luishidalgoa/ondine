@@ -49,6 +49,9 @@ public partial class Reproductor : Window
     private LibVLC? _vlc;
     private MediaPlayer? _mp;
 
+    // Fuera de Windows el vídeo no va en una ventana nativa: ver VideoEnSoftware.
+    private VideoEnSoftware? _pantalla;
+
     private readonly DispatcherTimer _apagon = new() { Interval = TimeSpan.FromSeconds(2.6) };
     private bool _visible = true;
     private bool _pausado;
@@ -86,6 +89,36 @@ public partial class Reproductor : Window
     {
         AvaloniaXamlLoader.Load(this);
         ArrastrarLaVentana.Enganchar(this);
+        if (!OperatingSystem.IsWindows()) UsarVideoEnSoftware();
+    }
+
+    /// <summary>
+    /// Cambia el <c>VideoView</c> (ventana nativa + una segunda ventana para los controles) por
+    /// un control normal con los controles encima.
+    ///
+    /// <para>
+    /// En Linux el gestor de ventanas dejaba la segunda ventana por debajo de la del reproductor:
+    /// se veía el vídeo y nada más, ni siquiera el botón de cerrar. Se hace al cargar y no en el
+    /// XAML porque en Windows el <c>VideoView</c> funciona, decodifica con la tarjeta y no
+    /// conviene tocarlo.
+    /// </para>
+    /// <para>
+    /// Los controles se mueven, no se recrean: siguen siendo los mismos del XAML, y
+    /// <c>FindControl</c> los encuentra por el ámbito de nombres, que no depende de dónde cuelguen.
+    /// </para>
+    /// </summary>
+    private void UsarVideoEnSoftware()
+    {
+        var raiz = this.FindControl<Grid>("raiz")!;
+        var vista = this.FindControl<LibVLCSharp.Avalonia.VideoView>("video")!;
+        var encima = vista.Content as Control;
+
+        vista.Content = null;
+        raiz.Children.Remove(vista);
+
+        _pantalla = new VideoEnSoftware();
+        raiz.Children.Add(_pantalla);
+        if (encima is not null) raiz.Children.Add(encima);
     }
 
     public Reproductor(string ruta) : this()
@@ -175,7 +208,8 @@ public partial class Reproductor : Window
             MotorDeVideo.Arrancar();
             _vlc = new LibVLC();
             _mp = new MediaPlayer(_vlc);
-            this.FindControl<LibVLCSharp.Avalonia.VideoView>("video")!.MediaPlayer = _mp;
+            if (_pantalla is not null) _pantalla.Enganchar(_mp);
+            else this.FindControl<LibVLCSharp.Avalonia.VideoView>("video")!.MediaPlayer = _mp;
 
             // Los eventos de LibVLC llegan en SU hilo, no en el de la interfaz. Tocar un
             // control desde ahí revienta; con Post se devuelven al hilo bueno, y si la
@@ -266,6 +300,7 @@ public partial class Reproductor : Window
         _vlc = null;
         if (mp is null) { vlc?.Dispose(); return; }
 
+        _pantalla?.Desenganchar();
         var vista = this.FindControl<LibVLCSharp.Avalonia.VideoView>("video");
         if (vista is not null) vista.MediaPlayer = null;
 

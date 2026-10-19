@@ -581,6 +581,15 @@ public static class Comprobacion
             // no mide nada.
             var abajo = v.FindControl<Grid>("capaInferior");
 
+            // FUERA DE WINDOWS los controles tienen que estar EN la ventana, no en otra. Esta
+            // comprobación no existía, y el reproductor de Linux salió sin controles ni botón
+            // de cerrar: el VideoView los pone en una segunda ventana que el gestor de ventanas
+            // dejaba por debajo, y desde dentro todo parecía correcto (opacidad, nombres...).
+            // Que sean descendientes visuales de la ventana es lo que garantiza que se ven.
+            if (!OperatingSystem.IsWindows())
+                Dice(abajo is not null && v.GetVisualDescendants().Contains(abajo),
+                    "los controles viven dentro de la ventana del reproductor, no en una aparte");
+
             // Quieto: se esconden.
             await Task.Delay(3200);
             Dice(abajo?.Opacity < 0.1,

@@ -32,6 +32,17 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **En Linux, el reproductor integrado ya tiene controles.** Se veía el vídeo pero no había
+  barra de posición, ni pausa, ni volumen, ni botón de cerrar: el gestor de ventanas dejaba los
+  controles por debajo del vídeo. Ahora el vídeo se pinta dentro de la propia ventana y los
+  controles van encima, con el clic para pausar, la barra, `Esc` para cerrar y el botón ✕.
+- **Ondine ya no gasta un núcleo entero de CPU sin hacer nada.** Los círculos de espera seguían
+  animándose aunque estuvieran ocultos, y con la pantalla de Organizar o el reproductor
+  abiertos la app consumía alrededor del 90 % de un núcleo, también con el vídeo en pausa.
+  Ahora solo se animan mientras se ven.
+
 ## [1.19.1] - 2026-10-19
 
 ### Corregido
