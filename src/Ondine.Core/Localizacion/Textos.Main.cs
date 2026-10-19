@@ -1013,8 +1013,16 @@ public sealed partial class Textos
     /// </para>
     /// </summary>
     public string MainDescargaHechaDeb => Idioma.Elegir(
-        "«{0}» has been downloaded and its installer is now open. Press Install; your library and your settings stay as they are.",
-        "«{0}» está descargado y se ha abierto su instalador. Pulsa «Instalar»: tu biblioteca y tus ajustes se quedan como están.");
+        "«{0}» has been downloaded and its installer is now open. Press Install and Ondine will restart on its own when it finishes; your library and your settings stay as they are.",
+        "«{0}» está descargado y se ha abierto su instalador. Pulsa «Instalar» y Ondine se reiniciará sola al terminar: tu biblioteca y tus ajustes se quedan como están.");
+
+    public string MainEsperandoInstalacion => Idioma.Elegir(
+        "Waiting for the installer to finish… Ondine will restart by itself",
+        "Esperando a que termine el instalador… Ondine se reiniciará sola");
+
+    public string MainReiniciandoTrasActualizar => Idioma.Elegir(
+        "Update installed. Restarting Ondine…",
+        "Actualización instalada. Reiniciando Ondine…");
 
     public string MainDescargaHechaAppImage => Idioma.Elegir(
         "«{0}» has been downloaded, it is already executable and its folder is open. Open it; you can then delete the old one.",

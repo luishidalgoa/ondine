@@ -7,6 +7,10 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Una sola Ondine. Los autochequeos (--auto) abren y cierran ventanas a propósito y no
+        // pueden toparse con la que tenga abierta el usuario.
+        if (!args.Contains("--auto") && !Instancia.Arrancar(args)) return;
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 
         if (!args.Contains("--auto")) return;
