@@ -36,8 +36,8 @@ public sealed partial class Textos
         "Cómo identifica Organizar tus ficheros");
 
     public string AyudaOrgComoIntro => Idioma.Elegir(
-        "Organise checks the videos in a folder against a catalogue (a JSON file with the episodes of the series) and proposes the canonical name for each one. It never touches the originals until you press Apply, and it never invents an episode: anything doubtful is left for you to decide.",
-        "Organizar coteja los vídeos de una carpeta contra un catálogo (un JSON con los episodios de la serie) y propone el nombre canónico de cada uno. Nunca toca los originales hasta que pulsas Aplicar, y nunca se inventa un episodio: lo dudoso lo deja para que decidas tú.");
+        "Organise checks the videos in a folder against a catalogue (a JSON file with the episodes of the series) and proposes the canonical name for each one. It never touches the originals until you press Apply, and it never invents an episode: anything doubtful is left for you to decide. If this catalogue's files number their episodes differently (7x1 restarting in each season, or 100 counting across the whole series), say so in the numbering box next to the priority: Ondine then reads the file names that way, whatever the catalogue's own numbering.",
+        "Organizar coteja los vídeos de una carpeta contra un catálogo (un JSON con los episodios de la serie) y propone el nombre canónico de cada uno. Nunca toca los originales hasta que pulsas Aplicar, y nunca se inventa un episodio: lo dudoso lo deja para que decidas tú. Si los ficheros de este catálogo numeran de otra forma (un 7x1 que reinicia en cada temporada, o un 100 que cuenta toda la serie), dilo en el cuadro de numeración junto a la prioridad: Ondine lee los nombres así, sea cual sea la numeración del propio catálogo.");
 
     public string AyudaOrgComoLeeTitulo => Idioma.Elegir(
         "WHAT IT READS FROM EACH FILE",

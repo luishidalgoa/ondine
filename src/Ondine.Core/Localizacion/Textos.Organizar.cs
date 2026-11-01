@@ -40,6 +40,14 @@ public sealed partial class Textos
         "What this catalogue trusts when identifying. \"The number wins\": if the file carries an episode number it is used even when the title is weak, without falling back to \"review\".",
         "En qué se fía este catálogo al identificar. «El número manda»: si el fichero trae número de episodio, se usa aunque el título flojee, sin caer en «revisar».");
 
+    public string OrganizarNumeracionAyuda => Idioma.Elegir(
+        "How this catalogue's files number their episodes. \"Automatic\" follows the catalogue's own numbering. \"Restart per season\": 7x1 is the first episode of season 7, whatever number the catalogue gives it. \"Across the series\": the number counts on through the whole series, so 100 is the hundredth episode. Remembered per catalogue.",
+        "Cómo numeran sus episodios los ficheros de este catálogo. «Automática» sigue la numeración del propio catálogo. «Reinicia por temporada»: 7x1 es el primer episodio de la temporada 7, sea cual sea el número que le dé el catálogo. «Seguida en la serie»: el número cuenta toda la serie, así que el 100 es el episodio centésimo. Se recuerda por catálogo.");
+
+    public string OrganizarNumeracionAuto => Idioma.Elegir("Numbering: automatic", "Numeración: automática");
+    public string OrganizarNumeracionTemporada => Idioma.Elegir("Numbering restarts each season", "Numeración reinicia por temporada");
+    public string OrganizarNumeracionSerie => Idioma.Elegir("Numbering runs across the series", "Numeración seguida en la serie");
+
     public string OrganizarModoAuto => Idioma.Elegir("Priority: automatic", "Prioridad: automática");
     public string OrganizarModoNumero => Idioma.Elegir("Priority: the number wins", "Prioridad: el número manda");
 
@@ -945,6 +953,7 @@ public sealed partial class Textos
     public string OrganizarPorQueDecision => Idioma.Elegir("your decision", "decisión tuya");
     public string OrganizarPorQueNumFecha => Idioma.Elegir("no. + exact date", "nº + fecha exacta");
     public string OrganizarPorQueOrdinal => Idioma.Elegir("season no.", "nº de temporada");
+    public string OrganizarPorQueOrdinalSerie => Idioma.Elegir("series no.", "nº de serie");
     public string OrganizarPorQueTitulo => Idioma.Elegir("title", "título");
     public string OrganizarPorQueSegmentos => Idioma.Elegir("{0} segments · titles", "{0} segmentos · títulos");
     public string OrganizarPorQueNumFechaAprox => Idioma.Elegir("no. + date≈", "nº + fecha≈");

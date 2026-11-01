@@ -279,6 +279,9 @@ public sealed class ReindexCatalog
     [JsonIgnore] private Dictionary<int, List<CatalogEpisode>> _porNum = new();
     [JsonIgnore] private Dictionary<EpisodeKey, CatalogEpisode> _porTemporadaYNum = new();
     [JsonIgnore] public IReadOnlyList<CatalogEpisode> Regulares { get; private set; } = Array.Empty<CatalogEpisode>();
+
+    /// <summary>Los regulares en el orden de la serie: temporada y luego número. Base de la numeración continua.</summary>
+    [JsonIgnore] public IReadOnlyList<CatalogEpisode> RegularesEnOrden { get; private set; } = Array.Empty<CatalogEpisode>();
     [JsonIgnore] public IReadOnlyList<CatalogEpisode> Especiales { get; private set; } = Array.Empty<CatalogEpisode>();
 
     /// <summary>Versión mayor del esquema que esta app sabe leer.</summary>
@@ -455,6 +458,7 @@ public sealed class ReindexCatalog
         foreach (var e in Episodios) _porTemporadaYNum[ClaveDe(e)] = e;
 
         Regulares = Episodios.Where(e => !e.Especial).ToList();
+        RegularesEnOrden = Regulares.OrderBy(e => e.Temporada ?? int.MinValue).ThenBy(e => e.Num).ToList();
         Especiales = Episodios.Where(e => e.Especial).ToList();
         Advertencias = ConstruirAdvertencias();
     }

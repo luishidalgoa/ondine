@@ -460,6 +460,7 @@ public sealed class OrganizarRow : INotifyPropertyChanged
                 ReindexHint.Override => Textos.Instancia.OrganizarPorQueDecision,
                 ReindexHint.IndiceFecha => Textos.Instancia.OrganizarPorQueNumFecha,
                 ReindexHint.OrdinalTemporada => Textos.Instancia.OrganizarPorQueOrdinal,
+                ReindexHint.OrdinalSerie => Textos.Instancia.OrganizarPorQueOrdinalSerie,
                 ReindexHint.Titulo => Res.Archivo.Segmentos.Count > 1
                     ? string.Format(Textos.Instancia.OrganizarPorQueSegmentos, Res.Archivo.Segmentos.Count)
                     : Textos.Instancia.OrganizarPorQueTitulo,

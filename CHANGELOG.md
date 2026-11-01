@@ -32,6 +32,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Puedes decir cómo numeran los ficheros de cada catálogo.** Junto a la prioridad hay un nuevo
+  desplegable de numeración: «automática» (lo que diga el catálogo), «reinicia por temporada» (un
+  7x1 es el primer episodio de la temporada 7) o «seguida en la serie» (el número cuenta toda la
+  serie). Lo que elijas manda sobre la numeración del JSON, así que el mismo catálogo sirve aunque
+  tus nombres de fichero numeren de otra forma. Se recuerda por catálogo.
+
 ### Corregido
 
 - **Un catálogo editado se aplica sin reimportarlo.** Antes, el JSON se leía al elegirlo y

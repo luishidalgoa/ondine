@@ -245,6 +245,13 @@ public partial class OrganizarView : UserControl
             // Cambiar el modo re-identifica al momento si ya hay análisis en pantalla.
             if (_catalogoCargado != null && _ficheros.Length > 0) Simular();
         };
+        cboNumeracion.SelectionChanged += (_, _) =>
+        {
+            if (_sincronizandoModo || _catalogoElegido == null) return;
+            ReindexStore.GuardarNumeracion(_catalogoElegido.Ruta, NumeracionActual());
+            // Igual que el modo: cambiarla re-identifica al momento si ya hay análisis.
+            if (_catalogoCargado != null && _ficheros.Length > 0) Simular();
+        };
         // Ctrl+Z deshace el último envío a la papelera de la app (p. ej. la copia repetida borrada).
         KeyDown += async (_, e) =>
         {
@@ -478,6 +485,21 @@ public partial class OrganizarView : UserControl
     private ModoPrioridad ModoActual() =>
         cboModo.SelectedIndex == 1 ? ModoPrioridad.NumeroPorTemporada : ModoPrioridad.Automatico;
 
+    /// <summary>Cómo numeran los ficheros de este catálogo, según lo que haya dicho el usuario.</summary>
+    private NumeracionFicheros NumeracionActual() => cboNumeracion.SelectedIndex switch
+    {
+        1 => NumeracionFicheros.PorTemporada,
+        2 => NumeracionFicheros.Continua,
+        _ => NumeracionFicheros.Automatica,
+    };
+
+    private static int IndiceDeNumeracion(NumeracionFicheros n) => n switch
+    {
+        NumeracionFicheros.PorTemporada => 1,
+        NumeracionFicheros.Continua => 2,
+        _ => 0,
+    };
+
     private void CargarCatalogoElegido()
     {
         _catalogoCargado = null;
@@ -485,6 +507,7 @@ public partial class OrganizarView : UserControl
         // El modo es propiedad del catálogo: se restaura el suyo sin disparar un re-análisis.
         _sincronizandoModo = true;
         cboModo.SelectedIndex = ReindexStore.CargarModo(_catalogoElegido.Ruta) == "numero" ? 1 : 0;
+        cboNumeracion.SelectedIndex = IndiceDeNumeracion(ReindexStore.CargarNumeracion(_catalogoElegido.Ruta));
         _sincronizandoModo = false;
         // La huella se toma ANTES de leer: si el fichero cambia mientras se lee, la siguiente
         // comprobación lo verá distinto y lo vuelve a leer, en vez de darlo por bueno.
@@ -767,6 +790,7 @@ public partial class OrganizarView : UserControl
         var catalogo = _catalogoCargado;
         var decisiones = _decisiones;
         var modo = ModoActual();
+        var numeracion = NumeracionActual();
         var señales = await Task.Run(() => nuevas
             .AsParallel()
             .AsOrdered()
@@ -777,7 +801,7 @@ public partial class OrganizarView : UserControl
                 duracion: FichaDeWindows.Duracion(f)))
             .ToList());
         var resoluciones = await Task.Run(() =>
-            ReindexEngine.Resolve(señales, catalogo, decisiones, modo));
+            ReindexEngine.Resolve(señales, catalogo, decisiones, modo, numeracion: numeracion));
 
         foreach (var r in resoluciones)
         {
@@ -1288,6 +1312,7 @@ public partial class OrganizarView : UserControl
         var ficheros = _ficheros;
         var decisiones = _decisiones;
         var modo = ModoActual();   // se lee AQUÍ: dentro del Task.Run no se puede tocar el ComboBox
+        var numeracion = NumeracionActual();
 
         try
         {
@@ -1337,7 +1362,7 @@ public partial class OrganizarView : UserControl
             // quedarse con un dato viejo (ver MemoriaDeParecidos).
             var memoria = await Task.Run(() => ReindexStore.CargarParecidos(catalogo));
             var resoluciones = await ConTiempoDeVerse(
-                Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo, memoria)), animar);
+                Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo, memoria, numeracion)), animar);
 
             // ── Etapa 2b: metadatos SOLO de los dudosos ──
             // El contenedor suele llevar el título grabado («title» del MKV) aunque el
@@ -1415,7 +1440,7 @@ public partial class OrganizarView : UserControl
                             señales[i] = SignalExtractor.Extract(
                                 señales[i].Path, señales[i].Carpeta, titulo,
                                 duracion: señales[i].Duracion);
-                    resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo, memoria));
+                    resoluciones = await Task.Run(() => ReindexEngine.Resolve(señales, catalogo, decisiones, modo, memoria, numeracion));
                     Escribir(string.Format(Textos.Instancia.OrganizarLogTitulosMetadatos, metadatos.Count));
                 }
             }
