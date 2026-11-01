@@ -371,6 +371,33 @@ public static class ReindexStore
         EscribirMapa(RutaPreferencias, mapa);
     }
 
+    // Cómo numeran los ficheros de cada catálogo, cuando el usuario lo dice. Por defecto, lo del JSON.
+    public static NumeracionFicheros CargarNumeracion(string catalogoRuta)
+    {
+        if (string.IsNullOrWhiteSpace(catalogoRuta)) return NumeracionFicheros.Automatica;
+        var mapa = LeerMapa(RutaPreferencias);
+        return mapa.TryGetValue("numeracion:" + catalogoRuta, out var v) ? v switch
+        {
+            "temporada" => NumeracionFicheros.PorTemporada,
+            "continua" => NumeracionFicheros.Continua,
+            _ => NumeracionFicheros.Automatica,
+        } : NumeracionFicheros.Automatica;
+    }
+
+    public static void GuardarNumeracion(string catalogoRuta, NumeracionFicheros numeracion)
+    {
+        if (string.IsNullOrWhiteSpace(catalogoRuta)) return;
+        var mapa = LeerMapa(RutaPreferencias);
+        var clave = "numeracion:" + catalogoRuta;
+        switch (numeracion)
+        {
+            case NumeracionFicheros.PorTemporada: mapa[clave] = "temporada"; break;
+            case NumeracionFicheros.Continua: mapa[clave] = "continua"; break;
+            default: mapa.Remove(clave); break;
+        }
+        EscribirMapa(RutaPreferencias, mapa);
+    }
+
     // El modo de prioridad del match es una propiedad de CADA catálogo (la fiabilidad de una
     // biblioteca no es global), así que se guarda por su ruta. «auto» = el de por defecto.
     public static void GuardarModo(string catalogoRuta, string modo)

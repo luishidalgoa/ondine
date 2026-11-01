@@ -37,6 +37,16 @@ public sealed partial class Textos
     // {0} = el número dentro de la temporada, {1} = la temporada.
     // «el número manda» es el nombre del modo: tiene que decirse igual que en el
     // selector de la pantalla (OrganizarModoNumero → «the number wins»).
+    // {0} = el número del fichero, {1} = su temporada.
+    public string ReindexMotivoNumeracionTemporada => Idioma.Elegir(
+        "Episode {0} of season {1} (this catalogue's files restart numbering in each season)",
+        "El episodio {0} de la temporada {1} (en este catálogo los ficheros reinician la numeración en cada temporada)");
+
+    // {0} = el número del fichero.
+    public string ReindexMotivoNumeracionSerie => Idioma.Elegir(
+        "Episode {0} counting across the whole series (this catalogue's files run on without restarting)",
+        "El episodio {0} contando toda la serie (en este catálogo los ficheros siguen de corrido, sin reiniciarse)");
+
     public string ReindexMotivoNumeroManda => Idioma.Elegir(
         "Episode {0} of season {1} (\"the number wins\" mode)",
         "El episodio {0} de la temporada {1} (modo «el número manda»)");

@@ -45,6 +45,29 @@ public enum ReindexHint
     TituloDebil,
     /// <summary>El número releído como «el N.º de la temporada de la carpeta».</summary>
     OrdinalTemporada,
+    /// <summary>El número releído como «el N.º de toda la serie» (numeración continua).</summary>
+    OrdinalSerie,
+}
+
+/// <summary>
+/// Cómo numeran los ficheros de ESTE catálogo, cuando el usuario lo dice.
+///
+/// <para>
+/// El JSON del catálogo puede numerar como quiera (<c>clave</c>), y los nombres de los ficheros
+/// pueden hacerlo de otra manera distinta: «7x1» es el primer episodio de la temporada 7 aunque el
+/// catálogo lo tenga como el 100. Con <see cref="Automatica"/> se sigue lo que diga el JSON; con
+/// las otras dos, el número del fichero se lee como lo que el usuario dice que es, y se busca el
+/// episodio por su POSICIÓN en el catálogo, no por su campo <c>num</c>.
+/// </para>
+/// </summary>
+public enum NumeracionFicheros
+{
+    /// <summary>Lo que diga el catálogo y la cascada de siempre.</summary>
+    Automatica,
+    /// <summary>El número vuelve a 1 en cada temporada: «7x1» es el primero de la temporada 7.</summary>
+    PorTemporada,
+    /// <summary>El número sigue de corrido por toda la serie: «100» es el centésimo episodio.</summary>
+    Continua,
 }
 
 /// <summary>
@@ -221,7 +244,8 @@ public static class ReindexEngine
         ReindexCatalog catalogo,
         IReadOnlyDictionary<string, ReindexOverride>? overrides = null,
         ModoPrioridad modo = ModoPrioridad.Automatico,
-        MemoriaDeParecidos? memoria = null)
+        MemoriaDeParecidos? memoria = null,
+        NumeracionFicheros numeracion = NumeracionFicheros.Automatica)
     {
         overrides ??= new Dictionary<string, ReindexOverride>();
         var indice = new IndiceTitulos(catalogo, memoria);
@@ -231,7 +255,7 @@ public static class ReindexEngine
         // después, cuando ya están todas. AsOrdered mantiene el orden de entrada, que es el
         // que verá el usuario en la tabla.
         var resoluciones = archivos.AsParallel().AsOrdered()
-            .Select(a => ResolverUno(a, catalogo, overrides, indice, modo))
+            .Select(a => ResolverUno(a, catalogo, overrides, indice, modo, numeracion))
             .ToList();
         Deduplicar(resoluciones);
 
@@ -239,7 +263,7 @@ public static class ReindexEngine
         // que la app identificó con confianza no hay nada que elegir, y ofrecer candidatos
         // peores solo mete ruido e invita a un clic equivocado. Se hace al final, después de
         // la deduplicación, porque esa puede degradar una fila que hasta entonces iba verde.
-        MarcarLosQueTraenDosEpisodios(resoluciones, catalogo, overrides, indice, modo);
+        MarcarLosQueTraenDosEpisodios(resoluciones, catalogo, overrides, indice, modo, numeracion);
 
         foreach (var r in resoluciones)
             if (r.Confianza == ReindexConfianza.Alta)
@@ -250,9 +274,26 @@ public static class ReindexEngine
 
     // ────────────────────────── resolución de un fichero ──────────────────────────
 
+    /// <summary>
+    /// El episodio que ocupa la posición <paramref name="idx"/> según la numeración que el usuario
+    /// ha declarado para el catálogo, o <c>null</c> si no hay tal posición (o no se puede saber:
+    /// una numeración por temporada sin temporada en el fichero).
+    /// </summary>
+    private static CatalogEpisode? PosicionEnLaNumeracion(ReindexCatalog cat, NumeracionFicheros n,
+                                                          int? temporada, int idx)
+    {
+        if (n == NumeracionFicheros.PorTemporada)
+        {
+            if (temporada is not int t) return null;
+            return cat.Regulares.Where(e => e.Temporada == t).OrderBy(e => e.Num).ElementAtOrDefault(idx - 1);
+        }
+        return cat.RegularesEnOrden.ElementAtOrDefault(idx - 1);
+    }
+
     private static ReindexResolution ResolverUno(FileSignals f, ReindexCatalog cat,
         IReadOnlyDictionary<string, ReindexOverride> overrides, IndiceTitulos indice,
-        ModoPrioridad modo = ModoPrioridad.Automatico)
+        ModoPrioridad modo = ModoPrioridad.Automatico,
+        NumeracionFicheros numeracion = NumeracionFicheros.Automatica)
     {
         var r = new ReindexResolution { Archivo = f };
 
@@ -298,6 +339,24 @@ public static class ReindexEngine
                 r.Motivo = Textos.Instancia.ReindexMotivoDecidisteTu;
                 return r;
             }
+        }
+
+        // ── La numeración que el USUARIO declara para este catálogo ──
+        // Manda sobre lo que diga el JSON: el número del fichero se lee como lo que se ha dicho que
+        // es, y el episodio se busca por su posición. Si no hay tal posición (fichero sin temporada
+        // con numeración por temporada, o un número fuera de rango) se sigue con la cascada de siempre.
+        if (numeracion != NumeracionFicheros.Automatica && !f.Especial && f.Indice is int idxDeclarado && idxDeclarado >= 1
+            && PosicionEnLaNumeracion(cat, numeracion, f.Temporada, idxDeclarado) is { } porDeclarada)
+        {
+            r.Episodio = porDeclarada;
+            r.Hint = numeracion == NumeracionFicheros.PorTemporada ? ReindexHint.OrdinalTemporada : ReindexHint.OrdinalSerie;
+            r.Score = 1.0;
+            r.Confianza = ReindexConfianza.Alta;
+            r.Estado = f.Indice == porDeclarada.Num ? ReindexEstado.Limpio : ReindexEstado.Corregido;
+            r.Motivo = numeracion == NumeracionFicheros.PorTemporada
+                ? string.Format(Textos.Instancia.ReindexMotivoNumeracionTemporada, idxDeclarado, f.Temporada)
+                : string.Format(Textos.Instancia.ReindexMotivoNumeracionSerie, idxDeclarado);
+            return r;
         }
 
         // ── Modo «el número manda por temporada» (opt-in, por catálogo) ──
@@ -625,7 +684,7 @@ public static class ReindexEngine
     /// </summary>
     private static void MarcarLosQueTraenDosEpisodios(List<ReindexResolution> resoluciones,
         ReindexCatalog cat, IReadOnlyDictionary<string, ReindexOverride> overrides,
-        IndiceTitulos indice, ModoPrioridad modo)
+        IndiceTitulos indice, ModoPrioridad modo, NumeracionFicheros numeracion)
     {
         foreach (var r in resoluciones)
         {
@@ -672,7 +731,7 @@ public static class ReindexEngine
         // cuadren.
         SubirLasQueSostieneElLote(resoluciones);
         RetirarLoQueSoloSostieneUnNumeroQueNoManda(resoluciones);
-        MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones, cat, overrides, indice, modo);
+        MarcarLosQueDeclaranMenosDeLoQuePromete(resoluciones, cat, overrides, indice, modo, numeracion);
         MarcarLosQueNoCuadranConElReloj(resoluciones);
     }
 
@@ -872,7 +931,7 @@ public static class ReindexEngine
     /// </summary>
     private static void MarcarLosQueDeclaranMenosDeLoQuePromete(List<ReindexResolution> resoluciones,
         ReindexCatalog cat, IReadOnlyDictionary<string, ReindexOverride> overrides,
-        IndiceTitulos indice, ModoPrioridad modo)
+        IndiceTitulos indice, ModoPrioridad modo, NumeracionFicheros numeracion)
     {
         // La vara de esta carpeta, para confirmar con el reloj lo que sospecha el nombre.
         var unidad = MedidaDelCapitulo.Aprender(resoluciones
@@ -958,7 +1017,7 @@ public static class ReindexEngine
             int i = resoluciones.IndexOf(fila);
             if (i < 0) continue;
 
-            var rehecha = ResolverUno(fila.Archivo.ConSegmento(letra), cat, overrides, indice, modo);
+            var rehecha = ResolverUno(fila.Archivo.ConSegmento(letra), cat, overrides, indice, modo, numeracion);
 
             // Acertar no lo vuelve automático. Lo que hay debajo es un fichero que no
             // contiene lo que su nombre decía, y eso lo confirma quien lo tenga delante.

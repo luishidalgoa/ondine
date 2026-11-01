@@ -112,6 +112,13 @@
             <ComboBoxItem Content="{i:T OrganizarModoAuto}" IsSelected="True"/>
             <ComboBoxItem Content="{i:T OrganizarModoNumero}"/>
           </ComboBox>
+          <!-- Cómo numeran los ficheros de ESTE catálogo: el usuario lo dice y manda sobre el JSON. -->
+          <ComboBox Name="cboNumeracion" Height="34" MinWidth="200" Margin="10,0,0,0" VerticalContentAlignment="Center"
+                    ToolTip.Tip="{i:T OrganizarNumeracionAyuda}">
+            <ComboBoxItem Content="{i:T OrganizarNumeracionAuto}" IsSelected="True"/>
+            <ComboBoxItem Content="{i:T OrganizarNumeracionTemporada}"/>
+            <ComboBoxItem Content="{i:T OrganizarNumeracionSerie}"/>
+          </ComboBox>
         </StackPanel>
       </StackPanel>
 
