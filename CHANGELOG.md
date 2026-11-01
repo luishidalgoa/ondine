@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-11-01
+
 ### Añadido
 
 - **Puedes decir cómo numeran los ficheros de cada catálogo.** Junto a la prioridad hay un nuevo
