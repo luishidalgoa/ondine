@@ -32,6 +32,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Un catálogo editado se aplica sin reimportarlo.** Antes, el JSON se leía al elegirlo y
+  «Analizar» seguía con esa versión: había que reimportarlo cada vez que cambiabas algo. Ahora
+  Ondine mira si el fichero ha cambiado antes de analizar y al volver a la ventana, y lo vuelve a
+  leer solo si cambió. La tarjeta del catálogo también muestra el recuento nuevo. Si el JSON queda
+  a medias, no se analiza con la versión vieja: se avisa.
+
 ## [1.19.2] - 2026-10-19
 
 ### Corregido
