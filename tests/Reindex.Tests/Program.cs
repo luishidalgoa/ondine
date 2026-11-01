@@ -137,6 +137,7 @@ public static class Program
         Ondine.Reindex.Tests.MemoriaDeParecidosTests.Todas();
         Ondine.Reindex.Tests.MulticargaTests.Todas();
         Ondine.Reindex.Tests.InstanciaUnicaYReinicioTests.Todas();
+        Ondine.Reindex.Tests.CatalogoQueSeReleeTests.Todas();
         Ondine.Reindex.Tests.FfmpegEnMacTests.Todas();
         Ondine.Reindex.Tests.RecursosQueNoExistenTests.Todas();
         Ondine.Reindex.Tests.PaqueteDeEscritorioTests.Todas();

@@ -104,6 +104,9 @@ public partial class OrganizarView : UserControl
     private CatalogoGuardado? _catalogoElegido;
     private bool _sincronizandoModo;   // evita re-analizar mientras se pone el modo al cargar catálogo
     private ReindexCatalog? _catalogoCargado;
+
+    // Huella del fichero del catálogo cuando se leyó: si cambia, el JSON se ha editado.
+    private string _firmaCatalogo = "";
     private LibraryTemplate _plantilla = new();
     private Dictionary<string, ReindexOverride> _decisiones = new();
 
@@ -396,7 +399,10 @@ public partial class OrganizarView : UserControl
                 w.Activated += (_, _) =>
                 {
                     if (vistaInicio.IsVisible && !_cargando)
+                    {
                         CargarCatalogos();
+                        RelerCatalogoSiHaCambiado();
+                    }
                 };
         };
     }
@@ -480,8 +486,58 @@ public partial class OrganizarView : UserControl
         _sincronizandoModo = true;
         cboModo.SelectedIndex = ReindexStore.CargarModo(_catalogoElegido.Ruta) == "numero" ? 1 : 0;
         _sincronizandoModo = false;
+        // La huella se toma ANTES de leer: si el fichero cambia mientras se lee, la siguiente
+        // comprobación lo verá distinto y lo vuelve a leer, en vez de darlo por bueno.
+        _firmaCatalogo = ReindexStore.FirmaDelFichero(_catalogoElegido.Ruta);
         try { _catalogoCargado = ReindexCatalog.Load(_catalogoElegido.Ruta); }
         catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSeLeyoCatalogo, ex.Message)); }
+    }
+
+    /// <summary>
+    /// Vuelve a leer el catálogo elegido si su fichero ha cambiado desde que se cargó.
+    ///
+    /// <para>
+    /// Antes el catálogo se leía al ELEGIRLO y no se volvía a leer nunca: editar el JSON con la
+    /// app abierta no servía hasta reimportarlo, y «Analizar» seguía con la versión vieja. Ahora
+    /// se mira la huella del fichero antes de analizar y al volver a la ventana, y solo se relee
+    /// si cambió.
+    /// </para>
+    /// <para>
+    /// No usa <see cref="CargarCatalogos"/> para refrescar la lista: ese cae en silencio al primer
+    /// catálogo cuando el elegido ya no está, y aquí no se quiere cambiar de serie a escondidas.
+    /// </para>
+    /// </summary>
+    private void RelerCatalogoSiHaCambiado()
+    {
+        if (_catalogoElegido is null) return;
+
+        var ruta = _catalogoElegido.Ruta;
+        if (ReindexStore.FirmaDelFichero(ruta) == _firmaCatalogo) return;
+
+        _catalogos.Clear();
+        _catalogos.AddRange(ReindexStore.ListarCatalogos());
+        cboSerie.ItemsSource = null;
+        cboSerie.ItemsSource = _catalogos;
+        PintarTarjetas();
+        _catalogoElegido = _catalogos.FirstOrDefault(c => c.Ruta == ruta);
+
+        // Ya no se lee (JSON a medias, fichero borrado): no se analiza con la versión vieja.
+        if (_catalogoElegido is null)
+        {
+            _catalogoCargado = null;
+            _firmaCatalogo = "";
+            if (File.Exists(ruta))
+                try { ReindexCatalog.Load(ruta); }
+                catch (Exception ex) { Aviso(string.Format(Textos.Instancia.OrganizarNoSeLeyoCatalogo, ex.Message)); }
+            ActualizarEstado();
+            return;
+        }
+
+        cboSerie.SelectedItem = _catalogoElegido;
+        CargarCatalogoElegido();
+        ActualizarEstado();
+        Escribir(string.Format(Textos.Instancia.OrganizarLogCatalogoRelido,
+                               _catalogoElegido.Serie, _catalogoElegido.Episodios));
     }
 
     private void ElegirCatalogo(CatalogoGuardado? cat)
@@ -1170,6 +1226,9 @@ public partial class OrganizarView : UserControl
 
     private async void Simular()
     {
+        // Lo que se analiza es lo que hay en disco AHORA, no lo que había al elegir el catálogo.
+        RelerCatalogoSiHaCambiado();
+
         // Se RE-ESCANEA siempre: tras aplicar, la lista vieja apunta a nombres que ya no
         // existen, y simular sobre ella re-resolvía el pasado — la tabla enseñaba los
         // mismos «Corregido» de antes como si aplicar no hubiera hecho nada.

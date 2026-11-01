@@ -1073,6 +1073,11 @@ public sealed partial class Textos
         "Catálogo quitado: «{0}».");
 
     // {0} = la serie, {1} = cuántos episodios trae.
+    // {0} = la serie, {1} = cuántos episodios tiene ahora.
+    public string OrganizarLogCatalogoRelido => Idioma.Elegir(
+        "Catalogue re-read from disk: {0} ({1} episodes), it had changed.",
+        "Catálogo releído del disco: {0} ({1} episodios), había cambiado.");
+
     public string OrganizarLogCatalogoImportado => Idioma.Elegir(
         "Catalogue imported: {0} ({1} episodes).",
         "Catálogo importado: {0} ({1} episodios).");

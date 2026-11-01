@@ -307,6 +307,20 @@ public static class ReindexStore
     }
 
     /// <summary>
+    /// Una huella barata del fichero: cambia si se edita, aunque el tamaño no cambie. Sirve para
+    /// saber si lo cargado en memoria sigue siendo lo que hay en disco. Vacía si no existe.
+    /// </summary>
+    public static string FirmaDelFichero(string ruta)
+    {
+        try
+        {
+            var f = new FileInfo(ruta);
+            return f.Exists ? $"{f.LastWriteTimeUtc.Ticks}|{f.Length}" : "";
+        }
+        catch { return ""; }
+    }
+
+    /// <summary>
     /// Quita un catálogo de la app: solo se olvida el REGISTRO. El fichero JSON es del
     /// usuario y no se toca nunca — ya no existe la copia interna que antes se borraba.
     /// </summary>
