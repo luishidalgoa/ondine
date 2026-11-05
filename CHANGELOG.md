@@ -34,6 +34,12 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Un fichero bloqueado ya no aborta toda la tanda.** Si el sistema no dejaba sustituir un fichero
+  (antivirus, OneDrive u otra copia lo tenían abierto), la compresión se paraba entera y no salía el aviso
+  de fin. Ahora ese fichero cuenta como fallo y la tanda sigue con el resto.
+- **El aviso de fin deja registro.** Cada envío se anota en `avisos.log`, en la carpeta de datos de Ondine,
+  con si el sistema lo aceptó o el motivo del fallo. En Windows también avisa si «Windows PowerShell» está
+  silenciado.
 - **La app y el MCP ya no tocan a la vez el mismo vídeo.** Si una compresión de la app y otra del
   agente (MCP) o de la CLI coincidían con el mismo fichero, las dos podían leerlo y borrarlo a la vez.
   Ahora cada vídeo se reserva mientras se usa: la copia que llega después lo salta y lo dice en la lista,

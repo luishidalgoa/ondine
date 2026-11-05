@@ -105,6 +105,10 @@ public static class TraduccionTests
             // Reconoce «(España)» y «(Hispanoamérica)» EN LOS DATOS de entrada.
             // Traducirlo dejaría de reconocer los títulos que vienen así.
             ["TitleMatch.cs"] = 1,
+
+            // Mensajes del registro técnico (avisos.log): diagnóstico para quien investiga un aviso que
+            // no sale. No se muestran en pantalla, y AGENTS.md los deja sin traducir.
+            ["AvisoDeSistema.cs"] = 2,
         };
 
         var excesos = new List<string>();
