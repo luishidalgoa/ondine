@@ -1,0 +1,28 @@
+Package: ondine
+Architecture: arm64
+Version: 1.23.1
+Priority: optional
+Section: video
+Maintainer: luishidalgoa <https://github.com/luishidalgoa/ondine>
+Installed-Size: 124980
+Depends: ffmpeg, hicolor-icon-theme, libnotify-bin
+Recommends: vlc
+Filename: pool/main/o/ondine/arm64/ondine_1.23.1_arm64.deb
+Size: 38132046
+MD5sum: 20e5d71d2e8a7c3810b4d8c2f1a8eb46
+SHA1: ae45de544871179cff0d706b4944e1d458d463ea
+SHA256: fd756aeb160556bfad9e50207502b54b7183513fae397db322d8bdd2f1160537
+SHA512: 090d6f6156473b4572c4ecbc6ac837bfc51301620ef49ed5f1c59c554ff4fee078447aa13a34e2859da31e7fb52b4ea395a02d07590fcff0d0fca45a3ac72630
+Homepage: https://github.com/luishidalgoa/ondine
+Description: Prepares your TV and film library for Plex and Jellyfin
+ Ondine names and sorts a video library from a reference catalogue, compresses it
+ in batches and splits episodes into their stories. Nothing changes without your
+ approval: analysis only proposes, you apply what you tick, and there is undo.
+ Deleted files go to the desktop trash, never removed outright.
+ .
+ Prepara tu biblioteca de series y películas para Plex y Jellyfin. Ondine pone
+ nombre y orden a una biblioteca de vídeo a partir de un catálogo de referencia,
+ la comprime por lotes y parte capítulos en sus historias. Nada se toca sin
+ aprobación: analizar solo propone, se aplica lo que marcas y hay deshacer. Lo
+ borrado va a la papelera del escritorio, no se elimina.
+
