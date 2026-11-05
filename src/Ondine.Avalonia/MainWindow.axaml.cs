@@ -41,6 +41,7 @@ public partial class MainWindow : Window
                     await Comprobacion.CorrerComplementos(this);
                     await Comprobacion.CorrerReproductor(this);
                     await Comprobacion.CorrerVentanaPrincipal(this);
+                    await Comprobacion.CorrerAgrupadoDeComprimir(this);
                     await Comprobacion.CorrerTodoSeDibuja(this);
                     await Comprobacion.CorrerMoverLaVentana(this);
                     await Comprobacion.CorrerLoQueSeEscapo(this);

@@ -160,8 +160,10 @@ public static class AjustesQueSobrevivenTests
         {
             var nombre = Path.GetFileName(Path.GetDirectoryName(f)!);
             var texto = File.Exists(f) ? File.ReadAllText(f) : "";
-            Program.Assert(texto.Contains("Engine.AceleracionPedida = _settings.AceleracionVideo"),
-                $"{nombre} se la pasa al motor al aplicar los ajustes");
+            // Va en las opciones de cada tanda, que es lo que el motor lee: así una tanda encolada se
+            // lleva el valor del momento en que se encoló.
+            Program.Assert(texto.Contains("AceleracionPedida = _settings.AceleracionVideo"),
+                $"{nombre} se la pasa al motor en cada tanda");
         }
     }
 

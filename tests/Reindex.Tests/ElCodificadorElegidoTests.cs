@@ -54,18 +54,10 @@ public static class ElCodificadorElegidoTests
         }
     }
 
-    private static string Elegido(string codec, string? pedido, bool hardware = true)
-    {
-        var antes = Engine.AllowHardware;
-        try
-        {
-            Engine.AllowHardware = hardware;
-            return new Engine()
-                .SelectEncoderAsync(codec, pedido, new FfmpegDeMentira().Ejecutar)
-                .GetAwaiter().GetResult();
-        }
-        finally { Engine.AllowHardware = antes; }
-    }
+    private static string Elegido(string codec, string? pedido, bool hardware = true) =>
+        new Engine()
+            .SelectEncoderAsync(codec, pedido, new FfmpegDeMentira().Ejecutar, hardware)
+            .GetAwaiter().GetResult();
 
     private static void SinPedirNadaComoSiempre()
     {
@@ -136,26 +128,20 @@ public static class ElCodificadorElegidoTests
     /// </summary>
     private static void LaCacheDistingueLoPedido()
     {
-        var antes = Engine.AllowHardware;
-        try
-        {
-            Engine.AllowHardware = true;
-            var ffmpeg = new FfmpegDeMentira();
-            var motor = new Engine();
+        var ffmpeg = new FfmpegDeMentira();
+        var motor = new Engine();
 
-            var primero = motor.SelectEncoderAsync("hevc", "libx265", ffmpeg.Ejecutar).GetAwaiter().GetResult();
-            var segundo = motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar).GetAwaiter().GetResult();
+        var primero = motor.SelectEncoderAsync("hevc", "libx265", ffmpeg.Ejecutar, true).GetAwaiter().GetResult();
+        var segundo = motor.SelectEncoderAsync("hevc", null, ffmpeg.Ejecutar, true).GetAwaiter().GetResult();
 
-            Program.Assert(primero == "libx265" && segundo == "hevc_nvenc",
-                $"pedir uno no contamina la siguiente elección ({primero}, {segundo})");
+        Program.Assert(primero == "libx265" && segundo == "hevc_nvenc",
+            $"pedir uno no contamina la siguiente elección ({primero}, {segundo})");
 
-            var repetido = motor.SelectEncoderAsync("hevc", "libx265", ffmpeg.Ejecutar).GetAwaiter().GetResult();
-            var llamadas = ffmpeg.Llamadas;
-            motor.SelectEncoderAsync("hevc", "libx265", ffmpeg.Ejecutar).GetAwaiter().GetResult();
+        var repetido = motor.SelectEncoderAsync("hevc", "libx265", ffmpeg.Ejecutar, true).GetAwaiter().GetResult();
+        var llamadas = ffmpeg.Llamadas;
+        motor.SelectEncoderAsync("hevc", "libx265", ffmpeg.Ejecutar, true).GetAwaiter().GetResult();
 
-            Program.Assert(repetido == "libx265" && ffmpeg.Llamadas == llamadas,
-                "y repetir la misma petición no vuelve a arrancar ffmpeg");
-        }
-        finally { Engine.AllowHardware = antes; }
+        Program.Assert(repetido == "libx265" && ffmpeg.Llamadas == llamadas,
+            "y repetir la misma petición no vuelve a arrancar ffmpeg");
     }
 }

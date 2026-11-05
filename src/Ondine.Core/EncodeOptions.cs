@@ -57,6 +57,15 @@ public sealed class EncodeOptions
     /// </summary>
     public string Codificador { get; set; } = "";
 
+    // Lo que antes eran estáticos de Engine. Viven aquí para que un trabajo encolado se lleve
+    // los suyos: cambiar Preferencias después no cambia lo que ya está en la cola.
+    /// <summary>Si se puede usar la aceleración por hardware (la GPU) para codificar.</summary>
+    public bool AllowHardware { get; set; } = true;
+    /// <summary>La aceleración de la decodificación: «auto», un nombre (cuda, qsv…) o «ninguna».</summary>
+    public string AceleracionPedida { get; set; } = Objetivo.AceleracionDeVideo.Auto;
+    /// <summary>El codificador que pide Preferencias, por su nombre. Vacío = que decida la app.</summary>
+    public string CodificadorPedido { get; set; } = "";
+
     /// <summary>
     /// Que hacer con el audio. Por defecto <see cref="Audio.AudioElegido.Copiar"/>, que es
     /// lo que la app venia haciendo cuando no se pedia un bitrate.

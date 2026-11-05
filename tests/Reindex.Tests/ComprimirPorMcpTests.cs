@@ -103,6 +103,12 @@ public static class ComprimirPorMcpTests
             [nameof(EncodeOptions.Desde)] = "es de Recortes, no de Comprimir",
             [nameof(EncodeOptions.Duracion)] = "es de Recortes, no de Comprimir",
             [nameof(EncodeOptions.NombreSalida)] = "es de Recortes, no de Comprimir",
+            [nameof(EncodeOptions.AllowHardware)] = "lo pone Preferencias; el MCP lo toma de los ajustes guardados "
+                                                  + "y no lo ofrece en el esquema",
+            [nameof(EncodeOptions.AceleracionPedida)] = "lo pone Preferencias; el MCP lo toma de los ajustes guardados "
+                                                      + "y no lo ofrece en el esquema",
+            [nameof(EncodeOptions.CodificadorPedido)] = "lo pone Preferencias; el MCP no lo toma: el codificador se "
+                                                      + "pide con «codificador», que va en la tanda",
         };
 
         var herramienta = Catalogo.Todas.Single(h => h.Nombre == "ondine_comprimir");

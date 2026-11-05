@@ -163,8 +163,8 @@ static async Task<int> CompressAsync(string[] args)
         return 3;
     }
 
-    Engine.AllowHardware = o.hardware;
-    Engine.AceleracionPedida = o.aceleracion;
+    o.opt.AllowHardware = o.hardware;
+    o.opt.AceleracionPedida = o.aceleracion;
     Engine.MinFreeBytes = o.minFreeMb * 1024L * 1024;
 
     Console.WriteLine($"{files.Count} vídeo(s) a procesar.");
@@ -212,8 +212,8 @@ static async Task<int> MeasureAsync(string[] args)
     var file = Collect(paths, o.recursive).FirstOrDefault();
     if (file == null) { Console.Error.WriteLine("No se ha encontrado el vídeo."); return 1; }
 
-    Engine.AllowHardware = o.hardware;
-    Engine.AceleracionPedida = o.aceleracion;
+    o.opt.AllowHardware = o.hardware;
+    o.opt.AceleracionPedida = o.aceleracion;
     var engine = new Engine();
     Console.WriteLine($"Midiendo «{Path.GetFileName(file)}» con muestras reales…");
     int kbps = await engine.MeasureVideoBitrateAsync(file, o.opt, new ConsoleReporter(quiet: true), CancellationToken.None);

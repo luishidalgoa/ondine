@@ -552,7 +552,25 @@
               </ListView.ContextMenu>
               <ListView.View>
                 <GridView ColumnHeaderContainerStyle="{StaticResource ColHeader}">
-                  <GridViewColumn Header="{i:T MainColVideo}" Width="316" DisplayMemberBinding="{Binding Name}" local:HeaderSort.Field="Name"/>
+                  <GridViewColumn Header="{i:T MainColVideo}" Width="316" local:HeaderSort.Field="Name">
+                    <GridViewColumn.CellTemplate>
+                      <DataTemplate>
+                        <StackPanel>
+                          <!-- Cabecera del grupo de la cola («En la cola» / «Analizados»): solo abre
+                               grupo en su primera fila. La decide Trabajos.VistaDeCola. En Avalonia
+                               la banda ocupa toda la fila; aquí, por ser una GridView, ocupa la columna. -->
+                          <Border Padding="8,5" Margin="-6,0,-6,4"
+                                  Visibility="{Binding PrimeraDeGrupo, Converter={StaticResource BoolAVisible}}"
+                                  Background="{StaticResource Accent900}"
+                                  BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,1">
+                            <TextBlock Text="{Binding TituloGrupo}" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource Accent200}"/>
+                          </Border>
+                          <TextBlock Text="{Binding Name}"/>
+                        </StackPanel>
+                      </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                  </GridViewColumn>
                   <GridViewColumn Header="{i:T MainColCarpeta}" Width="130" DisplayMemberBinding="{Binding Dir}" local:HeaderSort.Field="Dir"/>
                   <!-- TAMAÑO y DURACIÓN ordenan por su valor numérico (Bytes / DurationSec), no por el texto formateado -->
                   <GridViewColumn Header="{i:T MainColTamano}" Width="80" DisplayMemberBinding="{Binding SizeMB}" local:HeaderSort.Field="Bytes"/>

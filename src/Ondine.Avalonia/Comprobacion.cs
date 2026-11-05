@@ -1308,6 +1308,34 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// La tabla de Comprimir agrupada: lo encolado arriba, en el orden de la cola, y lo analizado
+    /// debajo, cada grupo con su banda. Se usa la ventana de verdad y el mismo camino que el botón
+    /// «Añadir a la cola», así que lo que se mide es lo que ve quien usa la app.
+    /// </summary>
+    public static async Task CorrerAgrupadoDeComprimir(Window dueno)
+    {
+        var v = new VentanaPrincipal { Width = 1180, Height = 780 };
+        v.Show(dueno);
+        await Task.Delay(700);
+
+        v.FilasDePrueba(("una.mkv", "…"), ("otra.mp4", "…"), ("tres.mkv", "…"));
+        v.EncolarParaPruebas(["tres.mkv", "otra.mp4"]);
+        await Task.Delay(400);
+
+        var tabla = v.GetVisualDescendants().OfType<DataGrid>().FirstOrDefault(d => d.Name == "lst");
+        var orden = tabla?.ItemsSource?.Cast<VideoRow>().Select(f => f.Path).ToList() ?? [];
+        Dice(orden.Count == 3 && orden[0] == "tres.mkv" && orden[1] == "otra.mp4" && orden[2] == "una.mkv",
+            $"lo encolado va arriba, en el orden de la cola, y lo analizado debajo ({string.Join(",", orden)})");
+
+        var bandas = tabla?.GetVisualDescendants().OfType<Border>()
+                          .Where(b => b.Name == "banda" && b.IsVisible).ToList() ?? [];
+        Dice(bandas.Count == 2,
+            $"cada grupo abre con su banda: el de la cola y el de los analizados ({bandas.Count})");
+
+        v.Close();
+    }
+
+    /// <summary>
     /// La ventana principal: que abra, que arranque donde debe y que la tabla PINTE.
     ///
     /// <para>

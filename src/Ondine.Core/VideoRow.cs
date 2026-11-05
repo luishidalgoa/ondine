@@ -89,6 +89,19 @@ public sealed class VideoRow : INotifyPropertyChanged
     public string Dir { get; init; } = "";
     public string SizeMB { get; init; } = "";
     public string Path { get; init; } = "";
+
+    // Lo pone la vista de la cola (Trabajos.VistaDeCola) cada vez que cambia la cola o la lista.
+    // La fila no decide su grupo: se le asigna.
+    private Ondine.Trabajos.GrupoDeVideo _grupo;
+    private bool _primeraDeGrupo;
+    private int _grupoCuantos, _puestoEnCola;
+    private string _tituloGrupo = "";
+
+    public Ondine.Trabajos.GrupoDeVideo Grupo { get => _grupo; set { _grupo = value; N(); } }
+    public bool PrimeraDeGrupo { get => _primeraDeGrupo; set { _primeraDeGrupo = value; N(); } }
+    public int GrupoCuantos { get => _grupoCuantos; set { _grupoCuantos = value; N(); } }
+    public int PuestoEnCola { get => _puestoEnCola; set { _puestoEnCola = value; N(); } }
+    public string TituloGrupo { get => _tituloGrupo; set { _tituloGrupo = value; N(); } }
     public long Bytes { get; init; }
 
     // Datos del análisis, para la estimación de ahorro
