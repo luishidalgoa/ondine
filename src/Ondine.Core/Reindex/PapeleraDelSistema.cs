@@ -108,6 +108,11 @@ public static class PapeleraDelSistema
         if (string.IsNullOrWhiteSpace(ruta)) return false;
         if (!File.Exists(ruta) && !Directory.Exists(ruta)) return false;
 
+        // Un fichero que otra copia de Ondine (o el propio motor, en este proceso) está usando no se manda
+        // a la Papelera. Se espera un poco: el motor lo suelta en cuanto termina con el fichero.
+        using var reserva = File.Exists(ruta) ? ReservaDeFichero.Esperar(ruta, TimeSpan.FromSeconds(5)) : null;
+        if (File.Exists(ruta) && reserva is null) return false;
+
         var quien = Quien(OperatingSystem.IsWindows(), OperatingSystem.IsMacOS(), casa is not null);
 
         // Si el nativo de ese sistema no estuviera enchufado se cae a la de carpetas. En
