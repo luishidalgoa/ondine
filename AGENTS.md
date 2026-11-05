@@ -94,7 +94,7 @@ Tres capas, y solo la última es la que de verdad protege:
 1. **Un gancho** (`.claude/comprobar-traduccion.ps1`) avisa al instante al
    editar cualquier fichero de `src/Ondine`. Solo avisa, nunca bloquea: un
    gancho que impide guardar acaba desactivado, y desactivado no protege nada.
-2. **Cinco pruebas** en `tests/Reindex.Tests/TraduccionTests.cs`, dentro de la
+2. **Siete pruebas** en `tests/Reindex.Tests/TraduccionTests.cs`, dentro de la
    tanda que corre en cada cambio. No comprueban que la traducción sea buena
    —eso no lo juzga una máquina— sino que esté **completa**: que ningún texto
    tenga las dos versiones idénticas por pereza, que toda clave usada en XAML
@@ -113,8 +113,8 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 
 - **CHANGELOG por versión, no por commit.** Formato *Keep a Changelog*, en
   castellano de cara al usuario. Los triviales (typo, formato, refactor) no
-  entran. Al cortar versión: subir `<Version>` en **los cuatro** `.csproj` -app,
-  motor, CLI e interfaz de Avalonia-, cerrar la sección del CHANGELOG y etiquetar `vX.Y.Z`. El CI **verifica el contrato
+  entran. Al cortar versión: subir `<Version>` en **los cinco** `.csproj` -app,
+  motor, CLI, MCP e interfaz de Avalonia-, cerrar la sección del CHANGELOG y etiquetar `vX.Y.Z`. El CI **verifica el contrato
   del CHANGELOG antes de compilar** y no publica si no cuadra.
 - **El motor es un proyecto, no un puñado de ficheros prestados.** Vive en
   `src/Ondine.Core` (`net9.0`, sin interfaz) y la app, la CLI y las pruebas lo
@@ -153,6 +153,8 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | `src/Ondine.Cli/` | Terminal multiplataforma. Referencia el motor. |
 | `tests/Reindex.Tests/` | Las pruebas del motor y de los textos. Sin dependencias externas ni WPF: corren en Linux. |
 | `tests/Ui.Smoke/` | Que cada pantalla se construya y se mida sin reventar. Necesita Windows (WPF), así que va aparte. |
+| `tools/Verificar/` | El harness: un comando que decide si un cambio es aceptable. Lo mismo en local que en el CI. |
+| `docs/funcionalidades/` | El mapa de funcionalidades: una ficha por bloque, con sus módulos, pruebas y huecos. Antes de tocar un bloque, lee su ficha. |
 | `web/` | El sitio de [ondine.hdglabs.com](https://ondine.hdglabs.com), en Astro, también bilingüe. |
 | `spot/` | El spot de 44 s, en composiciones HTML. Hay versión castellana e inglesa. |
 | `src/Ondine/Complementos/` | El sistema de complementos: manifiesto, descubrimiento e invocación. |
@@ -168,6 +170,7 @@ excepciones de `EsIgualAProposito`, nunca se relaja la prueba.
 | Ejecutar la app | `dotnet run --project src/Ondine` |
 | Ejecutar la CLI | `dotnet run --project src/Ondine.Cli -- --help` |
 | Pruebas | `dotnet run --project tests/Reindex.Tests` |
+| **Verificar el cambio** (pruebas, capas, mapa y formato; el mismo comando que el CI) | `dotnet run --project tools/Verificar` |
 | Compilar solo el motor | `dotnet build src/Ondine.Core` |
 | Humo de la interfaz (Windows) | `dotnet run --project tests/Ui.Smoke` |
 | Instalador completo | `pwsh -File build.ps1` |

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    El harness de verificación de Ondine: un único comando que decide si un cambio es aceptable.
+    Sin paquetes externos y sin referencias a ningún proyecto del producto: se compila igual en
+    Windows, Linux y macOS, y en el CI con el mismo SDK.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ondine.Verificar</RootNamespace>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+</Project>

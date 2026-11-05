@@ -1,0 +1,30 @@
+name: Verificar
+
+# El harness de verificación: el MISMO comando que se ejecuta en local.
+#   dotnet run --project tools/Verificar -- --base origin/main
+# Decide si el cambio es aceptable: pruebas, capas entre proyectos, mapa de funcionalidades y formato.
+# Una comprobación que falla hace fallar el job, y con él, la fusión (ver la protección de main).
+#
+# En Linux no se puede comprobar la interfaz de Windows (src/Ondine): ese paso sale como OMITIDO.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      # Hace falta la historia completa para comparar el cambio con la rama base.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Verificar el cambio
+        run: dotnet run --project tools/Verificar -- --base origin/main
