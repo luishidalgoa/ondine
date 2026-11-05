@@ -890,10 +890,18 @@ public partial class MainWindow : Window
     {
         var sel = SelectedRows();
         if (sel.Count == 0) return;
-        foreach (var r in sel) _rows.Remove(r);
-        lblProg.Text = sel.Count == 1
-            ? Textos.Instancia.MainQuitadoUno
-            : string.Format(Textos.Instancia.MainQuitadosVarios, sel.Count);
+        // Quitar de la lista también lo saca de la cola: si no, el trabajo ya encolado lo comprimiría
+        // igual. Lo que la cola está comprimiendo ahora no se puede quitar: se queda en la lista.
+        var (_, enCurso) = _cola.QuitarFicheros(sel.Select(r => r.Path).ToList());
+        var fijos = enCurso.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var quitables = sel.Where(r => !fijos.Contains(r.Path)).ToList();
+        foreach (var r in quitables) _rows.Remove(r);
+        PintarCola();
+        lblProg.Text = fijos.Count > 0
+            ? Textos.Instancia.MainColaEnCursoNoSeQuita
+            : quitables.Count == 1
+                ? Textos.Instancia.MainQuitadoUno
+                : string.Format(Textos.Instancia.MainQuitadosVarios, quitables.Count);
     }
 
     /// <summary>
@@ -1211,7 +1219,14 @@ public partial class MainWindow : Window
         {
             // Papelera PROPIA de la app (no la de Windows): permite deshacer con Ctrl+Z de forma
             // fiable y, al acumularse o cerrar, se finaliza en la Papelera del sistema.
-            if (Reindex.PapeleraApp.Enviar(r.Path) != null) { _rows.Remove(r); _pilaPapelera.Push(r); }
+            if (Reindex.PapeleraApp.Enviar(r.Path) != null)
+            {
+                _rows.Remove(r);
+                _pilaPapelera.Push(r);
+                // Lo enviado a la Papelera también sale de la cola: el trabajo pendiente lo buscaría.
+                _cola.QuitarFicheros([r.Path]);
+                PintarCola();
+            }
             else r.Estado = Textos.Instancia.MainEstadoErrorAlBorrar;
         }
         lblProg.Text = _pilaPapelera.Count > 0
@@ -1231,7 +1246,10 @@ public partial class MainWindow : Window
                                     string.Format(Textos.Instancia.MainEliminarCarpetaPregunta,
                                                   dirs.Count, string.Join("\n", dirs)))) return;
         foreach (var d in dirs) PapeleraDelSistema.Mandar(d);
-        foreach (var r in _rows.Where(r => Path.GetDirectoryName(r.Path) is { } d && dirs.Contains(d)).ToList()) _rows.Remove(r);
+        var delCarpeta = _rows.Where(r => Path.GetDirectoryName(r.Path) is { } d && dirs.Contains(d)).ToList();
+        foreach (var r in delCarpeta) _rows.Remove(r);
+        _cola.QuitarFicheros(delCarpeta.Select(r => r.Path).ToList());
+        PintarCola();
         lblProg.Text = Textos.Instancia.MainCarpetasALaPapelera;
     }
 

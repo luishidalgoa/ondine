@@ -792,6 +792,11 @@ public sealed partial class Textos
         "Originals are deleted for good, file by file as each one finishes. They cannot be recovered from the Recycle Bin.",
         "Los originales se borran de forma definitiva, archivo por archivo según van terminando. No se pueden recuperar desde la Papelera.");
 
+    // Quitar una fila que la cola está comprimiendo ahora: no se puede, y se dice.
+    public string MainColaEnCursoNoSeQuita => Idioma.Elegir(
+        "That file is being compressed right now, so it stays in the list.",
+        "Ese fichero se está comprimiendo ahora: se queda en la lista.");
+
     // Texto de la línea de estado de la fila cuando ffprobe no da nada que leer del fichero.
     public string MainNoSeLeyo => Idioma.Elegir(
         "Could not be read",
