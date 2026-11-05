@@ -59,6 +59,10 @@ public static class AvisoDeSistemaTests
             "en Linux el título y el cuerpo llegan tal cual, cada uno como su argumento");
         Program.Assert(linux.ArgumentList.Contains("--"),
             "en Linux un «--» separa las opciones del texto, por si el texto empieza por guion");
+        Program.Assert(linux.ArgumentList.Contains("--app-name=Ondine"),
+            "en Linux el aviso lleva el nombre de Ondine, no el del programa que lo envía");
+        Program.Assert(linux.ArgumentList.Any(a => a.StartsWith("--icon=", StringComparison.Ordinal)),
+            "en Linux el aviso lleva un icono: sin él sale el genérico de la bombilla");
 
         var mac = AvisoDeSistema.Armar("macos", Titulo, Cuerpo)!;
         Program.Assert(mac.FileName == "/usr/bin/osascript", "en macOS se usa osascript");
@@ -83,6 +87,8 @@ public static class AvisoDeSistemaTests
             "y el guion decodificado no contiene el texto");
         Program.Assert(guion.Contains("ONDINE_AVISO_CUERPO"),
             "pero sí lee el cuerpo del entorno, que es de donde sale");
+        Program.Assert(guion.Contains("'" + AvisoDeSistema.AumidWindows + "'") && !guion.Contains("1AC14E77"),
+            "el aviso se muestra con la identidad propia de Ondine, no con la de PowerShell");
     }
 
     private static void BorradoDefinitivoSoloFicheros()

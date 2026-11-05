@@ -106,7 +106,7 @@ Version: $version
 Section: video
 Priority: optional
 Architecture: $arquitectura
-Depends: ffmpeg, hicolor-icon-theme
+Depends: ffmpeg, hicolor-icon-theme, libnotify-bin
 Recommends: vlc
 Installed-Size: $tamano
 Maintainer: luishidalgoa <https://github.com/luishidalgoa/ondine>

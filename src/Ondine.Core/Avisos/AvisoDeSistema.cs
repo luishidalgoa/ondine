@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.Win32;
 using Ondine.Localizacion;
 
 namespace Ondine;
@@ -37,6 +39,9 @@ public static class AvisoDeSistema
             var plataforma = OperatingSystem.IsWindows() ? "windows"
                            : OperatingSystem.IsMacOS() ? "macos"
                            : "linux";
+            // Windows muestra el nombre que tenga registrado el aviso: se registra antes de lanzarlo,
+            // en el perfil del usuario, y cada vez, para que el icono apunte siempre al .exe actual.
+            if (OperatingSystem.IsWindows()) RegistrarIdentidadWindows();
             var psi = Armar(plataforma, titulo, cuerpo);
             if (psi is null) return;
             _ = Task.Run(() => Lanzar(psi, plataforma));
@@ -149,6 +154,9 @@ public static class AvisoDeSistema
                         RedirectStandardError = false,
                     };
                     psi.ArgumentList.Add("--app-name=Ondine");
+                    psi.ArgumentList.Add($"--icon={IconoLinux()}");
+                    // Une el aviso con ondine.desktop: es lo que da el nombre y el icono en el escritorio.
+                    if (File.Exists(RutaDesktopLinux)) psi.ArgumentList.Add("--hint=string:desktop-entry:ondine");
                     psi.ArgumentList.Add("--");
                     psi.ArgumentList.Add(titulo);
                     psi.ArgumentList.Add(cuerpo);
@@ -160,12 +168,57 @@ public static class AvisoDeSistema
         }
     }
 
+    /// <summary>
+    /// Identidad propia del aviso en Windows: el nombre que sale arriba de la notificación. Sin
+    /// registrarla, Windows muestra el nombre del programa que lo lanza, que es PowerShell.
+    /// </summary>
+    internal const string AumidWindows = "HDGLabs.Ondine";
+
+    /// <summary>
+    /// Registra el nombre y el icono de la app para sus avisos, en el perfil del usuario (sin administrador).
+    /// El icono solo se pone si <c>app.ico</c> está junto al ejecutable.
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    private static void RegistrarIdentidadWindows()
+    {
+        try
+        {
+            using var clave = Registry.CurrentUser.CreateSubKey(@"Software\Classes\AppUserModelId\" + AumidWindows, true);
+            if (clave is null) return;
+            if (clave.GetValue("DisplayName") as string != "Ondine")
+                clave.SetValue("DisplayName", "Ondine", RegistryValueKind.String);
+            var icono = Path.Combine(AppContext.BaseDirectory, "app.ico");
+            if (File.Exists(icono) && clave.GetValue("IconUri") as string != icono)
+                clave.SetValue("IconUri", icono, RegistryValueKind.String);
+        }
+        catch { /* sin identidad el aviso sale igual, pero con el nombre de PowerShell */ }
+    }
+
+    private static string RutaDesktopLinux => "/usr/share/applications/ondine.desktop";
+
+    /// <summary>
+    /// El icono para notify-send. En el AppImage está dentro del propio AppDir; en el .deb, instalado en
+    /// el tema hicolor. Si no hay ninguno, se pide por nombre y el escritorio decide.
+    /// </summary>
+    private static string IconoLinux()
+    {
+        var appDir = Environment.GetEnvironmentVariable("APPDIR");
+        if (!string.IsNullOrEmpty(appDir))
+        {
+            var dentro = Path.Combine(appDir, "usr", "share", "icons", "hicolor", "256x256", "apps", "ondine.png");
+            if (File.Exists(dentro)) return dentro;
+        }
+        const string deb = "/usr/share/icons/hicolor/256x256/apps/ondine.png";
+        return File.Exists(deb) ? deb : "ondine";
+    }
+
     private static string RutaPowerShellWindows =>
         Path.Combine(Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows",
                      "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
 
-    // Notificación nativa de Windows 10 y 11 sin paquetes. Se muestra con el nombre del host
-    // de PowerShell, que es lo que Windows deja usar a un proceso sin identidad propia.
+    // Notificación nativa de Windows 10 y 11 sin paquetes. PowerShell solo hace de vehículo para llamar a
+    // la API de notificaciones (el proyecto no admite paquetes NuGet). El nombre que ve el usuario es el
+    // de AumidWindows, que RegistrarIdentidadWindows deja registrado antes.
     private static readonly string[] GuionWindows =
     {
         "try {",
@@ -176,7 +229,7 @@ public static class AvisoDeSistema
         "$textos.Item(0).AppendChild($xml.CreateTextNode($env:ONDINE_AVISO_TITULO)) | Out-Null",
         "$textos.Item(1).AppendChild($xml.CreateTextNode($env:ONDINE_AVISO_CUERPO)) | Out-Null",
         "$aviso = [Windows.UI.Notifications.ToastNotification]::new($xml)",
-        "$app = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe'",
+        $"$app = '{AumidWindows}'",
         "$notificador = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($app)",
         // Si el usuario ha silenciado «Windows PowerShell» o está el modo concentración, el sistema no lo muestra.
         // Se dice por aquí, para que quede en avisos.log.

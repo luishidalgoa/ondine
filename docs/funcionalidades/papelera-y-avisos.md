@@ -31,7 +31,7 @@ tareas:
 ```mermaid
 flowchart TD
   TANDA["MainWindow y VentanaPrincipal<br/>al terminar la tanda"] --> AVISO["AvisoDeSistema.Enviar"]
-  AVISO -- "Armar por sistema" --> AWIN["Windows: PowerShell y toast"]
+  AVISO -- "Armar por sistema" --> AWIN["Windows: toast con el nombre de Ondine, enviado desde PowerShell"]
   AVISO --> AMAC["macOS: osascript display notification"]
   AVISO --> ALIN["Linux: notify-send"]
 
@@ -73,8 +73,8 @@ flowchart TD
    `PapeleraDelSistema.EnWindows` se deja a null, `Mandar` cae en `~/.local/share/Trash`. Hoy no pasa
    porque ambas ventanas lo conectan al arrancar y el valor por defecto es el mismo; es un fallo
    latente.
-5. **Aviso de Windows con identidad ajena.** El toast sale con el nombre de Windows PowerShell, no de
-   Ondine, y cada aviso arranca un proceso nuevo de PowerShell. Está documentado en `AvisoDeSistema`,
-   pero el usuario lo ve como un aviso de otra aplicación.
+5. **Cada aviso de Windows arranca un proceso nuevo de PowerShell.** Es el vehículo para llamar a la API de
+   notificaciones, porque el proyecto no admite paquetes NuGet. El nombre que ve el usuario es el de Ondine
+   (`AumidWindows`, registrado en el perfil al enviar), pero el proceso sigue existiendo. Está en `AvisoDeSistema`.
 6. **Resultado descartado en el MCP.** `ALaPapelera` en `src/Ondine.Mcp/Comprimir.cs` ignora el bool
    de `PapeleraDelSistema.Mandar`, así que un envío fallido no deja ningún rastro dentro de esa función.
