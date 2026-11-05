@@ -1370,7 +1370,8 @@ public partial class MainWindow : Window
         // Lo que pasará con los originales se decide ahora, igual que en la compresión directa: la tanda lo lleva.
         var (proceed, del) = DecidirOriginales(rutas.Count, opt.DryRun);
         if (!proceed) return;
-        _cola.Encolar(rutas, opt, EffectiveOutput(), del);
+        // Cada vídeo es su propio trabajo: así se puede subir o bajar en la tabla, uno a uno.
+        foreach (var ruta in rutas) _cola.Encolar([ruta], opt, EffectiveOutput(), del);
         PintarCola();
 
         // Si no habia nada corriendo, la cola arranca sola: encolar y que no pase nada
@@ -1384,14 +1385,31 @@ public partial class MainWindow : Window
     /// vez sobre el mismo disco tardan mas que en fila, y ademas se pelean por el espacio de
     /// los temporales.
     /// </summary>
-    private Task DespacharColaAsync() => _despacho.DrenarAsync(
-        () => _running,
-        async t =>
-        {
-            var r = await ComprimirTandaAsync(t.Ficheros, t.Opciones, null, t.BorrarOriginales);
-            return (r.Cancelado, r.Salieron, r.Fallaron);
-        },
-        PintarCola);
+    private async Task DespacharColaAsync()
+    {
+        await _despacho.DrenarAsync(
+            () => _running,
+            async t =>
+            {
+                var r = await ComprimirTandaAsync(t.Ficheros, t.Opciones, null, t.BorrarOriginales);
+                return (r.Cancelado, r.Salieron, r.Fallaron);
+            },
+            PintarCola);
+        // Si la cola se ha vaciado, se avisa una vez con el total de la tanda entera.
+        if (!_running && _cola.Siguiente() is null) AvisarSiHayFin();
+    }
+
+    // Lo que acumulan las tandas hasta que la cola se vacía: un solo aviso por tanda, no uno por vídeo.
+    private int _avisoOk, _avisoFallos;
+    private bool _avisoHay;
+
+    private void AvisarSiHayFin()
+    {
+        if (!_avisoHay) return;
+        AvisoDeSistema.TandaTerminada(_avisoOk, _avisoFallos);
+        _avisoOk = _avisoFallos = 0;
+        _avisoHay = false;
+    }
 
     /// <summary>
     /// Encolar sin pasar por la seleccion ni por los dialogos, para el arnes de humo.
@@ -1409,17 +1427,8 @@ public partial class MainWindow : Window
         PintarCola();
     }
 
-    private void PintarCola()
-    {
-        var vivos = _cola.Trabajos;
-        panelCola.Visibility = vivos.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-        listaCola.ItemsSource = vivos.Select(ColaFila.De).ToList();
-        lblCola.Text = string.Format(Textos.Instancia.MainColaResumen,
-                                     _cola.Pendientes, _cola.FicherosPorHacer);
-        // Lo encolado cambia de grupo con cada cambio de la cola: la tabla se vuelve a colocar.
-        Agrupar();
-    }
+    // La cola se ve en la propia tabla: lo encolado va arriba y se ordena con la columna Orden.
+    private void PintarCola() => Agrupar();
 
     // La tabla agrupada: lo encolado arriba, en el orden de la cola, y lo analizado debajo. La
     // regla la tiene Trabajos.VistaDeCola; aquí solo se coloca cada fila y se pone su cabecera.
@@ -1432,7 +1441,7 @@ public partial class MainWindow : Window
         {
             // Se mira antes de tocar nada: añadir analizados al final, que es lo normal, no reordena
             // y casi no notifica. Solo se reordena cuando la cola cambia de verdad.
-            var vista = VistaDeCola.Colocar(_rows.ToList(), _cola.Trabajos);
+            var vista = VistaDeCola.Colocar(_rows.ToList(), _cola.Trabajos, _enCompresion);
             bool igual = true;
             for (int i = 0; i < vista.Count && igual; i++) igual = ReferenceEquals(_rows[i], vista[i].Fila);
             if (!igual)
@@ -1455,6 +1464,8 @@ public partial class MainWindow : Window
                 if (f.GrupoCuantos != e.Cuantos) f.GrupoCuantos = e.Cuantos;
                 if (f.PuestoEnCola != e.PuestoEnCola) f.PuestoEnCola = e.PuestoEnCola;
                 if (f.TituloGrupo != titulo) f.TituloGrupo = titulo;
+                if (f.Procesando != e.Procesando) f.Procesando = e.Procesando;
+                if (f.TrabajoId != e.TrabajoId) f.TrabajoId = e.TrabajoId;
             }
         }
         finally { _agrupando = false; }
@@ -1469,14 +1480,6 @@ public partial class MainWindow : Window
 
         var pudo = arriba ? _cola.Subir(id) : _cola.Bajar(id);
         if (pudo) PintarCola();
-        else lblProg.Text = Textos.Instancia.MainColaNoSeMueve;
-    }
-
-    private void OnColaQuitar(object remitente, RoutedEventArgs e)
-    {
-        if (remitente is not Button { Tag: int id }) return;
-
-        if (_cola.Quitar(id)) PintarCola();
         else lblProg.Text = Textos.Instancia.MainColaNoSeMueve;
     }
 
@@ -1572,6 +1575,7 @@ public partial class MainWindow : Window
 
         _enCompresion.Clear();
         foreach (var x in sel) _enCompresion.Add(x);
+        Agrupar();
         foreach (var r in selRows) r.Estado = Textos.Instancia.MainEstadoEnCola;
         var reporter = new Reporter(this, deleteOriginals, selRows);
         // «ok» vive fuera del try porque el resumen de subtítulos lo consulta al terminar
@@ -1587,7 +1591,7 @@ public partial class MainWindow : Window
             ok = results.Where(r => r.OutBytes != null).ToList();
             // Aviso del sistema al terminar. En la simulación no se ha comprimido nada: no avisa.
             // Los que el motor salta (ya están hechos, ya son HEVC) no son fallos: no tienen resultado.
-            if (!opt.DryRun) AvisoDeSistema.TandaTerminada(ok.Count, results.Count(r => r.OutBytes == null));
+            if (!opt.DryRun) { _avisoOk += ok.Count; _avisoFallos += results.Count(r => r.OutBytes == null); _avisoHay = true; }
             if (ok.Count > 0)
             {
                 double inGb = ok.Sum(r => r.InBytes) / 1073741824.0;
@@ -1597,13 +1601,14 @@ public partial class MainWindow : Window
             }
             else lblProg.Text = Textos.Instancia.MainTerminado;
         }
-        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainCancelado; cancelado = true; }
+        catch (OperationCanceledException) { lblProg.Text = Textos.Instancia.MainCancelado; cancelado = true; _avisoHay = false; _avisoOk = _avisoFallos = 0; }
         // «Error» sale de Comun; los dos puntos son puntuación, no texto que traducir.
         catch (Exception ex) { lblProg.Text = Textos.Instancia.Error + ": " + ex.Message; AppendLog("ERROR: " + ex); }
         finally
         {
             _running = false; _paused = false;
             _enCompresion.Clear();
+            Agrupar();
             btnRun.IsEnabled = true; btnCancel.IsEnabled = false;
             btnPause.IsEnabled = false; btnPause.Content = Textos.Instancia.MainPausar;
             progRow.Visibility = Visibility.Collapsed;

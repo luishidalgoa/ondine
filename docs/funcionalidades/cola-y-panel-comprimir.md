@@ -5,12 +5,10 @@ modulos:
   - src/Ondine.Core/VideoRow.cs
   - src/Ondine.Avalonia/VentanaPrincipal.axaml
   - src/Ondine.Avalonia/VentanaPrincipal.axaml.cs
-  - src/Ondine.Avalonia/ColaFila.cs
   - src/Ondine.Avalonia/Temas/Lista.axaml
   - src/Ondine.Avalonia/Comprobacion.cs
   - src/Ondine/MainWindow.xaml
   - src/Ondine/MainWindow.xaml.cs
-  - src/Ondine/ColaFila.cs
 pruebas:
   - tests/Reindex.Tests/ColaDeTrabajosTests.cs
   - tests/Reindex.Tests/DespachoDeColaTests.cs
@@ -44,7 +42,7 @@ flowchart TD
   DIRECTA["Comprimir (directa)<br/>RunAsync"] --> RUN
   DIRECTA -- "al terminar, si no se canceló" --> DES
   QUITAR["Quitar de la lista · Suprimir<br/>Enviar a la Papelera · Borrar carpeta"] -- "QuitarFicheros" --> COLA
-  RUN -- "avisa al terminar" --> AVISO["AvisoDeSistema"]
+  DES -- "al vaciarse la cola, una vez" --> AVISO["AvisoDeSistema"]
 ```
 
 ## Reglas que no se deben romper
@@ -58,12 +56,12 @@ flowchart TD
 4. **Cancelar detiene la cola entera.** Lo que queda sigue pendiente.
 5. **La pertenencia a la cola se pregunta a la cola**, no se guarda en la fila. `VistaDeCola`
    es la única que decide el grupo.
+6. **Cada vídeo encolado es su propio trabajo.** Así la columna Orden de la tabla mueve un vídeo
+   cada vez. Lo que se está comprimiendo no se mueve (`PuedeMoverse`).
+7. **Un solo aviso por cola vaciada**, con el total de todas sus tandas. Cancelar lo anula.
 
 ## Huecos conocidos
 
-- **Los trabajos encolados nunca envían el original a la Papelera.** `DespacharColaAsync` no pasa
-  `deleteOriginals`, así que la opción «enviar a la Papelera» y la de borrado definitivo no
-  surten efecto en la cola. Está en `MainWindow.xaml.cs` y `VentanaPrincipal.axaml.cs`.
 - **Enviar a la Papelera un fichero que está en curso** no se evita: `DeleteSelected` no mira si
   el trabajo en curso lo está usando.
 - **La cabecera de grupo en WPF ocupa la columna VÍDEO**, no toda la fila como en Avalonia.
