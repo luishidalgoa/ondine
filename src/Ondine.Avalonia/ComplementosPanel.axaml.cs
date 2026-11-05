@@ -640,8 +640,10 @@ public partial class ComplementosPanel : UserControl
 
                 var f = new Fila
                 {
-                    Id = m.Id, Titulo = m.Titulo,
-                    Miniatura = m.Miniatura, Duracion = m.ComoDuracion,
+                    Id = m.Id,
+                    Titulo = m.Titulo,
+                    Miniatura = m.Miniatura,
+                    Duracion = m.ComoDuracion,
                 };
                 f.Cambio += RefrescarPie;
                 _filas.Add(f);

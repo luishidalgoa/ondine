@@ -613,7 +613,7 @@ public static class Program
             SignalExtractor.Extract(F("Serie de prueba - S2005E12 - Las galletas mágicas.mkv")),     // ya correcto → 12 (Limpio)
         }, cat);
         var yaCorrecto = titular.First(x => x.Archivo.NombreArchivo.Contains("S2005E12"));
-        var aspirante  = titular.First(x => !x.Archivo.NombreArchivo.Contains("S2005E12"));
+        var aspirante = titular.First(x => !x.Archivo.NombreArchivo.Contains("S2005E12"));
         Eq(ReindexEstado.Limpio, yaCorrecto.Estado,
             "el fichero ya correctamente nombrado se queda LIMPIO, no en conflicto");
         Eq(ReindexConfianza.Alta, yaCorrecto.Confianza,
@@ -1189,8 +1189,14 @@ public static class Program
             Eq(0, ReindexStore.CargarDecisiones().Count, "sin decisiones al principio");
             ReindexStore.GuardarDecisiones(new Dictionary<string, ReindexOverride>
             {
-                ["huella-1"] = new() { Num = 72, Temporada = 2007, Serie = "Serie de prueba",
-                                       FechaDecision = "2026-07-21", NombreOriginal = "algo.mkv" },
+                ["huella-1"] = new()
+                {
+                    Num = 72,
+                    Temporada = 2007,
+                    Serie = "Serie de prueba",
+                    FechaDecision = "2026-07-21",
+                    NombreOriginal = "algo.mkv"
+                },
             });
             var leidas = ReindexStore.CargarDecisiones();
             Eq(1, leidas.Count, "guarda y relee las decisiones");
@@ -1207,8 +1213,11 @@ public static class Program
 
             var lote = new LoteJournal
             {
-                Id = "20260721-143200", Fecha = "2026-07-21", Hora = "14:32",
-                Serie = "Serie de prueba", Carpeta = carpeta,
+                Id = "20260721-143200",
+                Fecha = "2026-07-21",
+                Hora = "14:32",
+                Serie = "Serie de prueba",
+                Carpeta = carpeta,
                 Movimientos = { new MovimientoJournal { De = viejo, A = nuevo } },
             };
             var rutaJournal = ReindexStore.EscribirJournal(lote);

@@ -31,10 +31,12 @@ public static class TenenciaTests
         var cat = ReindexCatalog.Parse(Json);
 
         var entero = new ReindexResolution
-            { Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "uno.mkv"), "T1") }.Con(cat, 1);
+        { Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "uno.mkv"), "T1") }.Con(cat, 1);
         var medias = new ReindexResolution
-            { Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "dos-a.mkv"), "T1")
-                                       .ConSegmento("a") }.Con(cat, 2);
+        {
+            Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "dos-a.mkv"), "T1")
+                                       .ConSegmento("a")
+        }.Con(cat, 2);
 
         var q = CoberturaCatalogo.PorEpisodio(cat, new[] { entero, medias });
 
@@ -61,11 +63,15 @@ public static class TenenciaTests
         // Dos ficheros para el mismo episodio (una historia cada uno) lo completan
         // entre los dos, y los dos se pueden señalar.
         var a = new ReindexResolution
-            { Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "dos-a.mkv"), "T1")
-                                       .ConSegmento("a") }.Con(cat, 2);
+        {
+            Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "dos-a.mkv"), "T1")
+                                       .ConSegmento("a")
+        }.Con(cat, 2);
         var b = new ReindexResolution
-            { Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "dos-b.mkv"), "T1")
-                                       .ConSegmento("b") }.Con(cat, 2);
+        {
+            Archivo = SignalExtractor.Extract(Path.Combine("C:", "tv", "dos-b.mkv"), "T1")
+                                       .ConSegmento("b")
+        }.Con(cat, 2);
         var dos = CoberturaCatalogo.PorEpisodio(cat, new[] { a, b });
         Program.Assert(dos[2].Que == CoberturaCatalogo.Tengo.Entero,
             "dos ficheros con una historia cada uno completan el episodio");

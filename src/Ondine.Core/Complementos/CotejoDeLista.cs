@@ -79,18 +79,18 @@ public static class CotejoDeLista
     {
         var cubierto = new Dictionary<EpisodeKey, HashSet<int>>();
         foreach (var r in loQueHay)
-        foreach (var (num, temporada, historias) in CoberturaCatalogo.LoQueCubre(r, catalogo))
-        {
-            var clave = new EpisodeKey(temporada, num);
-            if (!cubierto.TryGetValue(clave, out var set))
-                cubierto[clave] = set = new HashSet<int>();
+            foreach (var (num, temporada, historias) in CoberturaCatalogo.LoQueCubre(r, catalogo))
+            {
+                var clave = new EpisodeKey(temporada, num);
+                if (!cubierto.TryGetValue(clave, out var set))
+                    cubierto[clave] = set = new HashSet<int>();
 
-            // La MISMA cuenta que usa el informe de «qué falta» y el distintivo del
-            // explorador. Tenerla repetida aquí era tener tres criterios para lo
-            // mismo, y por eso este cotejo decía «ya lo tienes» de un episodio del
-            // que solo había una de sus dos historias.
-            set.UnionWith(historias);
-        }
+                // La MISMA cuenta que usa el informe de «qué falta» y el distintivo del
+                // explorador. Tenerla repetida aquí era tener tres criterios para lo
+                // mismo, y por eso este cotejo decía «ya lo tienes» de un episodio del
+                // que solo había una de sus dos historias.
+                set.UnionWith(historias);
+            }
 
         var indice = new IndiceTitulos(catalogo);
         var veredictos = new List<Veredicto>();

@@ -71,9 +71,9 @@ public static class RutaDeLibVlc
     /// </summary>
     public static string[] NombresEnLinux(string biblioteca) => biblioteca switch
     {
-        "libvlc"     => ["libvlc.so.5", "libvlc.so"],
+        "libvlc" => ["libvlc.so.5", "libvlc.so"],
         "libvlccore" => ["libvlccore.so.9", "libvlccore.so"],
-        _            => [],
+        _ => [],
     };
 
     /// <summary>La misma, preguntándole al disco. Es la que usa la app.</summary>

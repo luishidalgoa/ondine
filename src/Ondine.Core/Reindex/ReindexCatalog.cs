@@ -290,7 +290,8 @@ public sealed class ReindexCatalog
     /// <summary>Avisos de esta serie que la UI DEBE enseñar antes de identificar nada.</summary>
     [JsonIgnore] public IReadOnlyList<string> Advertencias { get; private set; } = Array.Empty<string>();
 
-    [JsonIgnore] public bool NumReiniciaPorTemporada =>
+    [JsonIgnore]
+    public bool NumReiniciaPorTemporada =>
         Clave.Equals("por_temporada", StringComparison.OrdinalIgnoreCase);
 
     public EpisodeKey ClaveDe(CatalogEpisode episodio) =>

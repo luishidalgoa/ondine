@@ -443,8 +443,11 @@ public static class ComplementoMultiplataformaTests
     /// <summary>La entrada del índice que corresponde a un paquete, con su huella.</summary>
     private static Indice.Entrada Entrada(byte[] paquete) => new()
     {
-        Id = "eco", Nombre = "Eco", Version = "1.0.0",
-        Paquete = "https://ejemplo/eco.zip", Sha256 = Indice.Huella(paquete),
+        Id = "eco",
+        Nombre = "Eco",
+        Version = "1.0.0",
+        Paquete = "https://ejemplo/eco.zip",
+        Sha256 = Indice.Huella(paquete),
     };
 
     /// <summary>Lo que contesta un ejecutable a <c>--version</c>.</summary>
@@ -455,8 +458,10 @@ public static class ComplementoMultiplataformaTests
             using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ruta)
             {
                 ArgumentList = { "--version" },
-                RedirectStandardOutput = true, RedirectStandardError = true,
-                UseShellExecute = false, CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
             })!;
             var dijo = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
             p.WaitForExit(5000);
@@ -715,8 +720,11 @@ public static class ComplementoMultiplataformaTests
 
             var entrada = new Indice.Entrada
             {
-                Id = "eco", Nombre = "Eco", Version = "1.0.0",
-                Paquete = "https://ejemplo/eco.zip", Sha256 = Indice.Huella(paquete),
+                Id = "eco",
+                Nombre = "Eco",
+                Version = "1.0.0",
+                Paquete = "https://ejemplo/eco.zip",
+                Sha256 = Indice.Huella(paquete),
             };
 
             var r = Instalador.Instalar(entrada, paquete, basePlug);

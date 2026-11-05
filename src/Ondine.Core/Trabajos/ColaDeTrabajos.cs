@@ -124,8 +124,8 @@ public sealed class ColaDeTrabajos
         t.Fallaron = fallaron;
         t.Estado = (salieron, fallaron) switch
         {
-            (> 0, 0) => EstadoDelTrabajo.Hecho,
-            (> 0, > 0) => EstadoDelTrabajo.AMedias,
+            ( > 0, 0) => EstadoDelTrabajo.Hecho,
+            ( > 0, > 0) => EstadoDelTrabajo.AMedias,
             _ => EstadoDelTrabajo.Fallido,
         };
     }
