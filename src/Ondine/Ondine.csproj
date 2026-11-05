@@ -60,6 +60,8 @@
 
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
+    <!-- Copia suelta: los avisos de Windows usan el icono como IconUri, y necesitan el fichero junto al .exe. -->
+    <None Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" Link="app.ico" />
   </ItemGroup>
 
 </Project>

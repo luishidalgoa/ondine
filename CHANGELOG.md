@@ -34,6 +34,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **El aviso de Windows sale con el nombre de Ondine**, no con el de Windows PowerShell.
+- **El aviso de Linux lleva el icono de Ondine** y se enlaza con la app, en lugar del icono genérico de la bombilla. El paquete `.deb` declara ahora `libnotify-bin`, que es lo que trae `notify-send`.
 - **Un fichero bloqueado ya no aborta toda la tanda.** Si el sistema no dejaba sustituir un fichero
   (antivirus, OneDrive u otra copia lo tenían abierto), la compresión se paraba entera y no salía el aviso
   de fin. Ahora ese fichero cuenta como fallo y la tanda sigue con el resto.
