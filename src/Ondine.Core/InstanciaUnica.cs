@@ -64,18 +64,37 @@ public sealed class InstanciaUnica : IDisposable
     /// </summary>
     public static bool Avisar(IReadOnlyList<string> ficheros, TimeSpan espera, string? tuberia = null)
     {
-        try
+        // Un aviso solo cuenta como entregado cuando la primera lo ha LEÍDO y lo acusa. Antes bastaba
+        // con escribirlo: si la primera cerraba la tubería justo entonces, el aviso se perdía sin error
+        // (se midió: un 20 % de avisos seguidos se perdían en Linux). Ahora se reintenta hasta el plazo.
+        var datos = Encoding.UTF8.GetBytes(string.Join("\n", ficheros)).Append(Fin).ToArray();
+        var limite = DateTime.UtcNow + espera;
+        while (true)
         {
-            using var cliente = new NamedPipeClientStream(
-                ".", tuberia ?? TuberiaDelUsuario, PipeDirection.Out, PipeOptions.CurrentUserOnly);
-            cliente.Connect((int)espera.TotalMilliseconds);
-            var datos = Encoding.UTF8.GetBytes(string.Join("\n", ficheros));
-            cliente.Write(datos, 0, datos.Length);
-            cliente.Flush();
-            return true;
+            var quedan = limite - DateTime.UtcNow;
+            if (quedan <= TimeSpan.Zero) return false;
+            try
+            {
+                using var cliente = new NamedPipeClientStream(
+                    ".", tuberia ?? TuberiaDelUsuario, PipeDirection.InOut, PipeOptions.CurrentUserOnly);
+                cliente.Connect((int)Math.Max(1, quedan.TotalMilliseconds));
+                cliente.Write(datos, 0, datos.Length);
+                cliente.Flush();
+
+                var acuse = Task.Run(() => cliente.ReadByte());
+                if (acuse.Wait(Math.Max(0, (int)(limite - DateTime.UtcNow).TotalMilliseconds)) && acuse.Result == Acuse)
+                    return true;
+            }
+            catch { /* la tubería no estaba lista o se cerró a mitad: se vuelve a intentar */ }
+            Thread.Sleep(20);
         }
-        catch { return false; }
     }
+
+    // El protocolo: el aviso es su texto en UTF-8 seguido de un byte Fin (0); la primera contesta
+    // con un byte Acuse cuando lo ha leído entero. Un texto nunca lleva un byte 0 (no hay rutas con
+    // NUL), así que el Fin no se confunde con nada.
+    private const byte Fin = 0;
+    private const byte Acuse = (byte)'K';
 
     /// <summary>
     /// Empieza a atender a las instancias que lleguen después. <paramref name="alRecibir"/> se
@@ -91,13 +110,22 @@ public sealed class InstanciaUnica : IDisposable
                 try
                 {
                     using var servidor = new NamedPipeServerStream(
-                        _tuberia, PipeDirection.In, NamedPipeServerStream.MaxAllowedServerInstances,
+                        _tuberia, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
                         PipeTransmissionMode.Byte, PipeOptions.CurrentUserOnly);
                     servidor.WaitForConnection();
                     if (_cerrada) return;
 
-                    using var lector = new StreamReader(servidor, Encoding.UTF8);
-                    var ficheros = lector.ReadToEnd()
+                    // Se lee hasta el byte de fin. Si el cliente se cortó antes, no hay aviso completo:
+                    // no se entrega, y el cliente, que no recibirá acuse, lo volverá a intentar.
+                    var bytes = new List<byte>();
+                    int b;
+                    while ((b = servidor.ReadByte()) > Fin) bytes.Add((byte)b);
+                    if (b != Fin) continue;
+
+                    servidor.WriteByte(Acuse);
+                    servidor.Flush();
+
+                    var ficheros = Encoding.UTF8.GetString(bytes.ToArray())
                         .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                         .Select(s => s.Trim())
                         .Where(s => s.Length > 0)

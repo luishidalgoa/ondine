@@ -80,7 +80,7 @@ public partial class Reproductor : Window
     private const string GlifoContraer =
         "M7.5,3 L7.5,7.5 L3,7.5 M17,7.5 L12.5,7.5 L12.5,3 M12.5,17 L12.5,12.5 L17,12.5 M3,12.5 L7.5,12.5 L7.5,17";
 
-        /// <summary>
+    /// <summary>
     /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
     /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
     /// abriera.
@@ -261,7 +261,7 @@ public partial class Reproductor : Window
             // Se reconoce por el tipo y no por el texto del mensaje, que llega en el idioma
             // del sistema y cambia entre versiones.
             bool falta = ex is DllNotFoundException or TypeInitializationException
-                             { InnerException: DllNotFoundException }
+            { InnerException: DllNotFoundException }
                          || ex is VLCException;
 
             Fallo(falta ? Textos.Instancia.ReproductorFaltaLibVlc : ex.Message);

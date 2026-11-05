@@ -110,7 +110,7 @@ public partial class Reordenar : Window
     // Los tres valores del desplegable, en el mismo orden en que se añaden.
     private static readonly string?[] Idiomas = [null, "en", "es"];
 
-        /// <summary>
+    /// <summary>
     /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
     /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
     /// abriera.

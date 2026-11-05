@@ -63,65 +63,65 @@ public static class AvisoDeSistema
         switch (plataforma)
         {
             case "windows":
-            {
-                // El guion va codificado en base64 para que ninguna comilla ni barra del
-                // propio guion llegue al analizador de la línea de comandos.
-                var guion = string.Join("\n", GuionWindows);
-                var psi = new ProcessStartInfo(RutaPowerShellWindows)
                 {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = false,
-                    RedirectStandardError = false,
-                };
-                psi.ArgumentList.Add("-NoProfile");
-                psi.ArgumentList.Add("-NonInteractive");
-                psi.ArgumentList.Add("-WindowStyle");
-                psi.ArgumentList.Add("Hidden");
-                psi.ArgumentList.Add("-EncodedCommand");
-                psi.ArgumentList.Add(Convert.ToBase64String(Encoding.Unicode.GetBytes(guion)));
-                // El texto viaja aparte, en el entorno, y el guion lo lee de ahí.
-                psi.Environment["ONDINE_AVISO_TITULO"] = titulo;
-                psi.Environment["ONDINE_AVISO_CUERPO"] = cuerpo;
-                return psi;
-            }
+                    // El guion va codificado en base64 para que ninguna comilla ni barra del
+                    // propio guion llegue al analizador de la línea de comandos.
+                    var guion = string.Join("\n", GuionWindows);
+                    var psi = new ProcessStartInfo(RutaPowerShellWindows)
+                    {
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = false,
+                        RedirectStandardError = false,
+                    };
+                    psi.ArgumentList.Add("-NoProfile");
+                    psi.ArgumentList.Add("-NonInteractive");
+                    psi.ArgumentList.Add("-WindowStyle");
+                    psi.ArgumentList.Add("Hidden");
+                    psi.ArgumentList.Add("-EncodedCommand");
+                    psi.ArgumentList.Add(Convert.ToBase64String(Encoding.Unicode.GetBytes(guion)));
+                    // El texto viaja aparte, en el entorno, y el guion lo lee de ahí.
+                    psi.Environment["ONDINE_AVISO_TITULO"] = titulo;
+                    psi.Environment["ONDINE_AVISO_CUERPO"] = cuerpo;
+                    return psi;
+                }
 
             case "macos":
-            {
-                // Mismo patrón que la Papelera de macOS: el texto va en argv, no en el guion.
-                var psi = new ProcessStartInfo("/usr/bin/osascript")
                 {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = false,
-                    RedirectStandardError = false,
-                };
-                psi.ArgumentList.Add("-e");
-                psi.ArgumentList.Add("on run argv");
-                psi.ArgumentList.Add("-e");
-                psi.ArgumentList.Add("display notification (item 2 of argv) with title (item 1 of argv)");
-                psi.ArgumentList.Add("-e");
-                psi.ArgumentList.Add("end run");
-                psi.ArgumentList.Add(titulo);
-                psi.ArgumentList.Add(cuerpo);
-                return psi;
-            }
+                    // Mismo patrón que la Papelera de macOS: el texto va en argv, no en el guion.
+                    var psi = new ProcessStartInfo("/usr/bin/osascript")
+                    {
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = false,
+                        RedirectStandardError = false,
+                    };
+                    psi.ArgumentList.Add("-e");
+                    psi.ArgumentList.Add("on run argv");
+                    psi.ArgumentList.Add("-e");
+                    psi.ArgumentList.Add("display notification (item 2 of argv) with title (item 1 of argv)");
+                    psi.ArgumentList.Add("-e");
+                    psi.ArgumentList.Add("end run");
+                    psi.ArgumentList.Add(titulo);
+                    psi.ArgumentList.Add(cuerpo);
+                    return psi;
+                }
 
             case "linux":
-            {
-                var psi = new ProcessStartInfo("notify-send")
                 {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = false,
-                    RedirectStandardError = false,
-                };
-                psi.ArgumentList.Add("--app-name=Ondine");
-                psi.ArgumentList.Add("--");
-                psi.ArgumentList.Add(titulo);
-                psi.ArgumentList.Add(cuerpo);
-                return psi;
-            }
+                    var psi = new ProcessStartInfo("notify-send")
+                    {
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = false,
+                        RedirectStandardError = false,
+                    };
+                    psi.ArgumentList.Add("--app-name=Ondine");
+                    psi.ArgumentList.Add("--");
+                    psi.ArgumentList.Add(titulo);
+                    psi.ArgumentList.Add(cuerpo);
+                    return psi;
+                }
 
             default:
                 return null;

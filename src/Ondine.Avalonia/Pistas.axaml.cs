@@ -55,7 +55,7 @@ public partial class Pistas : Window
 
     public bool SeCambioAlgo { get; private set; }
 
-        /// <summary>
+    /// <summary>
     /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
     /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
     /// abriera.

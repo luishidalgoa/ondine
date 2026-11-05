@@ -512,7 +512,10 @@ public sealed class Engine
 
     private static string AudioExt(string fmt) => fmt switch
     {
-        "m4a" => ".m4a", "flac" => ".flac", "opus" => ".opus", _ => ".mp3",
+        "m4a" => ".m4a",
+        "flac" => ".flac",
+        "opus" => ".opus",
+        _ => ".mp3",
     };
 
     /// <summary>Extensión del archivo de salida según el formato elegido (la usa también la vista previa de renombrado).</summary>
@@ -1100,8 +1103,12 @@ public sealed class Engine
 
                     var r = new FileResult
                     {
-                        Name = name, InBytes = inB, OutBytes = outB, Status = RotuloDeAhorro(inB, outB),
-                        SourcePath = f, OutputPath = outPath,
+                        Name = name,
+                        InBytes = inB,
+                        OutBytes = outB,
+                        Status = RotuloDeAhorro(inB, outB),
+                        SourcePath = f,
+                        OutputPath = outPath,
                         SubtitleWarning = lostSoFar.Count > 0 ? SubtitleLossMessage(lostSoFar, opt.Container) : null,
                     };
                     results.Add(r); rep.FileDone(r);
@@ -1262,7 +1269,7 @@ public sealed class Engine
 
     // ---------- pausa / reanudación del FFmpeg en curso ----------
     private Process? _active;
-    public void Pause()  { var p = _active; if (p is { HasExited: false }) ProcessControl.Suspend(p); }
+    public void Pause() { var p = _active; if (p is { HasExited: false }) ProcessControl.Suspend(p); }
     public void Resume() { var p = _active; if (p is { HasExited: false }) ProcessControl.Resume(p); }
 
     // ---------- ejecutar ffmpeg con progreso + cancelación ----------

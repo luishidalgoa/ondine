@@ -758,9 +758,9 @@ public partial class RecortesView : UserControl
                 try
                 {
                     // Se lee entera a memoria y el fichero queda libre. En WPF eran seis lineas con
-                // BeginInit/EndInit/Freeze; aqui basta con abrir el flujo y cerrarlo.
-                Bitmap bmp;
-                await using (var fs = File.OpenRead(jpg)) bmp = new Bitmap(fs);
+                    // BeginInit/EndInit/Freeze; aqui basta con abrir el flujo y cerrarlo.
+                    Bitmap bmp;
+                    await using (var fs = File.OpenRead(jpg)) bmp = new Bitmap(fs);
                     _previas[hueco] = bmp;
                     if (_previaPedida == hueco)
                     {
@@ -919,7 +919,8 @@ public partial class RecortesView : UserControl
     {
         var s = new Rectangle
         {
-            Width = Math.Max(0, XDe(hasta) - XDe(desde)), Height = alto,
+            Width = Math.Max(0, XDe(hasta) - XDe(desde)),
+            Height = alto,
             Fill = new SolidColorBrush(Color.FromArgb(0xC4, 0x06, 0x07, 0x0D)),
             IsHitTestVisible = false,
         };
@@ -955,7 +956,9 @@ public partial class RecortesView : UserControl
                 Padding = new Thickness(5, 1, 5, 1),
                 Child = new TextBlock
                 {
-                    Text = f.Numero.ToString(), FontSize = 10, FontWeight = FontWeight.SemiBold,
+                    Text = f.Numero.ToString(),
+                    FontSize = 10,
+                    FontWeight = FontWeight.SemiBold,
                     Foreground = Pincel("Accent200"),
                 },
             });
@@ -971,7 +974,9 @@ public partial class RecortesView : UserControl
                 MaxWidth = ancho - 68,
                 Child = new TextBlock
                 {
-                    Text = f.Nombre, FontSize = 10, Foreground = Brushes.White,
+                    Text = f.Nombre,
+                    FontSize = 10,
+                    Foreground = Brushes.White,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                 },
             });
@@ -1001,7 +1006,8 @@ public partial class RecortesView : UserControl
 
         var bloque = new Border
         {
-            Width = ancho, Height = alto,
+            Width = ancho,
+            Height = alto,
             CornerRadius = new CornerRadius(5),
             BorderThickness = new Thickness(2),
             BorderBrush = Pincel("Accent"),
@@ -1033,13 +1039,19 @@ public partial class RecortesView : UserControl
         for (int k = 0; k < 2; k++)
             rayas.Children.Add(new Rectangle
             {
-                Width = 1.4, Height = Math.Min(14, alto - 20), RadiusX = 1, RadiusY = 1,
-                Fill = Brushes.White, Opacity = 0.9, Margin = new Thickness(1.1, 0, 1.1, 0),
+                Width = 1.4,
+                Height = Math.Min(14, alto - 20),
+                RadiusX = 1,
+                RadiusY = 1,
+                Fill = Brushes.White,
+                Opacity = 0.9,
+                Margin = new Thickness(1.1, 0, 1.1, 0),
             });
 
         var t = new Border
         {
-            Width = 10, Height = alto,
+            Width = 10,
+            Height = alto,
             CornerRadius = new CornerRadius(3),
             Background = Pincel("Accent"),
             Cursor = new Cursor(StandardCursorType.SizeWestEast),
@@ -1187,7 +1199,9 @@ public partial class RecortesView : UserControl
 
             var celda = new Image
             {
-                Width = ancho, Height = alto, Stretch = Stretch.UniformToFill,
+                Width = ancho,
+                Height = alto,
+                Stretch = Stretch.UniformToFill,
                 Opacity = 0.85,     // el fondo sitúa; los bloques y el cabezal son lo que se lee
             };
             _previas.TryGetValue(hueco, out var ya);

@@ -56,7 +56,9 @@ public static class OrganizarPorMcpTests
         // Sin «confirmar» dice lo que haría y no toca nada.
         var ensayo = h.Ejecutar(new JsonObject
         {
-            ["fichero"] = video, ["catalogo"] = catalogo, ["episodio"] = 3,
+            ["fichero"] = video,
+            ["catalogo"] = catalogo,
+            ["episodio"] = 3,
         });
         Program.Assert(!ensayo.EsError && ensayo.Texto.Contains("Tres"),
             $"el ensayo dice de qué episodio habla ({Recorte(ensayo.Texto)})");
@@ -65,8 +67,11 @@ public static class OrganizarPorMcpTests
 
         var hecho = h.Ejecutar(new JsonObject
         {
-            ["fichero"] = video, ["catalogo"] = catalogo, ["episodio"] = 3,
-            ["segmento"] = "b", ["confirmar"] = true,
+            ["fichero"] = video,
+            ["catalogo"] = catalogo,
+            ["episodio"] = 3,
+            ["segmento"] = "b",
+            ["confirmar"] = true,
         });
         Program.Assert(!hecho.EsError, $"y con «confirmar» se guarda ({Recorte(hecho.Texto)})");
 
@@ -123,7 +128,9 @@ public static class OrganizarPorMcpTests
         var noExiste = h.Ejecutar(new JsonObject
         {
             ["fichero"] = Path.Combine(carpeta, "no-esta.mkv"),
-            ["catalogo"] = catalogo, ["episodio"] = 1, ["confirmar"] = true,
+            ["catalogo"] = catalogo,
+            ["episodio"] = 1,
+            ["confirmar"] = true,
         });
         Program.Assert(noExiste.EsError && noExiste.Texto.Contains("No existe"),
             $"un fichero que no está se dice ({Recorte(noExiste.Texto)})");
@@ -132,7 +139,10 @@ public static class OrganizarPorMcpTests
         // exactamente el error que nadie descubriría hasta ver el nombre puesto.
         var fuera = h.Ejecutar(new JsonObject
         {
-            ["fichero"] = video, ["catalogo"] = catalogo, ["episodio"] = 900, ["confirmar"] = true,
+            ["fichero"] = video,
+            ["catalogo"] = catalogo,
+            ["episodio"] = 900,
+            ["confirmar"] = true,
         });
         Program.Assert(fuera.EsError && fuera.Texto.Contains("900"),
             $"y un episodio que el catálogo no tiene también ({Recorte(fuera.Texto)})");
@@ -177,7 +187,9 @@ public static class OrganizarPorMcpTests
         // Repetirlo no duplica: es lo que pasa cuando un agente reintenta.
         var otra = h.Ejecutar(new JsonObject
         {
-            ["catalogo"] = catalogo, ["fichero"] = "avance.mkv", ["confirmar"] = true,
+            ["catalogo"] = catalogo,
+            ["fichero"] = "avance.mkv",
+            ["confirmar"] = true,
         });
         Program.Assert(!otra.EsError && ReindexCatalog.Load(catalogo).DejarComoEsta.Count == 2,
             $"y repetirlo no lo duplica ({ReindexCatalog.Load(catalogo).DejarComoEsta.Count})");
@@ -244,7 +256,9 @@ public static class OrganizarPorMcpTests
         var duda = Catalogo.Todas.Single(x => x.Nombre == "ondine_aplicar_renombrado")
             .Ejecutar(new JsonObject
             {
-                ["carpeta"] = carpeta, ["catalogo"] = catalogo, ["confirmar"] = true,
+                ["carpeta"] = carpeta,
+                ["catalogo"] = catalogo,
+                ["confirmar"] = true,
             });
         Program.Assert(duda.EsError || duda.Texto.Contains("nada que aplicar"),
             $"de entrada no se toca: es una duda ({Recorte(duda.Texto)})");
@@ -253,14 +267,18 @@ public static class OrganizarPorMcpTests
         Catalogo.Todas.Single(x => x.Nombre == "ondine_fijar_episodio")
             .Ejecutar(new JsonObject
             {
-                ["fichero"] = sucio, ["catalogo"] = catalogo,
-                ["episodio"] = 2, ["confirmar"] = true,
+                ["fichero"] = sucio,
+                ["catalogo"] = catalogo,
+                ["episodio"] = 2,
+                ["confirmar"] = true,
             });
 
         var aplicado = Catalogo.Todas.Single(x => x.Nombre == "ondine_aplicar_renombrado")
             .Ejecutar(new JsonObject
             {
-                ["carpeta"] = carpeta, ["catalogo"] = catalogo, ["confirmar"] = true,
+                ["carpeta"] = carpeta,
+                ["catalogo"] = catalogo,
+                ["confirmar"] = true,
             });
         Program.Assert(!aplicado.EsError && aplicado.Texto.Contains("Renombrados 1"),
             $"se renombra el fichero sucio ({Recorte(aplicado.Texto)})");

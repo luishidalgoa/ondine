@@ -43,7 +43,7 @@ public partial class Encargo : Window
     /// <summary>Códigos elegidos, en el orden en que se fueron marcando.</summary>
     private readonly List<string> _elegidos = ["es", "en"];
 
-        /// <summary>
+    /// <summary>
     /// Sin marco del sistema hay que pedir el arrastre y los bordes: los da
     /// <see cref="ArrastrarLaVentana"/>. Esta ventana se quedaba clavada donde el sistema la
     /// abriera.
@@ -111,7 +111,9 @@ public partial class Encargo : Window
         var encontrados = IsoLanguages.Buscar(Txt("txtBuscarIdioma").Text ?? "")
             .Select(i => new IdiomaFila
             {
-                Codigo = i.Codigo, Nombre = i.Nombre, Elegido = _elegidos.Contains(i.Codigo),
+                Codigo = i.Codigo,
+                Nombre = i.Nombre,
+                Elegido = _elegidos.Contains(i.Codigo),
             })
             .ToList();
 

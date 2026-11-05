@@ -80,10 +80,22 @@ public sealed class FileSignals
     /// </summary>
     public FileSignals ConSegmento(string? seg) => new()
     {
-        Path = Path, NombreArchivo = NombreArchivo, Extension = Extension, Carpeta = Carpeta,
-        Fecha = Fecha, Indice = Indice, SubSegmento = seg, Especial = Especial,
-        IndiceEspecial = IndiceEspecial, Temporada = Temporada, TituloNombre = TituloNombre,
-        TituloMeta = TituloMeta, Segmentos = Segmentos, Duracion = Duracion, Fingerprint = Fingerprint, Error = Error,
+        Path = Path,
+        NombreArchivo = NombreArchivo,
+        Extension = Extension,
+        Carpeta = Carpeta,
+        Fecha = Fecha,
+        Indice = Indice,
+        SubSegmento = seg,
+        Especial = Especial,
+        IndiceEspecial = IndiceEspecial,
+        Temporada = Temporada,
+        TituloNombre = TituloNombre,
+        TituloMeta = TituloMeta,
+        Segmentos = Segmentos,
+        Duracion = Duracion,
+        Fingerprint = Fingerprint,
+        Error = Error,
         TambienEpisodios = TambienEpisodios,
     };
 

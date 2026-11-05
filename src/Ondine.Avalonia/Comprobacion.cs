@@ -466,7 +466,8 @@ public static class Comprobacion
         var panel = new PeliculasPanel();
         var v = new Window
         {
-            Width = 640, Height = 420,
+            Width = 640,
+            Height = 420,
             Content = panel,
         };
         v.Show(dueno);

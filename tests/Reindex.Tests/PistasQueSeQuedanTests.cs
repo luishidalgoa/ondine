@@ -54,9 +54,18 @@ public static class PistasQueSeQuedanTests
     {
         var fila = new VideoRow
         {
-            Name = "capitulo.mkv", Bytes = 700L * 1024 * 1024, Probed = true,
-            Audio = "eng+spa+por", AudioCodec = "eac3", AudioBitrateKbps = 224, Channels = 2,
-            Width = 1920, Height = 1080, Fps = 25, DurationSec = 1400, VideoBitrateKbps = 3800,
+            Name = "capitulo.mkv",
+            Bytes = 700L * 1024 * 1024,
+            Probed = true,
+            Audio = "eng+spa+por",
+            AudioCodec = "eac3",
+            AudioBitrateKbps = 224,
+            Channels = 2,
+            Width = 1920,
+            Height = 1080,
+            Fps = 25,
+            DurationSec = 1400,
+            VideoBitrateKbps = 3800,
         };
         var opciones = new EncodeOptions { Container = "mkv", Lang = "spa" };   // KeepLangs vacía
 
@@ -70,7 +79,9 @@ public static class PistasQueSeQuedanTests
         // Y con «todas» sí son tres, para que la prueba de arriba no pase por sumar siempre dos.
         var conTodas = Estimator.Compute(fila, new EncodeOptions
         {
-            Container = "mkv", Lang = "spa", KeepLangs = { PistasQueSeQuedan.Todas },
+            Container = "mkv",
+            Lang = "spa",
+            KeepLangs = { PistasQueSeQuedan.Todas },
         });
         Program.Assert(conTodas.EstAudioKbps == 224 * 3,
             $"y pidiendo todas, las tres ({conTodas.EstAudioKbps})");

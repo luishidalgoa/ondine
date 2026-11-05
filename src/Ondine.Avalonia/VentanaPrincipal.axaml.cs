@@ -407,7 +407,7 @@ public partial class VentanaPrincipal : Window
             .ToList();
 
         var dlg = new Renombrar(_settings.Rename, items,
-                                   _settings.RenameSearchHistory, _settings.RenameReplaceHistory) ;
+                                   _settings.RenameSearchHistory, _settings.RenameReplaceHistory);
         if (await dlg.ShowDialog<bool>(this) && dlg.Result != null)
         {
             _settings.Rename = dlg.Result;   // los historiales se mutan dentro del diálogo
@@ -457,22 +457,30 @@ public partial class VentanaPrincipal : Window
     {
         var win = new Window
         {
-            Title = Textos.Instancia.MainPaginaComprimir, Width = 470, SizeToContent = SizeToContent.Height, 
-            WindowStartupLocation = WindowStartupLocation.CenterOwner, CanResize = false, Background = Brushes.Transparent, TransparencyLevelHint = [WindowTransparencyLevel.Transparent],
+            Title = Textos.Instancia.MainPaginaComprimir,
+            Width = 470,
+            SizeToContent = SizeToContent.Height,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            Background = Brushes.Transparent,
+            TransparencyLevelHint = [WindowTransparencyLevel.Transparent],
         };
         var panel = new StackPanel { Margin = new Thickness(22) };
         panel.Children.Add(new TextBlock
         {
             Text = string.Format(Textos.Instancia.MainAvisoComprimirCuantos, count),
-            FontSize = 14, FontWeight = FontWeight.Medium,
-            Foreground = Pincel("Text"), Margin = new Thickness(0, 0, 0, 14),
+            FontSize = 14,
+            FontWeight = FontWeight.Medium,
+            Foreground = Pincel("Text"),
+            Margin = new Thickness(0, 0, 0, 14),
         });
         var chkDel = new CheckBox
         {
             Content = _settings.BorrarDefinitivamente
                 ? Textos.Instancia.MainAvisoComprimirBorrar
                 : Textos.Instancia.MainAvisoComprimirPapelera,
-            Foreground = Pincel("Neutral300"), Margin = new Thickness(0, 0, 0, 9),
+            Foreground = Pincel("Neutral300"),
+            Margin = new Thickness(0, 0, 0, 9),
         };
         var chkRemember = new CheckBox
         {
@@ -486,7 +494,9 @@ public partial class VentanaPrincipal : Window
             Text = _settings.BorrarDefinitivamente
                 ? Textos.Instancia.MainAvisoComprimirNotaBorrar
                 : Textos.Instancia.MainAvisoComprimirNota,
-            FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Pincel("Neutral600"),
+            FontSize = 11,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Pincel("Neutral600"),
             Margin = new Thickness(0, 12, 0, 16),
         });
         var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
@@ -497,8 +507,11 @@ public partial class VentanaPrincipal : Window
         panel.Children.Add(row);
         win.Content = new Border
         {
-            Background = Pincel("Bg"), BorderBrush = Pincel("Divider"),
-            BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Child = panel,
+            Background = Pincel("Bg"),
+            BorderBrush = Pincel("Divider"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Child = panel,
         };
         bool proceed = false;
         okb.Click += (_, _) => { proceed = true; win.Close(true); };
@@ -1111,7 +1124,7 @@ public partial class VentanaPrincipal : Window
         }
 
         lblProg.Text = "";
-        var win = new Pistas(_engine, r.Path, pistas, dur) ;
+        var win = new Pistas(_engine, r.Path, pistas, dur);
         await win.ShowDialog(this);
         if (!win.SeCambioAlgo) return;
 
@@ -1275,7 +1288,9 @@ public partial class VentanaPrincipal : Window
         for (int i = 0; i < 5; i++)
             panel.Children.Add(new Border
             {
-                Width = 20, Height = 6, CornerRadius = new CornerRadius(2),
+                Width = 20,
+                Height = 6,
+                CornerRadius = new CornerRadius(2),
                 Margin = new Thickness(0, 0, 3, 0),
                 Background = i < value ? on : off,
             });
@@ -1473,7 +1488,7 @@ public partial class VentanaPrincipal : Window
         opt.AudioMezcla = cboMezcla.SelectedIndex == 1
             ? Ondine.Audio.Mezcla.Estereo
             : Ondine.Audio.Mezcla.SinTocar;
-                opt.AudioCodec = cboACodec.SelectedIndex switch
+        opt.AudioCodec = cboACodec.SelectedIndex switch
         {
             1 => Ondine.Audio.AudioElegido.Aac,
             2 => Ondine.Audio.AudioElegido.Ac3,
@@ -1482,7 +1497,7 @@ public partial class VentanaPrincipal : Window
             5 => Ondine.Audio.AudioElegido.Flac,
             _ => Ondine.Audio.AudioElegido.Copiar,
         };
-                opt.Velocidad = cboVel.SelectedIndex switch
+        opt.Velocidad = cboVel.SelectedIndex switch
         {
             0 => Ondine.Objetivo.Velocidad.MuyRapido,
             1 => Ondine.Objetivo.Velocidad.Rapido,
@@ -1574,8 +1589,14 @@ public partial class VentanaPrincipal : Window
     internal void FilasDePrueba(params (string nombre, string estado)[] filas)
     {
         foreach (var (nombre, estado) in filas)
-            _rows.Add(new VideoRow { Name = nombre, Dir = "pruebas", SizeMB = "100 MB",
-                                     Path = nombre, Estado = estado });
+            _rows.Add(new VideoRow
+            {
+                Name = nombre,
+                Dir = "pruebas",
+                SizeMB = "100 MB",
+                Path = nombre,
+                Estado = estado
+            });
     }
 
     /// <summary>
@@ -1863,9 +1884,14 @@ public partial class VentanaPrincipal : Window
         user.RemoveAll(x => x.Name == name);
         user.Add(new Preset
         {
-            Name = name, Fmt = cboFmt.SelectedIndex, Codec = cboCodec.SelectedIndex,
-            Quality = cboQ.SelectedIndex, Res = cboRes.SelectedIndex, Audio = cboAud.SelectedIndex,
-            ACodec = cboACodec.SelectedIndex, Lang = cboLang.Text,
+            Name = name,
+            Fmt = cboFmt.SelectedIndex,
+            Codec = cboCodec.SelectedIndex,
+            Quality = cboQ.SelectedIndex,
+            Res = cboRes.SelectedIndex,
+            Audio = cboAud.SelectedIndex,
+            ACodec = cboACodec.SelectedIndex,
+            Lang = cboLang.Text,
         });
         PresetStore.SaveUser(user);
         ReloadPresets(name);
@@ -1876,8 +1902,11 @@ public partial class VentanaPrincipal : Window
     {
         var win = new Window
         {
-            Title = title, Width = 380, SizeToContent = SizeToContent.Height, 
-            WindowStartupLocation = WindowStartupLocation.CenterOwner, CanResize = false,
+            Title = title,
+            Width = 380,
+            SizeToContent = SizeToContent.Height,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
             Background = Pincel("Surface"),
         };
         var tb = new TextBox { Margin = new Thickness(0, 0, 0, 12) };

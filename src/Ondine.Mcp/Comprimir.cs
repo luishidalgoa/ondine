@@ -90,8 +90,12 @@ internal static class Comprimir
             AudioBitrate = p.Audio switch { 1 => 192, 2 => 160, 3 => 128, 4 => 96, _ => 0 },
             AudioCodec = p.ACodec switch
             {
-                1 => AudioElegido.Aac, 2 => AudioElegido.Ac3, 3 => AudioElegido.Eac3,
-                4 => AudioElegido.Opus, 5 => AudioElegido.Flac, _ => AudioElegido.Copiar,
+                1 => AudioElegido.Aac,
+                2 => AudioElegido.Ac3,
+                3 => AudioElegido.Eac3,
+                4 => AudioElegido.Opus,
+                5 => AudioElegido.Flac,
+                _ => AudioElegido.Copiar,
             },
             Lang = string.IsNullOrWhiteSpace(p.Lang) ? "spa" : p.Lang,
         };

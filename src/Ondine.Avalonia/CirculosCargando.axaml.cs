@@ -103,13 +103,16 @@ public partial class CirculosCargando : UserControl
 
         var aro = new Ellipse
         {
-            Width = 20, Height = 20,
-            Stroke = Pincel("Accent700"), StrokeThickness = 1.4,
+            Width = 20,
+            Height = 20,
+            Stroke = Pincel("Accent700"),
+            StrokeThickness = 1.4,
             RenderTransform = new ScaleTransform(1, 1),
         };
         var punto = new Ellipse
         {
-            Width = 9, Height = 9,
+            Width = 9,
+            Height = 9,
             Fill = Pincel("Accent"),
             RenderTransform = new ScaleTransform(1, 1),
         };

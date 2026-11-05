@@ -270,7 +270,8 @@ public static class Invocador
                         ? await modelo.ResponderAsync(m, corte).ConfigureAwait(false)
                         : new Mensaje
                         {
-                            Tipo = Mensaje.TipoRespuesta, Id = m.Id,
+                            Tipo = Mensaje.TipoRespuesta,
+                            Id = m.Id,
                             MensajeError = Textos.Instancia.IaComplementoSinPermiso,
                         };
                     try

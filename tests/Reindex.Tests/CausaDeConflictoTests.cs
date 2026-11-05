@@ -145,7 +145,7 @@ public static class ConfirmarEspecialesTests
 
         var seguro1 = Esp(9001, 1.00);
         var seguro2 = Esp(9002, 0.98);
-        var flojo   = Esp(9003, 0.72);
+        var flojo = Esp(9003, 0.72);
 
         Program.Eq(CausaDeConflicto.Causa.EspecialSeguro, CausaDeConflicto.DeQueVa(seguro1),
             "un especial que casa al 1,00 es «seguro»");

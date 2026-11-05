@@ -109,29 +109,40 @@ public sealed class PasosVisual
         _icono.Children.Add(_resplandor);
         _icono.Children.Add(new Ellipse
         {
-            Width = 30, Height = 30, Fill = Rec("EstadoOk"),
+            Width = 30,
+            Height = 30,
+            Fill = Rec("EstadoOk"),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
         });
         _icono.Children.Add(new Path
         {
             Data = Geometry.Parse("M16,22.5 L20.5,27 L28.5,17.5"),
-            Stroke = Brushes.White, StrokeThickness = 2.4,
-            StrokeLineCap = PenLineCap.Round, StrokeJoin = PenLineJoin.Round,
+            Stroke = Brushes.White,
+            StrokeThickness = 2.4,
+            StrokeLineCap = PenLineCap.Round,
+            StrokeJoin = PenLineJoin.Round,
         });
         _resplandor.Transitions = [Transicion(Visual.OpacityProperty, 900)];
 
         _finTitulo = new TextBlock
         {
-            FontSize = 13, FontWeight = FontWeight.Medium, Foreground = Rec("Text"),
-            HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0),
+            FontSize = 13,
+            FontWeight = FontWeight.Medium,
+            Foreground = Rec("Text"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 12, 0, 0),
         };
         _finDetalle = new TextBlock
         {
-            FontSize = 11.5, Foreground = Rec("Neutral500"),
-            HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0),
+            FontSize = 11.5,
+            Foreground = Rec("Neutral500"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 3, 0, 0),
         };
 
         _final = new StackPanel
@@ -256,7 +267,8 @@ public sealed class PasosVisual
         {
             Raiz = new Grid
             {
-                Width = Diametro, Height = Diametro,
+                Width = Diametro,
+                Height = Diametro,
                 VerticalAlignment = VerticalAlignment.Top,
                 RenderTransform = TransformOperations.Parse($"scale(1)"),
                 RenderTransformOrigin = RelativePoint.Center,
@@ -272,7 +284,8 @@ public sealed class PasosVisual
             // cancelación que se corta al cerrarla, así que no puede quedarse viva.
             _arco = new Ellipse
             {
-                Stroke = Rec("Accent"), StrokeThickness = Trazo,
+                Stroke = Rec("Accent"),
+                StrokeThickness = Trazo,
                 StrokeDashArray = [Vuelta * 0.28, Vuelta],
                 StrokeLineCap = PenLineCap.Round,
                 RenderTransform = new RotateTransform(0),
@@ -282,13 +295,17 @@ public sealed class PasosVisual
             };
             _anillo = new Ellipse
             {
-                Stroke = Rec("EstadoOk"), StrokeThickness = Trazo, Opacity = 0,
+                Stroke = Rec("EstadoOk"),
+                StrokeThickness = Trazo,
+                Opacity = 0,
                 Transitions = [Transicion(Visual.OpacityProperty, 220)],
             };
 
             _num = new TextBlock
             {
-                Text = numero.ToString(), FontSize = 11, Foreground = Rec("Neutral600"),
+                Text = numero.ToString(),
+                FontSize = 11,
+                Foreground = Rec("Neutral600"),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Transitions = [Transicion(Visual.OpacityProperty, 200)],
@@ -296,8 +313,10 @@ public sealed class PasosVisual
             _check = new Path
             {
                 Data = Geometry.Parse("M7,12.5 L10.5,16 L17,8.5"),
-                Stroke = Rec("EstadoOk"), StrokeThickness = 2,
-                StrokeLineCap = PenLineCap.Round, StrokeJoin = PenLineJoin.Round,
+                Stroke = Rec("EstadoOk"),
+                StrokeThickness = 2,
+                StrokeLineCap = PenLineCap.Round,
+                StrokeJoin = PenLineJoin.Round,
                 Opacity = 0,
                 Transitions = [Transicion(Visual.OpacityProperty, 220)],
             };
@@ -310,13 +329,17 @@ public sealed class PasosVisual
 
             var etiqueta = new TextBlock
             {
-                Text = rotulo, FontSize = 12.5, Foreground = Rec("Neutral500"),
+                Text = rotulo,
+                FontSize = 12.5,
+                Foreground = Rec("Neutral500"),
                 TextWrapping = TextWrapping.Wrap,
             };
             _detalle = new TextBlock
             {
-                FontSize = 11, Foreground = Rec("Neutral500"),
-                IsVisible = false, Margin = new Thickness(0, 1, 0, 0),
+                FontSize = 11,
+                Foreground = Rec("Neutral500"),
+                IsVisible = false,
+                Margin = new Thickness(0, 1, 0, 0),
             };
             Textos = new StackPanel
             {
@@ -413,8 +436,10 @@ public sealed class PasosVisual
         {
             var puntos = new Rectangle
             {
-                Width = Trazo, Height = LargoConector,
-                Fill = Rec("Neutral800"), Opacity = 0.6,
+                Width = Trazo,
+                Height = LargoConector,
+                Fill = Rec("Neutral800"),
+                Opacity = 0.6,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
 
@@ -423,7 +448,8 @@ public sealed class PasosVisual
             // que se lee igual y es una transición en vez de dos animaciones sincronizadas.
             _tenido = new Rectangle
             {
-                Width = Trazo, Height = LargoConector,
+                Width = Trazo,
+                Height = LargoConector,
                 Fill = Rec("Accent"),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Top,

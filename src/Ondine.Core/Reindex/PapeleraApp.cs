@@ -89,8 +89,14 @@ public static class PapeleraApp
             File.Move(origen, destino);   // mismo volumen = instantáneo; entre volúmenes copia y borra
 
             var indice = LeerIndice();
-            indice.Add(new Entrada { Id = id, Origen = origen, Guardado = destino, Nombre = nombre,
-                                     Cuando = DateTime.Now.ToString("o") });
+            indice.Add(new Entrada
+            {
+                Id = id,
+                Origen = origen,
+                Guardado = destino,
+                Nombre = nombre,
+                Cuando = DateTime.Now.ToString("o")
+            });
             FinalizarViejosEn(indice);   // trigger por antigüedad
             Purgar(indice);              // trigger por cantidad
             EscribirIndice(indice);
