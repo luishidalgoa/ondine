@@ -2,6 +2,7 @@
 funcion: Motor de compresión
 modulos:
   - src/Ondine.Core/Engine.cs
+  - src/Ondine.Core/Ondine.Core.csproj
   - src/Ondine.Core/EncodeOptions.cs
   - src/Ondine.Core/Estimator.cs
   - src/Ondine.Core/Preset.cs
