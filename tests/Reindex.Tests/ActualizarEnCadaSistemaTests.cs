@@ -57,6 +57,13 @@ public static class ActualizarEnCadaSistemaTests
         Program.Assert(Elegido(Updater.Paquete.DebDeLinux) == "ondine_1.14.1_amd64.deb",
             "instalado desde el .deb, el .deb nuevo");
 
+        // Con el .deb de las dos arquitecturas publicado, cada máquina baja el suyo.
+        string[] dosDebs = ["ondine_1.14.1_amd64.deb", "ondine_1.14.1_arm64.deb"];
+        Program.Assert(dosDebs.FirstOrDefault(n => Updater.EsElPaquete(n, Updater.Paquete.DebDeLinux, "x64"))
+                       == "ondine_1.14.1_amd64.deb", "en un PC de 64 bits, el .deb amd64");
+        Program.Assert(dosDebs.FirstOrDefault(n => Updater.EsElPaquete(n, Updater.Paquete.DebDeLinux, "arm64"))
+                       == "ondine_1.14.1_arm64.deb", "en una máquina arm64, el .deb arm64");
+
         Program.Assert(Elegido(Updater.Paquete.AppImageDeLinux) == "Ondine-1.14.1-linux-x86_64.AppImage",
             "corriendo como AppImage, el AppImage nuevo");
 

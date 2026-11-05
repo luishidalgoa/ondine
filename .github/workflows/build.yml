@@ -303,7 +303,15 @@ jobs:
   # ---------------------------------------------------------------------------
   linux-escritorio:
     needs: verificar-version
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
 
@@ -315,7 +323,7 @@ jobs:
       - name: Montar el .deb
         run: |
           chmod +x empaquetado/linux/hacer-deb.sh
-          ./empaquetado/linux/hacer-deb.sh
+          ./empaquetado/linux/hacer-deb.sh "" ${{ matrix.arch }}
 
       # lintian es el revisor de paquetes de Debian. Se le pide que avise pero no que
       # falle: se queja de cosas que no aplican a una app autocontenida —páginas de
@@ -354,7 +362,7 @@ jobs:
       - name: Subir como artefacto
         uses: actions/upload-artifact@v7
         with:
-          name: ondine-linux-deb
+          name: ondine-linux-deb-${{ matrix.arch }}
           path: empaquetado/salida/*.deb
           if-no-files-found: error
 
@@ -363,6 +371,103 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: empaquetado/salida/*.deb
+
+  # ---------------------------------------------------------------------------
+  # El repositorio apt: lo que hace que el gestor de actualizaciones de Debian y de Mint vea Ondine.
+  #
+  # Solo en tags, y solo si hay clave de firma (secreto GPG_PRIVATE_KEY). Sin ella no se publica
+  # nada: un repositorio sin firmar lo rechaza apt, y es mejor no tocarlo que dejarlo roto.
+  #
+  # Se publica en la rama «apt», que pages.yml copia a https://ondine.hdglabs.com/apt. Solo guarda
+  # la versión actual: el sitio pesa y el gestor no necesita las antiguas.
+  # ---------------------------------------------------------------------------
+  publicar-apt:
+    needs: linux-escritorio
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Ver si hay clave de firma
+        id: clave
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            echo "hay=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Sin clave de firma (GPG_PRIVATE_KEY): el repositorio apt no se publica en este tag."
+            echo "hay=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bajar los .deb
+        if: steps.clave.outputs.hay == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          pattern: ondine-linux-deb-*
+          path: debs
+          merge-multiple: true
+
+      - name: Instalar las herramientas del repositorio
+        if: steps.clave.outputs.hay == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq apt-utils gnupg
+
+      - name: Construir y firmar el repositorio
+        if: steps.clave.outputs.hay == 'true'
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          # La rama apt, o una nueva si es la primera vez.
+          if git fetch -q origin apt 2>/dev/null; then
+            git worktree add -q -B apt apt-repo FETCH_HEAD
+          else
+            git worktree add -q --orphan -b apt apt-repo
+          fi
+          cd apt-repo
+          rm -rf pool dists ondine-archive-keyring.gpg
+
+          # Un pool por arquitectura: así cada índice solo lista lo suyo.
+          for arq in amd64 arm64; do
+            mkdir -p "pool/main/o/ondine/$arq" "dists/stable/main/binary-$arq"
+            cp ../debs/ondine_*_"$arq".deb "pool/main/o/ondine/$arq/"
+            apt-ftparchive packages "pool/main/o/ondine/$arq" > "dists/stable/main/binary-$arq/Packages"
+            gzip -kf "dists/stable/main/binary-$arq/Packages"
+          done
+
+          # La clave: se importa del secreto, se exporta la parte pública para el sitio y se firma el índice.
+          echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+          KEYID=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')
+          gpg --batch --export "$KEYID" > ondine-archive-keyring.gpg
+
+          cd dists/stable
+          rm -f Release Release.gpg InRelease
+          apt-ftparchive release \
+            -o APT::FTPArchive::Release::Origin=Ondine \
+            -o APT::FTPArchive::Release::Label=Ondine \
+            -o APT::FTPArchive::Release::Suite=stable \
+            -o APT::FTPArchive::Release::Codename=stable \
+            -o 'APT::FTPArchive::Release::Architectures=amd64 arm64' \
+            -o APT::FTPArchive::Release::Components=main \
+            . > Release
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+              -u "$KEYID" -abs -o Release.gpg Release
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+              -u "$KEYID" --clearsign -o InRelease Release
+          cd ../..
+
+          git -C apt-repo add -A
+          if git -C apt-repo diff --cached --quiet; then
+            echo "nada que publicar"
+            exit 0
+          fi
+          git -C apt-repo -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "apt: Ondine $VERSION"
+          git -C apt-repo push -q origin HEAD:refs/heads/apt
 
   # ---------------------------------------------------------------------------
   # El AppImage: un fichero, se marca ejecutable y se abre. Para probar Ondine sin

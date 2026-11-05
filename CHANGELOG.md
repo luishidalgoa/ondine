@@ -32,6 +32,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Repositorio apt para Debian, Mint y Ubuntu.** Cada versión se publica, firmada, en un repositorio
+  propio: el gestor de actualizaciones del sistema ofrece Ondine como cualquier otro paquete. Quien
+  instale el `.deb` ya queda apuntado a él.
+- **El `.deb` también para Linux de 64 bits con procesador ARM.** Hasta ahora solo había el de Intel y AMD.
+
 ### Corregido
 
 - **Un fichero bloqueado ya no aborta toda la tanda.** Si el sistema no dejaba sustituir un fichero

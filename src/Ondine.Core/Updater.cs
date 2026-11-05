@@ -159,7 +159,10 @@ public static class Updater
             nombre.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
             nombre.Contains("setup", StringComparison.OrdinalIgnoreCase),
 
-        Paquete.DebDeLinux => nombre.EndsWith(".deb", StringComparison.OrdinalIgnoreCase),
+        // El .deb sale una vez por arquitectura (_amd64 y _arm64): bajarse el de la otra no instala nada.
+        Paquete.DebDeLinux =>
+            nombre.EndsWith(".deb", StringComparison.OrdinalIgnoreCase) &&
+            nombre.Contains("_" + (arquitectura == "arm64" ? "arm64" : "amd64") + ".deb", StringComparison.OrdinalIgnoreCase),
 
         Paquete.AppImageDeLinux => nombre.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase),
 
