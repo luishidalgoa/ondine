@@ -32,6 +32,14 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.23.1] - 2026-11-05
+
+### Corregido
+
+- **El repositorio de paquetes para Debian, Mint y Ubuntu se publica con esta versión.** La 1.23.0 no llegó a
+  publicarlo: el paso que lo construye fallaba. Con la 1.23.1, el gestor de actualizaciones del sistema ya puede
+  ofrecer Ondine.
+
 ## [1.23.0] - 2026-11-05
 
 ### Añadido
