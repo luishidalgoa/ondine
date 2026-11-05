@@ -328,6 +328,7 @@ public partial class VentanaPrincipal : Window
             if (cboPreset.SelectedItem == null) cboLang.Text = _settings.DefaultLang;
             if (!await Engine.ToolsAvailableAsync())
                 await Dialogo.Aviso(this, Textos.Instancia.MainFaltaFfmpegTitulo, Textos.Instancia.MainFaltaFfmpegTexto);
+            _ = SondasDeHardware();   // se calientan ya, para que Preferencias abra al instante
             if (_settings.CheckUpdatesOnStart) await CheckUpdateAsync(manual: false);
         };
     }
@@ -353,6 +354,29 @@ public partial class VentanaPrincipal : Window
         SettingsStore.Save(_settings);
     }
 
+    // Las sondas de hardware arrancan ffmpeg una vez por candidata, y la primera vez se notaban
+    // al abrir Preferencias. Se lanzan al arrancar, en segundo plano, y Preferencias espera a la
+    // misma tarea: si ya ha terminado, abrir es instantáneo.
+    private Task<(IReadOnlyList<string> Aceleraciones, IReadOnlyList<string> Codificadores)>? _sondasHardware;
+
+    private Task<(IReadOnlyList<string> Aceleraciones, IReadOnlyList<string> Codificadores)> SondasDeHardware() =>
+        _sondasHardware ??= SondearHardwareAsync();
+
+    private async Task<(IReadOnlyList<string> Aceleraciones, IReadOnlyList<string> Codificadores)> SondearHardwareAsync()
+    {
+        try
+        {
+            var aceleraciones = await _engine.AceleracionesDisponiblesAsync();
+            var codificadores = await _engine.CodificadoresDisponiblesAsync();
+            return (aceleraciones, codificadores);
+        }
+        catch (Exception)
+        {
+            // Sin sondas, Preferencias se abre igual, sin las opciones de hardware detectadas.
+            return (Array.Empty<string>(), Array.Empty<string>());
+        }
+    }
+
     private async Task OpenPreferences()
     {
         var names = (cboPreset.ItemsSource as IEnumerable<Preset>)?.Select(p => p.Name) ?? Enumerable.Empty<string>();
@@ -360,9 +384,8 @@ public partial class VentanaPrincipal : Window
         // tarda un par de segundos la PRIMERA vez -luego el motor la recuerda-. Se paga aqui,
         // al abrir Preferencias, y no dentro de la ventana: asi la ventana no depende del disco
         // ni de ffmpeg, que es lo que la deja probarse en el autochequeo.
-        var aceleraciones = await _engine.AceleracionesDisponiblesAsync();
-        var dlg = new Preferencias(_settings, names, aceleraciones,
-                                   await _engine.CodificadoresDisponiblesAsync());
+        var (aceleraciones, codificadores) = await SondasDeHardware();
+        var dlg = new Preferencias(_settings, names, aceleraciones, codificadores);
         if (await dlg.ShowDialog<bool>(this) && dlg.Result != null)
         {
             _settings = dlg.Result;
@@ -1460,6 +1483,8 @@ public partial class VentanaPrincipal : Window
     // despacha.
 
     private readonly ColaDeTrabajos _cola = new();
+    private DespachoDeCola? _despachoDeCola;
+    private DespachoDeCola _despacho => _despachoDeCola ??= new DespachoDeCola(_cola);
 
     /// <summary>
     /// Mete lo marcado en la cola con los ajustes de AHORA, y deja la pantalla libre para
@@ -1504,23 +1529,14 @@ public partial class VentanaPrincipal : Window
     /// vez sobre el mismo disco tardan mas que en fila, y ademas se pelean por el espacio de
     /// los temporales.
     /// </summary>
-    private async Task DespacharColaAsync()
-    {
-        while (_cola.Siguiente() is { } t && !_running)
+    private Task DespacharColaAsync() => _despacho.DrenarAsync(
+        () => _running,
+        async t =>
         {
-            _cola.Empezar(t.Id);
-            PintarCola();
-
             var r = await ComprimirTandaAsync(t.Ficheros, t.Opciones);
-
-            // Cancelar detiene la cola entera, no solo el trabajo: quien pulsa «Detener»
-            // quiere parar, no pasar al siguiente.
-            if (r.Cancelado) { _cola.Cancelar(t.Id); PintarCola(); return; }
-
-            _cola.Terminar(t.Id, r.Salieron, r.Fallaron);
-            PintarCola();
-        }
-    }
+            return (r.Cancelado, r.Salieron, r.Fallaron);
+        },
+        PintarCola);
 
     /// <summary>
     /// Mete filas en la tabla sin tocar el disco, para la comprobacion de arranque.
@@ -1630,7 +1646,10 @@ public partial class VentanaPrincipal : Window
             else deleteOriginals = _settings.AfterCompress == AfterCompress.RecycleOriginal;
         }
 
-        await ComprimirTandaAsync(sel, opt, selRows, deleteOriginals);
+        var fin = await ComprimirTandaAsync(sel, opt, selRows, deleteOriginals);
+        // Lo añadido a la cola mientras esta compresión corría no se lanzó: ahora sí, salvo que se
+        // haya cancelado (cancelar detiene la cola entera).
+        if (!fin.Cancelado) await DespacharColaAsync();
     }
 
     /// <summary>Como fue una tanda. Lo que la cola necesita saber para cerrar el trabajo.</summary>
