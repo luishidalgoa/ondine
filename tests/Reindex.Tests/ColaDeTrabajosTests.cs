@@ -24,6 +24,19 @@ public static class ColaDeTrabajosTests
         new() { VideoCodec = codec, Quality = calidad };
 
     /// <summary>
+    /// Lo que se hace con los originales se decide al encolar y no cambia después. Antes, una tanda encolada
+    /// nunca enviaba el original a la Papelera, y la opción de Preferencias no hacía nada con la cola.
+    /// </summary>
+    private static void LosOriginalesSeDecidenAlEncolar()
+    {
+        var cola = new ColaDeTrabajos();
+        var con = cola.Encolar(["a.mkv"], Opciones(), "C:/s", borrarOriginales: true)!;
+        var sin = cola.Encolar(["b.mkv"], Opciones(), "C:/s")!;
+        Program.Assert(con.BorrarOriginales && !sin.BorrarOriginales,
+            "cada trabajo lleva su decisión: la que se tomó al encolarlo");
+    }
+
+    /// <summary>
     /// «Quitar» en la tabla tiene que sacar el fichero de la cola. Si no, la fila desaparece pero
     /// el trabajo sigue teniéndolo y se comprime igual: fue el fallo que se vio en Linux.
     /// </summary>
@@ -54,6 +67,7 @@ public static class ColaDeTrabajosTests
     {
         Program.Seccion("La cola de trabajos");
         QuitarFicherosSacaSoloDePendientes();
+        LosOriginalesSeDecidenAlEncolar();
 
         // ══ LA REGLA: las opciones se copian, no se apuntan ═══════════════════════
         var deLaPantalla = Opciones("hevc", 24);

@@ -801,6 +801,11 @@ public sealed partial class Textos
         "Analysed · not in the queue · {0} video(s)",
         "Analizados · no están en la cola · {0} vídeo(s)");
 
+    // Enviar a la Papelera o quitar un vídeo que se está comprimiendo ahora: no se puede, y se dice.
+    public string MainNoSeBorraEnCurso => Idioma.Elegir(
+        "That file is being compressed right now, so it can't be sent to the Recycle Bin yet.",
+        "Ese fichero se está comprimiendo ahora: no se puede enviar a la Papelera todavía.");
+
     // Quitar una fila que la cola está comprimiendo ahora: no se puede, y se dice.
     public string MainColaEnCursoNoSeQuita => Idioma.Elegir(
         "That file is being compressed right now, so it stays in the list.",

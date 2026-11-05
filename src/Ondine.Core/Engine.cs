@@ -1049,7 +1049,7 @@ public sealed class Engine
                 break;
             }
 
-            await WaitForSpaceAsync(outDir, MinFreeBytes, rep, ct);   // no empezar si el disco ya está lleno
+            await WaitForSpaceAsync(outDir, opt.MinFreeBytes, rep, ct);   // no empezar si el disco ya está lleno
             // El temporal DEBE llevar la extensión del contenedor elegido: ffmpeg escoge
             // el muxer por la extensión, así que un ".tmp.mkv" producía un Matroska aunque
             // luego se renombrara a .mp4 (y con él, mov_text fallaba siempre).
@@ -1092,7 +1092,7 @@ public sealed class Engine
                     if (code != 0 && IsDiskFull(err))
                     {
                         try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }   // liberar el temporal a medias
-                        await WaitForSpaceAsync(outDir, MinFreeBytes, rep, ct);      // pausa hasta que haya espacio
+                        await WaitForSpaceAsync(outDir, opt.MinFreeBytes, rep, ct);      // pausa hasta que haya espacio
                         continue;                                                   // reintentar el MISMO archivo (la cola se mantiene)
                     }
                     break;
@@ -1295,8 +1295,6 @@ public sealed class Engine
         new(@"time=(\d+):(\d+):(\d+)\.(\d+)", RegexOptions.Compiled);
 
     // ---------- detección y espera por disco lleno ----------
-    // Margen mínimo de disco antes de pausar (configurable desde Preferencias). Por defecto 200 MB.
-    internal static long MinFreeBytes = 200L * 1024 * 1024;
 
 
     /// <summary>

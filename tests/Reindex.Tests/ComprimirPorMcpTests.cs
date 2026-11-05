@@ -107,6 +107,8 @@ public static class ComprimirPorMcpTests
                                                   + "y no lo ofrece en el esquema",
             [nameof(EncodeOptions.AceleracionPedida)] = "lo pone Preferencias; el MCP lo toma de los ajustes guardados "
                                                       + "y no lo ofrece en el esquema",
+            [nameof(EncodeOptions.MinFreeBytes)] = "lo pone Preferencias (el margen de disco); el MCP lo toma de los "
+                                                  + "ajustes guardados y no lo ofrece en el esquema",
             [nameof(EncodeOptions.CodificadorPedido)] = "lo pone Preferencias; el MCP no lo toma: el codificador se "
                                                       + "pide con «codificador», que va en la tanda",
         };

@@ -33,6 +33,13 @@ public sealed class Trabajo
     public required EncodeOptions Opciones { get; init; }
     public required string Destino { get; init; }
 
+    /// <summary>
+    /// Si al terminar hay que quitar los originales (a la Papelera, o borrados si está activo el borrado
+    /// definitivo). Se decide al encolar, con la misma pregunta que la compresión directa: así una tanda
+    /// encolada no cambia de criterio después.
+    /// </summary>
+    public bool BorrarOriginales { get; init; }
+
     public EstadoDelTrabajo Estado { get; internal set; } = EstadoDelTrabajo.Pendiente;
 
     /// <summary>Cuántos salieron y cuántos no. Solo tiene sentido una vez despachado.</summary>
@@ -86,7 +93,7 @@ public sealed class ColaDeTrabajos
     /// Mete un trabajo al final con una copia de las opciones. Devuelve <c>null</c> si no
     /// hay ficheros: una fila que no hace nada solo estorba.
     /// </summary>
-    public Trabajo? Encolar(IReadOnlyList<string> ficheros, EncodeOptions opciones, string destino)
+    public Trabajo? Encolar(IReadOnlyList<string> ficheros, EncodeOptions opciones, string destino, bool borrarOriginales = false)
     {
         if (ficheros.Count == 0) return null;
 
@@ -96,6 +103,7 @@ public sealed class ColaDeTrabajos
             Ficheros = [.. ficheros],
             Opciones = Copiar(opciones),
             Destino = destino,
+            BorrarOriginales = borrarOriginales,
         };
         _trabajos.Add(t);
         return t;
@@ -239,6 +247,7 @@ public sealed class ColaDeTrabajos
         AllowHardware = o.AllowHardware,
         AceleracionPedida = o.AceleracionPedida,
         CodificadorPedido = o.CodificadorPedido,
+        MinFreeBytes = o.MinFreeBytes,
         AudioOnly = o.AudioOnly,
         AudioFormat = o.AudioFormat,
         Lang = o.Lang,

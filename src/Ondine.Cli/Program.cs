@@ -165,7 +165,7 @@ static async Task<int> CompressAsync(string[] args)
 
     o.opt.AllowHardware = o.hardware;
     o.opt.AceleracionPedida = o.aceleracion;
-    Engine.MinFreeBytes = o.minFreeMb * 1024L * 1024;
+    o.opt.MinFreeBytes = o.minFreeMb * 1024L * 1024;
 
     Console.WriteLine($"{files.Count} vídeo(s) a procesar.");
     using var cts = new CancellationTokenSource();
