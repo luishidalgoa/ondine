@@ -826,6 +826,8 @@ public sealed class Engine
         int total = files.Count, n = 0;
         int renamedCount = 0;                                              // contador de la regla de renombrado
         var usedOutputs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Todos los ficheros de la tanda, por ruta completa: ninguno puede ser la salida de otro.
+        var delLote = new HashSet<string>(files.Select(Path.GetFullPath), StringComparer.OrdinalIgnoreCase);
         foreach (var f in files)
         {
             ct.ThrowIfCancellationRequested();
@@ -851,6 +853,15 @@ public sealed class Engine
                 }
             }
             string outPath = UniqueOutput(Path.Combine(outDir, outName), usedOutputs);
+
+            // Nunca se sustituye un fichero de la tanda por el comprimido. Con «sobrescribir», una salida
+            // que cae sobre el propio original lo borraba sin pasar por la Papelera, y lo perdía.
+            if (SalidaEsDelLote(outPath, delLote))
+            {
+                rep.Log(string.Format(t.MotorSaltoSalidaEsOriginal, n, total, name));
+                rep.FileSkipped(f, t.MotorMotivoSalidaEsOriginal);
+                continue;
+            }
 
             if (File.Exists(outPath) && !opt.Force) { rep.Log(string.Format(t.MotorSaltoYaHecho, n, total, name)); rep.FileSkipped(f, t.MotorMotivoYaHecho); continue; }
             if (StillDownloading(f)) { rep.Log(string.Format(t.MotorSaltoDescargando, n, total, name)); rep.FileSkipped(f, t.MotorMotivoDescargando); continue; }
@@ -1249,6 +1260,13 @@ public sealed class Engine
         "xsub" => "XSUB",
         _ => codec,
     };
+
+    /// <summary>
+    /// ¿Cae la salida sobre un fichero de la tanda? Si sí, el comprimido NO puede escribirse ahí: sustituiría
+    /// un original. Compara por ruta completa y sin distinguir mayúsculas, como el sistema de Windows.
+    /// </summary>
+    internal static bool SalidaEsDelLote(string outPath, IReadOnlySet<string> delLote) =>
+        delLote.Contains(Path.GetFullPath(outPath));
 
     /// <summary>
     /// Evita que dos vídeos distintos acaben escribiendo en el mismo archivo dentro de

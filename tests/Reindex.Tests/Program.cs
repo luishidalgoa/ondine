@@ -104,6 +104,7 @@ public static class Program
         Ondine.Reindex.Tests.ColaDeTrabajosTests.Todas();
         Ondine.Reindex.Tests.DespachoDeColaTests.Todas();
         Ondine.Reindex.Tests.VistaDeColaTests.Todas();
+        Ondine.Reindex.Tests.SalidaSobreOriginalTests.Todas();
         Ondine.Reindex.Tests.TamanoObjetivoTests.Todas();
         Ondine.Reindex.Tests.ArgumentosDeBitrateTests.Todas();
         Ondine.Reindex.Tests.VelocidadDelCodificadorTests.Todas();

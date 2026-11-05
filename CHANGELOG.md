@@ -32,6 +32,12 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **Con «sobrescribir» activo, un original podía borrarse sin pasar por la Papelera.** Si la salida
+  caía sobre el propio original (mismo nombre, misma carpeta y mismo formato), el original se borraba y
+  el comprimido ocupaba su sitio. Ahora ese fichero se salta y la lista lo dice; el original no se toca.
+
 ## [1.21.1] - 2026-11-05
 
 ### Corregido

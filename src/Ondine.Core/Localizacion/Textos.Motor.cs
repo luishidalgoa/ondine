@@ -154,6 +154,11 @@ public sealed partial class Textos
     // Los motivos van en la columna Estado de la tabla, no en el registro: han de
     // caber en poco sitio, así que se quedan en dos o tres palabras.
     public string MotorMotivoYaHecho => Idioma.Elegir("Already done", "Ya hecho");
+    public string MotorMotivoSalidaEsOriginal => Idioma.Elegir("Output is the original", "La salida es el original");
+    // {0} = número de archivo · {1} = total · {2} = nombre del archivo.
+    public string MotorSaltoSalidaEsOriginal => Idioma.Elegir(
+        "[{0}/{1}] {2} → the output would replace the original, skipping",
+        "[{0}/{1}] {2} → la salida sería el propio original, salto");
     public string MotorMotivoDescargando => Idioma.Elegir("Downloading", "Descargando");
     public string MotorMotivoIlegible => Idioma.Elegir("Cannot be read", "No se puede leer");
     public string MotorMotivoSinVideo => Idioma.Elegir("No video", "Sin vídeo");
