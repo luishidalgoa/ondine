@@ -32,6 +32,17 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.21.1] - 2026-11-05
+
+### Corregido
+
+- **La cola sigue con lo que añades mientras comprime.** Lo añadido a la cola durante una compresión
+  con el botón Comprimir no arrancaba nunca: al terminar, la cola se quedaba parada. Ahora, al terminar,
+  la cola sigue con lo que quedaba. Si cancelas, la cola se detiene como antes.
+- **Preferencias abre al instante.** La primera vez de cada sesión tardaba unos segundos, mientras se
+  buscaban las opciones de aceleración de vídeo que tu equipo soporta. Esa búsqueda ya se hace al
+  arrancar la app.
+
 ## [1.21.0] - 2026-11-05
 
 ### Añadido
