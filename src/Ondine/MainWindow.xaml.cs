@@ -104,7 +104,10 @@ public partial class MainWindow : Window
 
         // el estado vacío solo se ve cuando no hay nada en la lista
         _rows.CollectionChanged += (_, _) =>
+        {
             emptyState.Visibility = _rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            Agrupar();
+        };
 
         // barra de título propia
         btnMin.Click += (_, _) => WindowState = WindowState.Minimized;
@@ -249,9 +252,6 @@ public partial class MainWindow : Window
     private void ApplySettings()
     {
         Engine.MinFreeBytes = _settings.MinFreeMb * 1024L * 1024;
-        Engine.AllowHardware = _settings.UseHardware;
-        Engine.AceleracionPedida = _settings.AceleracionVideo;
-        Engine.CodificadorPedido = _settings.Codificador;
         Estimator.ComplexityFactor = Math.Clamp(_settings.ComplexityFactor, 0.15, 4.0);
         chkRec.IsChecked = _settings.Recurse;
         UpdateRenameStatus();
@@ -1266,6 +1266,10 @@ public partial class MainWindow : Window
             Force = chkForce.IsChecked == true,
             DryRun = chkDry.IsChecked == true,
             NameRule = _settings.Rename,
+            // Van dentro de la tanda: así una tanda encolada se lleva los ajustes del momento en que se encoló.
+            AllowHardware = _settings.UseHardware,
+            AceleracionPedida = _settings.AceleracionVideo,
+            CodificadorPedido = _settings.Codificador,
             VideoCodec = cboCodec.SelectedIndex switch { 1 => "h264", 2 => "av1", _ => "hevc" },
         };
         switch (cboFmt.SelectedIndex)
@@ -1400,6 +1404,47 @@ public partial class MainWindow : Window
         listaCola.ItemsSource = vivos.Select(ColaFila.De).ToList();
         lblCola.Text = string.Format(Textos.Instancia.MainColaResumen,
                                      _cola.Pendientes, _cola.FicherosPorHacer);
+        // Lo encolado cambia de grupo con cada cambio de la cola: la tabla se vuelve a colocar.
+        Agrupar();
+    }
+
+    // La tabla agrupada: lo encolado arriba, en el orden de la cola, y lo analizado debajo. La
+    // regla la tiene Trabajos.VistaDeCola; aquí solo se coloca cada fila y se pone su cabecera.
+    private bool _agrupando;
+    private void Agrupar()
+    {
+        if (_agrupando) return;   // mover filas dispara otra vez el aviso de la lista
+        _agrupando = true;
+        try
+        {
+            // Se mira antes de tocar nada: añadir analizados al final, que es lo normal, no reordena
+            // y casi no notifica. Solo se reordena cuando la cola cambia de verdad.
+            var vista = VistaDeCola.Colocar(_rows.ToList(), _cola.Trabajos);
+            bool igual = true;
+            for (int i = 0; i < vista.Count && igual; i++) igual = ReferenceEquals(_rows[i], vista[i].Fila);
+            if (!igual)
+                for (int i = 0; i < vista.Count; i++)
+                {
+                    int actual = _rows.IndexOf(vista[i].Fila);
+                    if (actual != i) _rows.Move(actual, i);
+                }
+
+            foreach (var e in vista)
+            {
+                var f = e.Fila;
+                var titulo = !e.PrimeraDeGrupo ? ""
+                    : e.Grupo == GrupoDeVideo.EnCola
+                        ? string.Format(Textos.Instancia.MainGrupoEnCola, e.Cuantos)
+                        : string.Format(Textos.Instancia.MainGrupoAnalizados, e.Cuantos);
+                // Solo se avisa si algo cambia: con miles de filas, avisar a todas en cada alta cuesta.
+                if (f.Grupo != e.Grupo) f.Grupo = e.Grupo;
+                if (f.PrimeraDeGrupo != e.PrimeraDeGrupo) f.PrimeraDeGrupo = e.PrimeraDeGrupo;
+                if (f.GrupoCuantos != e.Cuantos) f.GrupoCuantos = e.Cuantos;
+                if (f.PuestoEnCola != e.PuestoEnCola) f.PuestoEnCola = e.PuestoEnCola;
+                if (f.TituloGrupo != titulo) f.TituloGrupo = titulo;
+            }
+        }
+        finally { _agrupando = false; }
     }
 
     private void OnColaSubir(object remitente, RoutedEventArgs e) => MoverEnCola(remitente, arriba: true);

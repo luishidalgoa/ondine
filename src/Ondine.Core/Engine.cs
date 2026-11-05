@@ -141,7 +141,7 @@ public sealed class Engine
     /// <para>
     /// <b>La clave lleva el interruptor dentro</b>, y esa es la parte que faltaba. Antes se
     /// indexaba solo por el códec y la caché se consultaba ANTES de mirar
-    /// <see cref="AllowHardware"/>: como el motor vive toda la sesión, bastaba con haber
+    /// <c>AllowHardware</c>: como el motor vive toda la sesión, bastaba con haber
     /// comprimido una vez para que desmarcar «usar aceleración por hardware» en Preferencias no
     /// hiciera nada hasta reiniciar. Un interruptor que parece no hacer nada es peor que no
     /// tenerlo: el usuario no concluye «no se ha aplicado», concluye «esto no sirve».
@@ -266,15 +266,19 @@ public sealed class Engine
     /// <summary>El centinela que significa «el mejor por software, sin tener que saber su nombre».</summary>
     public const string PorSoftware = "software";
 
+    /// <summary>
+    /// El codificador por defecto para un códec, sin preferencias de la app: lo que quiera la
+    /// app con sus ajustes se pasa en <see cref="EncodeOptions"/> (CodificadorPedido, AllowHardware).
+    /// </summary>
     public Task<string> SelectEncoderAsync(string codec = "hevc") =>
-        SelectEncoderAsync(codec, CodificadorPedido, null);
+        SelectEncoderAsync(codec, "", null, true);
 
     /// <param name="pedido">
     /// El codificador por su nombre («libx265», «hevc_nvenc»), o <see cref="PorSoftware"/>, o
     /// null/vacío para que decida la app.
     /// </param>
     public Task<string> SelectEncoderAsync(string codec, string? pedido) =>
-        SelectEncoderAsync(codec, pedido, null);
+        SelectEncoderAsync(codec, pedido, null, true);
 
     /// <param name="ejecutar">
     /// Cómo se arranca ffmpeg. Lo inyectan las pruebas con uno de mentira: elegir codificador
@@ -282,12 +286,13 @@ public sealed class Engine
     /// En producción llega null y se usa el de siempre.
     /// </param>
     internal async Task<string> SelectEncoderAsync(
-        string codec, string? pedido, Func<string, string[], Task<(int, string, string)>>? ejecutar)
+        string codec, string? pedido, Func<string, string[], Task<(int, string, string)>>? ejecutar,
+        bool allowHardware)
     {
         var correr = ejecutar ?? RunAsync;
         var quiere = (pedido ?? "").Trim();
 
-        var clave = (codec, AllowHardware, quiere.ToLowerInvariant());
+        var clave = (codec, allowHardware, quiere.ToLowerInvariant());
         if (_cachedEncoder.TryGetValue(clave, out var cached)) return cached;
         var (hw, sw) = Candidates(codec);
         var (_, encList, _) = await correr(Ffmpeg, new[] { "-hide_banner", "-encoders" });
@@ -315,7 +320,7 @@ public sealed class Engine
             return _cachedEncoder[clave] = sw[0];
         }
 
-        foreach (var cand in AllowHardware ? hw : Array.Empty<string>())
+        foreach (var cand in allowHardware ? hw : Array.Empty<string>())
         {
             if (!encList.Contains(cand)) continue;
             if (await Arranca(correr, cand)) return _cachedEncoder[clave] = cand;
@@ -427,7 +432,7 @@ public sealed class Engine
     public async Task<string?> PreviewAsync(string input, EncodeOptions opt, int startSec, string dest, IEngineReporter rep, CancellationToken ct)
     {
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;
-        var encoder = await SelectEncoderAsync(vcodec);
+        var encoder = await SelectEncoderAsync(vcodec, opt.CodificadorPedido, null, opt.AllowHardware);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
         var pr = await ProbeFullAsync(input);
         var video = pr?.Streams.FirstOrDefault(s => s.CodecType == "video" && !CoverCodecs.Contains(s.CodecName));
@@ -784,8 +789,8 @@ public sealed class Engine
     {
         var results = new List<FileResult>();
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;   // WebM: VP9 (más compatible entre builds de FFmpeg)
-        var pedido = opt.Codificador is { Length: > 0 } p ? p : CodificadorPedido;
-        var encoder = await SelectEncoderAsync(vcodec, pedido);
+        var pedido = opt.Codificador is { Length: > 0 } p ? p : opt.CodificadorPedido;
+        var encoder = await SelectEncoderAsync(vcodec, pedido, null, opt.AllowHardware);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
         var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps, opt.Velocidad);
         var t = Textos.Instancia;
@@ -802,7 +807,7 @@ public sealed class Engine
         // el registro contaba el codificador y callaba que el original lo descomprimía la CPU:
         // desde fuera parecía que todo iba por la tarjeta.
         var aceleracion = opt.AudioOnly ? null : Objetivo.AceleracionDeVideo.Elegida(
-            AceleracionPedida, await AceleracionesDisponiblesAsync(), encoder);
+            opt.AceleracionPedida, await AceleracionesDisponiblesAsync(), encoder);
         bool aceleracionCaida = false;   // si falla una vez, no se reintenta con el resto de la tanda
         if (!opt.AudioOnly)
             rep.Log(aceleracion is null ? t.MotorDecodificaCpu
@@ -1140,7 +1145,7 @@ public sealed class Engine
         if (dur < 4) return 0;
 
         string vcodec = opt.Container == "webm" ? "vp9" : opt.VideoCodec;
-        var encoder = await SelectEncoderAsync(vcodec);
+        var encoder = await SelectEncoderAsync(vcodec, opt.CodificadorPedido, null, opt.AllowHardware);
         int quality = opt.Quality > 0 ? opt.Quality : (IsHardware(encoder) ? 27 : 23);
         var encArgs = EncoderArgs(encoder, quality, opt.BitrateVideoKbps, opt.Velocidad);
 
@@ -1268,33 +1273,6 @@ public sealed class Engine
     // Margen mínimo de disco antes de pausar (configurable desde Preferencias). Por defecto 200 MB.
     internal static long MinFreeBytes = 200L * 1024 * 1024;
 
-    // ¿Se permite usar codificadores por hardware? (configurable desde Preferencias)
-    /// <summary>
-    /// Que aceleracion de DECODIFICACION pidio el usuario en Preferencias: «auto», «ninguna» o
-    /// el nombre de una (cuda, qsv, vaapi, d3d11va, videotoolbox).
-    ///
-    /// <para>
-    /// Separada de <see cref="AllowHardware"/> a proposito: decodificar y codificar por hardware
-    /// no fallan por lo mismo -uno depende del decodificador de la tarjeta y el otro de las
-    /// sesiones de codificacion-, y quien apague una por un problema concreto no tiene por que
-    /// perder la otra.
-    /// </para>
-    /// </summary>
-    public static string AceleracionPedida { get; set; } = Objetivo.AceleracionDeVideo.Auto;
-
-    /// <summary>
-    /// Qué codificador se quiere, por su nombre: «libx265», «hevc_nvenc»…, o «software» para el
-    /// mejor de software del códec elegido. Vacío = que decida la app.
-    ///
-    /// <para>
-    /// Lo pone Preferencias, y una llamada concreta lo puede pisar. Existe porque «con GPU o sin
-    /// ella» no era suficiente: en una Pascal, NVENC comprime peor que x265 para archivar, y
-    /// llegar a x265 obligaba a apagar el hardware para todo.
-    /// </para>
-    /// </summary>
-    public static string CodificadorPedido { get; set; } = "";
-
-    public static bool AllowHardware = true;
 
     /// <summary>
     /// ¿Debe enviarse el original a la Papelera tras comprimir? Solo si está activado, la

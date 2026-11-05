@@ -220,14 +220,15 @@ internal static class Comprimir
     /// Los ajustes que no viven en <see cref="EncodeOptions"/> sino en el motor: la aceleración
     /// y el margen de disco. Son estáticos porque en la app los pone Preferencias una vez.
     /// </summary>
-    private static string? Ajustes(JsonObject a)
+    private static string? Ajustes(JsonObject a, EncodeOptions opt)
     {
         // Igual que arriba: lo guardado en Preferencias es el punto de partida, y el argumento
-        // de la llamada lo pisa solo si viene.
+        // de la llamada lo pisa solo si viene. Van en las opciones, no en el motor, para que
+        // una tanda se lleve los suyos.
         var guardadas = SettingsStore.Load();
 
-        Engine.AllowHardware = Bandera(a, "hardware", guardadas.UseHardware);
-        Engine.AceleracionPedida = Texto(a, "aceleracion") ?? guardadas.AceleracionVideo;
+        opt.AllowHardware = Bandera(a, "hardware", guardadas.UseHardware);
+        opt.AceleracionPedida = Texto(a, "aceleracion") ?? guardadas.AceleracionVideo;
         Engine.MinFreeBytes = Entero(a, "margen_disco_mb", guardadas.MinFreeMb) * 1024L * 1024;
 
         return null;
@@ -242,7 +243,7 @@ internal static class Comprimir
 
         var opt = Opciones(a, out error);
         if (opt is null) return Resultado.Error(error!);
-        Ajustes(a);
+        Ajustes(a, opt);
 
         // Qué hacer con los originales al terminar. Esto lo aplicaba SOLO la ventana, así que
         // por MCP el ajuste de Preferencias no hacía nada: comprimías una temporada y los
@@ -462,7 +463,7 @@ internal static class Comprimir
 
         var opt = Opciones(a, out var error);
         if (opt is null) return Resultado.Error(error!);
-        Ajustes(a);
+        Ajustes(a, opt);
 
         var desde = (int)(Partir.Momento(a, "desde") ?? 0);
         var destino = Texto(a, "salida")
@@ -507,7 +508,7 @@ internal static class Comprimir
         var opt = Opciones(a, out var error);
         if (opt is null) return Resultado.Error(error!);
         if (opt.AudioOnly) return Resultado.Error("Medir es para vídeo: en «solo audio» el tamaño sale del caudal elegido.");
-        Ajustes(a);
+        Ajustes(a, opt);
 
         var motor = new Engine();
         var cuaderno = new Tandas.Cuaderno();

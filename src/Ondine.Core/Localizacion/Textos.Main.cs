@@ -792,6 +792,15 @@ public sealed partial class Textos
         "Originals are deleted for good, file by file as each one finishes. They cannot be recovered from the Recycle Bin.",
         "Los originales se borran de forma definitiva, archivo por archivo según van terminando. No se pueden recuperar desde la Papelera.");
 
+    // Cabecera de los dos grupos de la tabla de Comprimir. {0} = cuántos vídeos.
+    public string MainGrupoEnCola => Idioma.Elegir(
+        "In the queue · {0} video(s), compressed in this order",
+        "En la cola · {0} vídeo(s), se comprimen en este orden");
+
+    public string MainGrupoAnalizados => Idioma.Elegir(
+        "Analysed · not in the queue · {0} video(s)",
+        "Analizados · no están en la cola · {0} vídeo(s)");
+
     // Quitar una fila que la cola está comprimiendo ahora: no se puede, y se dice.
     public string MainColaEnCursoNoSeQuita => Idioma.Elegir(
         "That file is being compressed right now, so it stays in the list.",
