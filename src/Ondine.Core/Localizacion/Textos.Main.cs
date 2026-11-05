@@ -448,6 +448,8 @@ public sealed partial class Textos
     public string MainEstadoYaEn => Idioma.Elegir("Already in {0}", "Ya en {0}");
 
     public string MainEstadoEnCola => Idioma.Elegir("Queued", "En cola");
+    public string MainEstadoProcesando => Idioma.Elegir("Processing", "Procesando");
+    public string MainColOrden => Idioma.Elegir("Order", "Orden");
     public string MainEstadoComprimiendo => Idioma.Elegir("Compressing…", "Comprimiendo…");
 
     // {0} = porcentaje entero.

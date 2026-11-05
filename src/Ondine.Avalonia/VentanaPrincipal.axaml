@@ -590,6 +590,21 @@
                                     Binding="{Binding Audio}" SortMemberPath="Audio"/>
                 <DataGridTextColumn Header="{i:T MainColSubs}" Width="64"
                                     Binding="{Binding Subs}" SortMemberPath="Subs"/>
+                <!-- Orden: solo lo que espera en la cola se mueve. Lo que ya se está comprimiendo, no. -->
+                <DataGridTemplateColumn Header="{i:T MainColOrden}" Width="76">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                      <StackPanel Orientation="Horizontal" Spacing="2" IsVisible="{Binding PuedeMoverse}">
+                        <Button Theme="{StaticResource BtnGhostMuted}" FontSize="11" Padding="6,2"
+                                Content="↑" ToolTip.Tip="{i:T MainColaSubir}"
+                                Tag="{Binding TrabajoId}" Click="OnColaSubir"/>
+                        <Button Theme="{StaticResource BtnGhostMuted}" FontSize="11" Padding="6,2"
+                                Content="↓" ToolTip.Tip="{i:T MainColaBajar}"
+                                Tag="{Binding TrabajoId}" Click="OnColaBajar"/>
+                      </StackPanel>
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="{i:T MainColEstado}" Width="132"
                                         SortMemberPath="Estado">
                   <DataGridTemplateColumn.CellTemplate>
@@ -598,7 +613,7 @@
                            el porque -que ffmpeg si da- no llegaba a ninguna parte: doce
                            ficheros fallando, doce «Error» y ninguna pista. El globo solo sale
                            cuando hay algo que contar; con Detalle en nulo, ToolTip no aparece. -->
-                      <TextBlock Text="{Binding Estado}" TextTrimming="CharacterEllipsis"
+                      <TextBlock Text="{Binding EstadoMostrado}" TextTrimming="CharacterEllipsis"
                                  Foreground="{StaticResource Neutral500}"
                                  ToolTip.Tip="{Binding Detalle}"
                                  Classes.estadoOk="{Binding EstadoEsOk}"
@@ -754,58 +769,6 @@
       <Grid Name="progRow" Grid.Row="5" Margin="16,8,16,0" IsVisible="False">
         <ProgressBar Name="bar" Minimum="0" Maximum="1" Value="0"/>
       </Grid>
-
-      <!-- ══ La cola ══
-           Nace oculta y aparece con el primer trabajo: una cola vacia ocupando sitio
-           permanente es ruido para quien no la use, que hoy es todo el mundo. -->
-      <Border Name="panelCola" Grid.Row="6" Margin="16,8,16,0" IsVisible="False"
-              Background="{StaticResource Surface}" CornerRadius="8" Padding="12,10"
-              BorderBrush="{StaticResource Divider}" BorderThickness="1">
-        <StackPanel>
-          <Grid Margin="0,0,0,8">
-            <TextBlock Text="{i:T MainColaTitulo}" FontSize="11" FontWeight="Medium"
-                       Foreground="{StaticResource Accent400}" VerticalAlignment="Center"/>
-            <TextBlock Name="lblCola" HorizontalAlignment="Right" FontSize="11"
-                       Foreground="{StaticResource Neutral500}" VerticalAlignment="Center"/>
-          </Grid>
-
-          <ItemsControl Name="listaCola">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Grid Margin="0,0,0,6">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <Border Grid.Column="0" CornerRadius="9" Padding="8,2" Margin="0,0,10,0"
-                          Background="{Binding ColorEstado}" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Estado}" FontSize="10.5" Foreground="White"/>
-                  </Border>
-
-                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Resumen}" FontSize="12.5"
-                               Foreground="{StaticResource Text}"/>
-                    <TextBlock Text="{Binding Destino}" FontSize="10.5"
-                               Foreground="{StaticResource Neutral600}"
-                               TextTrimming="CharacterEllipsis" MaxWidth="520"/>
-                  </StackPanel>
-
-                  <Button Grid.Column="3" Theme="{StaticResource BtnGhostMuted}" FontSize="11"
-                          Padding="8,3" Content="↑" ToolTip.Tip="{i:T MainColaSubir}"
-                          Tag="{Binding Id}" Click="OnColaSubir"/>
-                  <Button Grid.Column="4" Theme="{StaticResource BtnGhostMuted}" FontSize="11"
-                          Padding="8,3" Content="↓" ToolTip.Tip="{i:T MainColaBajar}"
-                          Tag="{Binding Id}" Click="OnColaBajar"/>
-                  <Button Grid.Column="5" Theme="{StaticResource BtnGhostMuted}" FontSize="11"
-                          Padding="8,3" Content="✕" ToolTip.Tip="{i:T MainColaQuitar}"
-                          Tag="{Binding Id}" Click="OnColaQuitar"/>
-                </Grid>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </Border>
 
       <!-- ══ Acciones ══ -->
       <Grid Name="rowAcciones" Grid.Row="7" Margin="16,10,16,8">

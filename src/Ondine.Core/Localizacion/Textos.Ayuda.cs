@@ -393,20 +393,25 @@ public sealed partial class Textos
 
     public string AyudaComprimirCola => Idioma.Elegir(
         "«Add to queue» takes the ticked files with the settings as they are right now and puts " +
-        "them aside as a job. Then you can change the settings and queue another one: each job " +
-        "keeps the settings it was queued with, so they never change under you. The queue runs " +
-        "one job after another, and starts on its own if nothing was running.",
+        "them aside, one job per file. Then you can change the settings and queue more: each job " +
+        "keeps the settings it was queued with, so they never change under you. The table is the " +
+        "queue: what is being compressed goes first, then the files waiting in queue order, and " +
+        "the rest under «Analysed». The queue runs one job after another, and starts on its own " +
+        "if nothing was running.",
         "«Añadir a la cola» coge los ficheros marcados con los ajustes tal y como están en ese " +
-        "momento y los aparta como un trabajo. Luego puedes cambiar los ajustes y encolar otro: " +
-        "cada trabajo conserva los suyos, así que nunca te cambian por debajo. La cola va " +
-        "despachando uno tras otro, y arranca sola si no había nada en marcha.");
+        "momento y los aparta, un trabajo por fichero. Luego puedes cambiar los ajustes y encolar " +
+        "más: cada trabajo conserva los suyos, así que nunca te cambian por debajo. La tabla es la " +
+        "cola: lo que se comprime va primero, luego lo que espera en su orden, y el resto debajo, " +
+        "en «Analizados». La cola va despachando uno tras otro, y arranca sola si no había nada " +
+        "en marcha.");
 
     public string AyudaComprimirColaOrden => Idioma.Elegir(
-        "Waiting jobs can be moved up and down or taken out. The one that is running does not " +
-        "move —it is already writing to disk— and «Stop» stops the whole queue, not just that job.",
-        "Los trabajos que esperan se pueden subir, bajar o sacar. El que está en curso no se " +
-        "mueve —ya está escribiendo en el disco— y «Detener» para la cola entera, no solo ese " +
-        "trabajo.");
+        "Waiting files move with the Order column, up and down. The one being compressed does not " +
+        "move, since it is already writing to disk, and «Stop» stops the whole queue, not just that file. " +
+        "To take a file out of the queue, take it out of the list.",
+        "Los ficheros que esperan se mueven con la columna Orden, arriba y abajo. El que se está " +
+        "comprimiendo no se mueve, porque ya está escribiendo en el disco, y «Detener» para la cola " +
+        "entera, no solo ese fichero. Para sacar un fichero de la cola, quítalo de la lista.");
 
     public string AyudaRecortesTitulo => Idioma.Elegir(
         "Trim: splitting a video or cutting a piece out of it",

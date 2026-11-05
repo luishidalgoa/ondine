@@ -108,12 +108,21 @@
               <!-- Cabecera del grupo de la cola («En cola» / «Analizados»). Solo abre grupo en
                    la primera fila de cada uno: lo decide Trabajos.VistaDeCola. Mismo color que la
                    banda de Organizar, para que las dos pantallas se lean igual. -->
-              <Border Name="banda" Grid.Row="0" Grid.ColumnSpan="2" Padding="12,7"
-                      IsVisible="{Binding PrimeraDeGrupo}"
+              <!-- Dos bandas, una por grupo, pintadas distinto: la cola en acento y lo analizado
+                   apagado, para que se vea a simple vista dónde acaba una cosa y empieza la otra. -->
+              <Border Name="bandaCola" Grid.Row="0" Grid.ColumnSpan="2" Padding="12,7"
+                      IsVisible="{Binding BandaDeCola}"
                       Background="{StaticResource Accent900}"
-                      BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,1">
+                      BorderBrush="{StaticResource Accent}" BorderThickness="0,2,0,1">
                 <TextBlock Text="{Binding TituloGrupo}" FontSize="12" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{StaticResource Accent200}"/>
+              </Border>
+              <Border Name="bandaAnalizados" Grid.Row="0" Grid.ColumnSpan="2" Padding="12,7"
+                      IsVisible="{Binding BandaDeAnalizados}"
+                      Background="Transparent"
+                      BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,1">
+                <TextBlock Text="{Binding TituloGrupo}" FontSize="11" FontWeight="Medium"
+                           VerticalAlignment="Center" Foreground="{StaticResource Neutral500}"/>
               </Border>
               <DataGridRowHeader Name="PART_RowHeader" Grid.Row="1" Grid.RowSpan="3" IsVisible="False"/>
               <DataGridCellsPresenter Name="PART_CellsPresenter" Grid.Row="1" Grid.Column="1" Margin="0,7"/>

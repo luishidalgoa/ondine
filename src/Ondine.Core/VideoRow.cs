@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Ondine.Localizacion;
 
 namespace Ondine;
 
@@ -19,6 +20,7 @@ public sealed class VideoRow : INotifyPropertyChanged
         {
             _estado = value;
             N();
+            N(nameof(EstadoMostrado));
             N(nameof(EstadoBrush));
             // Las tres juntas, y no solo el color: una fila que cambia de «Comprimiendo» a
             // «Error» y no avisa de estas se queda con la clase anterior puesta. Todas las
@@ -97,11 +99,47 @@ public sealed class VideoRow : INotifyPropertyChanged
     private int _grupoCuantos, _puestoEnCola;
     private string _tituloGrupo = "";
 
-    public Ondine.Trabajos.GrupoDeVideo Grupo { get => _grupo; set { _grupo = value; N(); } }
-    public bool PrimeraDeGrupo { get => _primeraDeGrupo; set { _primeraDeGrupo = value; N(); } }
+    private bool _procesando;
+    private int _trabajoId;
+
+    public Ondine.Trabajos.GrupoDeVideo Grupo { get => _grupo; set { _grupo = value; N(); N(nameof(EstadoMostrado)); N(nameof(PuedeMoverse)); N(nameof(BandaDeCola)); N(nameof(BandaDeAnalizados)); } }
+    public bool PrimeraDeGrupo { get => _primeraDeGrupo; set { _primeraDeGrupo = value; N(); N(nameof(BandaDeCola)); N(nameof(BandaDeAnalizados)); } }
     public int GrupoCuantos { get => _grupoCuantos; set { _grupoCuantos = value; N(); } }
     public int PuestoEnCola { get => _puestoEnCola; set { _puestoEnCola = value; N(); } }
     public string TituloGrupo { get => _tituloGrupo; set { _tituloGrupo = value; N(); } }
+
+    /// <summary>Se está comprimiendo ahora mismo (lanzado desde la cola o desde Comprimir).</summary>
+    public bool Procesando { get => _procesando; set { _procesando = value; N(); N(nameof(EstadoMostrado)); N(nameof(PuedeMoverse)); } }
+
+    /// <summary>El trabajo de la cola al que pertenece (0 si no está en la cola). Es lo que mueve la columna Orden.</summary>
+    public int TrabajoId { get => _trabajoId; set { _trabajoId = value; N(); N(nameof(PuedeMoverse)); } }
+
+    /// <summary>
+    /// ¿Se puede cambiar su sitio en la cola con la columna Orden? Solo lo que espera en la cola: lo que se
+    /// está comprimiendo ya no se mueve.
+    /// </summary>
+    public bool PuedeMoverse => _grupo == Ondine.Trabajos.GrupoDeVideo.EnCola && !_procesando && _trabajoId > 0;
+
+    /// <summary>La banda de encabezado del grupo de cola (solo en su primera fila).</summary>
+    public bool BandaDeCola => _primeraDeGrupo && _grupo == Ondine.Trabajos.GrupoDeVideo.EnCola;
+
+    /// <summary>La banda de encabezado del grupo de analizados (solo en su primera fila).</summary>
+    public bool BandaDeAnalizados => _primeraDeGrupo && _grupo == Ondine.Trabajos.GrupoDeVideo.Analizado;
+
+    /// <summary>
+    /// Lo que la columna ESTADO enseña. Mientras se comprime, «Procesando»; si espera en la cola, «En cola»;
+    /// si solo está analizado y sin hacer nada, vacío (no «Pendiente»: eso no dice nada). Si ya tiene un
+    /// resultado (ya comprimido, error, o ya HEVC), se enseña ese.
+    /// </summary>
+    public string EstadoMostrado
+    {
+        get
+        {
+            if (_procesando) return Textos.Instancia.MainEstadoProcesando;
+            if (_grupo == Ondine.Trabajos.GrupoDeVideo.EnCola) return Textos.Instancia.MainEstadoEnCola;
+            return _estado == Textos.Instancia.Pendiente ? "" : _estado;
+        }
+    }
     public long Bytes { get; init; }
 
     // Datos del análisis, para la estimación de ahorro

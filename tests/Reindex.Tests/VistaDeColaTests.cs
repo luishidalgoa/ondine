@@ -27,6 +27,7 @@ public static class VistaDeColaTests
         LosTrabajosTerminadosNoCuentan();
         CadaGrupoAbreConSuCabecera();
         SacarDeLaColaLoDevuelveALosAnalizados();
+        LoQueSeComprimeVaArribaComoProcesando();
     }
 
     private static void LoEncoladoVaArribaEnSuOrden()
@@ -94,6 +95,28 @@ public static class VistaDeColaTests
         var sinCola = VistaDeCola.Colocar([Fila("c.mkv")], new ColaDeTrabajos().Trabajos);
         Program.Assert(sinCola.Count == 1 && sinCola[0].PrimeraDeGrupo && sinCola[0].Grupo == GrupoDeVideo.Analizado,
             "sin cola, todo es analizado y el grupo abre sin nada encima");
+    }
+
+    /// <summary>
+    /// Lo que se comprime ahora (lo lanzó el botón Comprimir directo, sin cola) no puede verse como analizado:
+    /// va arriba, en el grupo de cola, marcado como procesando.
+    /// </summary>
+    private static void LoQueSeComprimeVaArribaComoProcesando()
+    {
+        var cola = new ColaDeTrabajos();
+        cola.Encolar(["b.mkv"], Opciones(), "C:/s");
+        var filas = new[] { Fila("a.mkv"), Fila("b.mkv"), Fila("c.mkv") };
+
+        var vista = VistaDeCola.Colocar(filas, cola.Trabajos, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "a.mkv" });
+
+        Program.Assert(vista[0].Fila.Path == "a.mkv" && vista[0].Procesando && vista[0].Grupo == GrupoDeVideo.EnCola,
+            "lo que se comprime ahora va arriba, en el grupo de cola, como procesando");
+        Program.Assert(vista[1].Fila.Path == "b.mkv" && !vista[1].Procesando && vista[1].PuestoEnCola == 1,
+            "lo que espera sigue en la cola, con su puesto y sin estar procesando");
+        Program.Assert(vista[2].Fila.Path == "c.mkv" && vista[2].Grupo == GrupoDeVideo.Analizado && vista[2].TrabajoId == 0,
+            "lo que no está en la cola ni se comprime es analizado, sin trabajo");
+        Program.Assert(vista[1].TrabajoId > 0,
+            "cada fila de la cola sabe a qué trabajo pertenece, para poder ordenarla");
     }
 
     private static void SacarDeLaColaLoDevuelveALosAnalizados()

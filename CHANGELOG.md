@@ -39,6 +39,15 @@ es un acuerdo de buena voluntad: está verificado.
   instale el `.deb` ya queda apuntado a él.
 - **El `.deb` también para Linux de 64 bits con procesador ARM.** Hasta ahora solo había el de Intel y AMD.
 
+### Cambiado
+
+- **La cola se ve en la tabla de Comprimir.** Desaparece la tarjeta aparte con las flechas y la ✕: lo que
+  espera en la cola sale arriba, en su orden, y la columna **Orden** sirve para subirlo o bajarlo. Lo que se
+  está comprimiendo sale primero, con el estado «Procesando». Lo analizado que no está en la cola va debajo,
+  en su propia banda.
+- **Un solo aviso del sistema cuando se vacía la cola**, con el total de todos sus vídeos, en lugar de uno por
+  tanda.
+
 ### Corregido
 
 - **El aviso de Windows sale con el nombre de Ondine**, no con el de Windows PowerShell.

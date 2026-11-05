@@ -24,13 +24,13 @@ tareas:
 
 # Papelera y avisos del sistema
 
-**Qué hace:** manda a la papelera de cada sistema (Shell en Windows, Finder en macOS, carpetas freedesktop en Linux) lo que la app promete que va a la papelera, mantiene una papelera propia con deshacer que se finaliza hacia la del sistema, borra de verdad solo con la opción de borrado definitivo, y lanza un aviso del sistema al terminar cada tanda.
+**Qué hace:** manda a la papelera de cada sistema (Shell en Windows, Finder en macOS, carpetas freedesktop en Linux) lo que la app promete que va a la papelera, mantiene una papelera propia con deshacer que se finaliza hacia la del sistema, borra de verdad solo con la opción de borrado definitivo, y lanza un aviso del sistema al terminar: una vez por cola vaciada, con el total de sus tandas.
 
 ## Piezas y dependencias
 
 ```mermaid
 flowchart TD
-  TANDA["MainWindow y VentanaPrincipal<br/>al terminar la tanda"] --> AVISO["AvisoDeSistema.Enviar"]
+  TANDA["MainWindow y VentanaPrincipal<br/>al vaciarse la cola"] --> AVISO["AvisoDeSistema.Enviar"]
   AVISO -- "Armar por sistema" --> AWIN["Windows: toast con el nombre de Ondine, enviado desde PowerShell"]
   AVISO --> AMAC["macOS: osascript display notification"]
   AVISO --> ALIN["Linux: notify-send"]

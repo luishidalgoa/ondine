@@ -1371,7 +1371,7 @@ public static class Comprobacion
             $"lo encolado va arriba, en el orden de la cola, y lo analizado debajo ({string.Join(",", orden)})");
 
         var bandas = tabla?.GetVisualDescendants().OfType<Border>()
-                          .Where(b => b.Name == "banda" && b.IsVisible).ToList() ?? [];
+                          .Where(b => b.Name is "bandaCola" or "bandaAnalizados" && b.IsVisible).ToList() ?? [];
         Dice(bandas.Count == 2,
             $"cada grupo abre con su banda: el de la cola y el de los analizados ({bandas.Count})");
 
@@ -1416,12 +1416,14 @@ public static class Comprobacion
         // ══ La tabla, pintada ════════════════════════════════════════════════
         var tabla = Cual("lst") as DataGrid;
         Dice(tabla is not null, "la tabla de la lista está montada");
-        Dice(tabla?.Columns.Count == 8, $"con sus ocho columnas ({tabla?.Columns.Count})");
+        // Nueve: las ocho de siempre más Orden, que es la que mueve la cola.
+        Dice(tabla?.Columns.Count == 9, $"con sus nueve columnas, Orden incluida ({tabla?.Columns.Count})");
 
         // Y que ordena por columna, que es lo que se gana al cambiar de control: el
         // GridView de WPF no sabía, y había un ayudante de veintiséis líneas para suplirlo.
         var porValor = tabla?.Columns.Count(c => c.SortMemberPath is not null) ?? 0;
-        Dice(porValor == 8, $"y todas ordenan por su campo ({porValor}/8)");
+        // Orden no ordena: es el sitio en la cola, y ordenarla por otra cosa lo desharía.
+        Dice(porValor == 8, $"y las ocho de datos ordenan por su campo; Orden no ({porValor}/8)");
 
         v.FilasDePrueba(("una.mkv", "Error: se acabó el disco"), ("otra.mp4", "…"));
         await Task.Delay(400);
@@ -1502,7 +1504,9 @@ public static class Comprobacion
         panelIdiomas?.Children.Clear();
 
         // ══ La cola ══════════════════════════════════════════════════════════
-        Dice(Cual("panelCola")?.IsVisible == false, "el panel de la cola arranca oculto");
+        // La cola ya no tiene tarjeta: se ve en la propia tabla. Lo que queda que probar es que
+        // no vuelva a aparecer una tarjeta aparte.
+        Dice(Cual("panelCola") is null, "la cola no tiene tarjeta aparte: vive en la tabla");
 
         // ══ El registro se despliega ═════════════════════════════════════════
         // El plegado era un converter de booleano a visibilidad; aquí es un enlace directo
