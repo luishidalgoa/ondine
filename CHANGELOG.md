@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-11-05
+
 ### Añadido
 
 - **Aviso del sistema al terminar una compresión.** Cuando termina una tanda, Ondine te avisa con una
