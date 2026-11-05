@@ -832,6 +832,14 @@ public sealed class Engine
         {
             ct.ThrowIfCancellationRequested();
             n++;
+            // Si otra copia de Ondine (la app, la CLI o el MCP) tiene este fichero, no se toca.
+            using var reserva = ReservaDeFichero.Tomar(f);
+            if (reserva is null)
+            {
+                rep.Log(string.Format(t.MotorSaltoEnUso, n, total, Path.GetFileName(f)));
+                rep.FileSkipped(f, t.MotorMotivoEnUso);
+                continue;
+            }
             var fi = new FileInfo(f);
             string name = fi.Name;
             string outDir = opt.Output ?? Path.Combine(fi.DirectoryName!, "comprimido");

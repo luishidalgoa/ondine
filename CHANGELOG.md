@@ -32,6 +32,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Corregido
+
+- **La app y el MCP ya no tocan a la vez el mismo vídeo.** Si una compresión de la app y otra del
+  agente (MCP) o de la CLI coincidían con el mismo fichero, las dos podían leerlo y borrarlo a la vez.
+  Ahora cada vídeo se reserva mientras se usa: la copia que llega después lo salta y lo dice en la lista,
+  y la Papelera espera un momento antes de mandar un fichero que otra copia está usando.
+
 ## [1.22.0] - 2026-11-05
 
 ### Añadido

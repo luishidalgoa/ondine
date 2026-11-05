@@ -154,6 +154,11 @@ public sealed partial class Textos
     // Los motivos van en la columna Estado de la tabla, no en el registro: han de
     // caber en poco sitio, así que se quedan en dos o tres palabras.
     public string MotorMotivoYaHecho => Idioma.Elegir("Already done", "Ya hecho");
+    public string MotorMotivoEnUso => Idioma.Elegir("In use by another copy", "En uso por otra copia de Ondine");
+    // {0} = número de archivo · {1} = total · {2} = nombre del archivo.
+    public string MotorSaltoEnUso => Idioma.Elegir(
+        "[{0}/{1}] {2} → in use by another copy of Ondine, skipping",
+        "[{0}/{1}] {2} → en uso por otra copia de Ondine, salto");
     public string MotorMotivoSalidaEsOriginal => Idioma.Elegir("Output is the original", "La salida es el original");
     // {0} = número de archivo · {1} = total · {2} = nombre del archivo.
     public string MotorSaltoSalidaEsOriginal => Idioma.Elegir(

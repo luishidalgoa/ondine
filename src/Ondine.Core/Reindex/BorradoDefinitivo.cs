@@ -19,6 +19,9 @@ public static class BorradoDefinitivo
     public static bool Mandar(string ruta)
     {
         if (string.IsNullOrWhiteSpace(ruta) || !File.Exists(ruta)) return false;
+        // Como la Papelera: no se borra lo que otra copia de Ondine está usando.
+        using var reserva = ReservaDeFichero.Esperar(ruta, TimeSpan.FromSeconds(5));
+        if (reserva is null) return false;
         try
         {
             File.Delete(ruta);
