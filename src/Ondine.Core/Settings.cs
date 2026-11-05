@@ -50,6 +50,14 @@ public sealed class Settings
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public AfterCompress AfterCompress { get; set; } = AfterCompress.Ask;
 
+    /// <summary>
+    /// Borrar el original de forma definitiva, sin pasar por la Papelera. Actúa cuando el
+    /// original se va a quitar, sea porque está activado el envío automático a la Papelera o
+    /// porque se marca su casilla en el aviso de antes de comprimir. Es independiente de
+    /// <see cref="AfterCompress"/>: se puede dejar puesta sin tocar ese ajuste.
+    /// </summary>
+    public bool BorrarDefinitivamente { get; set; } = false;
+
     // --- Renombrado de la salida (estilo PowerRename) ---
     public RenameRule Rename { get; set; } = new();
     public List<string> RenameSearchHistory { get; set; } = new();    // valores recientes de «Buscar»

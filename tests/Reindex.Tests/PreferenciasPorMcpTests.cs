@@ -98,6 +98,8 @@ public static class PreferenciasPorMcpTests
             [nameof(Settings.ComplementosConModelo)] = "lo mismo, y encima da acceso al modelo",
             [nameof(Settings.CarpetaTemporadaIdioma)] = "lo elige la pantalla de Organizar al mover a "
                                                       + "carpetas de temporada, con el ejemplo delante",
+            [nameof(Settings.BorrarDefinitivamente)] = "borrar sin pasar por la Papelera no tiene vuelta atrás: "
+                                                     + "lo decide la persona en la ventana, nunca un agente por su cuenta",
         };
 
         var args = (Catalogo.Todas.Single(h => h.Nombre == "ondine_ajustar_preferencias")

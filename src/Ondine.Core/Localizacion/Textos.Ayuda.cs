@@ -220,8 +220,8 @@ public sealed partial class Textos
         "4.  Mira el pronóstico de ahorro; si quieres la cifra real, «Medir con una muestra» codifica unos fragmentos cortos.");
 
     public string AyudaComprimirPaso5 => Idioma.Elegir(
-        "5.  Select the videos and press «Compress selection». You will see live progress, with Pause and Stop. It never touches the originals unless you ask it to (and then they go to the Recycle Bin).",
-        "5.  Selecciona los vídeos y pulsa «Comprimir selección». Verás el progreso en vivo, con Pausar y Detener. Nunca toca los originales salvo que lo pidas (y entonces van a la Papelera).");
+        "5.  Select the videos and press «Compress selection». You will see live progress, with Pause and Stop. It never touches the originals unless you ask it to (and then they go to the Recycle Bin, or are deleted for good if you turn that on in Preferences). When the batch finishes, Ondine sends a system notification.",
+        "5.  Selecciona los vídeos y pulsa «Comprimir selección». Verás el progreso en vivo, con Pausar y Detener. Nunca toca los originales salvo que lo pidas (y entonces van a la Papelera, o se borran de forma definitiva si lo activas en Preferencias). Al terminar la tanda, Ondine avisa con una notificación del sistema.");
 
     // Dos papeleras distintas en la misma frase: la interna de la app y la de
     // Windows. En inglés, «its own bin» y «Windows Recycle Bin», que es el

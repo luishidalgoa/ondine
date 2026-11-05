@@ -32,6 +32,23 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+### Añadido
+
+- **Aviso del sistema al terminar una compresión.** Cuando termina una tanda, Ondine te avisa con una
+  notificación de Windows, Linux o macOS: cuántos ficheros salieron bien y cuántos fallaron. No hace
+  falta tener la ventana a la vista. En la simulación no avisa, porque no se ha comprimido nada.
+- **Borrar los originales de forma definitiva.** En Preferencias → Al comprimir hay una opción nueva,
+  hija de «Enviar el original a la Papelera automáticamente», que borra los originales sin pasar por la
+  Papelera. Funciona también cuando la Papelera está apagada: si marcas su casilla en el aviso de antes
+  de comprimir, el original se borra igual. Es irreversible, así que está apagada por defecto.
+
+### Corregido
+
+- **En Linux, el detalle de un vídeo ya muestra la previsualización y el deslizador de tiempo.** Si el
+  análisis no había llegado a leer el fichero seleccionado, el detalle se quedaba sin duración y el
+  deslizador no tenía recorrido. Ahora el fichero se lee al seleccionarlo. Si de verdad no se puede leer,
+  la lista lo dice en lugar de mostrar un vídeo de duración cero.
+
 ## [1.20.0] - 2026-11-01
 
 ### Añadido

@@ -359,7 +359,9 @@ public partial class MainWindow : Window
         });
         var chkDel = new CheckBox
         {
-            Content = Textos.Instancia.MainAvisoComprimirPapelera,
+            Content = _settings.BorrarDefinitivamente
+                ? Textos.Instancia.MainAvisoComprimirBorrar
+                : Textos.Instancia.MainAvisoComprimirPapelera,
             Foreground = (Brush)FindResource("Neutral300"), Margin = new Thickness(0, 0, 0, 9),
         };
         var chkRemember = new CheckBox
@@ -371,7 +373,9 @@ public partial class MainWindow : Window
         panel.Children.Add(chkRemember);
         panel.Children.Add(new TextBlock
         {
-            Text = Textos.Instancia.MainAvisoComprimirNota,
+            Text = _settings.BorrarDefinitivamente
+                ? Textos.Instancia.MainAvisoComprimirNotaBorrar
+                : Textos.Instancia.MainAvisoComprimirNota,
             FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = (Brush)FindResource("Neutral600"),
             Margin = new Thickness(0, 12, 0, 16),
         });
@@ -1476,6 +1480,9 @@ public partial class MainWindow : Window
             var tok = _cts.Token;
             var results = await Task.Run(() => _engine.CompressAsync(sel, opt, reporter, tok), tok);
             ok = results.Where(r => r.OutBytes != null).ToList();
+            // Aviso del sistema al terminar. En la simulación no se ha comprimido nada: no avisa.
+            // Los que el motor salta (ya están hechos, ya son HEVC) no son fallos: no tienen resultado.
+            if (!opt.DryRun) AvisoDeSistema.TandaTerminada(ok.Count, results.Count(r => r.OutBytes == null));
             if (ok.Count > 0)
             {
                 double inGb = ok.Sum(r => r.InBytes) / 1073741824.0;
@@ -2039,12 +2046,14 @@ public partial class MainWindow : Window
     {
         private readonly MainWindow _w;
         private readonly bool _del;
+        // Se lee al empezar la tanda: si se cambia la opción a mitad, no cambia lo ya decidido.
+        private readonly bool _definitivo;
         private readonly IReadOnlyList<VideoRow> _queue;   // mismo orden que las rutas del motor
         private VideoRow? _current;
         private int _lastPct = -1;
 
         public Reporter(MainWindow w, bool deleteOriginals, IReadOnlyList<VideoRow> queue)
-        { _w = w; _del = deleteOriginals; _queue = queue; }
+        { _w = w; _del = deleteOriginals; _queue = queue; _definitivo = w._settings.BorrarDefinitivamente; }
 
         private VideoRow? RowOf(string path) =>
             _w._rows.FirstOrDefault(r => string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase));
@@ -2107,16 +2116,22 @@ public partial class MainWindow : Window
             if (!Engine.ShouldRecycleSource(_del, r)) return;
             Task.Run(() =>
             {
-                bool ok = PapeleraDelSistema.Mandar(r.SourcePath);
+                // Con la opción de borrado definitivo no hay Papelera de por medio: el original se borra.
+                bool ok = _definitivo ? BorradoDefinitivo.Mandar(r.SourcePath)
+                                      : PapeleraDelSistema.Mandar(r.SourcePath);
                 _w.Dispatcher.BeginInvoke(() =>
                 {
                     if (ok)
                     {
                         var row = _w._rows.FirstOrDefault(x => string.Equals(x.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase));
                         if (row != null) _w._rows.Remove(row);
-                        _w.AppendLog(string.Format(Textos.Instancia.MainLogOriginalAPapelera, r.Name));
+                        _w.AppendLog(string.Format(_definitivo
+                            ? Textos.Instancia.MainLogOriginalBorrado
+                            : Textos.Instancia.MainLogOriginalAPapelera, r.Name));
                     }
-                    else _w.AppendLog(string.Format(Textos.Instancia.MainLogPapeleraFallo, r.Name));
+                    else _w.AppendLog(string.Format(_definitivo
+                        ? Textos.Instancia.MainLogBorradoFallo
+                        : Textos.Instancia.MainLogPapeleraFallo, r.Name));
                 });
             });
         }

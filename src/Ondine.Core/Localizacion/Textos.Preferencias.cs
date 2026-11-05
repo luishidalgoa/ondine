@@ -93,8 +93,18 @@ public sealed partial class Textos
         Idioma.Elegir("Keep the originals", "Conservar los originales");
 
     public string PreferenciasPapeleraNota => Idioma.Elegir(
-        "Originals are sent to the Recycle Bin (recoverable); they are never deleted for good.",
-        "Los originales se envían a la Papelera de reciclaje (recuperables); nunca se borran de forma definitiva.");
+        "Originals are sent to the Recycle Bin (recoverable). Ondine only deletes them for good if you turn on «Delete for good instead, skipping the Recycle Bin».",
+        "Los originales se envían a la Papelera de reciclaje (recuperables). Ondine solo los borra de forma definitiva si activas «Borrar de forma definitiva, sin pasar por la Papelera».");
+
+    // Hija de la opción de la Papelera, pero se aplica por su cuenta: también cuando la
+    // Papelera está apagada y se marca su casilla en el aviso de antes de comprimir.
+    public string PreferenciasBorrarDefinitivo => Idioma.Elegir(
+        "Delete for good instead, skipping the Recycle Bin",
+        "Borrar de forma definitiva, sin pasar por la Papelera");
+
+    public string PreferenciasBorrarDefinitivoNota => Idioma.Elegir(
+        "It applies in either case: when originals are sent to the Recycle Bin automatically, or when you tick that box in the question shown before compressing. Nothing can be recovered afterwards.",
+        "Se aplica en los dos casos: cuando los originales se envían a la Papelera automáticamente, o cuando marcas esa casilla en el aviso de antes de comprimir. Después no se puede recuperar nada.");
 
     // El original llevaba una raya larga; aquí va una coma, que dice lo mismo sin
     // meter un carácter que esta app no usa.
