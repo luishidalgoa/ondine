@@ -1309,6 +1309,48 @@ public static class Comprobacion
     }
 
     /// <summary>
+    /// La selección lee el vídeo de verdad: una fila que el análisis no ha leído se sondea con ffprobe al
+    /// seleccionarla, y su duración y su códec aparecen. Se hace con un MP4 creado con ffmpeg en el momento.
+    /// </summary>
+    public static async Task CorrerSeleccionLeeElVideo(Window dueno)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "ondine-seleccion-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        var video = Path.Combine(dir, "serie 1x01.mp4");
+        try
+        {
+            using var ff = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Engine.FfmpegPath)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                ArgumentList = { "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=duration=4:size=320x240:rate=25",
+                                 "-c:v", "libx264", "-pix_fmt", "yuv420p", video },
+            });
+            if (ff is null) { Dice(false, "no se pudo lanzar ffmpeg para crear el vídeo de prueba"); return; }
+            await ff.WaitForExitAsync();
+            if (ff.ExitCode != 0 || !File.Exists(video)) { Dice(false, "ffmpeg no creó el vídeo de prueba"); return; }
+
+            var v = new VentanaPrincipal { Width = 1180, Height = 780 };
+            v.Show(dueno);
+            await Task.Delay(600);
+            v.FilasDePrueba((video, "…"));
+
+            var tabla = v.GetVisualDescendants().OfType<DataGrid>().FirstOrDefault(d => d.Name == "lst");
+            var fila = tabla?.ItemsSource?.Cast<VideoRow>().FirstOrDefault();
+            Dice(fila is not null && !fila.Probed, "la fila recién añadida aún no está leída");
+
+            if (tabla is not null && fila is not null) tabla.SelectedItem = fila;
+            for (int i = 0; i < 100 && fila is not null && !fila.Probed; i++) await Task.Delay(100);
+
+            Dice(fila is not null && fila.Probed, "al seleccionarla, la fila se lee con ffprobe");
+            Dice(fila is not null && fila.DurationSec >= 3 && fila.Codec == "h264",
+                $"y lo que se lee es el vídeo de verdad: {fila?.DurationSec} s, {fila?.Codec}");
+            v.Close();
+        }
+        finally { try { Directory.Delete(dir, true); } catch { } }
+    }
+
+    /// <summary>
     /// La tabla de Comprimir agrupada: lo encolado arriba, en el orden de la cola, y lo analizado
     /// debajo, cada grupo con su banda. Se usa la ventana de verdad y el mismo camino que el botón
     /// «Añadir a la cola», así que lo que se mide es lo que ve quien usa la app.

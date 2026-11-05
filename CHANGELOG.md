@@ -34,6 +34,13 @@ es un acuerdo de buena voluntad: está verificado.
 
 ### Corregido
 
+- **Las tandas encoladas respetan la Papelera.** Antes, lo que se añadía a la cola nunca enviaba el
+  original a la Papelera, aunque lo tuvieras activado. Ahora la cola pregunta lo mismo que la compresión
+  directa al añadir, y cada tanda se lleva su respuesta.
+- **No se puede mandar a la Papelera un vídeo que se está comprimiendo.** Antes podía, y el compresor
+  seguía leyéndolo. Ahora la lista lo dice y lo deja donde está.
+- **Añadir a la cola con el campo de origen vacío ya no se cae.**
+
 - **Con «sobrescribir» activo, un original podía borrarse sin pasar por la Papelera.** Si la salida
   caía sobre el propio original (mismo nombre, misma carpeta y mismo formato), el original se borraba y
   el comprimido ocupaba su sitio. Ahora ese fichero se salta y la lista lo dice; el original no se toca.

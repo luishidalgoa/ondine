@@ -31,6 +31,8 @@ public partial class MainWindow : Window
     private object? _previewBtnContent;
     private CancellationTokenSource? _cts;
     private bool _running;
+    // Las rutas de la tanda que se está comprimiendo ahora: no se mandan a la Papelera ni se quitan.
+    private readonly HashSet<string> _enCompresion = new(StringComparer.OrdinalIgnoreCase);
     private Pagina _paginaActual = Pagina.Comprimir;   // la pestaña que se está viendo
     // Filas enviadas a la Papelera propia (Comprimir), en orden, para deshacer con Ctrl+Z: al
     // restaurar el fichero también vuelve su fila a la lista, sin re-analizarlo.
@@ -251,7 +253,6 @@ public partial class MainWindow : Window
     // ---------- preferencias / ajustes ----------
     private void ApplySettings()
     {
-        Engine.MinFreeBytes = _settings.MinFreeMb * 1024L * 1024;
         Estimator.ComplexityFactor = Math.Clamp(_settings.ComplexityFactor, 0.15, 4.0);
         chkRec.IsChecked = _settings.Recurse;
         UpdateRenameStatus();
@@ -894,6 +895,7 @@ public partial class MainWindow : Window
         // igual. Lo que la cola está comprimiendo ahora no se puede quitar: se queda en la lista.
         var (_, enCurso) = _cola.QuitarFicheros(sel.Select(r => r.Path).ToList());
         var fijos = enCurso.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in sel) if (_enCompresion.Contains(r.Path)) fijos.Add(r.Path);
         var quitables = sel.Where(r => !fijos.Contains(r.Path)).ToList();
         foreach (var r in quitables) _rows.Remove(r);
         PintarCola();
@@ -1209,8 +1211,12 @@ public partial class MainWindow : Window
     // ---------- eliminar (papelera) ----------
     private void DeleteSelected()
     {
-        var sel = SelectedRows();
-        if (sel.Count == 0) { DialogWindow.Aviso(this, Textos.Instancia.MainEliminarTitulo, Textos.Instancia.MainSinVideosSeleccionados); return; }
+        var todos = SelectedRows();
+        if (todos.Count == 0) { DialogWindow.Aviso(this, Textos.Instancia.MainEliminarTitulo, Textos.Instancia.MainSinVideosSeleccionados); return; }
+        // Lo que se está comprimiendo ahora no se manda a la Papelera: el compresor lo está leyendo.
+        var sel = todos.Where(r => !_enCompresion.Contains(r.Path)).ToList();
+        if (sel.Count == 0) { lblProg.Text = Textos.Instancia.MainNoSeBorraEnCurso; return; }
+        var aviso = sel.Count < todos.Count ? Textos.Instancia.MainNoSeBorraEnCurso : "";
         double mb = sel.Sum(r => r.Bytes) / 1048576.0;
         if (!DialogWindow.Confirmar(this, Textos.Instancia.MainEliminarMarcadosTitulo,
                                     string.Format(Textos.Instancia.MainEliminarMarcadosPregunta, sel.Count, mb))) return;
@@ -1232,6 +1238,7 @@ public partial class MainWindow : Window
         lblProg.Text = _pilaPapelera.Count > 0
             ? string.Format(Textos.Instancia.MainALaPapeleraDeshacer, Reindex.PapeleraApp.UltimoNombre)
             : Textos.Instancia.MainEnviadosALaPapelera;
+        if (aviso.Length > 0) lblProg.Text += " " + aviso;
     }
     private void DeleteFolders()
     {
@@ -1242,6 +1249,8 @@ public partial class MainWindow : Window
             if (!string.IsNullOrEmpty(s) && Directory.Exists(s)) dirs = new() { s };
         }
         if (dirs.Count == 0) { DialogWindow.Aviso(this, Textos.Instancia.MainEliminarCarpeta, Textos.Instancia.MainEliminarCarpetaSinNada); return; }
+        if (_rows.Any(r => _enCompresion.Contains(r.Path) && dirs.Contains(Path.GetDirectoryName(r.Path) ?? "")))
+        { lblProg.Text = Textos.Instancia.MainNoSeBorraEnCurso; return; }
         if (!DialogWindow.Confirmar(this, Textos.Instancia.MainEliminarCarpeta,
                                     string.Format(Textos.Instancia.MainEliminarCarpetaPregunta,
                                                   dirs.Count, string.Join("\n", dirs)))) return;
@@ -1270,6 +1279,7 @@ public partial class MainWindow : Window
             AllowHardware = _settings.UseHardware,
             AceleracionPedida = _settings.AceleracionVideo,
             CodificadorPedido = _settings.Codificador,
+            MinFreeBytes = _settings.MinFreeMb * 1024L * 1024,
             VideoCodec = cboCodec.SelectedIndex switch { 1 => "h264", 2 => "av1", _ => "hevc" },
         };
         switch (cboFmt.SelectedIndex)
@@ -1357,7 +1367,10 @@ public partial class MainWindow : Window
         }
 
         var opt = BuildOptions();
-        _cola.Encolar(rutas, opt, EffectiveOutput());
+        // Lo que pasará con los originales se decide ahora, igual que en la compresión directa: la tanda lo lleva.
+        var (proceed, del) = DecidirOriginales(rutas.Count, opt.DryRun);
+        if (!proceed) return;
+        _cola.Encolar(rutas, opt, EffectiveOutput(), del);
         PintarCola();
 
         // Si no habia nada corriendo, la cola arranca sola: encolar y que no pase nada
@@ -1375,7 +1388,7 @@ public partial class MainWindow : Window
         () => _running,
         async t =>
         {
-            var r = await ComprimirTandaAsync(t.Ficheros, t.Opciones);
+            var r = await ComprimirTandaAsync(t.Ficheros, t.Opciones, null, t.BorrarOriginales);
             return (r.Cancelado, r.Salieron, r.Fallaron);
         },
         PintarCola);
@@ -1486,6 +1499,28 @@ public partial class MainWindow : Window
         filaObjetivo.Visibility = cboQ.SelectedIndex == 5 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>
+    /// Lo que se hace con los originales de una tanda: pregunta si toca, y guarda la respuesta si se pide
+    /// «no volver a preguntar». Lo usan la compresión directa y la cola, para que decidan igual.
+    /// <para>Devuelve si se sigue (false = se canceló el modal) y si hay que quitar los originales.</para>
+    /// </summary>
+    private (bool proceed, bool del) DecidirOriginales(int cuantos, bool simulacion)
+    {
+        if (simulacion) return (true, false);
+        if (_settings.AfterCompress == AfterCompress.Ask)
+        {
+            var (proceed, del, remember) = AskAfterCompress(cuantos);
+            if (!proceed) return (false, false);
+            if (remember)
+            {
+                _settings.AfterCompress = del ? AfterCompress.RecycleOriginal : AfterCompress.Keep;
+                SettingsStore.Save(_settings);
+            }
+            return (true, del);
+        }
+        return (true, _settings.AfterCompress == AfterCompress.RecycleOriginal);
+    }
+
     private async Task RunAsync()
     {
         var selRows = SelectedRows();
@@ -1494,23 +1529,9 @@ public partial class MainWindow : Window
 
         var opt = BuildOptions();
 
-        // ¿enviar cada original a la Papelera tras comprimirlo? (según preferencias / modal)
-        bool deleteOriginals = false;
-        if (!opt.DryRun)
-        {
-            if (_settings.AfterCompress == AfterCompress.Ask)
-            {
-                var (proceed, del, remember) = AskAfterCompress(selRows.Count);
-                if (!proceed) return;   // canceló el modal
-                deleteOriginals = del;
-                if (remember)
-                {
-                    _settings.AfterCompress = del ? AfterCompress.RecycleOriginal : AfterCompress.Keep;
-                    SettingsStore.Save(_settings);
-                }
-            }
-            else deleteOriginals = _settings.AfterCompress == AfterCompress.RecycleOriginal;
-        }
+        // ¿Qué pasa con los originales al terminar? La misma decisión que en la cola.
+        var (proceed, deleteOriginals) = DecidirOriginales(selRows.Count, opt.DryRun);
+        if (!proceed) return;   // canceló el modal
 
         var fin = await ComprimirTandaAsync(sel, opt, selRows, deleteOriginals);
         // Lo añadido a la cola mientras esta compresión corría no se lanzó: ahora sí, salvo que se
@@ -1549,6 +1570,8 @@ public partial class MainWindow : Window
         lblProg.Text = string.Format(Textos.Instancia.MainProcesando, sel.Count);
         ActualizarTextoPildora(0, sel.Count, 0);   // ya recalcula el indicador global
 
+        _enCompresion.Clear();
+        foreach (var x in sel) _enCompresion.Add(x);
         foreach (var r in selRows) r.Estado = Textos.Instancia.MainEstadoEnCola;
         var reporter = new Reporter(this, deleteOriginals, selRows);
         // «ok» vive fuera del try porque el resumen de subtítulos lo consulta al terminar
@@ -1580,6 +1603,7 @@ public partial class MainWindow : Window
         finally
         {
             _running = false; _paused = false;
+            _enCompresion.Clear();
             btnRun.IsEnabled = true; btnCancel.IsEnabled = false;
             btnPause.IsEnabled = false; btnPause.Content = Textos.Instancia.MainPausar;
             progRow.Visibility = Visibility.Collapsed;

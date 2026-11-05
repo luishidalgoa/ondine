@@ -233,7 +233,7 @@ internal static class Comprimir
 
         opt.AllowHardware = Bandera(a, "hardware", guardadas.UseHardware);
         opt.AceleracionPedida = Texto(a, "aceleracion") ?? guardadas.AceleracionVideo;
-        Engine.MinFreeBytes = Entero(a, "margen_disco_mb", guardadas.MinFreeMb) * 1024L * 1024;
+        opt.MinFreeBytes = Entero(a, "margen_disco_mb", guardadas.MinFreeMb) * 1024L * 1024;
 
         return null;
     }

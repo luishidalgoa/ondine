@@ -65,6 +65,8 @@ public sealed class EncodeOptions
     public string AceleracionPedida { get; set; } = Objetivo.AceleracionDeVideo.Auto;
     /// <summary>El codificador que pide Preferencias, por su nombre. Vacío = que decida la app.</summary>
     public string CodificadorPedido { get; set; } = "";
+    /// <summary>Margen de disco que hay que dejar libre: si el destino baja de aquí, la tanda se pausa. Por defecto 200 MB.</summary>
+    public long MinFreeBytes { get; set; } = 200L * 1024 * 1024;
 
     /// <summary>
     /// Que hacer con el audio. Por defecto <see cref="Audio.AudioElegido.Copiar"/>, que es
