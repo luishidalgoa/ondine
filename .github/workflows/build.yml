@@ -385,6 +385,10 @@ jobs:
     needs: linux-escritorio
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    # actions: write hace falta para relanzar Pages al final (ver el último paso).
+    permissions:
+      contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v7
 
@@ -476,6 +480,11 @@ jobs:
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
               commit -q -m "apt: Ondine $VERSION"
           git -C apt-repo push -q origin HEAD:refs/heads/apt
+
+          # Un push hecho con el GITHUB_TOKEN no lanza otros flujos de trabajo, y por eso el sitio
+          # (que sirve el repositorio desde la rama apt) no se redesplegaba solo: el 404 de la 1.23.1.
+          # Se lanza a mano aquí.
+          gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
 
   # ---------------------------------------------------------------------------
   # El AppImage: un fichero, se marca ejecutable y se abre. Para probar Ondine sin
@@ -620,15 +629,34 @@ jobs:
   # Notas de la Release tomadas del CHANGELOG (el contrato garantiza que existen).
   # ---------------------------------------------------------------------------
   notas:
+    # No depende de windows-instalador: si ese job falla, la release debe seguir teniendo notas.
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [windows-instalador, cli, linux-escritorio, linux-appimage, macos-dmg]
+    needs: [cli, linux-escritorio, linux-appimage, macos-dmg]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
         with:
           name: release-notes
 
+      # Antes de las notas del CHANGELOG va una guía de qué archivo es cada cosa: la release
+      # tiene muchos binarios y sin guía parece que todos son instaladores.
+      - name: Preparar la guía de archivos
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          v="${VERSION#v}"
+          {
+            echo "## Qué descargar"
+            echo
+            echo "- **Windows:** \`Ondine-Setup-$v.exe\`. Es la app de escritorio: ejecútalo para instalarla."
+            echo "- **Linux (Mint, Ubuntu, Debian):** \`ondine_${v}_amd64.deb\` (o \`_arm64\`). Se instala con \`sudo apt install ./<archivo>.deb\` y a partir de ahí el gestor de actualizaciones ofrece las versiones nuevas. El \`.AppImage\` sirve para cualquier distribución."
+            echo "- **macOS:** \`Ondine-$v-macos-arm64.dmg\` en Mac con Apple Silicon, o \`Ondine-$v-macos-x64.dmg\` en Mac Intel."
+            echo "- **Herramientas de terminal:** \`ondine-*\` y \`ondine-mcp-*\`. Son el programa de consola (CLI) y el servidor para agentes (MCP). No se instalan con doble clic: se usan desde una terminal o desde un agente."
+            echo
+            cat release-notes.md
+          } > guia-y-notas.md
+
       - name: Publicar notas
         uses: softprops/action-gh-release@v3
         with:
-          body_path: release-notes.md
+          body_path: guia-y-notas.md

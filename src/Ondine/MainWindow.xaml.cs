@@ -1427,6 +1427,19 @@ public partial class MainWindow : Window
         PintarCola();
     }
 
+    /// <summary>Las filas de la tabla, para que el arnés de humo mire qué lleva la banda de la cola.</summary>
+    internal IReadOnlyList<VideoRow> FilasParaPruebas => _rows;
+
+    /// <summary>
+    /// Pone en la tabla ficheros de mentira, como haría Añadir archivos, para que la cola tenga
+    /// filas que pintar. Solo para el arnés: no analiza nada ni toca el disco.
+    /// </summary>
+    internal void AnadirFilasParaPruebas(IReadOnlyList<string> rutas)
+    {
+        foreach (var ruta in rutas)
+            _rows.Add(new VideoRow { Name = ruta, Dir = "", Path = ruta, Bytes = 0, SizeMB = "0 MB" });
+    }
+
     // La cola se ve en la propia tabla: lo encolado va arriba y se ordena con la columna Orden.
     private void PintarCola() => Agrupar();
 

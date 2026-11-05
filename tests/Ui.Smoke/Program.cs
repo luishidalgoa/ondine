@@ -941,28 +941,29 @@ public static class Program
         const string nombre = "la cola nace oculta y aparece con el primer trabajo";
         try
         {
+            // La cola ya no tiene tarjeta: vive en la propia tabla, como una banda sobre sus filas.
+            // Por eso se mira en las filas, no en un panel con nombre.
             var v = new MainWindow();
-            var panel = (FrameworkElement)v.FindName("panelCola")!;
-            var lista = (ItemsControl)v.FindName("listaCola")!;
-
             v.Measure(new Size(1280, 900));
             v.Arrange(new Rect(0, 0, 1280, 900));
             v.UpdateLayout();
 
-            if (panel.Visibility == Visibility.Visible)
-                throw new Exception("con la cola vacia el panel ya ocupaba sitio");
+            if (v.FilasParaPruebas.Any(f => f.BandaDeCola))
+                throw new Exception("con la cola vacia ya sale una banda de cola");
 
-            // Se encola de verdad, por el mismo camino que el boton.
-            v.EncolarParaPruebas(["uno.mkv", "dos.mkv"]);
+            // Los ficheros tienen que estar en la tabla para que la cola los pinte. Se encolan
+            // por el mismo camino que el boton.
+            string[] rutas = ["uno.mkv", "dos.mkv"];
+            v.AnadirFilasParaPruebas(rutas);
+            v.EncolarParaPruebas(rutas);
             v.UpdateLayout();
 
-            if (panel.Visibility != Visibility.Visible)
-                throw new Exception("con un trabajo dentro, la cola sigue sin verse");
+            var encoladas = v.FilasParaPruebas.Count(f => f.Grupo == Ondine.Trabajos.GrupoDeVideo.EnCola);
+            if (encoladas != rutas.Length)
+                throw new Exception($"la cola tiene {encoladas} filas y deberia tener {rutas.Length}");
 
-            var cuantas = (lista.ItemsSource as System.Collections.IEnumerable)?
-                .Cast<object>().Count() ?? 0;
-            if (cuantas != 1)
-                throw new Exception($"la lista pinta {cuantas} filas y deberia pintar 1");
+            if (!v.FilasParaPruebas.Any(f => f.BandaDeCola))
+                throw new Exception("con un trabajo dentro, la banda de la cola no sale");
 
             Bien(nombre);
         }
