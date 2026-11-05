@@ -418,19 +418,25 @@ jobs:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           VERSION: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          rm -rf apt-repo
 
-          # La rama apt, o una nueva si es la primera vez.
-          if git fetch -q origin apt 2>/dev/null; then
-            git worktree add -q -B apt apt-repo FETCH_HEAD
+          # La rama apt, o una nueva si es la primera vez. Se clona: el worktree que se usaba antes
+          # no funcionaba con el checkout del CI, y la carpeta no llegaba a existir.
+          if git ls-remote --exit-code --heads origin apt >/dev/null 2>&1; then
+            git clone -q --branch apt --depth 1 "https://github.com/${GITHUB_REPOSITORY}.git" apt-repo
           else
-            git worktree add -q --orphan -b apt apt-repo
+            mkdir apt-repo
+            git -C apt-repo init -q -b apt
           fi
+          git -C apt-repo remote remove origin 2>/dev/null || true
+          git -C apt-repo remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # Solo la versión actual, y un pool por arquitectura: cada índice lista solo lo suyo.
           cd apt-repo
           rm -rf pool dists ondine-archive-keyring.gpg
-
-          # Un pool por arquitectura: así cada índice solo lista lo suyo.
           for arq in amd64 arm64; do
             mkdir -p "pool/main/o/ondine/$arq" "dists/stable/main/binary-$arq"
             cp ../debs/ondine_*_"$arq".deb "pool/main/o/ondine/$arq/"
@@ -443,21 +449,23 @@ jobs:
           KEYID=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')
           gpg --batch --export "$KEYID" > ondine-archive-keyring.gpg
 
-          cd dists/stable
-          rm -f Release Release.gpg InRelease
-          apt-ftparchive release \
-            -o APT::FTPArchive::Release::Origin=Ondine \
-            -o APT::FTPArchive::Release::Label=Ondine \
-            -o APT::FTPArchive::Release::Suite=stable \
-            -o APT::FTPArchive::Release::Codename=stable \
-            -o 'APT::FTPArchive::Release::Architectures=amd64 arm64' \
-            -o APT::FTPArchive::Release::Components=main \
-            . > Release
-          gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
-              -u "$KEYID" -abs -o Release.gpg Release
-          gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
-              -u "$KEYID" --clearsign -o InRelease Release
-          cd ../..
+          (
+            cd dists/stable
+            rm -f Release Release.gpg InRelease
+            apt-ftparchive release \
+              -o APT::FTPArchive::Release::Origin=Ondine \
+              -o APT::FTPArchive::Release::Label=Ondine \
+              -o APT::FTPArchive::Release::Suite=stable \
+              -o APT::FTPArchive::Release::Codename=stable \
+              -o 'APT::FTPArchive::Release::Architectures=amd64 arm64' \
+              -o APT::FTPArchive::Release::Components=main \
+              . > Release
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+                -u "$KEYID" -abs -o Release.gpg Release
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+                -u "$KEYID" --clearsign -o InRelease Release
+          )
+          cd ..
 
           git -C apt-repo add -A
           if git -C apt-repo diff --cached --quiet; then
