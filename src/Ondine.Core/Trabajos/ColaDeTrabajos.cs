@@ -27,7 +27,9 @@ public enum EstadoDelTrabajo
 public sealed class Trabajo
 {
     public required int Id { get; init; }
-    public required IReadOnlyList<string> Ficheros { get; init; }
+    // Sin «required»: el compilador no admite un requerido con establecedor interno. Lo rellena
+    // Encolar, y solo la cola lo cambia al sacarle ficheros (QuitarFicheros).
+    public IReadOnlyList<string> Ficheros { get; internal set; } = [];
     public required EncodeOptions Opciones { get; init; }
     public required string Destino { get; init; }
 
@@ -181,6 +183,43 @@ public sealed class ColaDeTrabajos
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return [.. ficheros.Where(esperando.Contains)];
+    }
+
+    /// <summary>
+    /// Saca de la cola esos ficheros, de los trabajos que aún no han empezado.
+    ///
+    /// <para>
+    /// Es lo que hace «quitar» en la tabla: sin esto la fila desaparecía pero el trabajo ya
+    /// encolado seguía teniendo el fichero, y se comprimía igual cuando le llegaba el turno.
+    /// Un trabajo que se queda sin ficheros desaparece. El que está en curso no se toca: ya se
+    /// está escribiendo en el disco, y sus ficheros se devuelven para que quien llama lo diga.
+    /// </para>
+    /// </summary>
+    /// <returns>Cuántos se quitaron de la cola, y cuáles no porque están en curso.</returns>
+    public (int Quitados, IReadOnlyList<string> EnCurso) QuitarFicheros(IReadOnlyList<string> rutas)
+    {
+        var buscadas = rutas.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var enCurso = new List<string>();
+        int quitados = 0;
+
+        foreach (var t in _trabajos.ToList())
+        {
+            if (t.Despachado) continue;
+            var coinciden = t.Ficheros.Where(buscadas.Contains).ToList();
+            if (coinciden.Count == 0) continue;
+
+            if (t.Estado == EstadoDelTrabajo.EnCurso)
+            {
+                enCurso.AddRange(coinciden);
+                continue;
+            }
+
+            quitados += coinciden.Count;
+            var quedan = t.Ficheros.Where(f => !buscadas.Contains(f)).ToList();
+            if (quedan.Count == 0) _trabajos.Remove(t);
+            else t.Ficheros = quedan;
+        }
+        return (quitados, enCurso);
     }
 
     private Trabajo? Buscar(int id) => _trabajos.FirstOrDefault(t => t.Id == id);

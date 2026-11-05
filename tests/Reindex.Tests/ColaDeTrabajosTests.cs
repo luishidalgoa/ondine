@@ -23,9 +23,37 @@ public static class ColaDeTrabajosTests
     private static EncodeOptions Opciones(string codec = "hevc", int calidad = 24) =>
         new() { VideoCodec = codec, Quality = calidad };
 
+    /// <summary>
+    /// «Quitar» en la tabla tiene que sacar el fichero de la cola. Si no, la fila desaparece pero
+    /// el trabajo sigue teniéndolo y se comprime igual: fue el fallo que se vio en Linux.
+    /// </summary>
+    private static void QuitarFicherosSacaSoloDePendientes()
+    {
+        var cola = new ColaDeTrabajos();
+        var solo = cola.Encolar(["a.mkv"], Opciones(), "C:/s")!;
+        var mixto = cola.Encolar(["b.mkv", "c.mkv"], Opciones(), "C:/s")!;
+
+        var (quitados, enCurso) = cola.QuitarFicheros(["a.mkv", "b.mkv"]);
+
+        Program.Assert(quitados == 2 && enCurso.Count == 0,
+            "quitar «a» y «b» los saca de la cola, y no hay nada en curso que proteger");
+        Program.Assert(!cola.Trabajos.Contains(solo),
+            "el trabajo que se queda sin ficheros desaparece");
+        Program.Assert(mixto.Ficheros.Count == 1 && mixto.Ficheros[0] == "c.mkv",
+            "el trabajo mixto conserva el fichero que no se quitó");
+
+        // El trabajo en curso no se toca: ya se está escribiendo.
+        var corriendo = cola.Encolar(["d.mkv"], Opciones(), "C:/s")!;
+        cola.Empezar(corriendo.Id);
+        var (q2, enCurso2) = cola.QuitarFicheros(["d.mkv"]);
+        Program.Assert(q2 == 0 && enCurso2.Count == 1 && corriendo.Ficheros.Count == 1,
+            "un fichero en curso no se saca, y se devuelve para que la pantalla lo diga");
+    }
+
     public static void Todas()
     {
         Program.Seccion("La cola de trabajos");
+        QuitarFicherosSacaSoloDePendientes();
 
         // ══ LA REGLA: las opciones se copian, no se apuntan ═══════════════════════
         var deLaPantalla = Opciones("hevc", 24);
