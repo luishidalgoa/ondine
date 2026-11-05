@@ -946,6 +946,14 @@ public sealed class Engine
                     else { try { if (File.Exists(atmp)) File.Delete(atmp); } catch { } rep.Log(string.Format(t.MotorErrorExtraerAudio, acode)); }
                 }
                 catch (OperationCanceledException) { try { if (File.Exists(atmp)) File.Delete(atmp); } catch { } rep.Log(t.MotorDetenido); throw; }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    // Un fichero bloqueado (antivirus, OneDrive, otra copia) no debe tirar la tanda entera.
+                    try { if (File.Exists(atmp)) File.Delete(atmp); } catch { }
+                    rep.Log(string.Format(t.MotorErrorCodificar, ex.Message));
+                    var fr = new FileResult { Name = name, InBytes = fi.Length, OutBytes = null, Status = t.Error, SourcePath = f, OutputPath = outPath, Detalle = ex.Message };
+                    results.Add(fr); rep.FileDone(fr);
+                }
                 continue;
             }
 
@@ -1150,6 +1158,15 @@ public sealed class Engine
                 try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }   // al detener no dejamos el temporal a medias
                 rep.Log(t.MotorDetenidoConTemporal);
                 throw;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Un fichero que no se puede escribir o sustituir (antivirus, OneDrive, otra copia) cuenta como
+                // fallo de ese fichero. La tanda sigue con el resto y el aviso de fin sí sale.
+                try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+                rep.Log(string.Format(t.MotorErrorCodificar, ex.Message));
+                var fr = new FileResult { Name = name, InBytes = fi.Length, OutBytes = null, Status = t.Error, SourcePath = f, OutputPath = outPath, Detalle = ex.Message };
+                results.Add(fr); rep.FileDone(fr);
             }
         }
         return results;
