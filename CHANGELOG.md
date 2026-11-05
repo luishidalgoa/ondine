@@ -32,6 +32,8 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-11-05
+
 ### Añadido
 
 - **Repositorio apt para Debian, Mint y Ubuntu.** Cada versión se publica, firmada, en un repositorio
