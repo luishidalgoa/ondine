@@ -32,8 +32,20 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-11-05
+
+### Añadido
+
+- **La tabla de Comprimir muestra la cola.** Lo encolado va arriba, en el orden en que se comprimirá,
+  con su cabecera. Lo analizado que no está en la cola va debajo. Ya no hace falta mirar otro sitio para
+  saber qué se va a comprimir.
+
 ### Corregido
 
+- **Quitar un vídeo de la lista también lo quita de la cola.** Antes desaparecía de la tabla, pero el
+  trabajo ya encolado seguía comprimiéndolo.
+- **Un segundo aviso a la instancia abierta no se pierde en Linux.** Al abrir un vídeo con Ondine ya
+  abierta, el aviso a la ventana de antes a veces no llegaba.
 - **Las tandas encoladas respetan la Papelera.** Antes, lo que se añadía a la cola nunca enviaba el
   original a la Papelera, aunque lo tuvieras activado. Ahora la cola pregunta lo mismo que la compresión
   directa al añadir, y cada tanda se lleva su respuesta.
