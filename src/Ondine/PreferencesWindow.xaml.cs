@@ -106,6 +106,7 @@ public partial class PreferencesWindow : Window
         rbAsk.IsChecked = current.AfterCompress == AfterCompress.Ask;
         rbRecycle.IsChecked = current.AfterCompress == AfterCompress.RecycleOriginal;
         rbKeep.IsChecked = current.AfterCompress == AfterCompress.Keep;
+        chkBorrarDef.IsChecked = current.BorrarDefinitivamente;
 
         // Rendimiento y disco
         txtMinFree.Text = current.MinFreeMb.ToString();
@@ -301,6 +302,7 @@ public partial class PreferencesWindow : Window
         s.AfterCompress = rbRecycle.IsChecked == true ? AfterCompress.RecycleOriginal
                         : rbKeep.IsChecked == true ? AfterCompress.Keep
                         : AfterCompress.Ask;
+        s.BorrarDefinitivamente = chkBorrarDef.IsChecked == true;
         s.MinFreeMb = int.TryParse(txtMinFree.Text.Trim(), out var mb) ? Math.Clamp(mb, 50, 100_000) : 200;
         s.UseHardware = chkHw.IsChecked == true;
         s.Codificador = cboCodificador.SelectedIndex >= 0

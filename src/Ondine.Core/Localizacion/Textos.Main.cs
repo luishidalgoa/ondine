@@ -773,6 +773,30 @@ public sealed partial class Textos
         "    could not send to the Recycle Bin: {0}",
         "    no se pudo enviar a la Papelera: {0}");
 
+    // Mismo sangrado y voz que el de la Papelera, para que el panel se lea como uno solo.
+    public string MainLogOriginalBorrado => Idioma.Elegir(
+        "    original deleted for good: {0}",
+        "    original borrado de forma definitiva: {0}");
+
+    public string MainLogBorradoFallo => Idioma.Elegir(
+        "    could not delete the original: {0}",
+        "    no se pudo borrar el original: {0}");
+
+    // Lo que ve quien pulsa «Comprimir» con el modal activo: la opción de Preferencias cambia
+    // lo que promete la casilla, y la casilla no puede mentir.
+    public string MainAvisoComprimirBorrar => Idioma.Elegir(
+        "Delete each original for good (skipping the Recycle Bin) once its compressed version is ready",
+        "Borrar cada original de forma definitiva (sin pasar por la Papelera) cuando su comprimido esté listo");
+
+    public string MainAvisoComprimirNotaBorrar => Idioma.Elegir(
+        "Originals are deleted for good, file by file as each one finishes. They cannot be recovered from the Recycle Bin.",
+        "Los originales se borran de forma definitiva, archivo por archivo según van terminando. No se pueden recuperar desde la Papelera.");
+
+    // Texto de la línea de estado de la fila cuando ffprobe no da nada que leer del fichero.
+    public string MainNoSeLeyo => Idioma.Elegir(
+        "Could not be read",
+        "No se pudo leer");
+
     // ═══ Línea de estado ════════════════════════════════════════════════════
     // Valor de reposo, antes de que pase nada. Comun.Listo dice «Done» y este
     // dice «Ready»: aquí no ha terminado nada todavía.

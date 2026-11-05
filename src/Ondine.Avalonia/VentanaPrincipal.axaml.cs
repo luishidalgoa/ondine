@@ -446,7 +446,9 @@ public partial class VentanaPrincipal : Window
         });
         var chkDel = new CheckBox
         {
-            Content = Textos.Instancia.MainAvisoComprimirPapelera,
+            Content = _settings.BorrarDefinitivamente
+                ? Textos.Instancia.MainAvisoComprimirBorrar
+                : Textos.Instancia.MainAvisoComprimirPapelera,
             Foreground = Pincel("Neutral300"), Margin = new Thickness(0, 0, 0, 9),
         };
         var chkRemember = new CheckBox
@@ -458,7 +460,9 @@ public partial class VentanaPrincipal : Window
         panel.Children.Add(chkRemember);
         panel.Children.Add(new TextBlock
         {
-            Text = Textos.Instancia.MainAvisoComprimirNota,
+            Text = _settings.BorrarDefinitivamente
+                ? Textos.Instancia.MainAvisoComprimirNotaBorrar
+                : Textos.Instancia.MainAvisoComprimirNota,
             FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Pincel("Neutral600"),
             Margin = new Thickness(0, 12, 0, 16),
         });
@@ -528,10 +532,19 @@ public partial class VentanaPrincipal : Window
             nuevos.Add(row);
         }
         if (nuevos.Count == 0) return;
-        foreach (var row in nuevos) lst.SelectedItems.Add(row);   // los recién añadidos entran seleccionados
-        lblLangHint.Text = Textos.Instancia.MainDetectando;
-        int enNube = await ProbeRowsAsync(nuevos);
+        // Mientras se añaden y se sondean, la selección no sondea cada fila por su cuenta: si no,
+        // cada fila nueva lanzaría su propio ffprobe a la vez que el sondeo de la lista.
+        int enNube;
+        _sondeando = true;
+        try
+        {
+            foreach (var row in nuevos) lst.SelectedItems.Add(row);   // los recién añadidos entran seleccionados
+            lblLangHint.Text = Textos.Instancia.MainDetectando;
+            enNube = await ProbeRowsAsync(nuevos);
+        }
+        finally { _sondeando = false; }
         lblLangHint.Text = enNube > 0 ? string.Format(Textos.Instancia.MainSaltadosEnLaNube, enNube) : "";
+        await UpdateForSelectionAsync();   // la fila seleccionada ya se puede leer: se refresca su detalle
     }
     // ---------- arrastrar y soltar desde el Explorador ----------
     private void OnDragOver(object? sender, DragEventArgs e)
@@ -688,9 +701,12 @@ public partial class VentanaPrincipal : Window
             _escaneando = false;
             btnScan.Content = Textos.Instancia.MainAnalizar;
         }
+        // Lo seleccionado durante el análisis se quedó sin leer a propósito: ahora sí se refresca.
+        await UpdateForSelectionAsync();
     }
 
     private bool _escaneando;
+    private bool _sondeando;   // una carga de ficheros está sondeando sus filas
     private CancellationTokenSource? _cortarEscaneo;
 
     /// <summary>
@@ -731,24 +747,7 @@ public partial class VentanaPrincipal : Window
                 continue;
             }
 
-            var info = await _engine.ProbeAsync(row.Path);
-            row.Codec = info.Codec;
-            row.Dur = $"{info.DurationSec / 3600:D1}:{info.DurationSec % 3600 / 60:D2}:{info.DurationSec % 60:D2}";
-            row.Audio = string.Join("+", info.AudioLangs);
-            row.Subs = string.Join("+", info.SubLangs);
-            // El estado dice algo útil desde el análisis: si ya está bien comprimido, se
-            // avisa aquí y no se preselecciona, en vez de descubrirlo al lanzar la tanda.
-            int totalKbps = row.DurationSec > 0 ? (int)(row.Bytes * 8.0 / row.DurationSec / 1000.0) : 0;
-            row.YaComprimido = Engine.AlreadyCompressed(info.Codec, totalKbps);
-            row.Estado = row.YaComprimido
-                ? string.Format(Textos.Instancia.MainEstadoYaEn, info.Codec.ToUpperInvariant())
-                : Textos.Instancia.Pendiente;
-            row.Width = info.Width; row.Height = info.Height; row.Fps = info.Fps;
-            row.DurationSec = info.DurationSec;
-            row.VideoBitrateKbps = info.VideoBitrateKbps; row.AudioBitrateKbps = info.AudioBitrateKbps;
-            row.Channels = info.Channels; row.AudioCodec = info.AudioCodec; row.Probed = true;
-            foreach (var l in info.AudioLangs) if (l != "?") EnsureLangChip(pnlALang, l);
-            foreach (var l in info.SubLangs) if (l != "?") EnsureLangChip(pnlSLang, l);
+            await ProbeOneAsync(row);
         }
         UpdateLangCombo();
 
@@ -802,11 +801,64 @@ public partial class VentanaPrincipal : Window
         await UpdateForSelectionAsync();
     }
 
+    /// <summary>
+    /// Lee una fila con ffprobe y la deja lista para el detalle y la estimación.
+    ///
+    /// <para>
+    /// Si ffprobe no da nada que leer (no está instalado, falla, o el fichero no es un vídeo que
+    /// entienda), la fila NO queda como sondeada. Así el detalle no enseña «0:00:00» ni un
+    /// deslizador de duración cero como si fuera un vídeo de verdad, y la lista lo dice en su
+    /// línea de estado.
+    /// </para>
+    /// </summary>
+    private async Task ProbeOneAsync(VideoRow row)
+    {
+        // ffprobe puede no estar en el PATH o no arrancar: eso no tumba el análisis, deja la fila sin leer.
+        ProbeInfo info;
+        try { info = await _engine.ProbeAsync(row.Path); }
+        catch (Exception) { info = new ProbeInfo(); }
+        bool leido = info.DurationSec > 0 || info.Codec.Length > 0 || info.AudioCodec.Length > 0;
+        if (!leido)
+        {
+            row.Probed = false;
+            row.Estado = Textos.Instancia.MainNoSeLeyo;
+            return;
+        }
+        row.Codec = info.Codec;
+        row.Dur = $"{info.DurationSec / 3600:D1}:{info.DurationSec % 3600 / 60:D2}:{info.DurationSec % 60:D2}";
+        row.Audio = string.Join("+", info.AudioLangs);
+        row.Subs = string.Join("+", info.SubLangs);
+        // El estado dice algo útil desde el análisis: si ya está bien comprimido, se
+        // avisa aquí y no se preselecciona, en vez de descubrirlo al lanzar la tanda.
+        int totalKbps = row.DurationSec > 0 ? (int)(row.Bytes * 8.0 / row.DurationSec / 1000.0) : 0;
+        row.YaComprimido = Engine.AlreadyCompressed(info.Codec, totalKbps);
+        row.Estado = row.YaComprimido
+            ? string.Format(Textos.Instancia.MainEstadoYaEn, info.Codec.ToUpperInvariant())
+            : Textos.Instancia.Pendiente;
+        row.Width = info.Width; row.Height = info.Height; row.Fps = info.Fps;
+        row.DurationSec = info.DurationSec;
+        row.VideoBitrateKbps = info.VideoBitrateKbps; row.AudioBitrateKbps = info.AudioBitrateKbps;
+        row.Channels = info.Channels; row.AudioCodec = info.AudioCodec; row.Probed = true;
+        foreach (var l in info.AudioLangs) if (l != "?") EnsureLangChip(pnlALang, l);
+        foreach (var l in info.SubLangs) if (l != "?") EnsureLangChip(pnlSLang, l);
+    }
+
     private async Task UpdateForSelectionAsync()
     {
         if (lst.SelectedItem is not VideoRow r) return;
+        // El análisis de fondo lee todas las filas, pero la que se selecciona ahora puede no
+        // haberle llegado (o no haber terminado). Si no está leída, se lee aquí. Durante un
+        // análisis no se toca: esa fila le toca al propio análisis.
+        if (!r.Probed && !r.EnLaNube && !_escaneando && !_sondeando)
+        {
+            try { await ProbeOneAsync(r); }
+            catch (Exception) { r.Estado = Textos.Instancia.MainNoSeLeyo; }
+            if (lst.SelectedItem != r) return;   // cambió la selección mientras se leía
+        }
         UpdateEstimate();
         sldPreview.Maximum = Math.Max(0, r.DurationSec - 10);
+        // Sin recorrido (duración desconocida o de diez segundos o menos) el deslizador no sirve.
+        sldPreview.IsEnabled = sldPreview.Maximum > 0;
         if (sldPreview.Value > sldPreview.Maximum) sldPreview.Value = 0;
         lblPreviewAt.Text = string.Format(Textos.Instancia.MainPrevisualizarDesde, FmtTime((int)sldPreview.Value));
         lblPrevName.Text = r.Name;
@@ -1112,8 +1164,11 @@ public partial class VentanaPrincipal : Window
     /// <summary>Genera y muestra el fotograma del vídeo seleccionado en el punto del timeline.</summary>
     private async Task ShowScrubFrameAsync()
     {
-        if (lst.SelectedItem is not VideoRow r || !r.Probed) return;
+        if (lst.SelectedItem is not VideoRow r) return;
         _scrubCts?.Cancel();
+        // Una fila sin leer no tiene fotograma. El que quedaba era de la fila anterior, y no puede
+        // seguir en pantalla debajo del nombre de otro vídeo.
+        if (!r.Probed) { imgPrev.Source = null; return; }
         var cts = _scrubCts = new CancellationTokenSource();
         var token = cts.Token;
 
@@ -1622,6 +1677,9 @@ public partial class VentanaPrincipal : Window
             var tok = _cts.Token;
             var results = await Task.Run(() => _engine.CompressAsync(sel, opt, reporter, tok), tok);
             ok = results.Where(r => r.OutBytes != null).ToList();
+            // Aviso del sistema al terminar. En la simulación no se ha comprimido nada: no avisa.
+            // Los que el motor salta (ya están hechos, ya son HEVC) no son fallos: no tienen resultado.
+            if (!opt.DryRun) AvisoDeSistema.TandaTerminada(ok.Count, results.Count(r => r.OutBytes == null));
             if (ok.Count > 0)
             {
                 double inGb = ok.Sum(r => r.InBytes) / 1073741824.0;
@@ -2293,12 +2351,14 @@ public partial class VentanaPrincipal : Window
     {
         private readonly VentanaPrincipal _w;
         private readonly bool _del;
+        // Se lee al empezar la tanda: si se cambia la opción a mitad, no cambia lo ya decidido.
+        private readonly bool _definitivo;
         private readonly IReadOnlyList<VideoRow> _queue;   // mismo orden que las rutas del motor
         private VideoRow? _current;
         private int _lastPct = -1;
 
         public Reporter(VentanaPrincipal w, bool deleteOriginals, IReadOnlyList<VideoRow> queue)
-        { _w = w; _del = deleteOriginals; _queue = queue; }
+        { _w = w; _del = deleteOriginals; _queue = queue; _definitivo = w._settings.BorrarDefinitivamente; }
 
         private VideoRow? RowOf(string path) =>
             _w._rows.FirstOrDefault(r => string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase));
@@ -2366,16 +2426,22 @@ public partial class VentanaPrincipal : Window
             if (!Engine.ShouldRecycleSource(_del, r)) return;
             Task.Run(() =>
             {
-                bool ok = PapeleraDelSistema.Mandar(r.SourcePath);
+                // Con la opción de borrado definitivo no hay Papelera de por medio: el original se borra.
+                bool ok = _definitivo ? BorradoDefinitivo.Mandar(r.SourcePath)
+                                      : PapeleraDelSistema.Mandar(r.SourcePath);
                 Dispatcher.UIThread.Post(() =>
                 {
                     if (ok)
                     {
                         var row = _w._rows.FirstOrDefault(x => string.Equals(x.Path, r.SourcePath, StringComparison.OrdinalIgnoreCase));
                         if (row != null) _w._rows.Remove(row);
-                        _w.AppendLog(string.Format(Textos.Instancia.MainLogOriginalAPapelera, r.Name));
+                        _w.AppendLog(string.Format(_definitivo
+                            ? Textos.Instancia.MainLogOriginalBorrado
+                            : Textos.Instancia.MainLogOriginalAPapelera, r.Name));
                     }
-                    else _w.AppendLog(string.Format(Textos.Instancia.MainLogPapeleraFallo, r.Name));
+                    else _w.AppendLog(string.Format(_definitivo
+                        ? Textos.Instancia.MainLogBorradoFallo
+                        : Textos.Instancia.MainLogPapeleraFallo, r.Name));
                 });
             });
         }

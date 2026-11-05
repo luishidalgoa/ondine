@@ -64,6 +64,9 @@
             <TextBlock Text="{i:T PreferenciasTrasComprimirTitulo}" FontSize="12" Foreground="{StaticResource Neutral400}" Margin="0,0,0,10"/>
             <RadioButton x:Name="rbAsk" GroupName="after" Content="{i:T PreferenciasTrasComprimirPreguntar}"/>
             <RadioButton x:Name="rbRecycle" GroupName="after" Content="{i:T PreferenciasTrasComprimirPapelera}"/>
+            <CheckBox x:Name="chkBorrarDef" Content="{i:T PreferenciasBorrarDefinitivo}" Margin="24,6,0,0"/>
+            <TextBlock TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource Neutral500}" Margin="24,2,0,0"
+                       Text="{i:T PreferenciasBorrarDefinitivoNota}"/>
             <RadioButton x:Name="rbKeep" GroupName="after" Content="{i:T PreferenciasTrasComprimirConservar}"/>
             <Border Background="{StaticResource Field}" CornerRadius="8" Padding="12,10" Margin="0,16,0,0">
               <StackPanel>
