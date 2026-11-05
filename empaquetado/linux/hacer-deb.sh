@@ -5,7 +5,9 @@
 # Se ejecuta EN LINUX. Publica la interfaz de Avalonia autocontenida, la coloca en /opt y
 # deja el lanzador, el icono y las asociaciones de tipo donde el escritorio los busca.
 #
-#   ./empaquetado/linux/hacer-deb.sh [version]
+#   ./empaquetado/linux/hacer-deb.sh [version] [amd64|arm64]
+#
+# Sin arquitectura monta el de amd64. El de arm64 sale del mismo script, con su propio runtime.
 #
 # Sin argumento coge la versión del csproj, que es la que el flujo `verificar-version`
 # obliga a mantener igual en los cuatro sitios.
@@ -20,8 +22,12 @@ proyecto="$raiz/src/Ondine.Avalonia/Ondine.Avalonia.csproj"
 version="${1:-$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$proyecto" | head -1)}"
 [ -n "$version" ] || { echo "no se pudo averiguar la versión"; exit 1; }
 
-arquitectura="amd64"
-rid="linux-x64"
+arquitectura="${2:-amd64}"
+case "$arquitectura" in
+  amd64) rid="linux-x64" ;;
+  arm64) rid="linux-arm64" ;;
+  *) echo "arquitectura desconocida: $arquitectura (amd64 o arm64)"; exit 1 ;;
+esac
 nombre="ondine_${version}_${arquitectura}"
 salida="$raiz/empaquetado/salida"
 arbol="$salida/$nombre"
@@ -88,6 +94,25 @@ cp "$raiz/docs/icon.png" \
 # sin indice y sin cache. Es la que queda cuando lo otro falla, y ocupa tres kilobytes.
 cp "$raiz/docs/icon.png" "$arbol/usr/share/pixmaps/ondine.png"
 
+# ── El repositorio apt ───────────────────────────────────────────────────────
+# Si la clave pública del repositorio está en empaquetado/linux, el paquete instala la fuente apt
+# de Ondine. Así quien instala el .deb ya queda apuntado al repositorio, y el gestor de
+# actualizaciones le ofrece las versiones nuevas. Sin la clave, no se instala nada de eso.
+clave="$raiz/empaquetado/linux/ondine-archive-keyring.gpg"
+if [ -f "$clave" ]; then
+  mkdir -p "$arbol/usr/share/keyrings" "$arbol/etc/apt/sources.list.d"
+  cp "$clave" "$arbol/usr/share/keyrings/ondine-archive-keyring.gpg"
+  cat > "$arbol/etc/apt/sources.list.d/ondine.sources" <<FUENTE
+Types: deb
+URIs: https://ondine.hdglabs.com/apt
+Suites: stable
+Components: main
+Architectures: $arquitectura
+Signed-By: /usr/share/keyrings/ondine-archive-keyring.gpg
+FUENTE
+  echo /etc/apt/sources.list.d/ondine.sources > "$arbol/DEBIAN/conffiles"
+fi
+
 # ── El control ───────────────────────────────────────────────────────────────
 # ffmpeg es OBLIGATORIO: sin él la app no comprime, no saca miniaturas y no corta. En
 # Windows el instalador lo descarga; en Mint está en los repositorios y lo pone apt.
@@ -111,12 +136,17 @@ Recommends: vlc
 Installed-Size: $tamano
 Maintainer: luishidalgoa <https://github.com/luishidalgoa/ondine>
 Homepage: https://github.com/luishidalgoa/ondine
-Description: Prepara tu biblioteca de series y películas para Plex y Jellyfin
- Ondine pone nombre y orden a una biblioteca de vídeo a partir de un catálogo
- de referencia, la comprime por lotes y parte capítulos en sus historias.
+Description: Prepares your TV and film library for Plex and Jellyfin
+ Ondine names and sorts a video library from a reference catalogue, compresses it
+ in batches and splits episodes into their stories. Nothing changes without your
+ approval: analysis only proposes, you apply what you tick, and there is undo.
+ Deleted files go to the desktop trash, never removed outright.
  .
- Nada se toca sin aprobación: analizar solo propone, se aplica lo que marcas y
- hay deshacer. Lo borrado va a la papelera del escritorio, no se elimina.
+ Prepara tu biblioteca de series y películas para Plex y Jellyfin. Ondine pone
+ nombre y orden a una biblioteca de vídeo a partir de un catálogo de referencia,
+ la comprime por lotes y parte capítulos en sus historias. Nada se toca sin
+ aprobación: analizar solo propone, se aplica lo que marcas y hay deshacer. Lo
+ borrado va a la papelera del escritorio, no se elimina.
 CONTROL
 
 # Al instalar y al desinstalar hay que refrescar las cachés del escritorio, o el lanzador

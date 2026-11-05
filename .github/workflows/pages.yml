@@ -4,9 +4,13 @@ name: Pages
 # reharia y redesplegaria el sitio sin que nada del sitio haya cambiado.
 on:
   push:
-    branches: [main]
+    # La rama apt es el repositorio de paquetes: al publicarlo se rehace el sitio con él dentro.
+    branches: [main, apt]
     paths:
       - "web/**"
+      - "dists/**"
+      - "pool/**"
+      - "ondine-archive-keyring.gpg"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -43,6 +47,19 @@ jobs:
       - name: Construir
         working-directory: web
         run: npm run build
+
+      # El repositorio apt vive en la rama apt y se sirve bajo /apt, junto al sitio. Se copia DESPUÉS de
+      # construir, porque el despliegue reemplaza el sitio entero: sin esto, el repositorio desaparecería
+      # cada vez que cambia la web.
+      - name: Añadir el repositorio apt
+        run: |
+          if git ls-remote --exit-code --heads origin apt >/dev/null 2>&1; then
+            git fetch -q --depth 1 origin apt
+            mkdir -p web/dist/apt
+            git archive FETCH_HEAD | tar -x -C web/dist/apt
+          else
+            echo "::notice::Sin rama apt: el sitio se despliega sin repositorio."
+          fi
 
       - uses: actions/configure-pages@v5
 
