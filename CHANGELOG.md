@@ -32,6 +32,23 @@ es un acuerdo de buena voluntad: está verificado.
 
 ## [Unreleased]
 
+## [1.23.2] - 2026-11-06
+
+### Cambiado
+
+- **La página de cada versión explica qué descargar.** Antes había muchos archivos `.exe`, `.tar.gz` y `.dmg` sin
+  explicación, y parecían instaladores. Ahora la primera parte de las notas dice cuál es el instalador de cada
+  sistema y cuáles son las herramientas de terminal.
+
+### Corregido
+
+- **El instalador de Windows vuelve a publicarse.** La 1.23.1 no lo traía: una prueba automática seguía buscando el
+  panel de la cola, que desapareció cuando la cola pasó a la propia tabla. Sin ese instalador, quien descargaba la
+  versión en Windows no recibía la app.
+- **La página de la versión vuelve a tener notas.** Dependían del instalador de Windows y, al fallar él, no se escribían.
+- **El repositorio de paquetes para Linux se sirve sin pasos manuales.** La 1.23.1 se subió a su rama, pero el sitio
+  no se volvió a desplegar solo y el gestor de actualizaciones no lo encontraba.
+
 ## [1.23.1] - 2026-11-05
 
 ### Corregido
