@@ -1,18 +1,18 @@
 Package: ondine
 Architecture: arm64
-Version: 1.23.1
+Version: 1.23.2
 Priority: optional
 Section: video
 Maintainer: luishidalgoa <https://github.com/luishidalgoa/ondine>
 Installed-Size: 124980
 Depends: ffmpeg, hicolor-icon-theme, libnotify-bin
 Recommends: vlc
-Filename: pool/main/o/ondine/arm64/ondine_1.23.1_arm64.deb
-Size: 38132046
-MD5sum: 20e5d71d2e8a7c3810b4d8c2f1a8eb46
-SHA1: ae45de544871179cff0d706b4944e1d458d463ea
-SHA256: fd756aeb160556bfad9e50207502b54b7183513fae397db322d8bdd2f1160537
-SHA512: 090d6f6156473b4572c4ecbc6ac837bfc51301620ef49ed5f1c59c554ff4fee078447aa13a34e2859da31e7fb52b4ea395a02d07590fcff0d0fca45a3ac72630
+Filename: pool/main/o/ondine/arm64/ondine_1.23.2_arm64.deb
+Size: 38131298
+MD5sum: 457dd0d2ea5e28834be7aab80c2019e2
+SHA1: aef9a92ceb50dcb3389e2d2fafbc53d14d18ca8e
+SHA256: 45cf59501a1f719e1c2cff3d2eaae091462d761293e65582d0dd002edcf1dd4a
+SHA512: 04b71078d81528576e733c6aa93fd722f585930b83d9bc10bfc6af2a04d5d0a5765238cb198996dd4621190eec09a4e6627de12c5458c2fa0b115b3dbd2ac578
 Homepage: https://github.com/luishidalgoa/ondine
 Description: Prepares your TV and film library for Plex and Jellyfin
  Ondine names and sorts a video library from a reference catalogue, compresses it
